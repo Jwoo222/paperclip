@@ -46,6 +46,7 @@
     "mermaidRendering": "Mermaid 다이어그램 렌더링 중...",
     "scrollableTable": "스크롤 가능한 표",
     "duplicateAgentConfirm": "{{name}}을(를) {{nextName}} 이름으로 복제할까요?",
+    "insertOperator": "{{token}} 연산자 삽입",
     "priority": {
       "critical": "긴급",
       "high": "높음",

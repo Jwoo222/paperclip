@@ -46,6 +46,7 @@
     "mermaidRendering": "Rendering Mermaid diagram...",
     "scrollableTable": "Scrollable table",
     "duplicateAgentConfirm": "Duplicate {{name}} as {{nextName}}?",
+    "insertOperator": "Insert operator {{token}}",
     "priority": {
       "critical": "Critical",
       "high": "High",

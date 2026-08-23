@@ -70,7 +70,11 @@ export function CliAuthPage() {
 
   const challenge = challengeQuery.data;
   if (!challenge) {
-    return <div className="mx-auto max-w-xl py-10 text-sm text-destructive">CLI auth challenge unavailable.</div>;
+    return (
+      <div className="mx-auto max-w-xl py-10 text-sm text-destructive">
+        {t("integrations.cliAuth.unavailable")}
+      </div>
+    );
   }
 
   if (challenge.status === "approved") {

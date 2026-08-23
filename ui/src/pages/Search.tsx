@@ -648,7 +648,7 @@ export function Search() {
                 <button
                   key={suggestion.token}
                   type="button"
-                  aria-label={`Insert operator ${suggestion.token}`}
+                  aria-label={t("commonControls.insertOperator", { token: suggestion.token })}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => {
                     setDraftQuery(applySearchOperatorSuggestion(draftQuery, suggestion.token));
