@@ -1,0 +1,19 @@
+{
+  "toolsProfilesResidual": {
+    "pickAgent": "Pick an agent to see what it can use right now.",
+    "noAppTools": "This agent cannot use any app tools right now.",
+    "noActiveProfile": "No active profile applies to this agent.",
+    "gatewayPolicy": "Profile rules are enforced by the tool gateway policy service.",
+    "bind": "Bind",
+    "entry": "Entry",
+    "defaultAllow": "default allow",
+    "defaultDeny": "default deny",
+    "allow": "allow",
+    "deny": "deny",
+    "hour": "hour",
+    "day": "day",
+    "minute": "minute",
+    "seconds": "{{count}}s",
+    "rateLimit": "Limit to {{limit}}/{{window}}"
+  }
+}

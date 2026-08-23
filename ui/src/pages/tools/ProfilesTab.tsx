@@ -26,7 +26,7 @@ import {
 import { ApiError } from "@/api/client";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "@/i18n";
+import { t as translate, useTranslation } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -60,19 +60,19 @@ import {
 } from "./shared";
 
 const SELECTOR_TYPES: Array<{ value: ToolProfileEntrySelectorType; label: string }> = [
-  { value: "tool_name", label: "Tool name" },
-  { value: "risk_level", label: "Risk level" },
-  { value: "application", label: "Application" },
-  { value: "connection", label: "Connection" },
-  { value: "catalog_entry", label: "Catalog entry ID" },
+  { value: "tool_name", label: translate("toolsProfiles.profiles.selectorToolName") },
+  { value: "risk_level", label: translate("toolsProfiles.profiles.selectorRiskLevel") },
+  { value: "application", label: translate("toolsProfiles.profiles.selectorApplication") },
+  { value: "connection", label: translate("toolsProfiles.profiles.selectorConnection") },
+  { value: "catalog_entry", label: translate("toolsProfiles.profiles.selectorCatalogEntry") },
 ];
 
 const TARGET_TYPES: Array<{ value: ToolProfileBindingTargetType; label: string }> = [
-  { value: "company", label: "Company" },
-  { value: "agent", label: "Agent" },
-  { value: "project", label: "Project" },
-  { value: "routine", label: "Routine" },
-  { value: "issue", label: "Issue ID" },
+  { value: "company", label: translate("toolsProfiles.profiles.targetCompany") },
+  { value: "agent", label: translate("toolsProfiles.profiles.targetAgent") },
+  { value: "project", label: translate("toolsProfiles.profiles.targetProject") },
+  { value: "routine", label: translate("toolsProfiles.profiles.targetRoutine") },
+  { value: "issue", label: translate("toolsProfiles.profiles.targetIssue") },
 ];
 
 const RISK_LEVELS: ToolRiskLevel[] = ["read", "write", "destructive", "low", "medium", "high", "critical"];
@@ -139,11 +139,11 @@ function entryLabel(
   applicationsById: Map<string, string>,
   connectionsById: Map<string, string>,
 ) {
-  if (entry.selectorType === "application") return applicationsById.get(entry.applicationId ?? "") ?? entry.applicationId ?? "application";
-  if (entry.selectorType === "connection") return connectionsById.get(entry.connectionId ?? "") ?? entry.connectionId ?? "connection";
-  if (entry.selectorType === "catalog_entry") return entry.catalogEntryId ?? "catalog entry";
-  if (entry.selectorType === "risk_level") return entry.riskLevel ?? "risk level";
-  return entry.toolName ?? "tool";
+  if (entry.selectorType === "application") return applicationsById.get(entry.applicationId ?? "") ?? entry.applicationId ?? translate("toolsProfiles.profiles.selectorApplication");
+  if (entry.selectorType === "connection") return connectionsById.get(entry.connectionId ?? "") ?? entry.connectionId ?? translate("toolsProfiles.profiles.selectorConnection");
+  if (entry.selectorType === "catalog_entry") return entry.catalogEntryId ?? translate("toolsProfiles.profiles.selectorCatalogEntry");
+  if (entry.selectorType === "risk_level") return entry.riskLevel ?? translate("toolsProfiles.profiles.selectorRiskLevel");
+  return entry.toolName ?? translate("toolsProfiles.profiles.selectorToolName");
 }
 
 function bindingLabel(
@@ -156,7 +156,7 @@ function bindingLabel(
     routinesById: Map<string, string>;
   },
 ) {
-  if (targetType === "company") return targetId === labels.companyId ? "Company" : targetId;
+  if (targetType === "company") return targetId === labels.companyId ? translate("toolsProfiles.profiles.company") : targetId;
   if (targetType === "agent") return labels.agentsById.get(targetId) ?? targetId;
   if (targetType === "project") return labels.projectsById.get(targetId) ?? targetId;
   if (targetType === "routine") return labels.routinesById.get(targetId) ?? targetId;
@@ -165,10 +165,10 @@ function bindingLabel(
 
 /** Short, human subtitle for the master rail: prefers the agent count the spec calls for. */
 function bindingsSubtitle(bindings: ToolProfileBinding[]): string {
-  if (bindings.length === 0) return "unbound";
+  if (bindings.length === 0) return translate("toolsProfiles.profiles.unbound");
   const agents = bindings.filter((b) => b.targetType === "agent").length;
-  if (agents === bindings.length) return `bound to ${agents} agent${agents === 1 ? "" : "s"}`;
-  return `${bindings.length} binding${bindings.length === 1 ? "" : "s"}`;
+  if (agents === bindings.length) return translate("toolsProfiles.profiles.boundToAgents", { count: agents, suffix: agents === 1 ? "" : "s" });
+  return translate("toolsProfiles.profiles.bindings", { count: bindings.length, suffix: bindings.length === 1 ? "" : "s" });
 }
 
 // --- Allow-list resolution ------------------------------------------------
@@ -501,7 +501,7 @@ export function EffectiveAgentPanel({ companyId, agentOptions }: { companyId: st
       </div>
       {!agentId ? (
         <div className="rounded-lg border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
-          Pick an agent to see what it can use right now.
+          {t("toolsProfilesResidual.pickAgent")}
         </div>
       ) : effective.isLoading ? (
         <LoadingState label={t("toolsAdvanced.profiles.checkingAccess")} />
@@ -513,12 +513,15 @@ export function EffectiveAgentPanel({ companyId, agentOptions }: { companyId: st
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-sm font-semibold text-foreground">{t("toolsAdvanced.profiles.canUse")}</h3>
               <span className="text-xs text-muted-foreground tabular-nums">
-                {(effective.data?.allowedToolNames ?? []).length} tools
+                {t("toolsProfiles.profiles.toolCount", {
+                  count: (effective.data?.allowedToolNames ?? []).length,
+                  suffix: (effective.data?.allowedToolNames ?? []).length === 1 ? "" : "s",
+                })}
               </span>
             </div>
             {(effective.data?.allowedToolNames ?? []).length === 0 ? (
               <div className="rounded-lg border border-dashed border-border px-4 py-5 text-sm text-muted-foreground">
-                This agent cannot use any app tools right now.
+                {t("toolsProfilesResidual.noAppTools")}
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -532,7 +535,7 @@ export function EffectiveAgentPanel({ companyId, agentOptions }: { companyId: st
             <h3 className="text-sm font-semibold text-foreground">{t("toolsAdvanced.profiles.accessProfiles")}</h3>
             {(effective.data?.profiles ?? []).length === 0 ? (
               <div className="rounded-lg border border-dashed border-border px-4 py-5 text-sm text-muted-foreground">
-                No active profile applies to this agent.
+                {t("toolsProfilesResidual.noActiveProfile")}
               </div>
             ) : (
               <div className="divide-y divide-border rounded-lg border border-border">
@@ -581,17 +584,17 @@ function AllowList({ rows, catalogLoading }: { rows: AllowListRow[]; catalogLoad
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h4 className="text-sm font-semibold text-foreground">{t("toolsAdvanced.profiles.allowList")}</h4>
         <p className="text-xs text-muted-foreground">
-          {rows.length} tool{rows.length === 1 ? "" : "s"}
-          {explicitCount > 0 ? ` · ${explicitCount} explicit` : ""}
-          {patternCount > 0 ? ` · ${patternCount} via pattern` : ""}
-          {defaultCount > 0 ? ` · ${defaultCount} via default` : ""}
+          {t("toolsProfiles.profiles.toolCount", { count: rows.length, suffix: rows.length === 1 ? "" : "s" })}
+          {explicitCount > 0 ? ` · ${t("toolsProfiles.profiles.explicitCount", { count: explicitCount })}` : ""}
+          {patternCount > 0 ? ` · ${t("toolsProfiles.profiles.patternCount", { count: patternCount })}` : ""}
+          {defaultCount > 0 ? ` · ${t("toolsProfiles.profiles.defaultCount", { count: defaultCount })}` : ""}
         </p>
       </div>
       {rows.length === 0 ? (
         <div className="rounded-md border border-dashed border-border px-3 py-6 text-center text-sm text-muted-foreground">
           {catalogLoading
-            ? "Resolving allowed tools…"
-            : "No tools resolved for this profile. Add an include selector or refresh the tool catalog."}
+            ? t("toolsProfiles.profiles.resolving")
+            : t("toolsProfiles.profiles.noToolsResolved")}
         </div>
       ) : (
         <Card>
@@ -928,7 +931,7 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
         actions={
           <Button size="sm" onClick={() => setCreateOpen(true)}>
             <Plus className="mr-1 h-4 w-4" />
-            New profile
+            {t("toolsProfiles.profiles.newProfile")}
           </Button>
         }
       />
@@ -938,9 +941,9 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
       {list.length === 0 ? (
         <EmptyState
           icon={Layers}
-          message="No access profiles yet"
-          description="Create a profile to group tool selectors, then bind it to the company or a specific agent."
-          action="New profile"
+            message={t("toolsProfiles.profiles.noProfiles")}
+            description={t("toolsProfiles.profiles.noProfilesDescription")}
+            action={t("toolsProfiles.profiles.newProfile")}
           onAction={() => setCreateOpen(true)}
         />
       ) : (
@@ -971,12 +974,15 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
                           <span className="truncate font-medium text-foreground">{profile.name}</span>
                           {profile.status !== "active" ? (
                             <Badge variant={statusVariant(profile.status)} className="text-(length:--text-nano)">
-                              {profile.status}
+                              {t(`toolsAdvanced.profiles.${profile.status}`)}
                             </Badge>
                           ) : null}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {toolCount} tool{toolCount === 1 ? "" : "s"} · {bindingsSubtitle(profile.bindings)}
+                          {t("toolsProfiles.profiles.toolCount", {
+                            count: toolCount,
+                            suffix: toolCount === 1 ? "" : "s",
+                          })} · {bindingsSubtitle(profile.bindings)}
                         </span>
                       </button>
                     </li>
@@ -1025,7 +1031,7 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
           <DialogHeader>
             <DialogTitle>{editProfile ? t("toolsAdvanced.profiles.editProfile") : t("toolsAdvanced.profiles.newProfile")}</DialogTitle>
             <DialogDescription>
-              Profile rules are enforced by the tool gateway policy service.
+              {t("toolsProfilesResidual.gatewayPolicy")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -1111,10 +1117,10 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
               resetProfileForm();
               resetEntryForm();
             }}>
-              Cancel
+              {t("toolsAdvanced.profiles.cancel")}
             </Button>
             <Button disabled={!name.trim() || createProfile.isPending || updateProfile.isPending} onClick={saveProfile}>
-              {editProfile ? "Save" : createProfile.isPending ? "Creating..." : "Create"}
+              {editProfile ? t("toolsProfiles.profiles.save") : createProfile.isPending ? t("toolsProfiles.profiles.creating") : t("toolsProfiles.profiles.create")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1152,7 +1158,7 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEntryProfile(null)}>{t("toolsAdvanced.profiles.cancel")}</Button>
             <Button disabled={addEntry.isPending} onClick={saveEntry}>
-              Add entry
+              {t("toolsAdvanced.profiles.addEntry")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1229,7 +1235,7 @@ export function ProfilesTab({ companyId }: { companyId: string }) {
           <DialogFooter>
             <Button variant="outline" onClick={() => setBindProfileFor(null)}>{t("toolsAdvanced.profiles.cancel")}</Button>
             <Button disabled={bind.isPending} onClick={saveBinding}>
-              Bind
+              {t("toolsProfilesResidual.bind")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1285,30 +1291,32 @@ function ProfileDetail({
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-medium text-foreground">{profile.name}</span>
               <Badge variant="outline">{profile.profileKey}</Badge>
-              <Badge variant={statusVariant(profile.status)}>{profile.status}</Badge>
+              <Badge variant={statusVariant(profile.status)}>{t(`toolsAdvanced.profiles.${profile.status}`)}</Badge>
               <Badge variant={profile.defaultAction === "allow" ? "secondary" : "outline"}>
-                default {profile.defaultAction}
+                {profile.defaultAction === "allow"
+                  ? t("toolsProfilesResidual.defaultAllow")
+                  : t("toolsProfilesResidual.defaultDeny")}
               </Badge>
             </div>
             {profile.description ? (
               <p className="mt-1 text-sm text-muted-foreground">{profile.description}</p>
             ) : null}
             <p className="mt-1 text-xs text-muted-foreground">
-              updated <RelativeTime value={profile.updatedAt} />
+              {t("toolsAdvanced.profiles.updated")} <RelativeTime value={profile.updatedAt} />
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-1.5">
             <Button size="sm" variant="outline" onClick={onEdit}>
               <Pencil className="mr-1 h-3.5 w-3.5" />
-              Edit
+              {t("toolsAdvanced.profiles.edit")}
             </Button>
             <Button size="sm" variant="outline" onClick={onAddEntry}>
               <Plus className="mr-1 h-3.5 w-3.5" />
-              Entry
+              {t("toolsProfilesResidual.entry")}
             </Button>
             <Button size="sm" variant="outline" onClick={onBind}>
               <Link2 className="mr-1 h-3.5 w-3.5" />
-              Bind
+              {t("toolsProfilesResidual.bind")}
             </Button>
           </div>
         </div>
@@ -1321,14 +1329,16 @@ function ProfileDetail({
               <span className="text-sm text-muted-foreground">{t("toolsAdvanced.profiles.noTargets")}</span>
             ) : profile.bindings.map((binding) => (
               <span key={binding.id} className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs">
-                <Badge variant="outline">{binding.targetType}</Badge>
+                <Badge variant="outline">
+                  {TARGET_TYPES.find((target) => target.value === binding.targetType)?.label ?? binding.targetType}
+                </Badge>
                 <span>{bindingLabel(binding.targetType, binding.targetId, { companyId, ...maps })}</span>
                 <span className="text-muted-foreground">p{binding.priority}</span>
                 <button
                   type="button"
                   className="rounded p-0.5 text-muted-foreground hover:text-destructive"
                   onClick={() => onUnbind(binding)}
-                  aria-label={`Remove ${binding.targetType} binding`}
+                  aria-label={t("toolsProfiles.profiles.removeBinding", { type: binding.targetType })}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -1342,14 +1352,19 @@ function ProfileDetail({
           <h4 className="text-sm font-semibold text-foreground">{t("toolsAdvanced.profiles.effectiveScope")}</h4>
           <div className="flex flex-wrap gap-2 text-xs">
             <span className="rounded-md border border-border px-2 py-1 text-muted-foreground">
-              Default <span className="font-medium text-foreground">{profile.defaultAction}</span>
+              {t("toolsProfiles.profiles.defaultAction")}{" "}
+              <span className="font-medium text-foreground">
+                {profile.defaultAction === "allow"
+                  ? t("toolsProfilesResidual.allow")
+                  : t("toolsProfilesResidual.deny")}
+              </span>
             </span>
             <span className="rounded-md border border-border px-2 py-1 text-muted-foreground">
-              <span className="font-medium text-foreground">{rows.length}</span> tools allowed
+              <span className="font-medium text-foreground">{rows.length}</span> {t("toolsProfiles.profiles.allowedTools")}
             </span>
             <span className="rounded-md border border-border px-2 py-1 text-muted-foreground">
-              <span className="font-medium text-foreground">{includeCount}</span> include /{" "}
-              <span className="font-medium text-foreground">{excludeCount}</span> exclude
+              <span className="font-medium text-foreground">{includeCount}</span> {t("toolsProfiles.profiles.include")} /{" "}
+              <span className="font-medium text-foreground">{excludeCount}</span> {t("toolsProfiles.profiles.exclude")}
             </span>
           </div>
         </div>
@@ -1362,8 +1377,12 @@ function ProfileDetail({
               <span className="text-sm text-muted-foreground">{t("toolsAdvanced.profiles.noSelectors")}</span>
             ) : profile.entries.map((entry) => (
               <span key={entry.id} className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs">
-                <Badge variant={entry.effect === "include" ? "secondary" : "destructive"}>{entry.effect}</Badge>
-                <span className="font-mono">{entry.selectorType}</span>
+                <Badge variant={entry.effect === "include" ? "secondary" : "destructive"}>
+                  {entry.effect === "include"
+                    ? t("toolsAdvanced.profiles.include")
+                    : t("toolsAdvanced.profiles.exclude")}
+                </Badge>
+                <span>{SELECTOR_TYPES.find((type) => type.value === entry.selectorType)?.label ?? entry.selectorType}</span>
                 {entry.selectorType === "risk_level" ? <RiskBadge risk={entry.riskLevel} /> : (
                   <span className="max-w-64 truncate">{entryLabel(entry, maps.applicationsById, maps.connectionsById)}</span>
                 )}
@@ -1371,7 +1390,7 @@ function ProfileDetail({
                   type="button"
                   className="rounded p-0.5 text-muted-foreground hover:text-destructive"
                   onClick={() => onDeleteEntry(entry.id)}
-                  aria-label={`Delete ${entry.selectorType} entry`}
+                  aria-label={t("toolsProfiles.profiles.deleteEntry", { type: entry.selectorType })}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>

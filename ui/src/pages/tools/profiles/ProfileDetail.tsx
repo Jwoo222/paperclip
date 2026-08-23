@@ -11,7 +11,7 @@ import type {
   ToolProfileWithDetails,
 } from "@paperclipai/shared";
 import { useNavigate, useSearchParams } from "@/lib/router";
-import { useTranslation } from "@/i18n";
+import { t as translate, useTranslation } from "@/i18n";
 import { toolsApi } from "@/api/tools";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn, formatShortDate } from "@/lib/utils";
@@ -178,28 +178,28 @@ export function ProfileDetail({
     <div className="space-y-6">
       <ToolsPageHeader
         title={profile.name}
-        description={profile.description ?? "No description yet."}
+        description={profile.description ?? t("toolsProfiles.detail.noDescription")}
         actions={
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" disabled={archived} onClick={() => setDialog("edit")}>
               <Pencil className="mr-1.5 h-4 w-4" />
-              Edit
+              {t("toolsProfiles.detail.edit")}
             </Button>
             <Button variant="outline" disabled={archived} onClick={() => setDialog("duplicate")}>
               <Copy className="mr-1.5 h-4 w-4" />
-              Duplicate
+              {t("toolsProfiles.detail.duplicate")}
             </Button>
             {archived ? (
               <Button variant="outline" onClick={() => setDialog("restore")}>
                 <ArchiveRestore className="mr-1.5 h-4 w-4" />
-                Restore
+                {t("toolsProfiles.detail.restore")}
               </Button>
             ) : (
               <Button variant="outline" onClick={() => setDialog("archive")}>{t("toolsAdvanced.profiles.archive")}</Button>
             )}
             <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setDialog("delete")}>
               <Trash2 className="mr-1.5 h-4 w-4" />
-              Delete
+              {t("toolsProfiles.detail.delete")}
             </Button>
           </div>
         }
@@ -216,15 +216,15 @@ export function ProfileDetail({
           <div>
             <p className="text-sm font-medium text-foreground">{t("toolsAdvanced.profileExtra.profileSaved")}</p>
             <p className="text-sm text-muted-foreground">
-              {unassigned ? "Assign it to agents before it changes their access." : "Assignments are active now."}
+              {unassigned ? t("toolsProfiles.detail.assignBeforeAccess") : t("toolsProfiles.detail.assignmentsActive")}
             </p>
           </div>
           <div className="flex gap-2">
             <Button size="sm" onClick={() => navigate(`/apps/advanced/profiles/${profile.id}/edit?step=3`)}>
-              Assign
+              {t("toolsProfiles.detail.assign")}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setSearchParams({})}>
-              Dismiss
+              {t("toolsProfiles.detail.dismiss")}
             </Button>
           </div>
         </div>
@@ -232,7 +232,7 @@ export function ProfileDetail({
 
       {archived ? (
         <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-          This profile is archived. It does not apply to agents until it is restored.
+          {t("toolsProfiles.detail.archivedNotice")}
         </div>
       ) : null}
 
@@ -249,7 +249,7 @@ export function ProfileDetail({
         <div className="flex items-center justify-between gap-3">
         <h2 className="text-base font-semibold text-foreground">{t("toolsAdvanced.profiles.whatAllows")}</h2>
           <Button variant="outline" size="sm" disabled={archived} onClick={() => navigate(`/apps/advanced/profiles/${profile.id}/edit?step=2`)}>
-            Edit tools
+            {t("toolsProfiles.detail.editTools")}
           </Button>
         </div>
         <AllowList rows={allowRows} total={profile.summary.totalToolCount} />
@@ -259,7 +259,7 @@ export function ProfileDetail({
         <div className="flex items-center justify-between gap-3">
         <h2 className="text-base font-semibold text-foreground">{t("toolsAdvanced.profiles.whoHasIt")}</h2>
           <Button variant="outline" size="sm" disabled={archived} onClick={() => navigate(`/apps/advanced/profiles/${profile.id}/edit?step=3`)}>
-            Assign
+            {t("toolsProfiles.detail.assign")}
           </Button>
         </div>
         <Assignments
@@ -282,7 +282,7 @@ export function ProfileDetail({
 
       <Button variant="link" className="h-auto px-0" onClick={() => navigate("/apps/advanced/profiles?check=1")}>
         <ShieldCheck className="mr-1.5 h-4 w-4" />
-        Check what an agent can actually do
+        {t("toolsProfiles.detail.checkAgent")}
       </Button>
 
       <ProfileDialogs
@@ -341,7 +341,7 @@ function NewToolsReviewBanner({
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
       <div>
         <p className="font-medium">
-          {loading ? "New tools need review" : `${appLabel} added ${count} new ${count === 1 ? "tool" : "tools"} since your last review`}
+          {loading ? t("toolsProfiles.detail.newToolsNeedReview") : t("toolsProfiles.detail.newToolsAdded", { app: appLabel, count, toolWord: count === 1 ? t("toolsProfiles.detail.tool") : t("toolsProfiles.detail.tools") })}
         </p>
         <p className="text-amber-900/80">{t("toolsAdvanced.residual.chooseAllowedTools")}</p>
       </div>
@@ -380,7 +380,7 @@ function NewToolsReviewDialog({
         <DialogHeader>
           <DialogTitle>{t("toolsAdvanced.profileExtra.reviewNewTools")}</DialogTitle>
           <DialogDescription>
-            Allow the tools this profile should use. Keep the rest blocked.
+            {t("toolsProfiles.detail.reviewDescription")}
           </DialogDescription>
         </DialogHeader>
         {loading ? (
@@ -389,7 +389,7 @@ function NewToolsReviewDialog({
           <ErrorState error={error} onRetry={onRetry} />
         ) : tools.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
-            There are no new tools waiting for review.
+            {t("toolsProfiles.detail.noNewTools")}
           </div>
         ) : (
           <div className="max-h-(--sz-52vh) divide-y divide-border overflow-y-auto rounded-lg border border-border">
@@ -406,7 +406,7 @@ function NewToolsReviewDialog({
                     <p className="mt-1 text-sm text-muted-foreground">{tool.description}</p>
                   ) : null}
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {tool.applicationName ?? tool.connectionName ?? "App tool"} · added {formatShortDate(tool.addedAt)}
+                    {tool.applicationName ?? tool.connectionName ?? t("toolsProfiles.detail.appTool")} · {t("toolsProfiles.detail.added")} {formatShortDate(tool.addedAt)}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 sm:justify-end">
@@ -417,7 +417,7 @@ function NewToolsReviewDialog({
                       checked={(decisions[tool.catalogEntryId] ?? "keep_blocked") === "allow"}
                       onChange={() => onDecision(tool.catalogEntryId, "allow")}
                     />
-                    Allow
+                    {t("toolsProfiles.detail.allow")}
                   </label>
                   <label className="inline-flex items-center gap-1.5 text-sm">
                     <input
@@ -426,7 +426,7 @@ function NewToolsReviewDialog({
                       checked={(decisions[tool.catalogEntryId] ?? "keep_blocked") === "keep_blocked"}
                       onChange={() => onDecision(tool.catalogEntryId, "keep_blocked")}
                     />
-                    Keep blocked
+                    {t("toolsProfiles.detail.keepBlocked")}
                   </label>
                 </div>
               </div>
@@ -436,7 +436,7 @@ function NewToolsReviewDialog({
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>{t("toolsAdvanced.profiles.cancel")}</Button>
           <Button disabled={pending || loading || tools.length === 0} onClick={onSubmit}>
-            Submit review
+            {t("toolsProfiles.detail.submitReview")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -448,7 +448,7 @@ function AllowList({ rows, total }: { rows: AllowRow[]; total: number }) {
   if (rows.length === 0) {
     return (
       <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-        This profile allows 0 tools. Agents with only this profile will not be able to use app tools.
+          {t("toolsProfiles.detail.zeroTools")}
       </div>
     );
   }
@@ -472,14 +472,14 @@ function AllowList({ rows, total }: { rows: AllowRow[]; total: number }) {
                   {row.degraded ? (
                     <a className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline" href={`/apps/${row.connectionId}`}>
                       <PlugZap className="h-3 w-3" />
-                      Reconnect
+                      {t("toolsProfiles.detail.reconnect")}
                     </a>
                   ) : null}
                 </div>
               </td>
               <td className="px-3 py-2">
                 <span>{row.app}</span>
-                {row.degraded ? <span className="ml-2 text-xs text-muted-foreground">{row.app} is disconnected</span> : null}
+                {row.degraded ? <span className="ml-2 text-xs text-muted-foreground">{t("toolsProfiles.detail.disconnected", { app: row.app })}</span> : null}
               </td>
               <td className="px-3 py-2 text-muted-foreground">{row.capabilities}</td>
               <td className="px-3 py-2">
@@ -490,7 +490,7 @@ function AllowList({ rows, total }: { rows: AllowRow[]; total: number }) {
                 )}
                 {row.autoAddedAt ? (
                   <div className="mt-0.5 text-xs text-muted-foreground">
-                    added automatically · {formatShortDate(row.autoAddedAt)}
+                    {t("toolsProfiles.detail.addedAutomatically")} · {formatShortDate(row.autoAddedAt)}
                   </div>
                 ) : null}
               </td>
@@ -500,11 +500,11 @@ function AllowList({ rows, total }: { rows: AllowRow[]; total: number }) {
       </table>
       {rows.length > 80 ? (
         <p className="border-t border-border px-3 py-2 text-xs text-muted-foreground">
-          Showing 80 of {rows.length} allowed tools.
+          {t("toolsProfiles.detail.showingAllowed", { count: rows.length })}
         </p>
       ) : (
         <p className="border-t border-border px-3 py-2 text-xs text-muted-foreground">
-          Allows {rows.length} of {total} known tools.
+          {t("toolsProfiles.detail.allowsKnown", { count: rows.length, total })}
         </p>
       )}
     </div>
@@ -538,7 +538,7 @@ function Assignments({
         <div key={binding.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
-              {binding.targetType === "company" ? "Co" : binding.targetType.slice(0, 2).toUpperCase()}
+              {binding.targetType === "company" ? t("toolsProfiles.profiles.companyAbbreviation") : binding.targetType.slice(0, 2).toUpperCase()}
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-foreground">{assignmentLabel(binding, companyId, maps)}</p>
@@ -547,7 +547,7 @@ function Assignments({
           </div>
           <Button variant="ghost" size="sm" disabled={archived} onClick={() => onRemove(binding)}>
             <UserMinus className="mr-1.5 h-4 w-4" />
-            Remove
+            {t("toolsProfiles.detail.remove")}
           </Button>
         </div>
       ))}
@@ -624,7 +624,7 @@ function ProfileDialogs({
   const [name, setName] = useState(profile.name);
   const [description, setDescription] = useState(profile.description ?? "");
   const [profileKey, setProfileKey] = useState(profile.profileKey);
-  const [copyName, setCopyName] = useState(`${profile.name} copy`);
+  const [copyName, setCopyName] = useState(`${profile.name} ${t("toolsProfiles.profiles.copySuffix")}`);
   const [copyAssignments, setCopyAssignments] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
@@ -765,7 +765,7 @@ function buildAllowRows(
     .filter((tool) => includeAllExcept || included.some((entry) => entryMatchesTool(entry, tool)))
     .map((tool) => {
       const match = includeAllExcept ? null : included.find((entry) => entryMatchesTool(entry, tool)) ?? null;
-      const app = appNames.get(tool.applicationId ?? "") ?? connectionNames.get(tool.connectionId) ?? "Unknown app";
+      const app = appNames.get(tool.applicationId ?? "") ?? connectionNames.get(tool.connectionId) ?? translate("toolsProfiles.detail.unknownApp");
       const connection = connections.find((item) => item.id === tool.connectionId);
       return {
         id: tool.id,
@@ -798,31 +798,31 @@ function entryMatchesTool(entry: ToolProfileEntry, tool: ToolCatalogEntry): bool
 }
 
 function sourceLabel(entry: ToolProfileEntry | null, app: string): string {
-  if (!entry) return "added directly";
-  if (entry.selectorType === "application" || entry.selectorType === "connection") return `added by rule: all ${app}`;
-  if (entry.selectorType === "risk_level" && entry.riskLevel) return `added by rule: ${entry.riskLevel} tools`;
-  return "added directly";
+  if (!entry) return translate("toolsProfiles.detail.addedDirectly");
+  if (entry.selectorType === "application" || entry.selectorType === "connection") return translate("toolsProfiles.detail.addedByRuleAll", { app });
+  if (entry.selectorType === "risk_level" && entry.riskLevel) return translate("toolsProfiles.detail.addedByRuleRisk", { level: entry.riskLevel });
+  return translate("toolsProfiles.detail.addedDirectly");
 }
 
 function capabilityLabel(tool: ToolCatalogEntry): string {
-  if (tool.isDestructive) return "Destructive";
-  if (tool.isWrite) return "Write";
-  return "Read";
+  if (tool.isDestructive) return translate("toolsProfiles.detail.destructive");
+  if (tool.isWrite) return translate("toolsProfiles.detail.write");
+  return translate("toolsProfiles.detail.read");
 }
 
 function capabilityText(tool: ToolProfileNewToolReviewItem): string {
-  if (tool.riskLevel === "destructive") return "Destructive";
-  if (tool.riskLevel === "write") return "Write";
-  if (tool.riskLevel === "read") return "Read";
+  if (tool.riskLevel === "destructive") return translate("toolsProfiles.detail.destructive");
+  if (tool.riskLevel === "write") return translate("toolsProfiles.detail.write");
+  if (tool.riskLevel === "read") return translate("toolsProfiles.detail.read");
   return tool.capability;
 }
 
 function newToolsAppLabel(tools: ToolProfileNewToolReviewItem[]): string {
   const names = [...new Set(tools.map((tool) => tool.applicationName ?? tool.connectionName).filter(Boolean))] as string[];
-  if (names.length === 0) return "An app";
-  if (names.length === 1) return names[0] ?? "An app";
+  if (names.length === 0) return translate("toolsProfiles.detail.anApp");
+  if (names.length === 1) return names[0] ?? translate("toolsProfiles.detail.anApp");
   if (names.length === 2) return `${names[0]} and ${names[1]}`;
-  return `${names[0]} and ${names.length - 1} more apps`;
+  return translate("toolsProfiles.detail.moreApps", { name: names[0], count: names.length - 1 });
 }
 
 function isRecentTool(tool: ToolCatalogEntry): boolean {
@@ -838,18 +838,18 @@ function assignmentLabel(
   companyId: string,
   maps: ReturnType<typeof useProfilesData>["maps"],
 ): string {
-  if (binding.targetType === "company") return "Company default";
-  if (binding.targetType === "agent") return maps.agentsById.get(binding.targetId) ?? "Unknown agent";
-  if (binding.targetType === "project") return maps.projectsById.get(binding.targetId) ?? "Unknown project";
-  if (binding.targetType === "routine") return maps.routinesById.get(binding.targetId) ?? "Unknown routine";
-  if (binding.targetId === companyId) return "Company";
+  if (binding.targetType === "company") return translate("toolsProfiles.profiles.companyDefault");
+  if (binding.targetType === "agent") return maps.agentsById.get(binding.targetId) ?? translate("toolsProfiles.profiles.unknownAgent");
+  if (binding.targetType === "project") return maps.projectsById.get(binding.targetId) ?? translate("toolsProfiles.profiles.unknownProject");
+  if (binding.targetType === "routine") return maps.routinesById.get(binding.targetId) ?? translate("toolsProfiles.profiles.unknownRoutine");
+  if (binding.targetId === companyId) return translate("toolsProfiles.profiles.company");
   return binding.targetId;
 }
 
 function assignmentTypeLabel(type: ToolProfileBinding["targetType"]): string {
-  if (type === "company") return "Company default";
-  if (type === "agent") return "Agent";
-  if (type === "project") return "Project";
-  if (type === "routine") return "Routine";
-  return "Scoped assignment";
+  if (type === "company") return translate("toolsProfiles.profiles.companyDefault");
+  if (type === "agent") return translate("toolsProfiles.profiles.targetAgent");
+  if (type === "project") return translate("toolsProfiles.profiles.targetProject");
+  if (type === "routine") return translate("toolsProfiles.profiles.targetRoutine");
+  return translate("toolsProfiles.profiles.scopedAssignment");
 }

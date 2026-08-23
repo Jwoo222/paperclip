@@ -39,9 +39,9 @@ function slugifyProfileKey(name: string): string {
 }
 
 const STEP_LABELS: Array<{ step: WizardStep; label: string }> = [
-  { step: 1, label: "Name" },
-  { step: 2, label: "Choose tools" },
-  { step: 3, label: "Assign" },
+  { step: 1, label: "toolsProfiles.wizard.name" },
+  { step: 2, label: "toolsProfiles.wizard.chooseTools" },
+  { step: 3, label: "toolsProfiles.wizard.assign" },
 ];
 
 export function ProfileWizard({
@@ -154,7 +154,7 @@ export function ProfileWizard({
       if (!draftId) {
         const created = await toolsApi.createProfile(companyId, {
           profileKey: profileKey || slugifyProfileKey(name) || "profile",
-          name: name.trim() || "Untitled profile",
+          name: name.trim() || t("toolsProfiles.profiles.untitled"),
           description: description.trim() || null,
           status: "draft",
           defaultAction: newToolsAction,
@@ -165,7 +165,7 @@ export function ProfileWizard({
       }
       const updated = await toolsApi.updateProfile(draftId, {
         profileKey: profileKey || undefined,
-        name: name.trim() || "Untitled profile",
+        name: name.trim() || t("toolsProfiles.profiles.untitled"),
         description: description.trim() || null,
         defaultAction: newToolsAction,
         entries,
@@ -288,8 +288,7 @@ export function ProfileWizard({
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             {step >= 2 ? (
               <span>
-                Allows <span className="font-medium text-foreground">{live.allowed}</span> of {live.total}{" "}
-                tools
+                {t("toolsProfiles.wizard.allows")} <span className="font-medium text-foreground">{live.allowed}</span> {live.total} {t("toolsProfiles.wizard.tools")}
               </span>
             ) : null}
             {draftId ? (
@@ -299,7 +298,7 @@ export function ProfileWizard({
                 disabled={busy}
                 className="font-medium text-primary hover:underline disabled:opacity-50"
               >
-                Save &amp; finish later
+                {t("toolsProfiles.wizard.saveFinishLater")}
               </button>
             ) : null}
           </div>
@@ -307,11 +306,11 @@ export function ProfileWizard({
           <div className="flex items-center gap-2">
             {step > 1 ? (
               <Button variant="outline" disabled={busy} onClick={() => setStep((s) => (s - 1) as WizardStep)}>
-                Back
+                {t("toolsProfiles.wizard.back")}
               </Button>
             ) : (
               <Button variant="ghost" disabled={busy} onClick={() => navigate("/apps/advanced/profiles")}>
-                Cancel
+                {t("toolsProfiles.wizard.cancel")}
               </Button>
             )}
 
@@ -323,7 +322,7 @@ export function ProfileWizard({
                 }
               >
                 {busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
-                Continue
+                {t("toolsProfiles.wizard.continue")}
               </Button>
             ) : null}
 
@@ -333,14 +332,14 @@ export function ProfileWizard({
                 onClick={() => saveDraft.mutate({ goToStep: 3, completedStep: 2 })}
               >
                 {busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
-                Continue
+                {t("toolsProfiles.wizard.continue")}
               </Button>
             ) : null}
 
             {step === 3 ? (
               <Button disabled={busy} onClick={() => finish.mutate()}>
                 {busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
-                Save profile
+                {t("toolsProfiles.wizard.saveProfile")}
               </Button>
             ) : null}
           </div>
@@ -401,6 +400,7 @@ async function reconcileBindings(
 }
 
 function Stepper({ current }: { current: WizardStep }) {
+  const { t } = useTranslation();
   return (
     <ol className="flex items-center gap-2 text-sm">
       {STEP_LABELS.map(({ step, label }, idx) => {
@@ -419,7 +419,7 @@ function Stepper({ current }: { current: WizardStep }) {
               {done ? <Check className="h-3.5 w-3.5" /> : step}
             </span>
             <span className={cn("font-medium", active ? "text-foreground" : "text-muted-foreground")}>
-              {label}
+            {t(label)}
             </span>
             {idx < STEP_LABELS.length - 1 ? <span className="mx-1 text-muted-foreground">→</span> : null}
           </li>
@@ -531,7 +531,7 @@ export function StepName({
       <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
         <CollapsibleTrigger className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ChevronDown className={cn("h-4 w-4 transition-transform", advancedOpen && "rotate-180")} />
-          Advanced
+          {t("toolsProfiles.wizard.advanced")}
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-2">
           <div className="space-y-1.5">
@@ -543,7 +543,7 @@ export function StepName({
               className="font-mono text-xs"
             />
             <p className="text-xs text-muted-foreground">
-              Used in exports and the API. Auto-filled from the name.
+              {t("toolsProfiles.wizard.usedInExportsApi")}
             </p>
           </div>
         </CollapsibleContent>
@@ -614,7 +614,7 @@ export function StepAssign({
         <span className="flex flex-col gap-0.5">
           <span className="text-sm font-medium text-foreground">{t("toolsAdvanced.profiles.makeCompanyDefault")}</span>
           <span className="text-xs text-muted-foreground">
-            Every agent without its own profile uses this one.
+            {t("toolsProfiles.wizard.companyDefaultHint")}
             {defaultProfileName ? ` Replaces “${defaultProfileName}”.` : ""}
           </span>
         </span>
@@ -633,12 +633,12 @@ export function StepAssign({
           getDescription={(agent) => {
             const context = contextByAgent.get(agent.id) ?? [];
             const bits = [...context];
-            if (defaultProfileName) bits.push("company default");
-            return bits.length > 0 ? `already has: ${bits.join(" · ")}` : "no profiles yet";
+            if (defaultProfileName) bits.push(t("toolsProfiles.wizard.companyDefault"));
+            return bits.length > 0 ? t("toolsProfiles.wizard.alreadyHas", { profiles: bits.join(" · ") }) : t("toolsProfiles.wizard.noProfiles");
           }}
         />
         <p className="text-xs text-muted-foreground">
-          If an agent has several profiles, it can use anything any of them allows.
+          {t("toolsProfiles.wizard.assignmentHint")}
         </p>
       </div>
 
@@ -650,8 +650,7 @@ export function StepAssign({
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-4 border-t border-border px-4 py-3">
             <p className="text-xs text-muted-foreground">
-              Assign this profile to a whole project or a scheduled routine instead of (or as well as)
-              individual agents.
+              {t("toolsProfiles.wizard.projectRoutineHint")}
             </p>
             <TargetChecklist
               label={t("toolsAdvanced.residual.projects")}

@@ -5,6 +5,7 @@ import type {
   ToolRiskLevel,
 } from "@paperclipai/shared";
 import type { ToolProfileEntryInput } from "@/api/tools";
+import { t } from "@/i18n";
 
 /**
  * Pure domain model for the prosumer access-profile wizard (PAP-10997).
@@ -31,9 +32,9 @@ export function toolCapability(tool: ToolCatalogEntry): ToolCapability {
 }
 
 export const CAPABILITY_LABEL: Record<ToolCapability, string> = {
-  read: "Read-only",
-  write: "Makes changes",
-  destructive: "Destructive",
+  read: t("toolsProfiles.model.readOnly"),
+  write: t("toolsProfiles.model.makesChanges"),
+  destructive: t("toolsProfiles.model.destructive"),
 };
 
 // --- App grouping ----------------------------------------------------------
@@ -66,7 +67,7 @@ export function groupCatalogByApp(
       const name =
         (tool.applicationId ? applicationsById.get(tool.applicationId) : null) ??
         connectionsById.get(tool.connectionId) ??
-        "Tools";
+        t("toolsProfiles.model.tools");
       group = {
         appKey,
         applicationId: tool.applicationId,
@@ -131,7 +132,7 @@ export function appCheckState(group: AppGroup, selection: AppSelection | undefin
 export function appSelectionLabel(group: AppGroup, selection: AppSelection | undefined): string {
   const total = group.tools.length;
   const state = appCheckState(group, selection);
-  if (state === "unchecked") return "None selected";
+  if (state === "unchecked") return t("toolsProfiles.model.noneSelected");
   if (selection?.kind === "all" || (selection?.kind === "all_except" && selection.excluded.length === 0)) {
     return `All ${group.name} tools (${total})`;
   }
@@ -368,11 +369,11 @@ export interface TemplateDef {
 }
 
 export const TEMPLATES: TemplateDef[] = [
-  { key: "read_only", title: "Read-only", description: "See and fetch, but never change anything." },
-  { key: "everyday", title: "Everyday work", description: "Read and make routine changes — no destructive tools." },
-  { key: "full_access", title: "Full access", description: "Everything every connected app offers." },
-  { key: "scratch", title: "Start from scratch", description: "An empty profile you build up tool by tool." },
-  { key: "copy", title: "Copy an existing profile", description: "Start from a profile you already have." },
+  { key: "read_only", title: t("toolsProfiles.model.readOnlyTitle"), description: t("toolsProfiles.model.readOnlyDescription") },
+  { key: "everyday", title: t("toolsProfiles.model.everydayTitle"), description: t("toolsProfiles.model.everydayDescription") },
+  { key: "full_access", title: t("toolsProfiles.model.fullAccessTitle"), description: t("toolsProfiles.model.fullAccessDescription") },
+  { key: "scratch", title: t("toolsProfiles.model.scratchTitle"), description: t("toolsProfiles.model.scratchDescription") },
+  { key: "copy", title: t("toolsProfiles.model.copyTitle"), description: t("toolsProfiles.model.copyDescription") },
 ];
 
 function capabilityPredicate(key: TemplateKey): (tool: ToolCatalogEntry) => boolean {

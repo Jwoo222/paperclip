@@ -81,7 +81,7 @@ export function ProfilesIndex({
 
   const duplicate = useMutation({
     mutationFn: (profile: ToolProfileWithDetails) =>
-      toolsApi.duplicateProfile(profile.id, { name: `${profile.name} (copy)` }),
+      toolsApi.duplicateProfile(profile.id, { name: `${profile.name} (${t("toolsProfiles.profiles.copySuffix")})` }),
     onSuccess: () => {
       pushToast({ title: t("toolsAdvanced.residual.profileDuplicated"), body: t("toolsAdvanced.residual.copyUnassigned"), tone: "success" });
       invalidate();
@@ -122,16 +122,16 @@ export function ProfilesIndex({
   const header = (
     <ToolsPageHeader
         title={t("toolsAdvanced.profiles.title")}
-      description="Decide which tools your agents can use. Build a profile once, then assign it to the agents that need it."
+      description={t("toolsProfiles.profiles.profileDescription")}
       actions={
         <>
           <Button variant="outline" onClick={() => setResolverOpen(true)}>
             <ShieldCheck className="mr-1.5 h-4 w-4" />
-            Check an agent's access
+            {t("toolsAdvanced.profileExtra.checkAgentAccess")}
           </Button>
           <Button onClick={() => navigate(newProfileHref())}>
             <Plus className="mr-1.5 h-4 w-4" />
-            New profile
+            {t("toolsProfiles.profiles.newProfile")}
           </Button>
         </>
       }
@@ -144,7 +144,7 @@ export function ProfilesIndex({
         <SheetHeader className="border-b border-border">
           <SheetTitle>{t("toolsAdvanced.profileExtra.checkAgentAccess")}</SheetTitle>
           <SheetDescription>
-            See exactly which tools an agent can use right now, and which profile allows each one.
+            {t("toolsProfiles.profiles.resolverDescription")}
           </SheetDescription>
         </SheetHeader>
         <div className="flex min-h-0 flex-1 flex-col p-4">
@@ -189,7 +189,7 @@ export function ProfilesIndex({
               statusFilter === key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >
-            {key === "active" ? "Active" : "Archived"}
+            {key === "active" ? t("toolsProfiles.profiles.active") : t("toolsProfiles.profiles.archived")}
           </button>
         ))}
       </div>
@@ -197,7 +197,7 @@ export function ProfilesIndex({
       {rows.length === 0 ? (
         statusFilter === "archived" ? (
           <div className="rounded-lg border border-dashed border-border px-4 py-5 text-sm text-muted-foreground">
-            No archived profiles.
+            {t("toolsProfiles.profiles.noArchived")}
           </div>
         ) : (
           <EmptyTemplatePicker onPick={(key) => navigate(newProfileHref(key))} />
@@ -277,7 +277,7 @@ export function ProfilesIndex({
                             onClick={open}
                             className="text-xs font-medium text-primary hover:underline"
                           >
-                            Resume
+                          {t("toolsProfiles.profiles.resume")}
                           </button>
                         ) : null}
                       </span>
@@ -356,14 +356,14 @@ function RowMenu({
         {onRestore ? (
           <DropdownMenuItem onSelect={onRestore}>
             <ArchiveRestore className="mr-1.5 h-4 w-4" />
-            Restore
+            {t("toolsProfiles.profiles.restore")}
           </DropdownMenuItem>
         ) : (
         <DropdownMenuItem onSelect={onArchive}>{t("toolsAdvanced.profiles.archive")}</DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onDelete} className="text-destructive focus:text-destructive">
-          Delete
+          {t("toolsProfiles.profiles.delete")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -378,7 +378,7 @@ function EmptyTemplatePicker({ onPick }: { onPick: (key: TemplateKey) => void })
       <div className="mb-4 max-w-2xl">
         <h3 className="text-base font-semibold text-foreground">{t("toolsAdvanced.profiles.createFirst")}</h3>
         <p className="text-sm text-muted-foreground">
-          Pick a starting point. You can fine-tune exactly which tools it allows in the next step.
+          {t("toolsProfiles.profiles.pickStartingPoint")}
         </p>
       </div>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">

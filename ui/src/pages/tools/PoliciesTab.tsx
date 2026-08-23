@@ -85,15 +85,15 @@ type UsesMode = "anything" | "app" | "actions" | "capability";
 const RISK_LEVELS: ToolRiskLevel[] = ["read", "write", "destructive", "low", "medium", "high", "critical"];
 const RATE_LIMIT_KEY_FIELDS: RateLimitKeyBy[] = ["company", "agent", "application", "connection", "tool"];
 const CAPABILITY_OPTIONS: Array<{ value: ToolRiskLevel; label: string; sentence: string }> = [
-  { value: "read", label: "Read-only", sentence: "read-only actions" },
-  { value: "write", label: "Makes changes", sentence: "actions that make changes" },
-  { value: "destructive", label: "Destructive", sentence: "destructive actions" },
+  { value: "read", label: translate("toolsProfiles.policies.readOnly"), sentence: translate("toolsProfiles.policies.readOnlyActions") },
+  { value: "write", label: translate("toolsProfiles.policies.makesChanges"), sentence: translate("toolsProfiles.policies.changeActions") },
+  { value: "destructive", label: translate("toolsProfiles.policies.destructive"), sentence: translate("toolsProfiles.policies.destructiveActions") },
 ];
 const OUTCOMES: Array<{ value: BuilderPolicyType; label: string }> = [
-  { value: "allow", label: "Allow" },
-  { value: "block", label: "Block" },
-  { value: "require_approval", label: "Ask first" },
-  { value: "rate_limit", label: "Limit" },
+  { value: "allow", label: translate("toolsProfiles.policies.allow") },
+  { value: "block", label: translate("toolsProfiles.policies.block") },
+  { value: "require_approval", label: translate("toolsProfiles.policies.askFirst") },
+  { value: "rate_limit", label: translate("toolsProfiles.policies.limit") },
 ];
 const SUPPORTED_BUILDER_POLICY_TYPES = new Set<string>(OUTCOMES.map((outcome) => outcome.value));
 
@@ -256,29 +256,34 @@ function buildPolicyPayload(form: PolicyFormState) {
 
 function windowLabel(seconds: string | number | null | undefined) {
   const value = Number(seconds);
-  if (value === 3600) return "hour";
-  if (value === 86400) return "day";
-  if (value === 60) return "minute";
-  return `${Number.isFinite(value) && value > 0 ? value : 3600}s`;
+  if (value === 3600) return translate("toolsProfilesResidual.hour");
+  if (value === 86400) return translate("toolsProfilesResidual.day");
+  if (value === 60) return translate("toolsProfilesResidual.minute");
+  return translate("toolsProfilesResidual.seconds", {
+    count: Number.isFinite(value) && value > 0 ? value : 3600,
+  });
 }
 
 function outcomeLabel(policy: Pick<ToolPolicy, "policyType" | "config"> | PolicyFormState) {
   const policyType = String(policy.policyType);
-  if (policyType === "allow") return "Allow";
-  if (policyType === "block") return "Block";
-  if (policyType === "require_approval") return "Ask first";
-  if (policyType === "redact") return "Unsupported: redact";
-  if (policyType === "trust_rule") return "Allow";
-  if (policyType === "validate") return "Unsupported: custom check";
+  if (policyType === "allow") return translate("toolsProfiles.policies.allow");
+  if (policyType === "block") return translate("toolsProfiles.policies.block");
+  if (policyType === "require_approval") return translate("toolsProfiles.policies.askFirst");
+  if (policyType === "redact") return translate("toolsProfiles.policies.unsupportedRedact");
+  if (policyType === "trust_rule") return translate("toolsProfiles.policies.allow");
+  if (policyType === "validate") return translate("toolsProfiles.policies.unsupportedCustomCheck");
   const config = "config" in policy && isRecord(policy.config) ? policy.config : {};
   const rateLimit = isRecord(config.rateLimit) ? config.rateLimit : config;
   const limit = "rateLimitLimit" in policy ? policy.rateLimitLimit : rateLimit.limit;
   const seconds = "rateLimitWindowSeconds" in policy ? policy.rateLimitWindowSeconds : rateLimit.windowSeconds;
-  return `Limit to ${limit ?? 50}/${windowLabel(seconds as string | number | null | undefined)}`;
+  return translate("toolsProfilesResidual.rateLimit", {
+    limit: limit ?? 50,
+    window: windowLabel(seconds as string | number | null | undefined),
+  });
 }
 
 function capabilitySentence(value: string | null | undefined) {
-  return CAPABILITY_OPTIONS.find((item) => item.value === value)?.sentence ?? `${value} actions`;
+  return CAPABILITY_OPTIONS.find((item) => item.value === value)?.sentence ?? translate("toolsProfiles.policies.capabilityFallback", { value });
 }
 
 function toolDisplayName(toolName: string, catalogByToolName: Map<string, ToolCatalogEntry>) {
@@ -302,24 +307,24 @@ function policySentence(
   const actorType = selectValue(selectors, "actorType");
   const catalogById = new Map([...catalogByToolName.values()].map((tool) => [tool.id, tool]));
 
-  let who = "any agent";
-  if (agentIds.length === 1) who = maps.agent.get(agentIds[0]!) ?? "one agent";
-  else if (agentIds.length > 1) who = `${agentIds.length} agents`;
-  else if (projectIds.length === 1) who = `agents in ${maps.project.get(projectIds[0]!) ?? "one project"}`;
-  else if (projectIds.length > 1) who = `agents in ${projectIds.length} projects`;
-  else if (actorType !== ANY_VALUE && actorType !== "agent") who = `${actorType}s`;
+  let who = translate("toolsProfiles.policies.anyAgent");
+  if (agentIds.length === 1) who = maps.agent.get(agentIds[0]!) ?? translate("toolsProfiles.policies.oneAgent");
+  else if (agentIds.length > 1) who = translate("toolsProfiles.policies.agentsCount", { count: agentIds.length });
+  else if (projectIds.length === 1) who = translate("toolsProfiles.policies.agentsInProject", { project: maps.project.get(projectIds[0]!) ?? translate("toolsProfiles.policies.oneProject") });
+  else if (projectIds.length > 1) who = translate("toolsProfiles.policies.agentsInProjects", { count: projectIds.length });
+  else if (actorType !== ANY_VALUE && actorType !== "agent") who = translate("toolsProfiles.policies.actorTypePlural", { type: actorType });
 
-  let uses = "anything";
+  let uses = translate("toolsProfiles.policies.anythingUses");
   if (tools.length === 1) uses = toolDisplayName(tools[0]!, catalogByToolName);
-  else if (tools.length > 1) uses = `${tools.length} specific actions`;
+  else if (tools.length > 1) uses = translate("toolsProfiles.policies.actionsCount", { count: tools.length });
   else if (catalogEntryIds.length === 1) {
     const tool = catalogById.get(catalogEntryIds[0]!);
-    uses = tool ? tool.title || toolDisplayName(tool.toolName, catalogByToolName) : "one action";
+    uses = tool ? tool.title || toolDisplayName(tool.toolName, catalogByToolName) : translate("toolsProfiles.policies.oneAction");
   }
-  else if (catalogEntryIds.length > 1) uses = `${catalogEntryIds.length} specific actions`;
-  else if (appIds.length === 1) uses = maps.application.get(appIds[0]!) ?? "one app";
-  else if (appIds.length > 1) uses = `${appIds.length} apps`;
-  else if (connectionIds.length === 1) uses = maps.connection.get(connectionIds[0]!) ?? "one app";
+  else if (catalogEntryIds.length > 1) uses = translate("toolsProfiles.policies.actionsCount", { count: catalogEntryIds.length });
+  else if (appIds.length === 1) uses = maps.application.get(appIds[0]!) ?? translate("toolsProfiles.policies.oneApp");
+  else if (appIds.length > 1) uses = translate("toolsProfiles.policies.appsCount", { count: appIds.length });
+  else if (connectionIds.length === 1) uses = maps.connection.get(connectionIds[0]!) ?? translate("toolsProfiles.policies.oneApp");
   else if (risk !== ANY_VALUE) uses = capabilitySentence(risk);
 
   return { who, uses, outcome: outcomeLabel(policy) };
@@ -355,7 +360,7 @@ function buildPreviewConfig(form: PolicyFormState) {
 }
 
 function sentenceText(sentence: ReturnType<typeof policySentence>) {
-  return `When ${sentence.who} uses ${sentence.uses} → ${sentence.outcome}`;
+  return translate("toolsProfiles.policies.sentenceTemplate", sentence);
 }
 
 function OutcomeChip({ type, config }: { type: BuilderPolicyType | ToolPolicyType; config?: Record<string, unknown> | null }) {
@@ -379,7 +384,7 @@ type LookupMaps = {
 function RuleSentence({ sentence }: { sentence: ReturnType<typeof policySentence> }) {
   return (
     <span>
-      When <strong>{sentence.who}</strong> uses <strong>{sentence.uses}</strong> →{" "}
+      {t("toolsAdvanced.policies.when")} <strong>{sentence.who}</strong> {t("toolsAdvanced.policies.uses")} <strong>{sentence.uses}</strong> →{" "}
       <strong>{sentence.outcome}</strong>
     </span>
   );
@@ -432,7 +437,7 @@ function PolicySimulator({
     : null;
   const verdict = result
     ? `${outcomeLabel({ policyType: result.decision as ToolPolicyType, config: null })} - ${
-        decidingPolicy ? `rule ${policies.findIndex((policy) => policy.id === decidingPolicy.id) + 1}` : result.explanation
+        decidingPolicy ? translate("toolsProfiles.policies.ruleNumber", { number: policies.findIndex((policy) => policy.id === decidingPolicy.id) + 1 }) : result.explanation
       }`
     : null;
 
@@ -442,7 +447,7 @@ function PolicySimulator({
         <SheetHeader className="border-b border-border">
           <SheetTitle className="flex items-center gap-2 text-base">
             <FlaskConical className="h-4 w-4" />
-            Test a rule
+            {t("toolsProfiles.policies.testRule")}
           </SheetTitle>
           <SheetDescription>{t("toolsAdvanced.policies.testHint")}</SheetDescription>
         </SheetHeader>
@@ -474,7 +479,7 @@ function PolicySimulator({
             </div>
           </div>
           <Button size="sm" disabled={!agentId || !toolName.trim() || test.isPending} onClick={() => test.mutate()}>
-            {test.isPending ? "Checking..." : "Check rule"}
+            {test.isPending ? t("toolsProfiles.policies.checking") : t("toolsProfiles.policies.checkRule")}
           </Button>
 
           {result ? (
@@ -562,14 +567,14 @@ function RuleBuilder({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <Button variant="ghost" size="sm" className="px-0" onClick={onCancel}>
-            Back to rules
+          {t("toolsProfiles.policies.backToRules")}
           </Button>
           <h2 className="text-lg font-semibold text-foreground">{form.id ? t("toolsAdvanced.policies.editRule") : t("toolsAdvanced.policies.newRule")}</h2>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={onCancel}>{t("toolsAdvanced.residual.cancel")}</Button>
           <Button size="sm" onClick={onSave} disabled={saving}>
-            {saving ? "Saving..." : "Save rule"}
+            {saving ? t("toolsProfiles.policies.saving") : t("toolsProfiles.policies.saveRule")}
           </Button>
         </div>
       </div>
@@ -583,9 +588,9 @@ function RuleBuilder({
           <h3 className="text-sm font-semibold text-foreground">{t("toolsAdvanced.policies.when")}</h3>
           <div className="grid gap-2">
             {[
-              ["everyone", "Everyone"],
-              ["agent", "Specific agent"],
-              ["project", "Agents in a project"],
+              ["everyone", t("toolsProfiles.policies.everyone")],
+              ["agent", t("toolsProfiles.policies.specificAgent")],
+              ["project", t("toolsProfiles.policies.projectAgents")],
             ].map(([value, label]) => (
               <Button
                 key={value}
@@ -622,10 +627,10 @@ function RuleBuilder({
           <h3 className="text-sm font-semibold text-foreground">{t("toolsAdvanced.policies.uses")}</h3>
           <div className="grid gap-2">
             {[
-              ["anything", "Anything"],
-              ["app", "A specific app"],
-              ["actions", "Specific actions"],
-              ["capability", "Actions by capability"],
+              ["anything", t("toolsProfiles.policies.anything")],
+              ["app", t("toolsProfiles.policies.specificApp")],
+              ["actions", t("toolsProfiles.policies.specificActions")],
+              ["capability", t("toolsProfiles.policies.capabilityActions")],
             ].map(([value, label]) => (
               <Button
                 key={value}
@@ -731,7 +736,7 @@ function RuleBuilder({
       <details className="rounded-md border border-border p-3">
         <summary className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-foreground">
           <ChevronDown className="h-4 w-4" />
-          Advanced
+          {t("toolsProfiles.policies.advanced")}
         </summary>
         <div className="mt-3 grid gap-3 lg:grid-cols-2">
           <div className="space-y-1.5">
@@ -993,11 +998,11 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
           <>
             <Button size="sm" variant="outline" onClick={() => setTestOpen(true)}>
               <FlaskConical className="mr-1 h-4 w-4" />
-              Test a rule
+              {t("toolsProfiles.policies.testRule")}
             </Button>
             <Button size="sm" onClick={() => setForm(emptyPolicyForm())}>
               <Plus className="mr-1 h-4 w-4" />
-              New rule
+              {t("toolsProfiles.policies.newRule")}
             </Button>
           </>
         }
@@ -1012,9 +1017,9 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
           <div className="space-y-3">
             <EmptyState
               icon={Shield}
-              message="No rules yet"
+              message={t("toolsProfiles.policies.noRules")}
               description={t("toolsAdvanced.policies.emptyDescription")}
-              action="New rule"
+              action={t("toolsProfiles.policies.newRule")}
               onAction={() => setForm(emptyPolicyForm())}
             />
             <StarterCards onStart={setForm} />
@@ -1065,7 +1070,7 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
                           ) : null}
                         </td>
                         <td className="px-2 py-2"><OutcomeChip type={policy.policyType} config={policy.config} /></td>
-                        <td className="px-2 py-2 text-right text-xs text-muted-foreground">{hits} {hits === 1 ? "time" : "times"}</td>
+                        <td className="px-2 py-2 text-right text-xs text-muted-foreground">{hits} {hits === 1 ? t("toolsProfiles.policies.time") : t("toolsProfiles.policies.times")}</td>
                         <td className="px-2 py-2 text-center">
                           <ToggleSwitch
                             checked={policy.enabled}
@@ -1083,15 +1088,15 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onSelect={() => setForm(policyToForm(policy))}>
                                 <Pencil className="mr-2 h-4 w-4" />
-                                Edit
+                                {t("toolsProfiles.policies.edit")}
                               </DropdownMenuItem>
                               <DropdownMenuItem onSelect={() => duplicate.mutate(policy)}>
                                 <Copy className="mr-2 h-4 w-4" />
-                                Duplicate
+                                {t("toolsProfiles.policies.duplicate")}
                               </DropdownMenuItem>
                               <DropdownMenuItem onSelect={() => updatePolicy.mutate({ policyId: policy.id, body: { enabled: false } })}>
                                 <RotateCcw className="mr-2 h-4 w-4" />
-                                Turn off
+                                {t("toolsProfiles.policies.turnOff")}
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
@@ -1099,7 +1104,7 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
                                 onSelect={() => setConfirm({ kind: "delete-rule", policy, hits })}
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
+                                {t("toolsProfiles.policies.delete")}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -1123,7 +1128,7 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
           <ErrorState error={trustRules.error} onRetry={() => trustRules.refetch()} />
         ) : (trustRules.data?.trustRules ?? []).length === 0 ? (
           <div className="rounded-md border border-border px-4 py-6 text-sm text-muted-foreground">
-            No remembered approvals yet.
+            {t("toolsProfiles.policies.noRemembered")}
           </div>
         ) : (
           <div className="divide-y divide-border rounded-md border border-border">
@@ -1134,7 +1139,7 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
                     <RuleSentence sentence={policySentence(rule, maps, catalogByToolName)} />
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    Remembered <RelativeTime value={rule.updatedAt} />
+                    {t("toolsProfiles.policies.remembered")} <RelativeTime value={rule.updatedAt} />
                   </div>
                 </div>
                 <Button
@@ -1143,7 +1148,7 @@ export function PoliciesTab({ companyId }: { companyId: string }) {
                   disabled={!rule.enabled || revoke.isPending}
                   onClick={() => setConfirm({ kind: "forget-approval", policy: rule })}
                 >
-                  Forget
+                    {t("toolsProfiles.policies.forget")}
                 </Button>
               </div>
             ))}
