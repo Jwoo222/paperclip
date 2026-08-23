@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ResourceStatusChip, type ResourceStatusVariant } from "@/components/ResourceStatusChip";
 import { cn } from "@/lib/utils";
+import { t } from "@/i18n";
 import type {
   BuiltInAgentState,
   BuiltInManagedResourceKind,
@@ -75,26 +76,26 @@ function resourceActionCopy(
 ): ResourceActionCopy | null {
   if (resource.stockStatus === "stock_update_available") {
     return {
-      title: `Update ${label} to the newest default?`,
-      body: `You haven't edited this, so Paperclip will replace it with the newer shipped version. Nothing you customized is affected, and your adapter credentials and settings are not touched.`,
-      confirmLabel: "Update",
-      triggerLabel: "Update",
+      title: t("sharedOperationsExtra.bundleUpdateTitle", { label }),
+      body: t("sharedOperationsExtra.bundleUpdateBody"),
+      confirmLabel: t("sharedOperationsExtra.update"),
+      triggerLabel: t("sharedOperationsExtra.update"),
     };
   }
   if (resource.stockStatus === "operator_modified") {
     return {
       title: `Reset ${label} to the shipped default?`,
       body: `This replaces your edited version with Paperclip's current default. Your edits can't be recovered. Adapter credentials and settings are not touched.`,
-      confirmLabel: `Reset ${label}`,
-      triggerLabel: "Reset",
+      confirmLabel: `${t("sharedOperationsExtra.reset")} ${label}`,
+      triggerLabel: t("sharedOperationsExtra.reset"),
     };
   }
   if (resource.stockStatus === "missing") {
     return {
       title: `Recreate ${label}?`,
       body: `This resource is missing. Paperclip will recreate it from the shipped default. Adapter credentials and settings are not touched.`,
-      confirmLabel: "Recreate",
-      triggerLabel: "Recreate",
+      confirmLabel: t("sharedOperationsExtra.recreate"),
+      triggerLabel: t("sharedOperationsExtra.recreate"),
     };
   }
   return null;
@@ -117,7 +118,7 @@ function ResourceActionButton({
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button variant="outline" size="sm" disabled={pending}>
-          {pending ? "Working…" : copy.triggerLabel}
+          {pending ? t("sharedOperationsExtra.working") : copy.triggerLabel}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -126,7 +127,7 @@ function ResourceActionButton({
           <AlertDialogDescription>{copy.body}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("sharedOperationsExtra.cancel")}</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm}>{copy.confirmLabel}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -153,7 +154,7 @@ function ConfirmActionButton({
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button variant="outline" size="sm" disabled={pending}>
-          {pending ? "Working…" : triggerLabel}
+          {pending ? t("sharedOperationsExtra.working") : triggerLabel}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -162,7 +163,7 @@ function ConfirmActionButton({
           <AlertDialogDescription>{body}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("sharedOperationsExtra.cancel")}</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm}>{confirmLabel}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -302,7 +303,7 @@ export function BuiltInBundlePanel({
         actions={
           <>
             <Button asChild variant="link" size="sm">
-              <Link to={viewHref}>View</Link>
+              <Link to={viewHref}>{t("sharedOperationsExtra.view")}</Link>
             </Button>
             <ResourceActionButton
               resource={resource}
@@ -317,18 +318,18 @@ export function BuiltInBundlePanel({
   };
 
   return (
-    <section className={cn("space-y-2", className)} aria-label="Bundle status">
-      <h3 className="text-sm font-medium">Bundle status</h3>
+    <section className={cn("space-y-2", className)} aria-label={t("sharedOperationsExtra.bundleStatus")}>
+      <h3 className="text-sm font-medium">{t("sharedOperationsExtra.bundleStatus")}</h3>
 
       <div className="divide-y rounded-lg border px-4">
         {/* Adapter — no resource entry; readiness is the agent lifecycle. */}
         <BundleRow
-          label="Adapter"
+          label={t("sharedOperationsExtra.adapter")}
           chips={<ResourceStatusChip variant={adapterChip} />}
           detail={adapterDetail}
           actions={
             <Button variant="outline" size="sm" onClick={onConfigure}>
-              Configure
+              {t("sharedOperationsExtra.configure")}
             </Button>
           }
         />
@@ -336,7 +337,7 @@ export function BuiltInBundlePanel({
         {skill &&
           renderResourceRow(
             "skill",
-            "Skill",
+            t("sharedOperationsExtra.skill"),
             bundle.skill.displayName || skill.resourceKey,
             `/agents/${agentRef}/skills`,
             skill,
@@ -345,7 +346,7 @@ export function BuiltInBundlePanel({
         {instructions &&
           renderResourceRow(
             "instructions",
-            "Instructions",
+            t("sharedOperationsExtra.instructions"),
             bundle.instructions.entryFile,
             `/agents/${agentRef}/instructions`,
             instructions,
@@ -353,7 +354,7 @@ export function BuiltInBundlePanel({
 
         {/* Routine — zero-token-by-default; the weekly schedule ships off. */}
         <BundleRow
-          label="Routine"
+          label={t("sharedOperationsExtra.routine")}
           secondary={bundle.routine.title}
           chips={
             <>
@@ -368,18 +369,18 @@ export function BuiltInBundlePanel({
           }
           detail={
             scheduleEnabled
-              ? "The weekly schedule is enabled and can create background work."
-              : "Nothing runs until you enable the weekly schedule — it costs zero tokens by default."
+              ? t("sharedOperationsExtra.weeklyScheduleEnabled")
+              : t("sharedOperationsExtra.scheduleOff")
           }
           actions={
             routine ? (
               <>
                 {onRunRoutine && (
                   <ConfirmActionButton
-                    title="Run Reflection Coach once?"
-                    body="Paperclip will create one routine task now. This does not enable the weekly schedule or turn on background work."
-                    triggerLabel="Run once"
-                    confirmLabel="Run once"
+                    title={t("sharedOperationsExtra.runReflectionOnceTitle")}
+                    body={t("sharedOperationsExtra.runReflectionOnceBody")}
+                    triggerLabel={t("sharedOperationsExtra.runOnce")}
+                    confirmLabel={t("sharedOperationsExtra.runOnce")}
                     pending={routineActionPending === "run"}
                     onConfirm={() => onRunRoutine(routineKey)}
                   />
@@ -387,20 +388,20 @@ export function BuiltInBundlePanel({
                 {scheduleEnabled
                   ? onDisableSchedule && (
                     <ConfirmActionButton
-                      title="Disable the weekly schedule?"
-                      body="Paperclip will stop future scheduled Reflection Coach runs. Manual Run once remains available."
-                      triggerLabel="Disable schedule"
-                      confirmLabel="Disable schedule"
+                      title={t("sharedOperationsExtra.disableWeeklyTitle")}
+                      body={t("sharedOperationsExtra.disableWeeklyBody")}
+                      triggerLabel={t("sharedOperationsExtra.disableSchedule")}
+                      confirmLabel={t("sharedOperationsExtra.disableSchedule")}
                       pending={routineActionPending === "disable"}
                       onConfirm={() => onDisableSchedule(routineKey)}
                     />
                   )
                   : onEnableSchedule && (
                     <ConfirmActionButton
-                      title="Enable the weekly schedule?"
-                      body="Paperclip will allow Reflection Coach to create routine tasks on the weekly schedule. It can spend tokens when those tasks run."
-                      triggerLabel="Enable weekly"
-                      confirmLabel="Enable weekly"
+                      title={t("sharedOperationsExtra.enableWeeklyTitle")}
+                      body={t("sharedOperationsExtra.enableWeeklyBody")}
+                      triggerLabel={t("sharedOperationsExtra.enableWeekly")}
+                      confirmLabel={t("sharedOperationsExtra.enableWeekly")}
                       pending={routineActionPending === "enable"}
                       onConfirm={() => onEnableSchedule(routineKey)}
                     />
@@ -408,7 +409,7 @@ export function BuiltInBundlePanel({
                 {driftVariant(routine) && (
                   <ResourceActionButton
                     resource={routine}
-                    label="routine"
+                    label={t("sharedOperationsExtra.routine")}
                     onConfirm={() => onResetResource("routine")}
                     pending={resettingResource === "routine"}
                   />
@@ -419,12 +420,12 @@ export function BuiltInBundlePanel({
         />
         {proposalHref && (
           <BundleRow
-            label="Proposal"
+            label={t("sharedOperationsExtra.proposal")}
             chips={<ResourceStatusChip variant="proposal_pending" />}
-            detail="A proposed Reflection Coach update is waiting for review."
+            detail={t("sharedOperationsExtra.proposalWaiting")}
             actions={
               <Button asChild variant="link" size="sm">
-                <Link to={proposalHref}>Review proposal</Link>
+                <Link to={proposalHref}>{t("sharedOperationsExtra.reviewProposal")}</Link>
               </Button>
             }
           />

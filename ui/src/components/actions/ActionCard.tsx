@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EnforcementBanner } from "@/components/EnforcementBanner";
 import { CapabilityBadges, DecisionBadge, RiskBadge } from "@/pages/tools/shared";
+import { t } from "@/i18n";
 
 /**
  * Action approval card (PAP-10787 / PAP-10778, surfaces 11/12/99).
@@ -133,10 +134,10 @@ function initials(name: string): string {
 function bindingRows(binding: ActionCardBinding, isStale: boolean): BindingRow[] {
   const catalogValue = isStale && binding.previousCatalogSha256 ? (
     <span className="inline-flex flex-wrap items-center gap-1.5">
-      <span className="text-muted-foreground line-through decoration-amber-500" title="Previous catalog hash">
+      <span className="text-muted-foreground line-through decoration-amber-500" title={t("sharedOperationsExtra.previousCatalogHash")}>
         {shortSha(binding.previousCatalogSha256)}
       </span>
-      <span className="text-amber-600 dark:text-amber-400" title="Current catalog hash">
+      <span className="text-amber-600 dark:text-amber-400" title={t("sharedOperationsExtra.currentCatalogHash")}>
         {shortSha(binding.catalogSha256)}
       </span>
     </span>
@@ -146,7 +147,7 @@ function bindingRows(binding: ActionCardBinding, isStale: boolean): BindingRow[]
 
   return [
     {
-      label: "Application",
+      label: t("sharedOperationsExtra.application"),
       value: (
         <span>
           {binding.application}
@@ -154,15 +155,15 @@ function bindingRows(binding: ActionCardBinding, isStale: boolean): BindingRow[]
         </span>
       ),
     },
-    { label: "Connection", value: binding.connection, mono: true },
-    { label: "Catalog", value: catalogValue, mono: !isStale },
+    { label: t("sharedOperationsExtra.connection"), value: binding.connection, mono: true },
+    { label: t("sharedOperationsExtra.catalog"), value: catalogValue, mono: !isStale },
     {
-      label: "Payload",
+      label: t("sharedOperationsExtra.payload"),
       value: (
         <span className="inline-flex items-center gap-1.5">
           <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
           <span>{shortSha(binding.payloadSha256)}</span>
-          <span className="font-sans text-(length:--text-micro) uppercase tracking-normal text-muted-foreground">signed</span>
+          <span className="font-sans text-(length:--text-micro) uppercase tracking-normal text-muted-foreground">{t("sharedOperationsExtra.signed")}</span>
         </span>
       ),
       mono: true,
@@ -201,20 +202,20 @@ export function ActionCard({
       onClick={onApprove}
       disabled={isStale}
       className={mobile ? "w-full" : undefined}
-      title={isStale ? "Re-issue the request before approving — the catalog hash changed." : undefined}
+      title={isStale ? t("sharedOperationsExtra.reissueBeforeApproving") : undefined}
     >
-      Approve
+      {t("sharedOperationsExtra.approve")}
     </Button>
   );
   const denyButton = (
     <Button size="sm" variant="outline" onClick={onDeny} className={mobile ? "w-full" : undefined}>
-      Deny
+      {t("sharedOperationsExtra.deny")}
     </Button>
   );
   const editButton = (
     <Button size="sm" variant="outline" onClick={onEditResign} className={mobile ? "w-full" : undefined}>
       <Pencil className="mr-1 h-3.5 w-3.5" />
-      Edit &amp; re-sign
+      {t("sharedOperationsExtra.editResign")}
     </Button>
   );
 
@@ -236,7 +237,7 @@ export function ActionCard({
           </Avatar>
           <div className="min-w-0 flex-1">
             <p className="text-sm text-foreground">
-              <span className="font-medium">{agentName}</span> requested approval to call
+              <span className="font-medium">{agentName}</span> {t("sharedOperationsExtra.requestedApprovalToCall")}
             </p>
             <p className="mt-0.5 font-mono text-xs text-muted-foreground break-all">{toolName}</p>
           </div>
@@ -256,8 +257,8 @@ export function ActionCard({
         {isStale ? (
           <EnforcementBanner
             tone="warning"
-            title="Catalog changed since this request was signed."
-            body="The application's tool catalog hash no longer matches the one this approval was issued against. Approval is disabled — the agent must edit & re-sign to request again."
+            title={t("sharedOperationsExtra.catalogChangedTitle")}
+            body={t("sharedOperationsExtra.catalogChangedBody")}
           />
         ) : null}
 
@@ -266,7 +267,7 @@ export function ActionCard({
 
         {/* JSON input */}
         <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-normal text-muted-foreground">Input</p>
+          <p className="text-xs font-medium uppercase tracking-normal text-muted-foreground">{t("sharedOperationsExtra.input")}</p>
           <pre className="overflow-x-auto rounded-md border border-border bg-muted/40 p-3 font-mono text-xs leading-relaxed text-foreground">
             {json}
           </pre>
@@ -274,13 +275,13 @@ export function ActionCard({
 
         {/* Why I'm asking */}
         <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-normal text-muted-foreground">Why I&apos;m asking</p>
+          <p className="text-xs font-medium uppercase tracking-normal text-muted-foreground">{t("sharedOperationsExtra.whyAsking")}</p>
           <p className="text-sm text-muted-foreground">
             {reason}
             {policyNumber != null ? (
               <>
                 {" "}
-                <span className="font-medium text-foreground">Policy #{policyNumber}</span> requires approval here.
+                <span className="font-medium text-foreground">{t("sharedOperationsExtra.policyNumber", { number: policyNumber })}</span> {t("sharedOperationsExtra.requiresApprovalHere")}
               </>
             ) : null}
           </p>
@@ -296,7 +297,7 @@ export function ActionCard({
       >
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Clock className="h-3.5 w-3.5 shrink-0" />
-          {expiresInLabel ?? "no expiry set"}
+          {expiresInLabel ?? t("sharedOperationsExtra.noExpiry")}
         </span>
         {mobile ? (
           <div className="flex flex-col gap-2">

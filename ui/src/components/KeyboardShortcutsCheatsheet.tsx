@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { t } from "@/i18n";
 
 interface ShortcutEntry {
   keys: string[];
@@ -88,7 +89,7 @@ export function KeyboardShortcutsCheatsheetContent() {
         {sections.map((section) => (
           <div key={section.title} className="px-5 py-3">
             <h3 className="mb-2 text-(length:--text-micro) font-semibold uppercase tracking-wider text-muted-foreground">
-              {section.title}
+              {t(`sharedOperationsExtra.shortcut${section.title.replace(" ", "")}`)}
             </h3>
             <div className="space-y-1.5">
               {section.shortcuts.map((shortcut) => (
@@ -117,7 +118,7 @@ export function KeyboardShortcutsCheatsheetContent() {
       </div>
       <div className="border-t border-border px-5 py-3">
         <p className="text-xs text-muted-foreground">
-          Press <KeyCap>Esc</KeyCap> to close &middot; Shortcuts are disabled in text fields
+          {t("sharedOperationsExtra.press")} <KeyCap>Esc</KeyCap> {t("sharedOperationsExtra.toClose")} &middot; {t("sharedOperationsExtra.shortcutsDisabledInFields")}
         </p>
       </div>
     </>
@@ -135,7 +136,7 @@ export function KeyboardShortcutsCheatsheet({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md gap-0 p-0 overflow-hidden" showCloseButton={false}>
         <DialogHeader className="px-5 pt-5 pb-3">
-          <DialogTitle className="text-base">Keyboard shortcuts</DialogTitle>
+          <DialogTitle className="text-base">{t("sharedOperationsExtra.keyboardShortcuts")}</DialogTitle>
         </DialogHeader>
         <KeyboardShortcutsCheatsheetContent />
       </DialogContent>

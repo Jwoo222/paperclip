@@ -270,7 +270,7 @@ function CopyMarkdownButton({ text }: { text: string }) {
             : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
       )}
       title={label}
-      aria-label="Copy comment as markdown"
+      aria-label={t("sharedOperationsExtra.copyCommentMarkdown")}
       onClick={() => {
         void copyTextToClipboard(text)
           .then(() => setStatus("copied"))

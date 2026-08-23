@@ -8,6 +8,7 @@ import {
   formatDateTime,
   providerDisplayName,
 } from "@/lib/utils";
+import { useTranslation } from "@/i18n";
 
 interface FinanceTimelineCardProps {
   rows: FinanceEvent[];
@@ -18,15 +19,16 @@ export function FinanceTimelineCard({
   rows,
   emptyMessage = "No financial events in this period.",
 }: FinanceTimelineCardProps) {
+  const { t } = useTranslation();
   return (
     <Card>
       <CardHeader className="px-4 pt-4 pb-1">
-        <CardTitle className="text-base">Recent financial events</CardTitle>
-        <CardDescription>Top-ups, fees, credits, commitments, and other non-request charges.</CardDescription>
+        <CardTitle className="text-base">{t("sharedOperationsExtra.recentFinancialEvents")}</CardTitle>
+        <CardDescription>{t("sharedOperationsExtra.financialEventsDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 px-4 pb-4 pt-3">
         {rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+          <p className="text-sm text-muted-foreground">{emptyMessage === "No financial events in this period." ? t("sharedOperationsExtra.noFinancialEvents") : emptyMessage}</p>
         ) : (
           rows.map((row) => (
             <div
@@ -50,16 +52,16 @@ export function FinanceTimelineCard({
                   {(row.description || row.externalInvoiceId || row.region || row.pricingTier) && (
                     <div className="space-y-1 text-xs text-muted-foreground">
                       {row.description ? <div>{row.description}</div> : null}
-                      {row.externalInvoiceId ? <div>invoice {row.externalInvoiceId}</div> : null}
-                      {row.region ? <div>region {row.region}</div> : null}
-                      {row.pricingTier ? <div>tier {row.pricingTier}</div> : null}
+                      {row.externalInvoiceId ? <div>{t("sharedOperationsExtra.invoice", { id: row.externalInvoiceId })}</div> : null}
+                      {row.region ? <div>{t("sharedOperationsExtra.region", { value: row.region })}</div> : null}
+                      {row.pricingTier ? <div>{t("sharedOperationsExtra.tier", { value: row.pricingTier })}</div> : null}
                     </div>
                   )}
                 </div>
                 <div className="text-right tabular-nums">
                   <div className="text-sm font-semibold">{formatCents(row.amountCents)}</div>
                   <div className="text-xs text-muted-foreground">{row.currency}</div>
-                  {row.estimated ? <div className="text-(length:--text-micro) uppercase tracking-(--tracking-eyebrow) text-amber-600">estimated</div> : null}
+                  {row.estimated ? <div className="text-(length:--text-micro) uppercase tracking-(--tracking-eyebrow) text-amber-600">{t("sharedOperationsExtra.estimated")}</div> : null}
                 </div>
               </div>
             </div>

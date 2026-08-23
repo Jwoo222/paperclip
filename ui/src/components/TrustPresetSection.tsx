@@ -18,6 +18,7 @@ import {
   type LowTrustBoundaryTarget,
 } from "../lib/trust-policy-ui";
 import { cn } from "../lib/utils";
+import { t } from "@/i18n";
 
 const inputClass =
   "w-full rounded-md border border-border px-2.5 py-1.5 bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/40";
@@ -104,9 +105,9 @@ export function TrustPresetSection({
 
   return (
     <div>
-      <h3 className="mb-3 text-sm font-medium">Trust</h3>
+      <h3 className="mb-3 text-sm font-medium">{t("sharedOperationsExtra.trust")}</h3>
       <div className="rounded-lg border border-border p-4 space-y-3">
-        <Field label="Trust preset" hint="Choose how broadly this agent can read and act on Paperclip work objects.">
+        <Field label={t("sharedOperationsExtra.trustPreset")} hint={t("sharedOperationsExtra.trustPresetHint")}>
           <select
             className={inputClass}
             value={preset}
@@ -138,7 +139,7 @@ export function TrustPresetSection({
             <div className="min-w-0 flex-1 space-y-2">
               <div>
                 <p className="font-medium">
-                  {hasScope ? "Containment active" : "Containment not configured"}
+                  {hasScope ? t("sharedOperationsExtra.containmentActive") : t("sharedOperationsExtra.containmentNotConfigured")}
                 </p>
                 <p className="mt-1 text-xs leading-5">
                   {hasScope
@@ -149,16 +150,16 @@ export function TrustPresetSection({
               {boundaryEditable ? (
                 <div className="rounded-md border border-border/70 bg-background/70 p-3 text-foreground space-y-3">
                   <div className="grid gap-3 sm:grid-cols-(--gtc-12)">
-                    <Field label="Boundary type">
+                    <Field label={t("sharedOperationsExtra.boundaryType")}>
                       <select
                         className={inputClass}
                         value={targetType}
                         onChange={(event) => setTargetType(event.target.value as LowTrustBoundaryTargetType)}
                         disabled={disabled}
                       >
-                        <option value="project">Project</option>
-                        <option value="root_issue">Root issue</option>
-                        <option value="issue">Issue</option>
+                        <option value="project">{t("sharedOperationsExtra.project")}</option>
+                        <option value="root_issue">{t("sharedOperationsExtra.rootIssue")}</option>
+                        <option value="issue">{t("sharedOperationsExtra.issue")}</option>
                       </select>
                     </Field>
                     <Field label={BOUNDARY_TARGET_LABELS[targetType]}>
@@ -170,10 +171,10 @@ export function TrustPresetSection({
                       >
                         <option value="">
                           {candidatesLoading
-                            ? "Loading…"
+                            ? t("sharedOperationsExtra.loading")
                             : targetCandidates.length === 0
                               ? `No ${targetType === "project" ? "projects" : "issues"} available`
-                              : "Select boundary"}
+                              : t("sharedOperationsExtra.selectBoundary")}
                         </option>
                         {targetCandidates.map((candidate) => (
                           <option key={candidate.id} value={candidate.id}>
@@ -196,14 +197,14 @@ export function TrustPresetSection({
                         onClick={handleClearBoundary}
                         disabled={disabled}
                       >
-                        Clear boundary
+                        {t("sharedOperationsExtra.clearBoundary")}
                       </Button>
                     ) : null}
                   </div>
                 </div>
               ) : (
                 <div className="rounded-md border border-border/70 bg-background/70 p-3 text-foreground">
-                  <p className="text-sm font-medium">Managed by EE/API</p>
+                  <p className="text-sm font-medium">{t("sharedOperationsExtra.managedByEeApi")}</p>
                   <p className="mt-1 text-xs leading-5 text-muted-foreground">
                     This policy has {summarizeLowTrustBoundaryTarget(boundary).toLowerCase()} and cannot be edited by the CE single-boundary editor.
                   </p>
@@ -221,7 +222,7 @@ export function TrustPresetSection({
                 </a>
               </p>
               <CollapsibleSection
-                title="View policy"
+                title={t("sharedOperationsExtra.viewPolicy")}
                 open={policyOpen}
                 onToggle={() => setPolicyOpen((open) => !open)}
               >
@@ -238,7 +239,7 @@ export function TrustPresetSection({
                   <PolicyRow
                     label="EE fields"
                     value={Object.keys(policy ?? {}).some((key) => !["trustPreset", "reviewPreset", "trustBoundary"].includes(key))
-                      ? "Custom advanced policy fields preserved"
+                      ? t("sharedOperationsExtra.customPolicyPreserved")
                       : "-"}
                   />
                 </div>
