@@ -1,0 +1,22 @@
+{
+  "pluginUi": {
+    "selectCompany": "Select a company to view tasks.",
+    "responsible": "Responsible",
+    "noResponsible": "No responsible",
+    "searchResponsible": "Search responsible...",
+    "noResponsibleFound": "No responsible found.",
+    "project": "Project",
+    "noProject": "No project",
+    "searchProjects": "Search projects...",
+    "noProjectsFound": "No projects found.",
+    "noRows": "No rows.",
+    "loadingEllipsis": "Loading...",
+    "loading": "Loading",
+    "renderFailed": "Plugin UI failed to render.",
+    "unknownError": "Unknown error",
+    "namedRenderFailed": "{{name}}: failed to render",
+    "targetUnavailable": "{{name}}: could not resolve launcher target “{{target}}”.",
+    "close": "Close",
+    "launchersUnavailable": "Plugin launchers unavailable: {{error}}"
+  }
+}
