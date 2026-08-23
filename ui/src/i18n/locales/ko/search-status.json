@@ -1,0 +1,27 @@
+{
+  "searchStatus": {
+    "status": { "backlog": "백로그", "todo": "할 일", "in_progress": "진행 중", "in_review": "검토 중", "done": "완료", "cancelled": "취소됨", "blocked": "차단됨" },
+    "priority": { "urgent": "긴급", "high": "높음", "medium": "보통", "low": "낮음", "no_priority": "우선순위 없음" },
+    "blocked": {
+      "label": "차단됨",
+      "activeChild": { "withIdentifier": "차단됨 · 활성 하위 업무 {{identifier}} 대기 중", "one": "차단됨 · 활성 하위 업무 1개 대기 중", "many": "차단됨 · 활성 하위 업무 {{count}}개 대기 중" },
+      "activeDependency": { "withIdentifier": "차단됨 · 활성 종속 업무 {{identifier}}가 처리 중", "one": "차단됨 · 활성 종속 업무 1개가 처리 중", "many": "차단됨 · 활성 종속 업무 {{count}}개가 처리 중" },
+      "stalledReview": { "withIdentifier": "차단됨 · {{identifier}} 검토가 중단됨", "one": "차단됨 · 검토가 중단되어 다음 단계가 불분명함", "many": "차단됨 · 검토 {{count}}건이 중단되어 다음 단계가 불분명함" },
+      "attentionRequired": { "withCoveredOne": "차단됨 · 차단 원인 1건 조치 필요, {{coveredCount}}건은 진행 중 업무가 처리 중", "withCoveredMany": "차단됨 · 차단 원인 {{count}}건 조치 필요, {{coveredCount}}건은 진행 중 업무가 처리 중", "one": "차단됨 · 차단 원인 1건 조치 필요", "many": "차단됨 · 차단 원인 {{count}}건 조치 필요" }
+    },
+    "changeStatus": "상태 변경 (현재: {{status}})",
+    "filter": { "status": "상태", "priority": "우선순위", "assignee": "담당자", "project": "프로젝트", "label": "라벨", "updated": "업데이트" },
+    "openItems": "진행 중 업무",
+    "assignee": { "me": "나", "unassigned": "미배정" },
+    "search": { "assignees": "담당자 검색…", "projects": "프로젝트 검색…", "labels": "라벨 검색…" },
+    "empty": { "assignees": "담당자가 없습니다", "projects": "프로젝트가 없습니다", "labels": "라벨이 없습니다" },
+    "filters": "필터", "clearAll": "모두 지우기", "cancel": "취소",
+    "sort": { "results": "검색 결과 정렬", "prefix": "정렬:", "by": "정렬 기준", "relevance": "관련도순", "updated": "최근 업데이트순", "created": "최신 생성순", "priority": "우선순위순" },
+    "sheet": { "showResults": "결과 보기", "showResult": "결과 1개 보기", "showResultsCount": "결과 {{count}}개 보기" },
+    "snippet": { "comment": "댓글", "document": "문서", "artifact": "아티팩트", "description": "설명" },
+    "source": { "agent": "에이전트", "project": "프로젝트", "artifact": "아티팩트", "user": "사용자", "label": "라벨" },
+    "relative": { "justNow": "방금", "minutes": "{{count}}분 전", "hours": "{{count}}시간 전", "days": "{{count}}일 전", "weeks": "{{count}}주 전", "months": "{{count}}개월 전", "years": "{{count}}년 전" },
+    "updated": { "24h": "최근 24시간", "7d": "최근 7일", "30d": "최근 30일", "90d": "최근 90일" },
+    "zero": { "noResultsWithFilters": "현재 필터에 맞는 결과가 없습니다", "resultMatches": "결과 1개가 일치하지만", "resultsMatch": "결과 {{count}}개가 일치하지만", "oneFilterHides": "적용된 필터가 모든 결과를 숨기고 있습니다", "filtersHide": "적용된 필터 {{count}}개가 모든 결과를 숨기고 있습니다", "loosenFilter": "필터 완화", "remove": "제거", "result": "결과", "results": "결과", "clearAllFilters": "모든 필터 지우기" }
+  }
+}

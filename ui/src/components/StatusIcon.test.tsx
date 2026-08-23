@@ -1,8 +1,9 @@
 // @vitest-environment node
 
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { StatusIcon } from "./StatusIcon";
+import { i18n } from "@/i18n";
 
 /**
  * StatusIcon renders the unified {@link StatusGlyph} (one shape per status) at
@@ -11,6 +12,10 @@ import { StatusIcon } from "./StatusIcon";
  * size prop.
  */
 describe("StatusIcon", () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage("en");
+  });
+
   it("renders the unified glyph (24-unit viewBox), not a bespoke ring", () => {
     const html = renderToStaticMarkup(<StatusIcon status="in_progress" />);
     expect(html).toContain('viewBox="0 0 24 24"');

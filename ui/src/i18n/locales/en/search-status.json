@@ -1,0 +1,27 @@
+{
+  "searchStatus": {
+    "status": { "backlog": "Backlog", "todo": "Todo", "in_progress": "In progress", "in_review": "In review", "done": "Done", "cancelled": "Cancelled", "blocked": "Blocked" },
+    "priority": { "urgent": "Urgent", "high": "High", "medium": "Medium", "low": "Low", "no_priority": "No priority" },
+    "blocked": {
+      "label": "Blocked",
+      "activeChild": { "withIdentifier": "Blocked · waiting on active sub-task {{identifier}}", "one": "Blocked · waiting on 1 active sub-task", "many": "Blocked · waiting on {{count}} active sub-tasks" },
+      "activeDependency": { "withIdentifier": "Blocked · covered by active dependency {{identifier}}", "one": "Blocked · covered by 1 active dependency", "many": "Blocked · covered by {{count}} active dependencies" },
+      "stalledReview": { "withIdentifier": "Blocked · review stalled on {{identifier}}", "one": "Blocked · review stalled with no clear next step", "many": "Blocked · {{count}} reviews stalled with no clear next step" },
+      "attentionRequired": { "withCoveredOne": "Blocked · 1 blocker needs attention; {{coveredCount}} covered by active work", "withCoveredMany": "Blocked · {{count}} blockers need attention; {{coveredCount}} covered by active work", "one": "Blocked · 1 blocker needs attention", "many": "Blocked · {{count}} blockers need attention" }
+    },
+    "changeStatus": "Change status (current: {{status}})",
+    "filter": { "status": "Status", "priority": "Priority", "assignee": "Assignee", "project": "Project", "label": "Label", "updated": "Updated" },
+    "openItems": "Open items",
+    "assignee": { "me": "Me", "unassigned": "Unassigned" },
+    "search": { "assignees": "Search assignees…", "projects": "Search projects…", "labels": "Search labels…" },
+    "empty": { "assignees": "No assignees", "projects": "No projects", "labels": "No labels" },
+    "filters": "Filters", "clearAll": "Clear all", "cancel": "Cancel",
+    "sort": { "results": "Sort results", "prefix": "Sort:", "by": "Sort by", "relevance": "Relevance", "updated": "Recently updated", "created": "Newest created", "priority": "Priority" },
+    "sheet": { "showResults": "Show results", "showResult": "Show 1 result", "showResultsCount": "Show {{count}} results" },
+    "snippet": { "comment": "Comment", "document": "Doc", "artifact": "Artifact", "description": "Description" },
+    "source": { "agent": "Agent", "project": "Project", "artifact": "Artifact", "user": "User", "label": "Label" },
+    "relative": { "justNow": "just now", "minutes": "{{count}}m", "hours": "{{count}}h", "days": "{{count}}d", "weeks": "{{count}}w", "months": "{{count}}mo", "years": "{{count}}y" },
+    "updated": { "24h": "Last 24 hours", "7d": "Last 7 days", "30d": "Last 30 days", "90d": "Last 90 days" },
+    "zero": { "noResultsWithFilters": "No results with these filters", "resultMatches": "1 result matches", "resultsMatch": "{{count}} results match", "oneFilterHides": "but your active filter hides all of them", "filtersHide": "but your {{count}} active filters hide all of them", "loosenFilter": "Loosen a filter", "remove": "Remove", "result": "result", "results": "results", "clearAllFilters": "Clear all filters" }
+  }
+}

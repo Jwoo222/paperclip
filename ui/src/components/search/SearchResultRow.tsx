@@ -6,42 +6,43 @@ import { cn } from "@/lib/utils";
 import { StatusIcon } from "../StatusIcon";
 import { Identity } from "../Identity";
 import { HighlightedText, type HighlightedTextProps } from "./HighlightedText";
+import { useTranslation } from "@/i18n";
 
 type SnippetStyle = {
   Icon: ComponentType<SVGProps<SVGSVGElement>>;
   label: string;
 };
 
-const SNIPPET_STYLES: Record<string, SnippetStyle> = {
-  comment: { Icon: MessageSquare, label: "Comment" },
-  document: { Icon: FileText, label: "Doc" },
-  artifact: { Icon: Paperclip, label: "Artifact" },
-  description: { Icon: Quote, label: "Description" },
+const SNIPPET_ICONS: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
+  comment: MessageSquare,
+  document: FileText,
+  artifact: Paperclip,
+  description: Quote,
 };
 
 function snippetStyle(field: string, fallbackLabel: string): SnippetStyle {
-  return SNIPPET_STYLES[field] ?? { Icon: Quote, label: fallbackLabel };
+  return { Icon: SNIPPET_ICONS[field] ?? Quote, label: fallbackLabel };
 }
 
-function formatRelativeTime(input: string | null): string {
+function formatRelativeTime(input: string | null, translate: (key: string, options?: Record<string, unknown>) => string): string {
   if (!input) return "";
   const value = new Date(input);
   if (Number.isNaN(value.getTime())) return "";
   const diffMs = Date.now() - value.getTime();
   const seconds = Math.round(diffMs / 1000);
-  if (seconds < 60) return "just now";
+  if (seconds < 60) return translate("searchStatus.relative.justNow");
   const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes}m`;
+  if (minutes < 60) return translate("searchStatus.relative.minutes", { count: minutes });
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h`;
+  if (hours < 24) return translate("searchStatus.relative.hours", { count: hours });
   const days = Math.round(hours / 24);
-  if (days < 7) return `${days}d`;
+  if (days < 7) return translate("searchStatus.relative.days", { count: days });
   const weeks = Math.round(days / 7);
-  if (weeks < 5) return `${weeks}w`;
+  if (weeks < 5) return translate("searchStatus.relative.weeks", { count: weeks });
   const months = Math.round(days / 30);
-  if (months < 12) return `${months}mo`;
+  if (months < 12) return translate("searchStatus.relative.months", { count: months });
   const years = Math.round(days / 365);
-  return `${years}y`;
+  return translate("searchStatus.relative.years", { count: years });
 }
 
 export interface SearchResultRowProps {
@@ -60,6 +61,7 @@ function SearchResultRowImpl({
   isActive,
   className,
 }: SearchResultRowProps) {
+  const { t } = useTranslation();
   if (result.type === "agent") {
     return (
       <Link
@@ -79,7 +81,7 @@ function SearchResultRowImpl({
               text={result.snippets[0]?.text ?? result.snippet}
               highlights={result.snippets[0]?.highlights}
               field="agent"
-              fallbackLabel={result.sourceLabel ?? "Agent"}
+              fallbackLabel={result.sourceLabel ?? t("searchStatus.source.agent")}
             />
           ) : null}
         </div>
@@ -102,7 +104,7 @@ function SearchResultRowImpl({
               text={result.snippets[0]?.text ?? result.snippet}
               highlights={result.snippets[0]?.highlights}
               field="project"
-              fallbackLabel={result.sourceLabel ?? "Project"}
+              fallbackLabel={result.sourceLabel ?? t("searchStatus.source.project")}
             />
           ) : null}
         </div>
@@ -113,7 +115,7 @@ function SearchResultRowImpl({
   if (result.type === "artifact") {
     const artifact = result.artifact;
     if (!artifact) return null;
-    const updated = formatRelativeTime(result.updatedAt ?? artifact.updatedAt);
+    const updated = formatRelativeTime(result.updatedAt ?? artifact.updatedAt, t);
     return (
       <Link
         to={result.href}
@@ -134,7 +136,7 @@ function SearchResultRowImpl({
               text={result.snippets[0]?.text ?? result.snippet}
               highlights={result.snippets[0]?.highlights}
               field="artifact"
-              fallbackLabel={result.sourceLabel ?? "Artifact"}
+              fallbackLabel={result.sourceLabel ?? t("searchStatus.source.artifact")}
               multiline
             />
           ) : null}
@@ -164,7 +166,7 @@ function SearchResultRowImpl({
   const assigneeName = issue.assigneeAgentId
     ? agentsById?.get(issue.assigneeAgentId)?.name ?? null
     : null;
-  const updated = formatRelativeTime(result.updatedAt ?? issue.updatedAt);
+  const updated = formatRelativeTime(result.updatedAt ?? issue.updatedAt, t);
   const titleHighlights = result.snippets.find((snippet) => snippet.field === "title")?.highlights;
   const bodySnippets = result.snippets.filter((snippet) => snippet.field !== "title").slice(0, 2);
   const previewImageUrl = result.previewImageUrl;
@@ -244,7 +246,9 @@ interface SnippetLineProps {
 }
 
 function SnippetLine({ text, highlights, field, fallbackLabel, multiline = false }: SnippetLineProps) {
-  const { Icon, label } = snippetStyle(field, fallbackLabel);
+  const { t } = useTranslation();
+  const translatedLabel = t(`searchStatus.snippet.${field}`, { defaultValue: fallbackLabel });
+  const { Icon, label } = snippetStyle(field, translatedLabel);
   return (
     <div
       className={cn(
