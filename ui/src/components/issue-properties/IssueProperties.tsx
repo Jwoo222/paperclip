@@ -350,7 +350,7 @@ export function IssueProperties({
     onError: (error) => {
       setUnarchiveErrorMessage(error instanceof Error && error.message.trim().length > 0
         ? error.message
-        : "Failed to unarchive this issue. Please try again.");
+        : t("issueProperties.unarchiveFailed"));
     },
   });
 
@@ -369,7 +369,7 @@ export function IssueProperties({
   };
 
   const projectName = (id: string | null) => {
-    if (!id) return id?.slice(0, 8) ?? "None";
+    if (!id) return id?.slice(0, 8) ?? t("issueProperties.none");
     const project = orderedProjects.find((p) => p.id === id);
     return project?.name ?? id.slice(0, 8);
   };
@@ -401,7 +401,7 @@ export function IssueProperties({
   const controlWorkspaceRuntime = useMutation({
     mutationFn: (request: WorkspaceRuntimeControlRequest) => {
       const workspaceId = issue.currentExecutionWorkspace?.id ?? issue.executionWorkspaceId;
-      if (!workspaceId) throw new Error("This task is not attached to a workspace.");
+       if (!workspaceId) throw new Error(t("issueProperties.taskNotAttached"));
       return executionWorkspacesApi.controlRuntimeCommands(workspaceId, request.action, request);
     },
     onSuccess: (result, request) => {
@@ -417,17 +417,17 @@ export function IssueProperties({
       setRuntimeActionErrorMessage(null);
       setRuntimeActionMessage(
         request.action === "run"
-          ? "Workspace job completed."
+          ? t("issueProperties.workspaceJobCompleted")
           : request.action === "stop"
-            ? "Workspace service stopped."
+            ? t("issueProperties.workspaceServiceStopped")
             : request.action === "restart"
-              ? "Workspace service restarted."
-              : "Workspace service started.",
+              ? t("issueProperties.workspaceServiceRestarted")
+              : t("issueProperties.workspaceServiceStarted"),
       );
     },
     onError: (error) => {
       setRuntimeActionMessage(null);
-      setRuntimeActionErrorMessage(error instanceof Error ? error.message : "Failed to control workspace commands.");
+      setRuntimeActionErrorMessage(error instanceof Error ? error.message : t("issueProperties.workspaceControlFailed"));
     },
   });
   const pendingWorkspaceRuntimeAction = controlWorkspaceRuntime.isPending ? controlWorkspaceRuntime.variables ?? null : null;
@@ -588,7 +588,7 @@ export function IssueProperties({
   };
   const assigneeOptionsTrigger = (() => {
     if (assigneeOverrideLane === "cheap") {
-      return <span className="text-sm">Cheap model</span>;
+       return <span className="text-sm">{t("issueProperties.cheapModel")}</span>;
     }
     if (assigneeOverrideLane === "custom") {
       const details = [
@@ -596,23 +596,23 @@ export function IssueProperties({
         assigneeOverrideThinkingEffort,
         assigneeOverrideChrome ? "Chrome" : "",
       ].filter(Boolean);
-      const summary = details.length > 0 ? `Override · ${details.join(" · ")}` : "Override · adapter options";
+       const summary = details.length > 0 ? `${t("issueProperties.override")} · ${details.join(" · ")}` : t("issueProperties.overrideAdapterOptions");
       return (
         <span
           className="min-w-0 truncate text-sm"
-          title={`Task-level model override — replaces the agent's primary model for this issue.${details.length > 0 ? ` (${details.join(" · ")})` : ""}`}
+           title={`${t("issueProperties.taskModelOverride")}${details.length > 0 ? ` (${details.join(" · ")})` : ""}`}
         >
           {summary}
         </span>
       );
     }
-    return <span className="text-sm text-muted-foreground">Primary model</span>;
+     return <span className="text-sm text-muted-foreground">{t("issueProperties.primaryModel")}</span>;
   })();
   const assigneeOptionsContent = supportsAssigneeOverrides ? (
     <div className="w-full space-y-3 p-2">
       <div className="space-y-1.5">
-        <div className="text-xs text-muted-foreground">Model lane</div>
-        <div className="flex w-full overflow-hidden rounded-md border border-border" role="radiogroup" aria-label="Model lane">
+         <div className="text-xs text-muted-foreground">{t("issueProperties.modelLane")}</div>
+         <div className="flex w-full overflow-hidden rounded-md border border-border" role="radiogroup" aria-label={t("issueProperties.modelLane")}>
           {(["primary", ...(assigneeSupportsCheapLane ? (["cheap"] as const) : ([] as const)), "custom"] as const).map((lane) => (
             <button
               key={lane}
@@ -625,13 +625,13 @@ export function IssueProperties({
               )}
               onClick={() => setAssigneeOverrideLane(lane)}
             >
-              {lane === "primary" ? "Primary" : lane === "cheap" ? "Cheap" : "Override"}
+               {lane === "primary" ? t("issueProperties.primary") : lane === "cheap" ? t("issueProperties.cheap") : t("issueProperties.override")}
             </button>
           ))}
         </div>
         {assigneeOverrideLane === "cheap" ? (
           <p className="text-xs text-muted-foreground">
-            Sends <code>modelProfile: "cheap"</code>{" "}
+             {t("issueProperties.sends")} <code>modelProfile: "cheap"</code>{" "}
             {assigneeCheapProfile?.adapterConfig && typeof (assigneeCheapProfile.adapterConfig as Record<string, unknown>).model === "string"
               ? <>· adapter default <code>{String((assigneeCheapProfile.adapterConfig as Record<string, unknown>).model)}</code></>
               : assigneeCheapProfile
@@ -641,27 +641,27 @@ export function IssueProperties({
         ) : null}
         {assigneeOverrideLane === "custom" ? (
           <p className="text-xs text-muted-foreground">
-            Task-level model override — replaces the agent&apos;s primary model for this issue.
+             {t("issueProperties.taskModelOverride")}
           </p>
         ) : null}
       </div>
       {assigneeOverrideLane === "custom" ? (
         <>
           <div className="space-y-1.5">
-            <div className="text-xs text-muted-foreground">Model</div>
+             <div className="text-xs text-muted-foreground">{t("issueProperties.model")}</div>
             <InlineEntitySelector
               value={assigneeOverrideModel}
               options={modelOverrideOptions}
-              placeholder="Default model"
+               placeholder={t("issueProperties.defaultModel")}
               disablePortal
-              noneLabel="Default model"
-              searchPlaceholder="Search models..."
-              emptyMessage="No models found."
+               noneLabel={t("issueProperties.defaultModel")}
+               searchPlaceholder={t("issueProperties.searchModels")}
+               emptyMessage={t("issueProperties.noModels")}
               onChange={(model) => updateAssigneeOverrideConfig({ model: model || undefined })}
             />
           </div>
           <div className="space-y-1.5">
-            <div className="text-xs text-muted-foreground">Thinking effort</div>
+             <div className="text-xs text-muted-foreground">{t("issueProperties.thinkingEffort")}</div>
             <div className="flex items-center gap-1.5 flex-wrap">
               {thinkingEffortOptionsFor(assigneeAdapterType).map((option) => (
                 <button
@@ -679,7 +679,7 @@ export function IssueProperties({
           </div>
           {assigneeAdapterType === "claude_local" ? (
             <div className="flex items-center justify-between rounded-md border border-border px-2 py-1.5">
-              <div className="text-xs text-muted-foreground">Enable Chrome (--chrome)</div>
+               <div className="text-xs text-muted-foreground">{t("issueProperties.enableChrome")}</div>
               <ToggleSwitch
                 checked={assigneeOverrideChrome}
                 onCheckedChange={(next) => updateAssigneeOverrideConfig({ chrome: next ? true : undefined })}
@@ -693,15 +693,15 @@ export function IssueProperties({
     <div className="w-full space-y-2 p-2">
       <p className="text-xs text-muted-foreground">
         {assignee
-          ? "This assignee's adapter does not expose editable task overrides."
-          : "Select a compatible assignee agent to edit these overrides."}
+           ? t("issueProperties.assigneeOverridesUnavailable")
+           : t("issueProperties.selectCompatibleAssignee")}
       </p>
       <button
         type="button"
         className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
         onClick={() => updateAssigneeAdapterOverrides(null)}
       >
-        Clear adapter options
+         {t("issueProperties.clearAdapterOptions")}
       </button>
     </div>
   );
@@ -792,7 +792,7 @@ export function IssueProperties({
       return agentName(value.slice("agent:".length)) ?? value.slice("agent:".length, "agent:".length + 8);
     }
     if (value.startsWith("user:")) {
-      return userLabel(value.slice("user:".length)) ?? "User";
+      return userLabel(value.slice("user:".length)) ?? t("issueProperties.user");
     }
     return value;
   };
@@ -800,10 +800,10 @@ export function IssueProperties({
   const approverLabel = approverValues.map((value) => executionParticipantLabel(value)).join(", ");
   const reviewerTrigger = reviewerValues.length > 0
     ? <span className="text-sm truncate min-w-0" title={reviewerLabel}>{reviewerLabel}</span>
-    : <span className="text-sm text-muted-foreground">None</span>;
+     : <span className="text-sm text-muted-foreground">{t("issueProperties.none")}</span>;
   const approverTrigger = approverValues.length > 0
     ? <span className="text-sm truncate min-w-0" title={approverLabel}>{approverLabel}</span>
-    : <span className="text-sm text-muted-foreground">None</span>;
+     : <span className="text-sm text-muted-foreground">{t("issueProperties.none")}</span>;
   const nextRunnableExecutionStage = (() => {
     if (issue.executionState?.status === "changes_requested" && issue.executionState.currentStageType) {
       return issue.executionState.currentStageType;
@@ -820,13 +820,13 @@ export function IssueProperties({
         className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
         onClick={() => onUpdate({ status: "in_review" })}
       >
-        {stageType === "review" ? "Run review now" : "Run approval now"}
+        {stageType === "review" ? t("issueProperties.runReviewNow") : t("issueProperties.runApprovalNow")}
       </button>
     </PropertyRow>
   );
   const currentExecutionLabel = (() => {
     if (!issue.executionState?.currentStageType) return null;
-    const stageLabel = issue.executionState.currentStageType === "review" ? "Review" : "Approval";
+    const stageLabel = issue.executionState.currentStageType === "review" ? t("issueProperties.review") : t("issueProperties.approval");
     const participant = issue.executionState.currentParticipant;
     const participantLabel = participant
       ? (participant.type === "agent"
@@ -928,22 +928,22 @@ export function IssueProperties({
       ) : null}
     </span>
   ) : (
-    <span className="text-sm text-muted-foreground">None</span>
+     <span className="text-sm text-muted-foreground">{t("issueProperties.none")}</span>
   );
   const watchdogContent = (
     <div className="space-y-3 p-2">
       <div className="space-y-1.5">
-        <div className="text-xs font-medium text-foreground">Watchdog agent</div>
+         <div className="text-xs font-medium text-foreground">{t("issueProperties.watchdogAgent")}</div>
         <InlineEntitySelector
           value={watchdogAgentInput}
           options={watchdogAgentOptions}
-          placeholder="Select agent"
-          noneLabel="No watchdog agent"
-          searchPlaceholder="Search agents..."
-          emptyMessage="No agents found."
+           placeholder={t("issueProperties.selectAgent")}
+           noneLabel={t("issueProperties.noWatchdogAgent")}
+           searchPlaceholder={t("issueProperties.searchAgents")}
+           emptyMessage={t("issueProperties.noAgents")}
           onChange={setWatchdogAgentInput}
           renderTriggerValue={(option) => {
-            if (!option) return <span className="text-muted-foreground">Select agent</span>;
+             if (!option) return <span className="text-muted-foreground">{t("issueProperties.selectAgent")}</span>;
             const agent = (agents ?? []).find((candidate) => candidate.id === option.id);
             return (
               <>
@@ -965,21 +965,21 @@ export function IssueProperties({
       </div>
       <div className="space-y-1.5">
         <div className="text-xs font-medium text-foreground">
-          Instructions <span className="font-normal text-muted-foreground">(optional)</span>
+           {t("issueProperties.instructions")} <span className="font-normal text-muted-foreground">({t("issueProperties.optional")})</span>
         </div>
         <Textarea
           value={watchdogInstructionsInput}
           onChange={(event) => setWatchdogInstructionsInput(event.target.value)}
-          placeholder="What should the watchdog watch for and how should it keep work moving?"
+           placeholder={t("issueProperties.watchdogInstructionsPlaceholder")}
           rows={4}
           className="text-xs"
         />
       </div>
       {watchdogIssueRef ? (
         <div className="text-xs text-muted-foreground">
-          Watchdog task:{" "}
+           {t("issueProperties.watchdogTask")}{" "}
           <Link to={`/issues/${watchdogIssueRef.id}`} className="text-primary hover:underline">
-            {watchdogIssueRef.identifier ?? "View task"}
+             {watchdogIssueRef.identifier ?? t("issueProperties.viewTask")}
           </Link>
         </div>
       ) : null}
@@ -995,7 +995,7 @@ export function IssueProperties({
           disabled={deleteWatchdog.isPending || (!issue.watchdog && !watchdogAgentInput)}
           onClick={removeWatchdog}
         >
-          {deleteWatchdog.isPending ? "Removing…" : "Remove"}
+           {deleteWatchdog.isPending ? t("issueProperties.removing") : t("issueProperties.remove")}
         </button>
         <Button
           type="button"
@@ -1004,7 +1004,7 @@ export function IssueProperties({
           disabled={!watchdogAgentInput || upsertWatchdog.isPending}
           onClick={saveWatchdog}
         >
-          {upsertWatchdog.isPending ? "Saving…" : issue.watchdog ? "Update" : "Set watchdog"}
+           {upsertWatchdog.isPending ? t("issueProperties.saving") : issue.watchdog ? t("issueProperties.update") : t("issueProperties.setWatchdog")}
         </Button>
       </div>
     </div>
@@ -1065,16 +1065,16 @@ export function IssueProperties({
   const monitorPrimary = monitorNextCheckAt
     ? formatMonitorEtaLabel(monitorNextCheckAt, monitorNow)
     : monitorState?.status === "cleared"
-      ? "Cleared"
-      : "None";
+      ? t("issueProperties.cleared")
+      : t("issueProperties.none");
   const monitorSecondary = monitorNextCheckAt
     ? monitorIsDueNow
-      ? "checking momentarily…"
-      : `${formatMonitorAbsolute(monitorNextCheckAt, {}, monitorNow)}${monitorIsOverdue ? " · fires on next tick" : monitorAttemptCount > 0 ? ` · Attempt ${monitorAttemptCount}` : ""}`
+       ? t("issueProperties.checkingMomentarily")
+       : `${formatMonitorAbsolute(monitorNextCheckAt, {}, monitorNow)}${monitorIsOverdue ? ` · ${t("issueProperties.firesNextTick")}` : monitorAttemptCount > 0 ? ` · ${t("issueProperties.attempt", { count: monitorAttemptCount })}` : ""}`
     : monitorState?.status === "cleared"
       ? [
-          monitorLastTriggeredAt ? `last checked ${timeAgo(monitorLastTriggeredAt)}` : null,
-          monitorAttemptCount > 0 ? `after attempt ${monitorAttemptCount}` : null,
+           monitorLastTriggeredAt ? t("issueProperties.lastChecked", { time: timeAgo(monitorLastTriggeredAt) }) : null,
+           monitorAttemptCount > 0 ? t("issueProperties.afterAttempt", { count: monitorAttemptCount }) : null,
         ].filter(Boolean).join(" · ")
       : null;
   const monitorTrigger = (
@@ -1104,36 +1104,36 @@ export function IssueProperties({
           onPointerDown={(event) => event.stopPropagation()}
         >
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <span className="text-sm font-semibold">Monitor</span>
-            {monitorAttemptCount > 0 ? <span className="text-xs text-muted-foreground">Attempt {monitorAttemptCount}</span> : null}
+            <span className="text-sm font-semibold">{t("issueProperties.monitor")}</span>
+            {monitorAttemptCount > 0 ? <span className="text-xs text-muted-foreground">{t("issueProperties.attempt", { count: monitorAttemptCount })}</span> : null}
           </div>
           <div className="space-y-3 px-4 py-3 text-left">
             <div>
-              <div className="text-xs text-muted-foreground">Next check</div>
+              <div className="text-xs text-muted-foreground">{t("issueProperties.nextCheck")}</div>
               <div className="text-sm">{formatMonitorAbsoluteFull(monitorNextCheckAt)}</div>
               <div className="text-xs text-muted-foreground">{monitorRelative}</div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">Watching</div>
+              <div className="text-xs text-muted-foreground">{t("issueProperties.watching")}</div>
               <div className="text-sm">{monitorServiceName ?? "—"}</div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">Notes</div>
+              <div className="text-xs text-muted-foreground">{t("issueProperties.notes")}</div>
               <div className="whitespace-normal text-sm">{monitorNotes ?? "—"}</div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">Last triggered</div>
-              <div className="text-sm">{monitorLastTriggeredAt ? formatMonitorAbsoluteFull(monitorLastTriggeredAt) : "— not yet triggered"}</div>
+              <div className="text-xs text-muted-foreground">{t("issueProperties.lastTriggered")}</div>
+              <div className="text-sm">{monitorLastTriggeredAt ? formatMonitorAbsoluteFull(monitorLastTriggeredAt) : t("issueProperties.notYetTriggered")}</div>
             </div>
           </div>
           <div className="flex gap-2 border-t border-border px-4 py-3">
             {onCheckMonitorNow ? (
               <Button type="button" size="sm" variant="outline" disabled={checkingMonitorNow} onClick={() => { setMonitorDetailsOpen(false); onCheckMonitorNow(); }}>
-                {checkingMonitorNow ? "Checking…" : "Check now"}
+                {checkingMonitorNow ? t("issueProperties.checking") : t("issueProperties.checkNow")}
               </Button>
             ) : null}
-            <Button type="button" size="sm" variant="outline" onClick={() => { setMonitorDetailsOpen(false); setMonitorOpen(true); }}>Edit</Button>
-            <Button type="button" size="sm" variant="outline" onClick={() => { setMonitorDetailsOpen(false); clearMonitor(); }}>Clear</Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => { setMonitorDetailsOpen(false); setMonitorOpen(true); }}>{t("issueProperties.edit")}</Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => { setMonitorDetailsOpen(false); clearMonitor(); }}>{t("issueProperties.clear")}</Button>
           </div>
         </TooltipContent>
       ) : null}
@@ -1166,15 +1166,15 @@ export function IssueProperties({
   const scheduledRetryIsContinuation =
     scheduledRetry?.scheduledRetryReason === "max_turns_continuation";
   const scheduledRetryRelativeLabel = (() => {
-    if (!scheduledRetryRelative) return "Pending schedule";
-    const action = scheduledRetryIsContinuation ? "Continuation" : "Retry";
-    if (scheduledRetryRelative === "now") return `${action} due now`;
+    if (!scheduledRetryRelative) return t("issueProperties.pendingSchedule");
+    const action = scheduledRetryIsContinuation ? t("issueProperties.continuation") : t("issueProperties.retry");
+    if (scheduledRetryRelative === "now") return t("issueProperties.actionDueNow", { action });
     return `${action} ${scheduledRetryRelative}`;
   })();
   const scheduledRetryRetryNowSuccess = retryNow.isSuccess
     && (retryNow.data?.outcome === "promoted" || retryNow.data?.outcome === "already_promoted");
   const scheduledRetryAttemptBadge = scheduledRetryAttempt !== null ? (
-    <span className="whitespace-nowrap shrink-0 text-xs text-muted-foreground">Attempt {scheduledRetryAttempt}</span>
+     <span className="whitespace-nowrap shrink-0 text-xs text-muted-foreground">{t("issueProperties.attempt", { count: scheduledRetryAttempt })}</span>
   ) : null;
   const scheduledRetryTrigger = (
     <span className="inline-flex min-w-0 items-center gap-1.5">
@@ -1196,24 +1196,24 @@ export function IssueProperties({
     <div className="flex w-full flex-col gap-2 p-2 text-xs">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-foreground">
-          {scheduledRetryIsContinuation ? "Scheduled continuation" : "Scheduled retry"}
+          {scheduledRetryIsContinuation ? t("issueProperties.scheduledContinuation") : t("issueProperties.scheduledRetry")}
         </span>
         {scheduledRetryAttempt !== null ? (
           <span className="text-xs text-muted-foreground">
-            Attempt {scheduledRetryAttempt}
+            {t("issueProperties.attempt", { count: scheduledRetryAttempt })}
           </span>
         ) : null}
       </div>
       <dl className="grid grid-cols-(--gtc-15) gap-y-1">
         {scheduledRetryReasonLabel ? (
           <>
-            <dt className="text-muted-foreground">Reason</dt>
+            <dt className="text-muted-foreground">{t("issueProperties.reason")}</dt>
             <dd className="text-foreground">{scheduledRetryReasonLabel}</dd>
           </>
         ) : null}
         {scheduledRetryAbsolute ? (
           <>
-            <dt className="text-muted-foreground">Next attempt</dt>
+            <dt className="text-muted-foreground">{t("issueProperties.nextAttempt")}</dt>
             <dd className="text-foreground">
               {scheduledRetryAbsolute}
               {scheduledRetryRelative ? (
@@ -1224,7 +1224,7 @@ export function IssueProperties({
         ) : null}
         {scheduledRetry.retryOfRunId ? (
           <>
-            <dt className="text-muted-foreground">Replaces run</dt>
+            <dt className="text-muted-foreground">{t("issueProperties.replacesRun")}</dt>
             <dd className="text-foreground">
               <Link
                 to={`/agents/${scheduledRetry.agentId}/runs/${scheduledRetry.retryOfRunId}`}
@@ -1237,7 +1237,7 @@ export function IssueProperties({
         ) : null}
         {scheduledRetry.agentName ? (
           <>
-            <dt className="text-muted-foreground">Agent</dt>
+            <dt className="text-muted-foreground">{t("issueProperties.agent")}</dt>
             <dd className="text-foreground">
               <Link
                 to={`/agents/${scheduledRetry.agentId}`}
@@ -1250,7 +1250,7 @@ export function IssueProperties({
         ) : null}
         {scheduledRetry.error ? (
           <>
-            <dt className="text-muted-foreground">Last error</dt>
+            <dt className="text-muted-foreground">{t("issueProperties.lastError")}</dt>
             <dd className="text-foreground break-words">{scheduledRetry.error}</dd>
           </>
         ) : null}
@@ -1275,30 +1275,30 @@ export function IssueProperties({
           {retryNow.isPending ? (
             <span className="inline-flex items-center gap-1.5">
               <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-              Retrying…
+              {t("issueProperties.retrying")}
             </span>
           ) : scheduledRetryRetryNowSuccess ? (
             <span className="inline-flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-              {retryNow.data?.outcome === "already_promoted" ? "Already promoted" : "Promoted"}
+              {retryNow.data?.outcome === "already_promoted" ? t("issueProperties.alreadyPromoted") : t("issueProperties.promoted")}
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5">
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-              Retry now
+              {t("issueProperties.retryNow")}
             </span>
           )}
         </Button>
         <span className="text-right text-xs text-muted-foreground">
           {retryNow.isPending
-            ? "Promoting scheduled retry"
+             ? t("issueProperties.promotingScheduledRetry")
             : scheduledRetryRetryNowSuccess
               ? retryNow.data?.outcome === "already_promoted"
-                ? "Already promoted — run starting"
-                : "Promoted — run starting"
+                 ? t("issueProperties.alreadyPromotedRunStarting")
+                 : t("issueProperties.promotedRunStarting")
               : scheduledRetryIsContinuation
-                ? "Pulls continuation forward immediately"
-                : "Pulls retry forward immediately"}
+                 ? t("issueProperties.pullContinuationForward")
+                 : t("issueProperties.pullRetryForward")}
         </span>
       </div>
     </div>
@@ -1315,7 +1315,7 @@ export function IssueProperties({
         <input
           type="text"
           className="min-w-0 flex-1 rounded-md border border-border bg-transparent px-2 py-1 text-xs"
-          placeholder="What should the agent re-check?"
+           placeholder={t("issueProperties.retryNotesPlaceholder")}
           value={monitorNotesInput}
           onChange={(e) => setMonitorNotesInput(e.target.value)}
         />
@@ -1324,7 +1324,7 @@ export function IssueProperties({
         <input
           type="text"
           className="min-w-0 flex-1 rounded-md border border-border bg-transparent px-2 py-1 text-xs"
-          placeholder="External service"
+           placeholder={t("issueProperties.externalServicePlaceholder")}
           value={monitorServiceInput}
           onChange={(e) => setMonitorServiceInput(e.target.value)}
         />
@@ -1385,15 +1385,15 @@ export function IssueProperties({
       )}
     </div>
   ) : (
-    <span className="text-sm text-muted-foreground">None</span>
+        <span className="text-sm text-muted-foreground">{t("issueProperties.none")}</span>
   );
   const labelsExtra = (issue.labelIds ?? []).length > 0 ? (
     <button
       type="button"
       className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
       onClick={() => setLabelsOpen(true)}
-      aria-label="Add label"
-      title="Add label"
+          aria-label={t("issueProperties.addLabel")}
+          title={t("issueProperties.addLabel")}
     >
       <Plus className="h-3 w-3" />
       Add label
@@ -1404,7 +1404,7 @@ export function IssueProperties({
     <>
       <input
         className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-        placeholder="Search labels..."
+            placeholder={t("issueProperties.searchLabels")}
         value={labelSearch}
         onChange={(e) => setLabelSearch(e.target.value)}
         autoFocus={!inline}
@@ -1443,7 +1443,7 @@ export function IssueProperties({
           />
           <input
             className="flex-1 px-2 py-1.5 text-xs bg-transparent outline-none rounded placeholder:text-muted-foreground/50"
-            placeholder="New label"
+            placeholder={t("issueProperties.newLabel")}
             value={newLabelName}
             onChange={(e) => setNewLabelName(e.target.value)}
           />
@@ -1459,7 +1459,7 @@ export function IssueProperties({
           }
         >
           <Plus className="h-3 w-3" />
-          {createLabel.isPending ? "Creating…" : "Create label"}
+            {createLabel.isPending ? t("issueProperties.creating") : t("issueProperties.createLabel")}
         </button>
       </div>
     </>
@@ -1473,7 +1473,7 @@ export function IssueProperties({
       <span className="min-w-0 truncate text-sm" title={assigneeUserLabel}>{assigneeUserLabel}</span>
     </>
   ) : (
-    <span className="text-sm text-muted-foreground">Unassigned</span>
+          <span className="text-sm text-muted-foreground">{t("issueProperties.unassigned")}</span>
   );
 
   // Grouped picker options (design surface 2): a board-users section and an
@@ -1485,7 +1485,7 @@ export function IssueProperties({
           kind: "user" as const,
           value: `user:${currentUserId}`,
           userId: currentUserId,
-          label: "Assign to me",
+        label: t("issueProperties.assignToMe"),
           searchText: userLabel(currentUserId) ?? "",
         }]
       : []),
@@ -1494,7 +1494,7 @@ export function IssueProperties({
           kind: "user" as const,
           value: `user:${issue.createdByUserId}`,
           userId: issue.createdByUserId,
-          label: creatorUserLabel ? `Assign to ${creatorUserLabel}` : "Assign to requester",
+        label: creatorUserLabel ? t("issueProperties.assignTo", { name: creatorUserLabel }) : t("issueProperties.assignToRequester"),
           searchText: creatorUserLabel ?? "requester",
         }]
       : []),
@@ -1563,7 +1563,7 @@ export function IssueProperties({
   const visibleAgentOptions = agentAssigneeOptions.filter((option) =>
     matchesAssigneeSearch(option.label, option.searchText),
   );
-  const showNoAssigneeOption = matchesAssigneeSearch("No assignee", "");
+  const showNoAssigneeOption = matchesAssigneeSearch(t("issueProperties.noAssignee"), "");
   const sectionHeader = (text: string) => (
     <div className="px-2 pb-0.5 pt-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
       {text}
@@ -1594,14 +1594,14 @@ export function IssueProperties({
       ) : null}
       <input
         className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-        placeholder="Search assignees..."
+      placeholder={t("issueProperties.searchAssignees")}
         value={assigneeSearch}
         onChange={(e) => setAssigneeSearch(e.target.value)}
         autoFocus={!inline}
       />
       <div className="max-h-56 overflow-y-auto overscroll-contain">
         {showNoAssigneeOption
-          ? renderAssigneeOption({ kind: "none", value: "", label: "No assignee", searchText: "" })
+      ? renderAssigneeOption({ kind: "none", value: "", label: t("issueProperties.noAssignee"), searchText: "" })
           : null}
         {visibleAgentOptions.length > 0 ? (
           <>
@@ -1616,7 +1616,7 @@ export function IssueProperties({
           </>
         ) : null}
         {!showNoAssigneeOption && visibleAgentOptions.length === 0 && visibleUserOptions.length === 0 ? (
-          <div className="px-2 py-2 text-xs text-muted-foreground">No matches.</div>
+          <div className="px-2 py-2 text-xs text-muted-foreground">{t("issueProperties.noMatches")}</div>
         ) : null}
       </div>
     </>
@@ -1632,7 +1632,7 @@ export function IssueProperties({
     <>
       <input
         className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-        placeholder={`Search ${stageType === "review" ? "reviewers" : "approvers"}...`}
+        placeholder={t("issueProperties.searchParticipants", { role: stageType === "review" ? t("issueProperties.reviewers") : t("issueProperties.approvers") })}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         autoFocus={!inline}
@@ -1645,7 +1645,7 @@ export function IssueProperties({
           )}
           onClick={onClear}
         >
-          No {stageType === "review" ? "reviewers" : "approvers"}
+        {t("issueProperties.noParticipants", { role: stageType === "review" ? t("issueProperties.reviewers") : t("issueProperties.approvers") })}
         </button>
         {currentUserId && (
           <button
@@ -1668,7 +1668,7 @@ export function IssueProperties({
             onClick={() => toggleExecutionParticipant(stageType, `user:${issue.createdByUserId}`)}
           >
             <User className="h-3 w-3 shrink-0 text-muted-foreground" />
-            {creatorUserLabel ? creatorUserLabel : "Requester"}
+        {creatorUserLabel ? creatorUserLabel : t("issueProperties.requester")}
           </button>
         )}
         {otherUserOptions
@@ -1723,11 +1723,11 @@ export function IssueProperties({
       <span className="text-sm truncate min-w-0" title={projectName(issue.projectId)}>{projectName(issue.projectId)}</span>
     </>
   ) : (
-    <span className="text-sm text-muted-foreground">None</span>
+          <span className="text-sm text-muted-foreground">{t("issueProperties.none")}</span>
   );
   const projectPickerOptions = orderItemsBySelectedAndRecent(
     [
-      { id: "", kind: "none" as const, name: "No project", color: null as string | null },
+      { id: "", kind: "none" as const, name: t("issueProperties.noProject"), color: null as string | null },
       ...orderedProjects.map((project) => ({
         id: project.id,
         kind: "project" as const,
@@ -1744,7 +1744,7 @@ export function IssueProperties({
     <>
       <input
         className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-        placeholder="Search projects..."
+          placeholder={t("issueProperties.searchProjects")}
         value={projectSearch}
         onChange={(e) => setProjectSearch(e.target.value)}
         autoFocus={!inline}
@@ -1855,7 +1855,7 @@ export function IssueProperties({
       {parentTitle}
     </span>
   ) : (
-    <span className="text-sm text-muted-foreground">None</span>
+          <span className="text-sm text-muted-foreground">{t("issueProperties.none")}</span>
   );
   const parentLink = issue.parentId ? (
     <Link
@@ -1886,7 +1886,7 @@ export function IssueProperties({
     <>
       <input
         className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-        placeholder="Search tasks..."
+          placeholder={t("issueProperties.searchTasks")}
         value={parentSearch}
         onChange={(e) => setParentSearch(e.target.value)}
         autoFocus={!inline}
@@ -1902,7 +1902,7 @@ export function IssueProperties({
             setParentOpen(false);
           }}
         >
-          No parent
+          {t("issueProperties.noParent")}
         </button>
         {parentOptions.map((candidate) => (
           <button
@@ -1957,11 +1957,11 @@ export function IssueProperties({
     <>
       <input
         className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-        placeholder="Search tasks..."
+        placeholder={t("issueProperties.searchTasks")}
         value={blockedBySearch}
         onChange={(e) => setBlockedBySearch(e.target.value)}
         autoFocus={!inline}
-        aria-label="Search tasks to add as blockers"
+        aria-label={t("issueProperties.searchBlockers")}
       />
       <div className="max-h-48 overflow-y-auto overscroll-contain">
         <button
@@ -1975,7 +1975,7 @@ export function IssueProperties({
             setBlockedBySearch("");
           }}
         >
-          No blockers
+          {t("issueProperties.noBlockers")}
         </button>
         {blockerOptions.map((candidate) => {
           const selected = blockedByIds.includes(candidate.id);
@@ -1998,9 +1998,9 @@ export function IssueProperties({
           );
         })}
         {blockerOptionsLoading ? (
-          <div className="px-2 py-2 text-xs text-muted-foreground">Searching tasks...</div>
+          <div className="px-2 py-2 text-xs text-muted-foreground">{t("issueProperties.searchingTasks")}</div>
         ) : blockerOptions.length === 0 ? (
-          <div className="px-2 py-2 text-xs text-muted-foreground">No matching tasks.</div>
+          <div className="px-2 py-2 text-xs text-muted-foreground">{t("issueProperties.noMatchingTasks")}</div>
         ) : null}
       </div>
     </>
@@ -2012,7 +2012,7 @@ export function IssueProperties({
       onClick={onClick}
     >
       <Plus className="h-3 w-3" />
-      Add blocker
+      {t("issueProperties.addBlocker")}
     </button>
   );
 
@@ -2259,7 +2259,7 @@ export function IssueProperties({
 
         <PropertyPicker
           inline={inline}
-          label="Approvers"
+          label={t("issueProperties.approvers")}
           open={approversOpen}
           onOpenChange={(open) => { setApproversOpen(open); if (!open) setApproverSearch(""); }}
           triggerContent={approverTrigger}
@@ -2277,7 +2277,7 @@ export function IssueProperties({
         {nextRunnableExecutionStage === "approval" && approverValues.length > 0 ? runExecutionButton("approval") : null}
 
         {currentExecutionLabel && (
-          <PropertyRow label="Execution">
+          <PropertyRow label={t("issueProperties.execution")}>
             <span className="text-sm truncate min-w-0" title={currentExecutionLabel}>{currentExecutionLabel}</span>
           </PropertyRow>
         )}
@@ -2285,7 +2285,7 @@ export function IssueProperties({
         {showScheduledRetryRow && scheduledRetryContent ? (
           <PropertyPicker
             inline={inline}
-            label="Scheduled retry"
+            label={t("issueProperties.scheduledRetry")}
             open={scheduledRetryOpen}
             onOpenChange={setScheduledRetryOpen}
             triggerContent={scheduledRetryTrigger}
@@ -2299,7 +2299,7 @@ export function IssueProperties({
 
         <PropertyPicker
           inline={inline}
-          label="Monitor"
+          label={t("issueProperties.monitor")}
           open={monitorOpen}
           onOpenChange={setMonitorOpen}
           triggerContent={monitorTrigger}
@@ -2312,7 +2312,7 @@ export function IssueProperties({
         {taskWatchdogsEnabled ? (
           <PropertyPicker
             inline={inline}
-            label="Watchdog"
+            label={t("issueProperties.watchdog")}
             open={watchdogOpen}
             onOpenChange={setWatchdogOpen}
             triggerContent={watchdogTrigger}
@@ -2323,8 +2323,8 @@ export function IssueProperties({
                 <Link
                   to={`/issues/${watchdogIssueRef.id}`}
                   className="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-accent/50 transition-colors text-muted-foreground hover:text-foreground"
-                  title="Open watchdog task"
-                  aria-label="Open watchdog task"
+                  title={t("issueProperties.openWatchdogTask")}
+                  aria-label={t("issueProperties.openWatchdogTask")}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <ArrowUpRight className="h-3 w-3" />
@@ -2338,21 +2338,21 @@ export function IssueProperties({
       </PropertySection>
 
       {hasWorkspaceRuntimeControls || issue.currentExecutionWorkspace?.branchName || issue.currentExecutionWorkspace?.cwd || issue.executionWorkspaceId ? (
-        <PropertySection title="Workspace">
+        <PropertySection title={t("issueProperties.workspace")}>
           {showWorkspaceDetailLink && issue.executionWorkspaceId && (
-            <PropertyRow label="Workspace">
+            <PropertyRow label={t("issueProperties.workspace")}>
               <Link
                 to={`/execution-workspaces/${issue.executionWorkspaceId}`}
                 className="text-sm text-primary hover:underline inline-flex min-w-0 items-center gap-1.5"
               >
                 <HardDrive className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                View workspace
+                {t("issueProperties.viewWorkspace")}
                 <ArrowUpRight className="h-3 w-3 shrink-0" />
               </Link>
             </PropertyRow>
           )}
           {hasWorkspaceRuntimeControls && (
-            <PropertyRow label="Service">
+            <PropertyRow label={t("issueProperties.service")}>
               <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <WorkspaceRuntimeQuickControls
                   sections={workspaceRuntimeSections}
@@ -2373,7 +2373,7 @@ export function IssueProperties({
             </PropertyRow>
           )}
           {issue.currentExecutionWorkspace?.branchName && (
-            <PropertyRow label="Branch">
+            <PropertyRow label={t("issueProperties.branch")}>
               <TruncatedCopyable
                 value={issue.currentExecutionWorkspace.branchName}
                 icon={GitBranch}
@@ -2381,7 +2381,7 @@ export function IssueProperties({
             </PropertyRow>
           )}
           {issue.currentExecutionWorkspace?.cwd && (
-            <PropertyRow label="Folder">
+            <PropertyRow label={t("issueProperties.folder")}>
               <TruncatedCopyable
                 value={issue.currentExecutionWorkspace.cwd}
                 icon={FolderOpen}
@@ -2391,9 +2391,9 @@ export function IssueProperties({
         </PropertySection>
       ) : null}
 
-      <PropertySection title="About">
+      <PropertySection title={t("issueProperties.about")}>
         {originatingActor ? (
-          <PropertyRow label="Originating">
+          <PropertyRow label={t("issueProperties.originating")}>
             {originatingActor.kind === "agent" ? (
               <Link
                 to={`/agents/${originatingActor.id}`}
@@ -2408,13 +2408,13 @@ export function IssueProperties({
             ) : (
               <span className="flex min-w-0 items-center gap-1.5">
                 <Identity
-                  name={actualUserLabel(originatingActor.id) ?? originatingUserProfile?.label ?? "User"}
+                    name={actualUserLabel(originatingActor.id) ?? originatingUserProfile?.label ?? t("issueProperties.user")}
                   avatarUrl={originatingUserProfile?.image ?? null}
                   size="sm"
                 />
                 {originatingViaAgentName ? (
                   <span className="shrink-0 truncate text-xs text-muted-foreground">
-                    via {originatingViaAgentName}
+                    {t("issueProperties.viaAgent", { name: originatingViaAgentName })}
                   </span>
                 ) : null}
               </span>
@@ -2422,19 +2422,19 @@ export function IssueProperties({
           </PropertyRow>
         ) : null}
         {issue.startedAt && (
-          <PropertyRow label="Started">
+          <PropertyRow label={t("issueProperties.started")}>
             <span className="text-sm">{formatDateTime(issue.startedAt)}</span>
           </PropertyRow>
         )}
         {issue.completedAt && (
-          <PropertyRow label="Completed">
+          <PropertyRow label={t("issueProperties.completed")}>
             <span className="text-sm">{formatDateTime(issue.completedAt)}</span>
           </PropertyRow>
         )}
-        <PropertyRow label="Created">
+        <PropertyRow label={t("issueProperties.created")}>
           <span className="text-sm">{formatDateTime(issue.createdAt)}</span>
         </PropertyRow>
-        <PropertyRow label="Updated">
+        <PropertyRow label={t("issueProperties.updated")}>
           <span className="text-sm">{timeAgo(issue.updatedAt)}</span>
         </PropertyRow>
         {issue.archivedAt && issue.archivedByActorType === "agent" && issue.archivedByAgentId ? (
@@ -2442,7 +2442,7 @@ export function IssueProperties({
             const archivedByAgent = (agents ?? []).find((candidate) => candidate.id === issue.archivedByAgentId);
             const archivedByName = agentName(issue.archivedByAgentId);
             return (
-              <PropertyRow label="Archived">
+              <PropertyRow label={t("issueProperties.archived")}>
                 <div className="flex min-w-0 max-w-full flex-col items-start gap-1">
                   {/* The row label already reads "Archived", so the value shows just
                       the attributing agent (icon + name) — this gives the name the
@@ -2452,7 +2452,7 @@ export function IssueProperties({
                       truncation on genuinely long names is recoverable. */}
                   <span
                     className="flex min-w-0 max-w-full items-center gap-1.5 text-sm"
-                    title={`Archived by ${archivedByName} · ${formatDateTime(issue.archivedAt)}`}
+                      title={t("issueProperties.archivedBy", { name: archivedByName, date: formatDateTime(issue.archivedAt) })}
                   >
                     {archivedByAgent
                       ? <AgentIcon icon={archivedByAgent.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -2470,7 +2470,7 @@ export function IssueProperties({
                       disabled={unarchiveFromInbox.isPending}
                     >
                       <ArchiveRestore className="h-3 w-3" />
-                      {unarchiveFromInbox.isPending ? "Unarchiving…" : "Unarchive"}
+                      {unarchiveFromInbox.isPending ? t("issueProperties.unarchiving") : t("issueProperties.unarchive")}
                     </button>
                   </div>
                   {unarchiveErrorMessage ? (
@@ -2484,7 +2484,7 @@ export function IssueProperties({
           })()
         ) : null}
         {issue.requestDepth > 0 && (
-          <PropertyRow label="Depth">
+          <PropertyRow label={t("issueProperties.depth")}>
             <span className="text-sm font-mono">{issue.requestDepth}</span>
           </PropertyRow>
         )}
@@ -2507,7 +2507,7 @@ export function IssueProperties({
     return (
       <>
         {paneHeaderSlot
-          ? createPortal(<span className="text-sm font-medium">Properties</span>, paneHeaderSlot)
+          ? createPortal(<span className="text-sm font-medium">{t("issueProperties.properties")}</span>, paneHeaderSlot)
           : null}
         {propertiesBody}
       </>
@@ -2539,16 +2539,16 @@ export function IssueProperties({
       }
     >
       <TabsTrigger value="properties" className={paneTabTriggerClass}>
-        Properties
+        {t("issueProperties.properties")}
       </TabsTrigger>
       {hasPlanTab ? (
         <TabsTrigger value="plans" className={paneTabTriggerClass}>
-          Plan
+          {t("issueProperties.plan")}
         </TabsTrigger>
       ) : null}
       {hasArtifactsTab ? (
         <TabsTrigger value="artifacts" className={paneTabTriggerClass}>
-          Artifacts
+          {t("issueProperties.artifacts")}
         </TabsTrigger>
       ) : null}
     </TabsList>
