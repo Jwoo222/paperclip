@@ -34,6 +34,7 @@ import {
 import { usePublishSharedQueryData, useSharedPollingQuery } from "../hooks/useSharedPolling";
 
 import { getAdapterLabel } from "../adapters/adapter-display-registry";
+import { useTranslation } from "@/i18n";
 
 const roleLabels = AGENT_ROLE_LABELS as Record<string, string>;
 
@@ -47,14 +48,6 @@ const ConfigureBuiltInAgentModal = lazy(() =>
 
 export const AGENT_FILTER_TABS = ["all", "active", "paused", "error", "builtin"] as const;
 type FilterTab = (typeof AGENT_FILTER_TABS)[number];
-
-const AGENT_FILTER_TAB_ITEMS: { value: FilterTab; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "active", label: "Active" },
-  { value: "paused", label: "Paused" },
-  { value: "error", label: "Error" },
-  { value: "builtin", label: "Built-in" },
-];
 
 function isFilterTab(value: string): value is FilterTab {
   return (AGENT_FILTER_TABS as readonly string[]).includes(value);
@@ -186,6 +179,7 @@ function filterOrgTree(nodes: OrgNode[], tab: FilterTab, builtInAgentIds: Set<st
 }
 
 export function Agents() {
+  const { t } = useTranslation();
   const { selectedCompanyId } = useCompany();
   const { openNewAgent } = useDialogActions();
   const { setBreadcrumbs } = useBreadcrumbs();
@@ -205,9 +199,16 @@ export function Agents() {
   });
   const builtInAgentsEnabled = instanceSettings?.experimental.enableBuiltInAgents === true;
   const tab: FilterTab = requestedTab === "builtin" && !builtInAgentsEnabled ? "all" : requestedTab;
+  const agentFilterTabItems: { value: FilterTab; label: string }[] = [
+    { value: "all", label: t("agentManagement.filters.all", { defaultValue: "All" }) },
+    { value: "active", label: t("agentManagement.filters.active", { defaultValue: "Active" }) },
+    { value: "paused", label: t("agentManagement.filters.paused", { defaultValue: "Paused" }) },
+    { value: "error", label: t("agentManagement.filters.error", { defaultValue: "Error" }) },
+    { value: "builtin", label: t("agentManagement.filters.builtIn", { defaultValue: "Built-in" }) },
+  ];
   const visibleTabItems = useMemo(
-    () => AGENT_FILTER_TAB_ITEMS.filter((item) => item.value !== "builtin" || builtInAgentsEnabled),
-    [builtInAgentsEnabled],
+    () => agentFilterTabItems.filter((item) => item.value !== "builtin" || builtInAgentsEnabled),
+    [agentFilterTabItems, builtInAgentsEnabled],
   );
 
   const { data: builtInAgents } = useQuery({
@@ -315,17 +316,17 @@ export function Agents() {
   }, [agents, environmentsById, environmentCapabilities, instanceSettings?.defaultEnvironmentId]);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Agents" }]);
+    setBreadcrumbs([{ label: t("agentManagement.title", { defaultValue: "Agents" }) }]);
   }, [setBreadcrumbs]);
 
   useEffect(() => {
     if (selectedCompanyId && requestedTab === "builtin" && instanceSettings && !builtInAgentsEnabled) {
       navigate("/agents/all", { replace: true });
     }
-  }, [builtInAgentsEnabled, instanceSettings, navigate, requestedTab, selectedCompanyId]);
+  }, [builtInAgentsEnabled, instanceSettings, navigate, requestedTab, selectedCompanyId, t]);
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Bot} message="Select a company to view agents." />;
+    return <EmptyState icon={Bot} message={t("agentManagement.empty.selectCompany", { defaultValue: "Select a company to view agents." })} />;
   }
 
   if (isLoading) {
@@ -398,7 +399,7 @@ export function Agents() {
           resourceMembershipState(membershipsQuery.data, "agent", agent.id) === "left" ? "sm:text-foreground/55" : "",
         )}
         leading={hasInvalidOrgChain ? (
-          <AlertTriangle className="h-3.5 w-3.5 text-amber-500" aria-label="Invalid reporting chain" />
+          <AlertTriangle className="h-3.5 w-3.5 text-amber-500" aria-label={t("agentManagement.invalidReportingChain", { defaultValue: "Invalid reporting chain" })} />
         ) : (
           <AgentStatusCapsule status={agent.status} />
         )}
@@ -451,7 +452,7 @@ export function Agents() {
                 <AgentActionButtons
                   agent={agent}
                   companyId={selectedCompanyId}
-                  runLabel="Run Heartbeat"
+                  runLabel={t("agentManagement.actions.runHeartbeat", { defaultValue: "Run Heartbeat" })}
                   showStatus={false}
                 />
               </div>
@@ -505,15 +506,15 @@ export function Agents() {
         <div className="flex items-center gap-2">
           {/* View toggle */}
           {!forceListView && (
-            <div className="flex items-center border border-border" role="group" aria-label="View mode">
+            <div className="flex items-center border border-border" role="group" aria-label={t("agentManagement.viewMode", { defaultValue: "View mode" })}>
               <button
                 className={cn(
                   "p-1.5 transition-colors",
                   effectiveView === "list" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50"
                 )}
                 onClick={() => setView("list")}
-                title="List view"
-                aria-label="List view"
+                title={t("agentManagement.listView", { defaultValue: "List view" })}
+                aria-label={t("agentManagement.listView", { defaultValue: "List view" })}
                 aria-pressed={effectiveView === "list"}
               >
                 <List className="h-3.5 w-3.5" />
@@ -524,8 +525,8 @@ export function Agents() {
                   effectiveView === "org" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50"
                 )}
                 onClick={() => setView("org")}
-                title="Org chart view"
-                aria-label="Org chart view"
+                title={t("agentManagement.orgChartView", { defaultValue: "Org chart view" })}
+                aria-label={t("agentManagement.orgChartView", { defaultValue: "Org chart view" })}
                 aria-pressed={effectiveView === "org"}
               >
                 <GitBranch className="h-3.5 w-3.5" />
@@ -548,8 +549,8 @@ export function Agents() {
       {agents && agents.length === 0 && (
         <EmptyState
           icon={Bot}
-          message="Create your first agent to get started."
-          action="New Agent"
+          message={t("agentManagement.empty.createFirst", { defaultValue: "Create your first agent to get started." })}
+          action={t("agentManagement.actions.newAgent", { defaultValue: "New Agent" })}
           onAction={openNewAgent}
         />
       )}
@@ -563,7 +564,7 @@ export function Agents() {
 
       {effectiveView === "list" && agents && agents.length > 0 && filtered.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-8">
-          No agents match the selected status.
+          {t("agentManagement.empty.noMatches", { defaultValue: "No agents match the selected status." })}
         </p>
       )}
 
@@ -592,13 +593,13 @@ export function Agents() {
 
       {effectiveView === "org" && orgTree && orgTree.length > 0 && filteredOrg.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-8">
-          No agents match the selected status.
+          {t("agentManagement.empty.noMatches", { defaultValue: "No agents match the selected status." })}
         </p>
       )}
 
       {effectiveView === "org" && orgTree && orgTree.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-8">
-          No organizational hierarchy defined.
+          {t("agentManagement.empty.noHierarchy", { defaultValue: "No organizational hierarchy defined." })}
         </p>
       )}
       {configureState && selectedCompanyId && (
@@ -644,6 +645,7 @@ function OrgTreeNode({
   builtInByAgentId: Map<string, BuiltInAgentState>;
   onConfigureBuiltIn: (state: BuiltInAgentState) => void;
 }) {
+  const { t } = useTranslation();
   const agent = agentMap.get(node.id);
   const builtInState = builtInByAgentId.get(node.id);
   const showBuiltInLifecycle = builtInState?.status === "needs_setup" || builtInState?.status === "pending_approval";
@@ -667,7 +669,7 @@ function OrgTreeNode({
         )}
       >
         {hasInvalidOrgChain ? (
-          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" aria-label="Invalid reporting chain" />
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" aria-label={t("agentManagement.invalidReportingChain", { defaultValue: "Invalid reporting chain" })} />
         ) : (
           <AgentStatusCapsule status={node.status} />
         )}

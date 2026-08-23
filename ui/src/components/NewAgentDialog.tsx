@@ -29,6 +29,7 @@ import { getAdapterDisplay } from "../adapters/adapter-display-registry";
 import { useDisabledAdaptersSync } from "../adapters/use-disabled-adapters";
 import { useToast } from "../context/ToastContext";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/i18n";
 
 /**
  * Adapter types that are suitable for agent creation (excludes internal
@@ -43,6 +44,7 @@ function isAgentAdapterType(type: string): boolean {
 }
 
 export function NewAgentDialog() {
+  const { t } = useTranslation();
   const { newAgentOpen, closeNewAgent, openNewIssue } = useDialog();
   const { selectedCompanyId } = useCompany();
   const { pushToast } = useToast();
@@ -121,7 +123,7 @@ export function NewAgentDialog() {
     closeNewAgent();
     openNewIssue({
       assigneeAgentId: ceoAgent?.id,
-      title: "Create a new agent",
+        title: t("agentManagement.toasts.createTitle", { defaultValue: "Create a new agent" }),
       description: "(type in what kind of agent you want here)",
     });
   }
@@ -146,7 +148,7 @@ export function NewAgentDialog() {
       return true;
     } catch {
       pushToast({
-        title: "Clipboard unavailable",
+        title: t("agentManagement.errors.clipboardUnavailableTitle", { defaultValue: "Clipboard unavailable" }),
         body: unavailableBody,
         tone: "warn",
       });
@@ -197,15 +199,15 @@ export function NewAgentDialog() {
 
       await queryClient.invalidateQueries({ queryKey: inviteHistoryQueryKey });
       pushToast({
-        title: "Agent invite created",
+        title: t("agentManagement.toasts.inviteCreated", { defaultValue: "Agent invite created" }),
         body: copied ? "Agent onboarding prompt ready below and copied to clipboard." : "Agent onboarding prompt ready below.",
         tone: "success",
       });
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to create agent invite",
-        body: error instanceof Error ? error.message : "Unknown error",
+        title: t("agentManagement.errors.inviteFailed", { defaultValue: "Failed to create agent invite" }),
+        body: error instanceof Error ? error.message : t("agentManagement.errors.unknown", { defaultValue: "Unknown error" }),
         tone: "error",
       });
     },
@@ -230,7 +232,7 @@ export function NewAgentDialog() {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
-          <span className="text-sm text-muted-foreground">Add a new agent</span>
+          <span className="text-sm text-muted-foreground">{t("agentManagement.dialog.addNew", { defaultValue: "Add a new agent" })}</span>
           <Button
             variant="ghost"
             size="icon-xs"
@@ -253,28 +255,27 @@ export function NewAgentDialog() {
                   <Bot className="h-6 w-6 text-foreground" />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Ask a leader to propose the hire, configure a runtime yourself,
-                  or send an onboarding prompt to an external agent.
+                  {t("agentManagement.dialog.chooseMethod", { defaultValue: "Ask a leader to propose the hire, configure a runtime yourself, or send an onboarding prompt to an external agent." })}
                 </p>
               </div>
 
               <Button className="w-full" size="lg" onClick={handleAskCeo}>
                 <Bot className="h-4 w-4 mr-2" />
-                Ask the CEO to create a new agent
+                {t("agentManagement.dialog.askCeo", { defaultValue: "Ask the CEO to create a new agent" })}
               </Button>
 
               <div className="grid gap-2">
                 <Button variant="outline" className="w-full" onClick={handleAdvancedConfig}>
                   <Settings2 className="h-4 w-4 mr-2" />
-                  Configure a runtime manually
+                  {t("agentManagement.dialog.configureRuntime", { defaultValue: "Configure a runtime manually" })}
                 </Button>
                 <div className="space-y-1">
                   <Button variant="outline" className="w-full" onClick={handleInviteExternalAgent}>
                     <MailPlus className="h-4 w-4 mr-2" />
-                    Invite an external agent
+                    {t("agentManagement.dialog.inviteExternal", { defaultValue: "Invite an external agent" })}
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">
-                    (OpenClaw, Hermes, or any agent that can call the invite API.)
+                    {t("agentManagement.dialog.inviteHint", { defaultValue: "(OpenClaw, Hermes, or any agent that can call the invite API.)" })}
                   </p>
                 </div>
               </div>
@@ -287,10 +288,10 @@ export function NewAgentDialog() {
                   onClick={() => setMode("choices")}
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
-                  Back
+                  {t("agentManagement.actions.back", { defaultValue: "Back" })}
                 </button>
                 <p className="text-sm text-muted-foreground">
-                  Choose the runtime Paperclip should start or resume directly.
+                  {t("agentManagement.dialog.runtimeDescription", { defaultValue: "Choose the runtime Paperclip should start or resume directly." })}
                 </p>
               </div>
 
@@ -310,7 +311,7 @@ export function NewAgentDialog() {
                   >
                     {opt.recommended && (
                       <Badge variant="ghost" className="absolute -top-1.5 right-1.5 bg-green-500 text-white text-(length:--text-nano) font-semibold px-1.5 leading-none">
-                        Recommended
+                        {t("agentManagement.dialog.recommended", { defaultValue: "Recommended" })}
                       </Badge>
                     )}
                     <opt.icon className="h-4 w-4" />
@@ -330,29 +331,29 @@ export function NewAgentDialog() {
                   onClick={() => setMode("choices")}
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
-                  Back
+                  {t("agentManagement.actions.back", { defaultValue: "Back" })}
                 </button>
                 <div className="space-y-1">
-                  <h2 className="text-sm font-semibold">Invite an external agent</h2>
+                  <h2 className="text-sm font-semibold">{t("agentManagement.dialog.inviteExternal", { defaultValue: "Invite an external agent" })}</h2>
                   <p className="text-sm text-muted-foreground">
-                    Generate a one-time onboarding prompt that any compatible agent can use to request access, wait for approval, and claim its Paperclip API key.
+                    {t("agentManagement.dialog.inviteDescription", { defaultValue: "Generate a one-time onboarding prompt that any compatible agent can use to request access, wait for approval, and claim its Paperclip API key." })}
                   </p>
                 </div>
               </div>
 
               <label className="block space-y-2">
-                <span className="text-sm font-medium">Optional message for the agent</span>
+                <span className="text-sm font-medium">{t("agentManagement.dialog.optionalMessage", { defaultValue: "Optional message for the agent" })}</span>
                 <Textarea
                   value={agentMessage}
                   onChange={(event) => setAgentMessage(event.target.value)}
                   className="min-h-24 resize-y"
-                  placeholder="Add onboarding context, expected role, or first instructions."
+                  placeholder={t("agentManagement.dialog.messagePlaceholder", { defaultValue: "Add onboarding context, expected role, or first instructions." })}
                   maxLength={4000}
                 />
               </label>
 
               <div className="rounded-lg border border-border px-4 py-3 text-sm text-muted-foreground">
-                Agent invites create a join request first. A company admin still approves the request before the agent can claim its API key.
+                {t("agentManagement.dialog.inviteNotice", { defaultValue: "Agent invites create a join request first. A company admin still approves the request before the agent can claim its API key." })}
               </div>
 
               <div>
@@ -360,7 +361,7 @@ export function NewAgentDialog() {
                   onClick={() => createAgentInviteMutation.mutate()}
                   disabled={!selectedCompanyId || createAgentInviteMutation.isPending}
                 >
-                  {createAgentInviteMutation.isPending ? "Generating…" : "Generate onboarding prompt"}
+                  {createAgentInviteMutation.isPending ? t("agentManagement.dialog.generating", { defaultValue: "Generating…" }) : t("agentManagement.dialog.generatePrompt", { defaultValue: "Generate onboarding prompt" })}
                 </Button>
               </div>
             </div>
@@ -372,20 +373,20 @@ export function NewAgentDialog() {
                   onClick={() => setMode("invite")}
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
-                  Back
+                  {t("agentManagement.actions.back", { defaultValue: "Back" })}
                 </button>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-sm font-semibold">Agent onboarding prompt</h2>
+                    <h2 className="text-sm font-semibold">{t("agentManagement.dialog.onboardingPrompt", { defaultValue: "Agent onboarding prompt" })}</h2>
                     {latestAgentPromptCopied ? (
                       <div className="inline-flex items-center gap-1 text-xs font-medium text-foreground">
                         <Check className="h-3.5 w-3.5" />
-                        Copied
+                        {t("agentManagement.dialog.copied", { defaultValue: "Copied" })}
                       </div>
                     ) : null}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Send this prompt to the external agent that should join this company.
+                    {t("agentManagement.dialog.sendPromptDescription", { defaultValue: "Send this prompt to the external agent that should join this company." })}
                   </p>
                 </div>
               </div>
@@ -401,11 +402,11 @@ export function NewAgentDialog() {
                 disabled={!latestAgentPrompt}
                 onClick={async () => {
                   if (!latestAgentPrompt) return;
-                  const copied = await copyText(latestAgentPrompt, "Copy the agent onboarding prompt manually from the field above.");
+                  const copied = await copyText(latestAgentPrompt, t("agentManagement.dialog.copyManuallyHint", { defaultValue: "Copy the agent onboarding prompt manually from the field above." }));
                   setLatestAgentPromptCopied(copied);
                 }}
               >
-                {latestAgentPromptCopied ? "Copied prompt" : "Copy prompt"}
+                {latestAgentPromptCopied ? t("agentManagement.dialog.copiedPrompt", { defaultValue: "Copied prompt" }) : t("agentManagement.dialog.copyPrompt", { defaultValue: "Copy prompt" })}
               </Button>
             </div>
           )}
