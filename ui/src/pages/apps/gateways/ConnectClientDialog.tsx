@@ -14,6 +14,7 @@ import { useToast } from "@/context/ToastContext";
 import { cn } from "@/lib/utils";
 import { copyTextToClipboard } from "@/lib/clipboard";
 import { formatSnippetConfig, maskedTokenLabel, orderedSnippets } from "./gateway-helpers";
+import { useTranslation } from "@/i18n";
 
 type PanelKey = string; // snippet client key, or "raw_url"
 
@@ -34,6 +35,7 @@ export function ConnectClientDialog({
   onOpenChange: (open: boolean) => void;
   createdToken?: ToolMcpGatewayTokenCreated | null;
 }) {
+  const { t } = useTranslation();
   const { pushToast } = useToast();
   const snippets = useMemo(() => orderedSnippets(gateway.clientSnippets ?? []), [gateway.clientSnippets]);
   const endpoint = useMemo(() => {
@@ -54,11 +56,11 @@ export function ConnectClientDialog({
   async function copyText(value: string, label: string) {
     try {
       await copyTextToClipboard(value);
-      pushToast({ title: "Copied", body: label, tone: "success" });
+      pushToast({ title: t("appsBrowserGateway.gateway.copied"), body: label, tone: "success" });
     } catch (error) {
       pushToast({
-        title: "Copy failed",
-        body: error instanceof Error ? error.message : "Clipboard access is unavailable.",
+        title: t("appsBrowserGateway.gateway.copyFailed"),
+        body: error instanceof Error ? error.message : t("appsBrowserGateway.gateway.clipboardUnavailable"),
         tone: "error",
       });
     }
@@ -71,14 +73,14 @@ export function ConnectClientDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Connect a client</DialogTitle>
+          <DialogTitle>{t("appsBrowserGateway.gateway.client")}</DialogTitle>
           <DialogDescription>
-            Pick how you’ll point your client at this gateway.
+            {t("appsBrowserGateway.gateway.clientDescription")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 sm:grid-cols-(--gtc-10)">
-          <nav className="flex gap-1 overflow-x-auto sm:flex-col" aria-label="Clients">
+          <nav className="flex gap-1 overflow-x-auto sm:flex-col" aria-label={t("appsBrowserGateway.gateway.clients")}>
             {snippets.map((snippet) => (
               <button
                 key={snippet.client}
@@ -104,25 +106,25 @@ export function ConnectClientDialog({
                   : "text-muted-foreground hover:bg-muted/60",
               )}
             >
-              Raw URL
+              {t("appsBrowserGateway.gateway.rawUrl")}
             </button>
           </nav>
 
           <div className="min-w-0 space-y-3">
             {active === "raw_url" ? (
               <div className="space-y-1.5">
-                <div className="text-sm font-medium text-foreground">Endpoint URL</div>
+                <div className="text-sm font-medium text-foreground">{t("appsBrowserGateway.gateway.endpointUrl")}</div>
                 <div className="flex items-center gap-2">
                   <code className="min-w-0 flex-1 truncate rounded-md bg-muted px-3 py-2 font-mono text-xs text-muted-foreground">
                     {endpoint}
                   </code>
-                  <Button variant="outline" size="sm" onClick={() => void copyText(endpoint, "Endpoint URL")}>
+                  <Button variant="outline" size="sm" onClick={() => void copyText(endpoint, t("appsBrowserGateway.gateway.copyEndpoint"))}>
                     <Copy className="mr-1 h-3.5 w-3.5" />
-                    Copy
+                    {t("appsBrowserGateway.gateway.copy")}
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Authenticate with <code>Authorization: Bearer &lt;token&gt;</code> over streamable HTTP.
+                  {t("appsBrowserGateway.gateway.authenticate")} <code>Authorization: Bearer &lt;token&gt;</code> over streamable HTTP.
                 </p>
               </div>
             ) : activeSnippet ? (
@@ -150,11 +152,11 @@ export function ConnectClientDialog({
                 ) : null}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No client snippets available for this gateway.</p>
+              <p className="text-sm text-muted-foreground">{t("appsBrowserGateway.gateway.noSnippets")}</p>
             )}
 
             <div className="space-y-1.5 rounded-md border border-border p-3">
-              <div className="text-xs font-medium text-muted-foreground">Token</div>
+              <div className="text-xs font-medium text-muted-foreground">{t("appsBrowserGateway.gateway.token")}</div>
               {createdToken ? (
                 <div className="flex items-center gap-2">
                   <code className="min-w-0 flex-1 truncate rounded bg-background px-2 py-1.5 font-mono text-xs text-foreground">
@@ -167,24 +169,21 @@ export function ConnectClientDialog({
                       onClick={() => void copyText(createdToken.token, "Access token")}
                     >
                       <Copy className="mr-1 h-3.5 w-3.5" />
-                      Copy
+                      {t("appsBrowserGateway.gateway.copy")}
                     </Button>
                   ) : (
                     <Button variant="outline" size="sm" onClick={() => setRevealed(true)}>
-                      Show
+                      {t("appsBrowserGateway.gateway.show")}
                     </Button>
                   )}
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  Mint a token on the <span className="font-medium">Tokens</span> tab, then paste it where the
-                  snippet shows <code>Bearer …</code>. You won’t see a token’s full value again after it’s
-                  created.
+                  {t("appsBrowserGateway.gateway.mintHint")}
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
-                Treat this like a password. Anyone with the token can call exactly the tools this gateway
-                allows. If it leaks, revoke it — the client goes silent immediately.
+                {t("appsBrowserGateway.gateway.tokenWarning")}
               </p>
             </div>
           </div>
@@ -193,7 +192,7 @@ export function ConnectClientDialog({
         <DialogFooter>
           <Button onClick={() => onOpenChange(false)}>
             <Check className="mr-1.5 h-4 w-4" />
-            Done
+            {t("appsBrowserGateway.gateway.done")}
           </Button>
         </DialogFooter>
       </DialogContent>

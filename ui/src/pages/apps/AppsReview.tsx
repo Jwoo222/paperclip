@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { useCompany } from "@/context/CompanyContext";
 import { ReviewQueueCard } from "./ReviewQueueCard";
+import { useTranslation } from "@/i18n";
 
 /**
  * Review — the "decisions waiting on you" inbox (PAP-12371, Finding B).
@@ -14,32 +15,33 @@ import { ReviewQueueCard } from "./ReviewQueueCard";
  * "Needs attention"; decisions live here.
  */
 export function AppsReview() {
+  const { t } = useTranslation();
   const { selectedCompany, selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
-      { label: "Apps", href: "/apps" },
-      { label: "Review" },
+      { label: selectedCompany?.name ?? t("integrations.common.company"), href: "/dashboard" },
+      { label: t("integrations.common.apps"), href: "/apps" },
+      { label: t("appsBrowserGateway.review.title") },
     ]);
     return () => setBreadcrumbs([]);
   }, [setBreadcrumbs, selectedCompany?.name]);
 
   if (!selectedCompanyId) {
-    return <div className="p-6 text-sm text-muted-foreground">Select a company to review approvals.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{t("appsBrowserGateway.review.selectCompany")}</div>;
   }
 
   return (
     <div className="max-w-3xl space-y-6 pb-12">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">Review</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("appsBrowserGateway.review.title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Actions your agents want to run that need your OK first. Approve, always-allow, or decline.
+          {t("appsBrowserGateway.review.description")}
         </p>
       </header>
 
-      <ReviewQueueCard emptyState="reassure" heading="Waiting for your OK" />
+      <ReviewQueueCard emptyState="reassure" heading={t("appsBrowserGateway.review.waiting")} />
     </div>
   );
 }

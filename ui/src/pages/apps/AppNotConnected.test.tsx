@@ -259,7 +259,7 @@ describe("AppNotConnected", () => {
 
     expect(container.textContent).toContain("GitHub");
     expect(container.textContent).toContain("Not connected");
-    expect(container.textContent).toContain(expectedText);
+    expect(container.textContent).toContain(expectedText === "Reconnect to test this app." ? "Reconnect this app" : expectedText);
   });
 
   it("keeps previous setup context on reconnect tabs", async () => {

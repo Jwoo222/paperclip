@@ -5,6 +5,7 @@ import { toolsApi, type ToolAuditOutcome, type ToolGatewayActivityEvent } from "
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState, RelativeTime } from "@/pages/tools/shared";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n";
 
 const OUTCOME_LABEL: Record<ToolAuditOutcome, string> = {
   allowed: "Allowed",
@@ -40,6 +41,7 @@ export function GatewayActivityPanel({
   companyId: string;
   gateway: ToolMcpGatewayWithTokens;
 }) {
+  const { t } = useTranslation();
   const activityQuery = useQuery({
     queryKey: ["tools", "gateway-activity", companyId, gateway.id],
     queryFn: () => toolsApi.listActivity(companyId, { window: "7d", limit: 100 }),
@@ -66,19 +68,19 @@ export function GatewayActivityPanel({
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        Every call through this gateway in the last 7 days, with why it was allowed, blocked, or paused.
+        {t("appsBrowserGateway.gateway.activity.description")}
       </p>
       {events.length === 0 ? (
         <div className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          No calls have gone through this gateway yet.
+          {t("appsBrowserGateway.gateway.activity.noCalls")}
         </div>
       ) : (
         <ul className="divide-y divide-border rounded-lg border border-border">
           {events.map((event) => {
             const outcome = event.normalizedOutcome;
-            const tool = event.toolDisplayName ?? "tool";
-            const app = event.appDisplayName ?? event.applicationDisplayName ?? "app";
-            const actor = event.agentDisplayName ?? "Client";
+            const tool = event.toolDisplayName ?? t("appsBrowserGateway.gateway.activity.tool");
+            const app = event.appDisplayName ?? event.applicationDisplayName ?? t("appsBrowserGateway.gateway.apps");
+            const actor = event.agentDisplayName ?? t("appsBrowserGateway.gateway.activity.client");
             return (
               <li key={event.id} className="flex items-center justify-between gap-3 px-4 py-3">
                 <div className="min-w-0">
@@ -93,7 +95,7 @@ export function GatewayActivityPanel({
                     OUTCOME_CLASS[outcome],
                   )}
                 >
-                  {OUTCOME_LABEL[outcome]}
+                  {t(`appsBrowserGateway.gateway.activity.${outcome === "allowed" ? "allowed" : outcome === "blocked" ? "blocked" : outcome === "asked_first" ? "askFirst" : outcome === "waiting" ? "waiting" : outcome === "failed" ? "failed" : "unknown"}`)}
                 </span>
               </li>
             );

@@ -39,6 +39,7 @@ import {
 } from "./app-definition-display";
 import { useReviewCount } from "./useReviewCount";
 import { AdvancedToolsLink } from "./store-cards";
+import { useTranslation } from "@/i18n";
 
 const BROWSE_HREF = "/apps";
 
@@ -95,6 +96,7 @@ const STATUS_CLASS: Record<AppStatus["tone"], string> = {
 };
 
 export function Connections() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -110,9 +112,9 @@ export function Connections() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
-      { label: "Apps", href: "/apps" },
-      { label: "Connections" },
+      { label: selectedCompany?.name ?? t("integrations.common.company"), href: "/dashboard" },
+      { label: t("integrations.common.apps"), href: "/apps" },
+      { label: t("appsBrowserGateway.connections.title") },
     ]);
     return () => setBreadcrumbs([]);
   }, [setBreadcrumbs, selectedCompany?.name]);
@@ -146,18 +148,18 @@ export function Connections() {
       queryClient.invalidateQueries({ queryKey: queryKeys.tools.applications(selectedCompanyId!) });
       queryClient.invalidateQueries({ queryKey: queryKeys.apps.attention(selectedCompanyId!) });
       pushToast({
-        title: "Connection deleted",
+        title: t("appsBrowserGateway.connections.deleted"),
         body: target.remainingConnectionCount > 0
-          ? `${target.appName} still has ${target.remainingConnectionCount} active ${target.remainingConnectionCount === 1 ? "connection" : "connections"} available to agents.`
-          : `${target.appName} is no longer available to agents. You can connect it again later.`,
+          ? t(target.remainingConnectionCount === 1 ? "appsBrowserGateway.connections.deletedWithOthersOne" : "appsBrowserGateway.connections.deletedWithOthers", { name: target.appName, count: target.remainingConnectionCount })
+          : t("appsBrowserGateway.connections.deletedLast", { name: target.appName }),
         tone: "success",
       });
       setConnectionToDelete(null);
     },
     onError: (error) =>
       pushToast({
-        title: "Couldn't delete the connection",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: t("appsBrowserGateway.connections.deleteFailed"),
+        body: error instanceof Error ? error.message : t("appsBrowserGateway.connections.tryAgain"),
         tone: "error",
       }),
   });
@@ -236,7 +238,7 @@ export function Connections() {
   const visibleRows = filter === "attention" ? rowsNeedingAttention : rows;
 
   if (!selectedCompanyId) {
-    return <div className="p-6 text-sm text-muted-foreground">Select a company to manage apps.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{t("appsBrowserGateway.connections.selectCompany")}</div>;
   }
 
   const loading = applicationsQuery.isLoading || connectionsQuery.isLoading || galleryQuery.isLoading;
@@ -254,17 +256,17 @@ export function Connections() {
         <div className="space-y-5">
           <header className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">Connections</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{t("appsBrowserGateway.connections.title")}</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                The tools you’ve connected, and whether they’re working.
+                {t("appsBrowserGateway.connections.description")}
               </p>
             </div>
-            <Button onClick={() => navigate(BROWSE_HREF)}>Connect an app</Button>
+            <Button onClick={() => navigate(BROWSE_HREF)}>{t("appsBrowserGateway.connections.connectApp")}</Button>
           </header>
 
           <div className="flex flex-wrap items-center gap-2">
             <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
-              All ({rows.length})
+              {t("appsBrowserGateway.connections.all", { count: rows.length })}
             </FilterChip>
             <FilterChip
               active={filter === "attention"}
@@ -272,7 +274,7 @@ export function Connections() {
               disabled={rowsNeedingAttention.length === 0}
               onClick={() => setFilter("attention")}
             >
-              Needs attention ({rowsNeedingAttention.length})
+              {t("appsBrowserGateway.connections.attention", { count: rowsNeedingAttention.length })}
             </FilterChip>
           </div>
 
@@ -285,13 +287,13 @@ export function Connections() {
               <ShieldQuestion className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold text-amber-900 dark:text-amber-100">
-                  {reviewCount} {reviewCount === 1 ? "action is" : "actions are"} waiting for your OK
+                  {reviewCount === 1 ? t("appsBrowserGateway.connections.waitingOne") : t("appsBrowserGateway.connections.waitingMany", { count: reviewCount })}
                 </div>
                 <div className="truncate text-xs text-amber-700 dark:text-amber-300">
-                  Your agents paused to check with you before making a change.
+                  {t("appsBrowserGateway.connections.waitingBody")}
                 </div>
               </div>
-              <span className="shrink-0 text-xs font-semibold text-amber-800 dark:text-amber-200">Review →</span>
+              <span className="shrink-0 text-xs font-semibold text-amber-800 dark:text-amber-200">{t("appsBrowserGateway.connections.review")}</span>
             </button>
           )}
 
@@ -304,13 +306,13 @@ export function Connections() {
               <ShieldAlert className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold text-red-900 dark:text-red-100">
-                  {rowsNeedingAttention.length} {rowsNeedingAttention.length === 1 ? "app needs" : "apps need"} attention
+                  {rowsNeedingAttention.length === 1 ? t("appsBrowserGateway.connections.appAttentionOne") : t("appsBrowserGateway.connections.appAttentionMany", { count: rowsNeedingAttention.length })}
                 </div>
                 <div className="truncate text-xs text-red-700 dark:text-red-300">
                   {floatSummary(rowsNeedingAttention)}
                 </div>
               </div>
-              <span className="shrink-0 text-xs font-semibold text-red-800 dark:text-red-200">Fix →</span>
+              <span className="shrink-0 text-xs font-semibold text-red-800 dark:text-red-200">{t("appsBrowserGateway.connections.fix")}</span>
             </button>
           )}
 
@@ -318,10 +320,10 @@ export function Connections() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/40 text-left text-(length:--text-micro) font-semibold uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-2.5">App</th>
-                  <th className="px-4 py-2.5">Status</th>
-                  <th className="px-4 py-2.5">Actions</th>
-                  <th className="px-4 py-2.5">Last used</th>
+                  <th className="px-4 py-2.5">{t("appsBrowserGateway.connections.app")}</th>
+                  <th className="px-4 py-2.5">{t("appsBrowserGateway.connections.status")}</th>
+                  <th className="px-4 py-2.5">{t("appsBrowserGateway.connections.actions")}</th>
+                  <th className="px-4 py-2.5">{t("appsBrowserGateway.connections.lastUsed")}</th>
                   <th className="px-4 py-2.5" />
                 </tr>
               </thead>
@@ -332,21 +334,21 @@ export function Connections() {
                   const hint =
                     status.tone === "attention"
                       ? primaryConnection?.authKind === "oauth"
-                        ? "Reconnect required — sign in again to restore access."
-                        : "The key stopped working — reconnect to fix."
+                        ? t("appsBrowserGateway.connections.reconnectOAuth")
+                        : t("appsBrowserGateway.connections.reconnectKey")
                       : status.tone === "paused"
-                        ? "Paused — agents can’t use it right now."
+                        ? t("appsBrowserGateway.connections.pausedHint")
                         : status.tone === "not_connected"
-                          ? "Connect it so agents can use it."
+                          ? t("appsBrowserGateway.connections.connectHint")
                           : row.connectionCount > 1
-                            ? `${row.connectionCount} connections`
+                            ? t("appsBrowserGateway.connections.connectionCount", { count: row.connectionCount })
                             : null;
                   const appHref = `/apps/app/${application.id}/setup`;
                   const actionLabel = !primaryConnection
-                    ? "Connect"
+                    ? t("appsBrowserGateway.connections.connect")
                     : status.tone === "attention"
-                      ? "Reconnect"
-                      : "Open";
+                      ? t("appsBrowserGateway.connections.reconnect")
+                      : t("appsBrowserGateway.connections.open");
                   return (
                     <tr
                       key={application.id}
@@ -380,15 +382,15 @@ export function Connections() {
                             STATUS_CLASS[status.tone],
                           )}
                         >
-                          {status.label}
+                          {t(`appsBrowserGateway.connections.${status.tone === "connected" ? "healthy" : status.tone === "attention" ? "needsAttention" : status.tone === "paused" ? "paused" : "notConnected"}`)}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-xs text-muted-foreground">{row.actionCount} on</span>
+                        <span className="text-xs text-muted-foreground">{t("appsBrowserGateway.connections.actionOn", { count: row.actionCount })}</span>
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-xs text-muted-foreground">
-                          {row.lastUsedAt ? timeAgo(row.lastUsedAt) : "—"}
+                          {row.lastUsedAt ? timeAgo(row.lastUsedAt) : t("appsBrowserGateway.connections.lastUsedNever")}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -408,7 +410,7 @@ export function Connections() {
                               variant="ghost"
                               size="icon-sm"
                               className="text-muted-foreground hover:text-destructive"
-                              aria-label={`Delete ${application.name} connection`}
+                              aria-label={t("appsBrowserGateway.connections.deleteAria", { name: application.name })}
                               onClick={(event) => {
                                 event.stopPropagation();
                                 setConnectionToDelete({
@@ -436,7 +438,7 @@ export function Connections() {
 
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs text-muted-foreground">
-              Apps you connect become available to every agent unless you change “Who can use it”.
+              {t("appsBrowserGateway.connections.appsAvailable")}
             </p>
             <AdvancedToolsLink />
           </div>
@@ -452,16 +454,16 @@ export function Connections() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Delete {connectionToDelete?.appName ?? "this"} connection?
+              {t("appsBrowserGateway.connections.deleteTitle", { name: connectionToDelete?.appName ?? "this" })}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {connectionToDelete && connectionToDelete.remainingConnectionCount > 0
-                ? `This connection will be removed. Agents can still use ${connectionToDelete.appName} through ${connectionToDelete.remainingConnectionCount} other active ${connectionToDelete.remainingConnectionCount === 1 ? "connection" : "connections"}.`
-                : "Agents will lose access immediately. You can connect it again later."}
+                  ? t(connectionToDelete.remainingConnectionCount === 1 ? "appsBrowserGateway.connections.deleteBodyWithOthersOne" : "appsBrowserGateway.connections.deleteBodyWithOthers", { name: connectionToDelete.appName, count: connectionToDelete.remainingConnectionCount })
+                : t("appsBrowserGateway.connections.deleteBody")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteConnection.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteConnection.isPending}>{t("appsBrowserGateway.connections.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={!connectionToDelete || deleteConnection.isPending}
@@ -471,7 +473,7 @@ export function Connections() {
               }}
             >
               {deleteConnection.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              {deleteConnection.isPending ? "Deleting..." : "Delete connection"}
+              {deleteConnection.isPending ? t("integrations.common.loading") : t("appsBrowserGateway.connections.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -528,12 +530,13 @@ function floatSummary(rows: AppRow[]): string {
 }
 
 function EmptyConnections({ onBrowse }: { onBrowse: () => void }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">Connections</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("appsBrowserGateway.connections.title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          The tools you’ve connected, and whether they’re working.
+          {t("appsBrowserGateway.connections.description")}
         </p>
       </header>
 
@@ -541,13 +544,12 @@ function EmptyConnections({ onBrowse }: { onBrowse: () => void }) {
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted">
           <AppWindow className="h-6 w-6 text-muted-foreground" />
         </div>
-        <p className="mt-4 text-sm font-medium text-foreground">No connections yet.</p>
+        <p className="mt-4 text-sm font-medium text-foreground">{t("appsBrowserGateway.connections.emptyTitle")}</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Add one from <span className="font-medium text-foreground">Apps</span> to give your agents
-          the tools they need.
+          {t("appsBrowserGateway.connections.emptyBody")}
         </p>
         <Button className="mt-6" onClick={onBrowse}>
-          Browse apps
+          {t("appsBrowserGateway.connections.browseApps")}
         </Button>
       </div>
     </div>

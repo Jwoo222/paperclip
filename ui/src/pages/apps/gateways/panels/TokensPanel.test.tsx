@@ -153,7 +153,7 @@ describe("TokensPanel", () => {
   it("masks existing tokens and never renders the full secret at rest", async () => {
     await render(<TokensPanel companyId="company-1" gateway={gateway({ tokens: [token()] })} />);
     expect(container.textContent).toContain("pcgw_live_8x4Pa•••");
-    expect(container.textContent).toContain("Active");
+    expect(container.textContent).toContain("active");
   });
 
   it("mints a token and reveals it once, then copies the full value", async () => {

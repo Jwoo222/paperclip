@@ -10,6 +10,7 @@ import { timeAgo } from "@/lib/timeAgo";
 import { toolsApi } from "@/api/tools";
 import { Button } from "@/components/ui/button";
 import { MarkdownBody } from "@/components/MarkdownBody";
+import { t as translate, useTranslation } from "@/i18n";
 
 /**
  * "Ask first" review queue (M1b float / M9 card, PAP-10859).
@@ -31,6 +32,7 @@ export function ReviewQueueCard({
   emptyState?: "hidden" | "reassure";
   heading?: string;
 }) {
+  const { t } = useTranslation();
   const { selectedCompanyId } = useCompany();
 
   const query = useQuery({
@@ -52,7 +54,7 @@ export function ReviewQueueCard({
     if (emptyState === "hidden") return null;
     return (
       <div className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
-        Nothing is waiting for your OK right now.
+        {t("appsBrowserGateway.review.empty")}
       </div>
     );
   }
@@ -76,6 +78,7 @@ export function ReviewQueueCard({
 }
 
 function ReviewRow({ companyId, item }: { companyId: string; item: ToolActionRequestListItem }) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const [resolving, setResolving] = useState<null | "allow" | "always" | "decline">(null);
@@ -89,7 +92,7 @@ function ReviewRow({ companyId, item }: { companyId: string; item: ToolActionReq
     mutationFn: () => toolsApi.approveActionRequest(companyId, item.request.id),
     onMutate: () => setResolving("allow"),
     onSuccess: () => {
-      pushToast({ title: "Allowed once", body: `${actionLabel(item)} can run this time.`, tone: "success" });
+      pushToast({ title: t("appsBrowserGateway.review.allowedOnce"), body: t("appsBrowserGateway.review.allowedOnceBody", { action: actionLabel(item) }), tone: "success" });
       invalidate();
     },
     onError: (error) => {
@@ -108,8 +111,8 @@ function ReviewRow({ companyId, item }: { companyId: string; item: ToolActionReq
     onMutate: () => setResolving("always"),
     onSuccess: () => {
       pushToast({
-        title: "Always allowed",
-        body: `${actionLabel(item)} won’t ask again.`,
+        title: t("appsBrowserGateway.review.alwaysAllowed"),
+        body: t("appsBrowserGateway.review.alwaysAllowedBody", { action: actionLabel(item) }),
         tone: "success",
       });
       invalidate();
@@ -126,7 +129,7 @@ function ReviewRow({ companyId, item }: { companyId: string; item: ToolActionReq
     mutationFn: () => toolsApi.declineActionRequest(companyId, item.request.id),
     onMutate: () => setResolving("decline"),
     onSuccess: () => {
-      pushToast({ title: "Declined", body: `${actionLabel(item)} won’t run.`, tone: "info" });
+      pushToast({ title: t("appsBrowserGateway.review.declined"), body: t("appsBrowserGateway.review.declinedBody", { action: actionLabel(item) }), tone: "info" });
       invalidate();
     },
     onError: (error) => {
@@ -145,10 +148,10 @@ function ReviewRow({ companyId, item }: { companyId: string; item: ToolActionReq
         <span className="font-bold text-foreground">{actionLabel(item)}</span>
         {item.applicationName && (
           <span className="text-muted-foreground">
-            in {humanizeConnectionDisplayName(item.applicationName)}
+            {t("appsBrowserGateway.review.inApp", { name: humanizeConnectionDisplayName(item.applicationName) })}
           </span>
         )}
-        <span className="text-xs text-muted-foreground">· asked {timeAgo(item.request.createdAt)}</span>
+        <span className="text-xs text-muted-foreground">{t("appsBrowserGateway.review.asked", { time: timeAgo(item.request.createdAt) })}</span>
       </div>
 
       {preview ? (
@@ -157,22 +160,22 @@ function ReviewRow({ companyId, item }: { companyId: string; item: ToolActionReq
         </div>
       ) : (
         <p className="mt-1 text-sm text-muted-foreground">
-          An agent wants to run this action. It can change something, so we’re checking with you first.
+          {t("appsBrowserGateway.review.fallback")}
         </p>
       )}
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <Button size="sm" onClick={() => allowOnce.mutate()} disabled={busy}>
           {resolving === "allow" ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Check className="mr-1.5 h-3.5 w-3.5" />}
-          Allow once
+          {t("appsBrowserGateway.review.allowOnce")}
         </Button>
         <Button size="sm" variant="outline" onClick={() => alwaysAllow.mutate()} disabled={busy}>
           {resolving === "always" ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-          Always allow
+          {t("appsBrowserGateway.review.alwaysAllow")}
         </Button>
         <Button size="sm" variant="ghost" onClick={() => decline.mutate()} disabled={busy}>
           {resolving === "decline" ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <X className="mr-1.5 h-3.5 w-3.5" />}
-          Decline
+          {t("appsBrowserGateway.review.decline")}
         </Button>
       </div>
     </div>
@@ -189,8 +192,8 @@ function failToast(
   error: unknown,
 ) {
   pushToast({
-    title: "Couldn’t save that",
-    body: error instanceof Error ? error.message : "Please try again.",
+    title: translate("appsBrowserGateway.review.saveFailed"),
+    body: error instanceof Error ? error.message : translate("appsBrowserGateway.review.pleaseTry"),
     tone: "error",
   });
 }

@@ -15,6 +15,7 @@ import {
 import { useToast } from "@/context/ToastContext";
 import { queryKeys } from "@/lib/queryKeys";
 import { allowedToolsLabel } from "./gateway-helpers";
+import { useTranslation } from "@/i18n";
 
 export const gatewaysQueryKey = (companyId: string) => ["tools", "gateways", companyId] as const;
 
@@ -34,6 +35,7 @@ export function NewGatewayDialog({
   onOpenChange: (open: boolean) => void;
   onCreated?: (gatewayId: string) => void;
 }) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const [name, setName] = useState("");
@@ -63,7 +65,7 @@ export function NewGatewayDialog({
         contextScopeType: "company" satisfies ToolMcpGatewayContextScopeType,
       }),
     onSuccess: async (gateway) => {
-      pushToast({ title: "Gateway created", body: gateway.name, tone: "success" });
+      pushToast({ title: t("appsBrowserGateway.gateway.created"), body: gateway.name, tone: "success" });
       await queryClient.invalidateQueries({ queryKey: gatewaysQueryKey(companyId) });
       setName("");
       setDescription("");
@@ -72,7 +74,7 @@ export function NewGatewayDialog({
     },
     onError: (error) => {
       pushToast({
-        title: "Gateway was not created",
+        title: t("appsBrowserGateway.gateway.createFailed"),
         body: error instanceof Error ? error.message : String(error),
         tone: "error",
       });
@@ -92,25 +94,24 @@ export function NewGatewayDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>New gateway</DialogTitle>
+          <DialogTitle>{t("appsBrowserGateway.gateway.new")}</DialogTitle>
           <DialogDescription>
-            One safe MCP endpoint that exposes only the apps in its access profile. Hand it to a client
-            like Cursor or Claude Desktop.
+            {t("appsBrowserGateway.gateway.oneSafeEndpoint")}
           </DialogDescription>
         </DialogHeader>
         <form className="space-y-4" onSubmit={submit}>
           <label className="block space-y-1.5">
-            <span className="text-xs font-medium text-muted-foreground">Name</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("appsBrowserGateway.gateway.name")}</span>
             <Input
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="CTO agents"
+              placeholder={t("appsBrowserGateway.gateway.namePlaceholder")}
               required
               autoFocus
             />
           </label>
           <label className="block space-y-1.5">
-            <span className="text-xs font-medium text-muted-foreground">Access profile</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("appsBrowserGateway.gateway.accessProfile")}</span>
             <select
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               value={profileId}
@@ -119,7 +120,7 @@ export function NewGatewayDialog({
               disabled={noProfiles}
             >
               <option value="" disabled>
-                {profilesLoading ? "Loading profiles…" : "Choose a profile"}
+                {profilesLoading ? t("appsBrowserGateway.gateway.loadingProfiles") : t("appsBrowserGateway.gateway.chooseProfile")}
               </option>
               {activeProfiles.map((profile) => (
                 <option key={profile.id} value={profile.id}>
@@ -128,32 +129,32 @@ export function NewGatewayDialog({
               ))}
             </select>
             <span className="text-xs text-muted-foreground">
-              The profile decides which tools this gateway allows. You can change it later.
+              {t("appsBrowserGateway.gateway.profileHelp")}
             </span>
           </label>
           <label className="block space-y-1.5">
-            <span className="text-xs font-medium text-muted-foreground">Description (optional)</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("appsBrowserGateway.gateway.descriptionOptional")}</span>
             <textarea
               className="min-h-16 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="Who this endpoint is for and when it should be rotated."
+              placeholder={t("appsBrowserGateway.gateway.descriptionPlaceholder")}
             />
           </label>
           {noProfiles ? (
             <p className="text-xs text-destructive">
-              Create an access profile under Advanced before adding a gateway.
+              {t("appsBrowserGateway.gateway.noProfiles")}
             </p>
           ) : null}
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t("appsBrowserGateway.connections.cancel")}
             </Button>
             <Button
               type="submit"
               disabled={createMutation.isPending || noProfiles || !name.trim() || !profileId}
             >
-              {createMutation.isPending ? "Creating…" : "Create gateway"}
+              {createMutation.isPending ? t("appsBrowserGateway.gateway.creating") : t("appsBrowserGateway.gateway.create")}
             </Button>
           </DialogFooter>
         </form>
