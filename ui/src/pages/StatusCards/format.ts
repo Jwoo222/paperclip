@@ -1,10 +1,11 @@
 import type { StatusCardRefreshPolicy, StatusCardUpdate } from "@paperclipai/shared";
+import { t } from "@/i18n";
 
 /** "1.1k tok" / "940 tok" — compact token count for footers and chips. */
 export function formatTokens(tokens: number | null | undefined): string | null {
   if (tokens === null || tokens === undefined) return null;
-  if (tokens < 1000) return `${tokens} tok`;
-  return `${(tokens / 1000).toFixed(1)}k tok`;
+  const count = tokens < 1000 ? String(tokens) : `${(tokens / 1000).toFixed(1)}k`;
+  return t("statusCardsResidual.tokensCompact", { count, defaultValue: `${count} tok` });
 }
 
 /**
@@ -98,8 +99,8 @@ export function estimateStatusCardCost(policy: StatusCardRefreshPolicy): StatusC
     const cost = `${formatCents(EST_FULL_CENTS)} · ${formatTokens(EST_FULL_TOKENS)}`;
     return {
       cost,
-      primary: `~1 rebuild per refresh ≈ ${cost}`,
-      note: "Manual cards only cost tokens when you press Refresh.",
+      primary: t("statusCardsResidual.manualCost", { cost, defaultValue: `~1 rebuild per refresh ≈ ${cost}` }),
+      note: t("statusCardsResidual.manualCostNote", { defaultValue: "Manual cards only cost tokens when you press Refresh." }),
     };
   }
 
@@ -109,11 +110,11 @@ export function estimateStatusCardCost(policy: StatusCardRefreshPolicy): StatusC
   if (policy.mode === "interval") {
     const interval = policy.intervalMinutes ?? 15;
     maxPerDay = Math.floor(windowMinutes / interval);
-    cadence = `every ${interval} min`;
+    cadence = t("statusCardsResidual.everyMinutes", { count: interval, defaultValue: `every ${interval} min` });
   } else {
     const perHour = policy.maxUpdatesPerHour ?? 6;
     maxPerDay = Math.round((windowMinutes / 60) * perHour);
-    cadence = `up to ${perHour}/hour`;
+    cadence = t("statusCardsResidual.upToPerHour", { count: perHour, defaultValue: `up to ${perHour}/hour` });
   }
 
   const cap = policy.dailyTokenCap ?? null;
@@ -123,33 +124,48 @@ export function estimateStatusCardCost(policy: StatusCardRefreshPolicy): StatusC
 
   const tokens = effective * EST_INCREMENTAL_TOKENS;
   const cents = effective * EST_INCREMENTAL_CENTS;
-  const withinHours = policy.activeHours ? " during active hours" : "";
+  const withinHours = policy.activeHours
+    ? t("statusCardsResidual.duringActiveHours", { defaultValue: " during active hours" })
+    : "";
   const cost = `${formatCents(cents)} · ${formatTokens(tokens)}`;
 
   return {
     cost,
-    primary: `Up to ~${effective} updates/day (${cadence}${withinHours}) ≈ ${cost}`,
+    primary: t("statusCardsResidual.automaticCost", {
+      count: effective,
+      cadence,
+      activeHours: withinHours,
+      cost,
+      defaultValue: `Up to ~${effective} updates/day (${cadence}${withinHours}) ≈ ${cost}`,
+    }),
     note: cappedByTokenCap
-      ? `Capped by your ${formatTokens(cap!)} daily token cap — the card pauses when it's hit.`
-      : "Only runs when something changed; a cheap no-op check otherwise.",
+      ? t("statusCardsResidual.tokenCapNote", {
+        count: formatTokens(cap!),
+        defaultValue: `Capped by your ${formatTokens(cap!)} daily token cap — the card pauses when it's hit.`,
+      })
+      : t("statusCardsResidual.noOpNote", { defaultValue: "Only runs when something changed; a cheap no-op check otherwise." }),
   };
 }
 
 /** "0.4k in / 0.2k out" — the per-update token split shown in history rows. */
 export function formatTokenSplit(inputTokens: number, outputTokens: number): string {
   const fmt = (n: number) => (n < 1000 ? `${n}` : `${(n / 1000).toFixed(1)}k`);
-  return `${fmt(inputTokens)} in / ${fmt(outputTokens)} out`;
+  return t("statusCardsResidual.tokenSplit", {
+    input: fmt(inputTokens),
+    output: fmt(outputTokens),
+    defaultValue: `${fmt(inputTokens)} in / ${fmt(outputTokens)} out`,
+  });
 }
 
 /** Human label for an update's kind. */
 export function updateKindLabel(kind: StatusCardUpdate["kind"]): string {
   switch (kind) {
     case "compile":
-      return "compile";
+      return t("statusCardsResidual.updateKinds.compile", { defaultValue: "compile" });
     case "full":
-      return "full rebuild";
+      return t("statusCardsResidual.updateKinds.full", { defaultValue: "full rebuild" });
     case "incremental":
-      return "incremental";
+      return t("statusCardsResidual.updateKinds.incremental", { defaultValue: "incremental" });
     default:
       return kind;
   }

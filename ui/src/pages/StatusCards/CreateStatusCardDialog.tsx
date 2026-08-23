@@ -19,12 +19,6 @@ import { queryKeys } from "@/lib/queryKeys";
 import { t } from "@/i18n";
 import { SummarizerAgentSelect } from "./SummarizerAgentSelect";
 
-const EXAMPLES = [
-  "issues about evals",
-  "everything blocked this week",
-  "is feature X live? if not, the exact next actions to ship it",
-];
-
 export function CreateStatusCardDialog({
   companyId,
   open,
@@ -39,6 +33,11 @@ export function CreateStatusCardDialog({
   // "" → the built-in Summarizer; otherwise the id of the override agent.
   const [agentId, setAgentId] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const examples = [
+    t("statusCardsResidual.examples.evals", { defaultValue: "issues about evals" }),
+    t("statusCardsResidual.examples.blocked", { defaultValue: "everything blocked this week" }),
+    t("statusCardsResidual.examples.featureLive", { defaultValue: "is feature X live? if not, the exact next actions to ship it" }),
+  ];
 
   function reset() {
     setPrompt("");
@@ -77,8 +76,7 @@ export function CreateStatusCardDialog({
         <DialogHeader>
           <DialogTitle>{t("statusTraining.cards.newCard")}</DialogTitle>
           <DialogDescription>
-            One message sets up the whole card: say what you want to watch and what each update
-            should tell you. The agent builds the query from it and writes every update against it.
+            {t("statusCardsResidual.createDescription", { defaultValue: "One message sets up the whole card: say what you want to watch and what each update should tell you. The agent builds the query from it and writes every update against it." })}
           </DialogDescription>
         </DialogHeader>
 
@@ -86,7 +84,7 @@ export function CreateStatusCardDialog({
 
         <div className="space-y-3">
           <label htmlFor="status-card-prompt" className="block pb-1 text-sm font-semibold">
-            What do you want to keep an eye on?
+            {t("statusCardsResidual.interestQuestion", { defaultValue: "What do you want to keep an eye on?" })}
           </label>
           <Textarea
             id="status-card-prompt"
@@ -99,7 +97,7 @@ export function CreateStatusCardDialog({
           />
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground">{t("statusTraining.cards.examples")}</span>
-            {EXAMPLES.map((example) => (
+            {examples.map((example) => (
               <button
                 key={example}
                 type="button"
@@ -116,21 +114,21 @@ export function CreateStatusCardDialog({
           <label className="block text-sm font-semibold">{t("statusTraining.cards.agent")}</label>
           <SummarizerAgentSelect companyId={companyId} value={agentId} onChange={setAgentId} enabled={open} />
           <p className="text-xs text-muted-foreground">
-            Runs this card's setup and updates. Leave on the default unless another agent should own it.
+            {t("statusCardsResidual.agentHelp", { defaultValue: "Runs this card's setup and updates. Leave on the default unless another agent should own it." })}
           </p>
         </div>
 
         <DialogFooter>
           <div className="flex gap-2">
             <Button variant="outline" onClick={close} disabled={createMutation.isPending}>
-              Cancel
+              {t("statusCardsResidual.cancel", { defaultValue: "Cancel" })}
             </Button>
             <Button
               onClick={() => createMutation.mutate()}
               disabled={prompt.trim().length === 0 || createMutation.isPending}
             >
               {createMutation.isPending ? <Loader2 className="animate-spin" /> : null}
-              Create card
+              {t("statusCardsResidual.createCard", { defaultValue: "Create card" })}
             </Button>
           </div>
         </DialogFooter>

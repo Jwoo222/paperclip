@@ -1,0 +1,53 @@
+{
+  "statusCardsResidual": {
+    "archivedMeta": "Archived {{archived}} · last summary {{lastSummary}}",
+    "lifetimeMeta": " · lifetime {{tokens}} / {{cost}}",
+    "view": "View",
+    "restore": "Restore",
+    "examples": {
+      "evals": "issues about evals",
+      "blocked": "everything blocked this week",
+      "featureLive": "is feature X live? if not, the exact next actions to ship it"
+    },
+    "createDescription": "One message sets up the whole card: say what you want to watch and what each update should tell you. The agent builds the query from it and writes every update against it.",
+    "interestQuestion": "What do you want to keep an eye on?",
+    "agentHelp": "Runs this card's setup and updates. Leave on the default unless another agent should own it.",
+    "cancel": "Cancel",
+    "createCard": "Create card",
+    "compilingHelp": "You can add instructions and pick an update policy while this runs.",
+    "revisionMeta": "Revision {{revision}} · {{kind}} · {{time}}",
+    "revisionSummaryUnavailable": "The full summary text for this revision is unavailable — showing its change summary. The integrated changes below are the live ledger for this revision.",
+    "noChangeSummary": "No change summary was recorded for this revision.",
+    "noSummaryAfterSetup": "No summary yet — the first one is generated automatically once this card finishes setting up.",
+    "changeCountOne": "{{count}} change",
+    "changeCountMany": "{{count}} changes",
+    "interestHelp": "This one message drives the whole card: the agent compiles the watch query from it and follows it as the instructions for every update. Editing it rebuilds the card.",
+    "save": "Save",
+    "queryNotCompiled": "// query not compiled yet",
+    "noQueryMatches": "The compiled query matches no issues right now.",
+    "noSummaryYet": "no summary yet",
+    "loadingHistory": "Loading history…",
+    "today": "Today:",
+    "updateCountOne": "{{count}} update",
+    "updateCountMany": "{{count}} updates",
+    "dailyCap": " · daily cap {{count}}",
+    "updateChanges": " · {{count}} changes",
+    "changeEnteredQuery": "new issue matched the query",
+    "changeLeftQuery": "left the query",
+    "tokensCompact": "{{count}} tok",
+    "manualCost": "~1 rebuild per refresh ≈ {{cost}}",
+    "manualCostNote": "Manual cards only cost tokens when you press Refresh.",
+    "everyMinutes": "every {{count}} min",
+    "upToPerHour": "up to {{count}}/hour",
+    "duringActiveHours": " during active hours",
+    "automaticCost": "Up to ~{{count}} updates/day ({{cadence}}{{activeHours}}) ≈ {{cost}}",
+    "tokenCapNote": "Capped by your {{count}} daily token cap — the card pauses when it's hit.",
+    "noOpNote": "Only runs when something changed; a cheap no-op check otherwise.",
+    "tokenSplit": "{{input}} in / {{output}} out",
+    "updateKinds": {
+      "compile": "compile",
+      "full": "full rebuild",
+      "incremental": "incremental"
+    }
+  }
+}

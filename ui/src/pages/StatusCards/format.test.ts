@@ -1,11 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import type { StatusCardUpdate } from "@paperclipai/shared";
+import { setLocale } from "@/i18n";
 
 import {
   estimateStatusCardCost,
   rollupUpdates,
   rollupUpdatesToday,
 } from "./format";
+
+beforeAll(async () => {
+  await setLocale("en");
+});
 
 function update(overrides: Partial<StatusCardUpdate>): StatusCardUpdate {
   return {

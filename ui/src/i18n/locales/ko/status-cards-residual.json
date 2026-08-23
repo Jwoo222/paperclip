@@ -1,0 +1,53 @@
+{
+  "statusCardsResidual": {
+    "archivedMeta": "{{archived}}에 보관됨 · 최근 요약 {{lastSummary}}",
+    "lifetimeMeta": " · 누적 {{tokens}} / {{cost}}",
+    "view": "보기",
+    "restore": "복원",
+    "examples": {
+      "evals": "평가 관련 이슈",
+      "blocked": "이번 주에 차단된 모든 업무",
+      "featureLive": "기능 X가 운영 중인지, 아니라면 출시를 위한 정확한 다음 조치"
+    },
+    "createDescription": "한 문장으로 카드 전체를 설정합니다. 무엇을 감시하고 각 업데이트에서 무엇을 알려줄지 적으세요. 에이전트가 이를 바탕으로 쿼리를 만들고 모든 업데이트를 작성합니다.",
+    "interestQuestion": "무엇을 계속 지켜볼까요?",
+    "agentHelp": "이 카드의 설정과 업데이트를 실행합니다. 다른 에이전트가 담당해야 하는 경우가 아니면 기본값을 유지하세요.",
+    "cancel": "취소",
+    "createCard": "카드 만들기",
+    "compilingHelp": "실행되는 동안 지침을 추가하고 업데이트 정책을 선택할 수 있습니다.",
+    "revisionMeta": "개정 {{revision}} · {{kind}} · {{time}}",
+    "revisionSummaryUnavailable": "이 개정의 전체 요약을 사용할 수 없어 변경 요약을 표시합니다. 아래 반영된 변경 목록이 이 개정의 현재 기록입니다.",
+    "noChangeSummary": "이 개정에 기록된 변경 요약이 없습니다.",
+    "noSummaryAfterSetup": "아직 요약이 없습니다. 카드 설정이 끝나면 첫 요약이 자동으로 생성됩니다.",
+    "changeCountOne": "변경 {{count}}개",
+    "changeCountMany": "변경 {{count}}개",
+    "interestHelp": "이 한 문장이 카드 전체를 제어합니다. 에이전트는 이를 바탕으로 감시 쿼리를 만들고 모든 업데이트의 지침으로 따릅니다. 내용을 수정하면 카드가 다시 구성됩니다.",
+    "save": "저장",
+    "queryNotCompiled": "// 쿼리가 아직 컴파일되지 않음",
+    "noQueryMatches": "현재 컴파일된 쿼리와 일치하는 이슈가 없습니다.",
+    "noSummaryYet": "아직 요약 없음",
+    "loadingHistory": "기록을 불러오는 중…",
+    "today": "오늘:",
+    "updateCountOne": "업데이트 {{count}}회",
+    "updateCountMany": "업데이트 {{count}}회",
+    "dailyCap": " · 일일 한도 {{count}}",
+    "updateChanges": " · 변경 {{count}}개",
+    "changeEnteredQuery": "새 이슈가 쿼리와 일치함",
+    "changeLeftQuery": "쿼리에서 제외됨",
+    "tokensCompact": "{{count}} 토큰",
+    "manualCost": "새로고침당 약 1회 재구성 ≈ {{cost}}",
+    "manualCostNote": "수동 카드는 새로고침을 누를 때만 토큰을 사용합니다.",
+    "everyMinutes": "{{count}}분마다",
+    "upToPerHour": "시간당 최대 {{count}}회",
+    "duringActiveHours": " · 활성 시간 내",
+    "automaticCost": "하루 최대 약 {{count}}회 업데이트({{cadence}}{{activeHours}}) ≈ {{cost}}",
+    "tokenCapNote": "일일 토큰 한도 {{count}}에 도달하면 카드가 일시 중지됩니다.",
+    "noOpNote": "변경 사항이 있을 때만 실행하며, 그 외에는 저비용 확인만 수행합니다.",
+    "tokenSplit": "입력 {{input}} / 출력 {{output}}",
+    "updateKinds": {
+      "compile": "컴파일",
+      "full": "전체 재구성",
+      "incremental": "증분 업데이트"
+    }
+  }
+}

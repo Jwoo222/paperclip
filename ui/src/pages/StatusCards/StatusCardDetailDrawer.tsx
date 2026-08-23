@@ -309,8 +309,12 @@ export function StatusCardDetailDrawer({
               ) : selectedRevision ? (
                 <div className="space-y-2 rounded-md border border-border bg-muted/30 p-3">
                   <p className="text-xs text-muted-foreground" title={formatDateTime(selectedRevision.startedAt)}>
-                    Revision {revisionNumberOf(selectedRevision)} · {updateKindLabel(selectedRevision.kind)} ·{" "}
-                    {relativeTime(selectedRevision.startedAt)}
+                    {t("statusCardsResidual.revisionMeta", {
+                      revision: revisionNumberOf(selectedRevision),
+                      kind: updateKindLabel(selectedRevision.kind),
+                      time: relativeTime(selectedRevision.startedAt),
+                      defaultValue: `Revision ${revisionNumberOf(selectedRevision)} · ${updateKindLabel(selectedRevision.kind)} · ${relativeTime(selectedRevision.startedAt)}`,
+                    })}
                   </p>
                   {selectedRevisionBody ? (
                     <MarkdownBody className="text-sm leading-7">{selectedRevisionBody}</MarkdownBody>
@@ -318,13 +322,12 @@ export function StatusCardDetailDrawer({
                     <>
                       <MarkdownBody className="text-sm leading-7">{selectedRevision.changeSummary}</MarkdownBody>
                       <p className="text-xs text-muted-foreground/70">
-                        The full summary text for this revision is unavailable — showing its change summary. The
-                        integrated changes below are the live ledger for this revision.
+                        {t("statusCardsResidual.revisionSummaryUnavailable", { defaultValue: "The full summary text for this revision is unavailable — showing its change summary. The integrated changes below are the live ledger for this revision." })}
                       </p>
                     </>
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      No change summary was recorded for this revision.
+                      {t("statusCardsResidual.noChangeSummary", { defaultValue: "No change summary was recorded for this revision." })}
                     </p>
                   )}
                 </div>
@@ -348,13 +351,13 @@ export function StatusCardDetailDrawer({
                       className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground underline-offset-2 hover:underline"
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
-                      View setup task
+                      {t("statusTraining.cards.viewSetupTask")}
                     </Link>
                   ) : null}
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  No summary yet — the first one is generated automatically once this card finishes setting up.
+                  {t("statusCardsResidual.noSummaryAfterSetup", { defaultValue: "No summary yet — the first one is generated automatically once this card finishes setting up." })}
                 </p>
               )}
 
@@ -362,7 +365,10 @@ export function StatusCardDetailDrawer({
                 <section className="space-y-2">
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {selectedRevision ? t("statusTraining.cards.integratedRevision") : t("statusTraining.cards.integratedUpdate")} (
-                    {displayedChanges.length} {displayedChanges.length === 1 ? "change" : "changes"})
+                    {t(displayedChanges.length === 1 ? "statusCardsResidual.changeCountOne" : "statusCardsResidual.changeCountMany", {
+                      count: displayedChanges.length,
+                      defaultValue: displayedChanges.length === 1 ? "{{count}} change" : "{{count}} changes",
+                    })})
                   </h3>
                   <div className="space-y-1.5">
                     {displayedChanges.map((change) => (
@@ -378,17 +384,22 @@ export function StatusCardDetailDrawer({
                   every recorded update (each update is one summary revision). */}
               {updatesQuery.isLoading ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Loading history…
+                  <Loader2 className="h-4 w-4 animate-spin" /> {t("statusCardsResidual.loadingHistory", { defaultValue: "Loading history…" })}
                 </div>
               ) : updates.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t("statusTraining.cards.noUpdates")}</p>
               ) : (
                 <>
                   <div className="text-xs text-muted-foreground">
-                    Today: {todayRollup.updateCount}{" "}
-                    {todayRollup.updateCount === 1 ? "update" : "updates"} ·{" "}
+                    {t("statusCardsResidual.today", { defaultValue: "Today:" })} {t(todayRollup.updateCount === 1 ? "statusCardsResidual.updateCountOne" : "statusCardsResidual.updateCountMany", {
+                      count: todayRollup.updateCount,
+                      defaultValue: todayRollup.updateCount === 1 ? "{{count}} update" : "{{count}} updates",
+                    })} ·{" "}
                     {formatTokens(todayRollup.totalTokens)} · {formatCents(todayRollup.totalCostCents)}
-                    {card.refreshPolicy.dailyTokenCap ? ` · daily cap ${formatTokens(card.refreshPolicy.dailyTokenCap)}` : ""}
+                    {card.refreshPolicy.dailyTokenCap ? t("statusCardsResidual.dailyCap", {
+                      count: formatTokens(card.refreshPolicy.dailyTokenCap),
+                      defaultValue: ` · daily cap ${formatTokens(card.refreshPolicy.dailyTokenCap)}`,
+                    }) : ""}
                   </div>
                   <div className="divide-y divide-border">
                     {updates.map((update) => (
@@ -407,7 +418,10 @@ export function StatusCardDetailDrawer({
                         <p className="mt-1 text-xs text-muted-foreground">
                           {formatTokenSplit(update.inputTokens, update.outputTokens)} · {formatCents(update.costCents)}
                           {update.model ? ` · ${update.model}` : ""}
-                          {update.changes.length > 0 ? ` · ${update.changes.length} changes` : ""}
+                          {update.changes.length > 0 ? t("statusCardsResidual.updateChanges", {
+                            count: update.changes.length,
+                            defaultValue: ` · ${update.changes.length} changes`,
+                          }) : ""}
                         </p>
                         {update.error ? <p className="mt-1 text-xs text-destructive">{update.error}</p> : null}
                       </div>
@@ -460,8 +474,7 @@ export function StatusCardDetailDrawer({
                   aria-label={t("statusTraining.cards.watchesReports")}
                 />
                 <p className="text-xs text-muted-foreground">
-                  This one message drives the whole card: the agent compiles the watch query from it
-                  and follows it as the instructions for every update. Editing it rebuilds the card.
+                  {t("statusCardsResidual.interestHelp", { defaultValue: "This one message drives the whole card: the agent compiles the watch query from it and follows it as the instructions for every update. Editing it rebuilds the card." })}
                 </p>
               </section>
 
@@ -482,7 +495,7 @@ export function StatusCardDetailDrawer({
               <div className="flex justify-end border-t border-border pt-4">
                 <Button onClick={() => saveSettingsMutation.mutate()} disabled={saveSettingsMutation.isPending}>
                   {saveSettingsMutation.isPending ? <Loader2 className="animate-spin" /> : null}
-                  Save
+                  {t("statusCardsResidual.save", { defaultValue: "Save" })}
                 </Button>
               </div>
             </TabsContent>
@@ -505,14 +518,14 @@ function QueryDebugSection({ card }: { card: StatusCardView }) {
     <Collapsible className="rounded-md border border-border">
       <CollapsibleTrigger className="group flex w-full items-center justify-between gap-2 px-3 py-2.5 text-sm font-semibold">
         <span className="flex items-center gap-2">
-          Query debug
+          {t("statusTraining.cards.queryDebug")}
           <Badge variant="secondary">v{card.queryVersion}</Badge>
         </span>
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
       </CollapsibleTrigger>
       <CollapsibleContent className="space-y-2 border-t border-border px-3 py-3">
         <pre className="max-h-64 overflow-auto rounded-md bg-muted p-3 font-mono text-xs text-foreground">
-          {card.queries.length > 0 ? queryJson : "// query not compiled yet"}
+          {card.queries.length > 0 ? queryJson : t("statusCardsResidual.queryNotCompiled", { defaultValue: "// query not compiled yet" })}
         </pre>
         <p className="text-xs text-muted-foreground">
           {card.queryCompiledAt
@@ -544,7 +557,7 @@ function MatchedIssueList({ queries, mentioned }: { queries: StatusCardDryRun["q
   if (matched.length === 0 && mentionedOnly.length === 0) {
     return (
       <div className="rounded-md border border-dashed border-border px-3 py-4 text-sm text-muted-foreground">
-        The compiled query matches no issues right now.
+        {t("statusCardsResidual.noQueryMatches", { defaultValue: "The compiled query matches no issues right now." })}
       </div>
     );
   }
@@ -614,7 +627,11 @@ function ChangeRow({ change }: { change: StatusCardUpdate["changes"][number] }) 
 }
 
 function describeChangeKind(changeKind: string): string {
-  if (changeKind === "entered_query" || changeKind === "new") return "new issue matched the query";
-  if (changeKind === "left_query") return "left the query";
+  if (changeKind === "entered_query" || changeKind === "new") {
+    return t("statusCardsResidual.changeEnteredQuery", { defaultValue: "new issue matched the query" });
+  }
+  if (changeKind === "left_query") {
+    return t("statusCardsResidual.changeLeftQuery", { defaultValue: "left the query" });
+  }
   return changeKind.replace(/_/g, " ");
 }

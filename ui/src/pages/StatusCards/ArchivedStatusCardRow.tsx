@@ -37,8 +37,16 @@ export function ArchivedStatusCardRow({
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold">{card.title ?? t("statusTraining.cards.untitled")}</p>
         <p className="mt-0.5 text-xs text-muted-foreground" title={card.archivedAt ? formatDateTime(card.archivedAt) : undefined}>
-          archived {shortDate(card.archivedAt)} · last summary {shortDate(card.lastGeneratedAt)}
-          {rollup ? ` · lifetime ${formatTokens(rollup.totalTokens)} / ${formatCents(rollup.totalCostCents)}` : ""}
+          {t("statusCardsResidual.archivedMeta", {
+            archived: shortDate(card.archivedAt),
+            lastSummary: shortDate(card.lastGeneratedAt),
+            defaultValue: `Archived ${shortDate(card.archivedAt)} · last summary ${shortDate(card.lastGeneratedAt)}`,
+          })}
+          {rollup ? t("statusCardsResidual.lifetimeMeta", {
+            tokens: formatTokens(rollup.totalTokens),
+            cost: formatCents(rollup.totalCostCents),
+            defaultValue: ` · lifetime ${formatTokens(rollup.totalTokens)} / ${formatCents(rollup.totalCostCents)}`,
+          }) : ""}
         </p>
       </div>
       {/* View is the more common intent on an archived row (reading the last
@@ -46,11 +54,11 @@ export function ArchivedStatusCardRow({
           stale and never auto-runs. */}
       <div className="flex shrink-0 gap-2">
         <Button size="sm" onClick={onView}>
-          View
+          {t("statusCardsResidual.view", { defaultValue: "View" })}
         </Button>
         <Button variant="outline" size="sm" onClick={onRestore} disabled={restorePending}>
           {restorePending ? <Loader2 className="animate-spin" /> : null}
-          Restore
+          {t("statusCardsResidual.restore", { defaultValue: "Restore" })}
         </Button>
       </div>
     </div>
