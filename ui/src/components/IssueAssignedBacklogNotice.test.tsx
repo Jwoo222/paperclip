@@ -3,6 +3,7 @@
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { setLocale } from "../i18n";
 import type { Agent } from "@paperclipai/shared";
 import { IssueAssignedBacklogNotice } from "./IssueAssignedBacklogNotice";
 
@@ -19,7 +20,8 @@ const baseAgent = {
 let container: HTMLDivElement;
 let root: ReturnType<typeof createRoot>;
 
-beforeEach(() => {
+beforeEach(async () => {
+  await setLocale("en");
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);

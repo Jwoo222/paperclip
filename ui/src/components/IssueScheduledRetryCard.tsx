@@ -1,14 +1,62 @@
 import { Clock, RotateCcw, AlertCircle, Loader2, CheckCircle2 } from "lucide-react";
 import { Link } from "@/lib/router";
 import { Button } from "@/components/ui/button";
-import { cn, formatDateTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { formatMonitorOffset } from "@/lib/issue-monitor";
 import { formatRetryReason } from "@/lib/runRetryState";
 import type { IssueScheduledRetry } from "@paperclipai/shared";
 import { useRetryNowMutation, type RetryNowError } from "../hooks/useRetryNowMutation";
 import { Badge } from "@/components/ui/badge";
+import { i18n, t } from "@/i18n";
 
 const MAX_TURN_CONTINUATION = "max_turns_continuation";
+
+function formatDateTime(date: Date | string) {
+  const locale = i18n.resolvedLanguage?.toLowerCase().startsWith("ko") ? "ko-KR" : "en-US";
+  return new Date(date).toLocaleString(locale, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function localizedCompactDuration(value: string) {
+  return value.split(" ").map((part) => {
+    const match = /^(\d+)([smhd])$/.exec(part);
+    if (!match) return part;
+    const count = Number(match[1]);
+    if (match[2] === "s") return t("taskDetailExtra.durationSeconds", { count });
+    if (match[2] === "m") return t("taskDetailExtra.durationMinutes", { count });
+    if (match[2] === "h") return t("taskDetailExtra.durationHours", { count });
+    return t("taskDetailExtra.durationDays", { count });
+  }).join(" ");
+}
+
+function localizedMonitorOffset(value: string) {
+  if (value.startsWith("in ")) {
+    return t("taskDetailExtra.inDuration", {
+      duration: localizedCompactDuration(value.slice(3)),
+    });
+  }
+  if (value.endsWith(" ago")) {
+    return t("taskDetailExtra.durationAgo", {
+      duration: localizedCompactDuration(value.slice(0, -4)),
+    });
+  }
+  return localizedCompactDuration(value);
+}
+
+function localizedRetryReason(reason: string | null | undefined) {
+  if (reason === "transient_failure") return t("taskDetailExtra.retryReasonTransientFailure");
+  if (reason === "missing_issue_comment") return t("taskDetailExtra.retryReasonMissingComment");
+  if (reason === "process_lost") return t("taskDetailExtra.retryReasonProcessLost");
+  if (reason === "assignment_recovery") return t("taskDetailExtra.retryReasonAssignmentRecovery");
+  if (reason === "issue_continuation_needed") return t("taskDetailExtra.retryReasonContinuationNeeded");
+  if (reason === MAX_TURN_CONTINUATION) return t("taskDetailExtra.retryReasonMaxTurns");
+  return formatRetryReason(reason);
+}
 
 function isContinuationReason(reason: string | null | undefined) {
   return reason === MAX_TURN_CONTINUATION;
@@ -36,11 +84,12 @@ export function IssueScheduledRetryCard({
   const dueAtIso = scheduledRetry.scheduledRetryAt
     ? new Date(scheduledRetry.scheduledRetryAt).toISOString()
     : null;
-  const relative = dueAtIso ? formatMonitorOffset(dueAtIso) : null;
+  const rawRelative = dueAtIso ? formatMonitorOffset(dueAtIso) : null;
+  const relative = rawRelative && rawRelative !== "now" ? localizedMonitorOffset(rawRelative) : rawRelative;
   const absolute = scheduledRetry.scheduledRetryAt
     ? formatDateTime(scheduledRetry.scheduledRetryAt)
     : null;
-  const reason = formatRetryReason(scheduledRetry.scheduledRetryReason);
+  const reason = localizedRetryReason(scheduledRetry.scheduledRetryReason);
   const attempt =
     typeof scheduledRetry.scheduledRetryAttempt === "number"
     && Number.isFinite(scheduledRetry.scheduledRetryAttempt)
@@ -48,21 +97,21 @@ export function IssueScheduledRetryCard({
       ? scheduledRetry.scheduledRetryAttempt
       : null;
 
-  const badgeLabel = continuation ? "Continuation scheduled" : "Retry scheduled";
-  const titleAction = continuation ? "Automatic continuation" : "Automatic retry";
+  const badgeLabel = continuation ? t("taskDetailExtra.continuationScheduled") : t("taskDetailExtra.retryScheduled");
+  const titleAction = continuation ? t("taskDetailExtra.automaticContinuation") : t("taskDetailExtra.automaticRetry");
   let titleSuffix: string;
   if (relative === "now") {
-    titleSuffix = "due now";
+    titleSuffix = t("taskDetailExtra.dueNow");
   } else if (relative) {
     titleSuffix = relative;
   } else {
-    titleSuffix = "pending schedule";
+    titleSuffix = t("taskDetailExtra.pendingSchedule");
   }
   const title = `${titleAction} ${titleSuffix}`;
 
   const helperIdle = continuation
-    ? "Pulls continuation forward immediately"
-    : "Pulls retry forward immediately";
+    ? t("taskDetailExtra.pullContinuationNow")
+    : t("taskDetailExtra.pullRetryNow");
   const isError = retryNow.isError || retryNow.lastError !== null;
   const isSuccessTransient = retryNow.isSuccess
     && (retryNow.data?.outcome === "promoted" || retryNow.data?.outcome === "already_promoted");
@@ -80,7 +129,7 @@ export function IssueScheduledRetryCard({
               {badgeLabel}
             </Badge>
             {attempt !== null ? (
-              <span className="text-muted-foreground">Attempt {attempt}</span>
+              <span className="text-muted-foreground">{t("taskDetailExtra.attempt", { count: attempt })}</span>
             ) : null}
             {reason ? (
               <span className="text-muted-foreground">{reason}</span>
@@ -93,7 +142,7 @@ export function IssueScheduledRetryCard({
               {absolute && scheduledRetry.retryOfRunId ? <span>{" · "}</span> : null}
               {scheduledRetry.retryOfRunId ? (
                 <span>
-                  Replaces run{" "}
+                  {t("taskDetailExtra.replacesRun")}{" "}
                   <Link
                     to={`/agents/${scheduledRetry.agentId}/runs/${scheduledRetry.retryOfRunId}`}
                     className="font-mono text-foreground hover:underline"
@@ -106,7 +155,7 @@ export function IssueScheduledRetryCard({
           ) : null}
           {scheduledRetry.error ? (
             <div className="mt-1 text-xs text-muted-foreground">
-              Last attempt failed: {scheduledRetry.error}. Paperclip will retry automatically.
+              {t("taskDetailExtra.lastAttemptFailed", { error: scheduledRetry.error })}
             </div>
           ) : null}
           {isError ? (
@@ -132,27 +181,27 @@ export function IssueScheduledRetryCard({
             {retryNow.isPending ? (
               <span className="inline-flex items-center gap-1.5">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                Retrying…
+                {t("taskDetailExtra.retrying")}
               </span>
             ) : isSuccessTransient ? (
               <span className="inline-flex items-center gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-                {retryNow.data?.outcome === "already_promoted" ? "Already promoted" : "Promoted"}
+                {retryNow.data?.outcome === "already_promoted" ? t("taskDetailExtra.alreadyPromoted") : t("taskDetailExtra.promoted")}
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5">
                 <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-                Retry now
+                {t("taskDetailExtra.retryNow")}
               </span>
             )}
           </Button>
           <span className="text-right text-xs text-muted-foreground sm:max-w-(--sz-12rem)">
             {retryNow.isPending
-              ? "Promoting scheduled retry"
+              ? t("taskDetailExtra.promotingRetry")
               : isSuccessTransient
                 ? retryNow.data?.outcome === "already_promoted"
-                  ? "Already promoted — run starting"
-                  : "Promoted — run starting"
+                  ? t("taskDetailExtra.alreadyPromotedStarting")
+                  : t("taskDetailExtra.promotedStarting")
                 : helperIdle}
           </span>
         </div>
@@ -180,7 +229,7 @@ export function RetryErrorBand({ error, onRetry, className }: RetryErrorBandProp
     >
       <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
       <div className="min-w-0 flex-1">
-        <div className="font-medium">Couldn't retry now</div>
+        <div className="font-medium">{t("taskDetailExtra.couldntRetry")}</div>
         <div className="mt-0.5 text-muted-foreground">{error.message}</div>
       </div>
       <button
@@ -188,7 +237,7 @@ export function RetryErrorBand({ error, onRetry, className }: RetryErrorBandProp
         onClick={onRetry}
         className="shrink-0 font-medium text-rose-700 hover:underline dark:text-rose-300"
       >
-        Try again
+        {t("taskDetailExtra.tryAgain")}
       </button>
     </div>
   );

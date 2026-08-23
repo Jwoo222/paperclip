@@ -21,17 +21,52 @@ import { Badge } from "@/components/ui/badge";
 import {
   deriveActiveRecoveryDisplayState,
   RECOVERY_CHIP_DEFAULT_TONE,
-  recoveryChipLabel,
 } from "../lib/recovery-display";
 import { StatusGlyph } from "./StatusGlyph";
 import { t } from "@/i18n";
+
+function localizedCompactDuration(value: string) {
+  return value.split(" ").map((part) => {
+    const match = /^(\d+)([smhd])$/.exec(part);
+    if (!match) return part;
+    const count = Number(match[1]);
+    if (match[2] === "s") return t("taskDetailExtra.durationSeconds", { count });
+    if (match[2] === "m") return t("taskDetailExtra.durationMinutes", { count });
+    if (match[2] === "h") return t("taskDetailExtra.durationHours", { count });
+    return t("taskDetailExtra.durationDays", { count });
+  }).join(" ");
+}
+
+function localizedMonitorOffset(value: string) {
+  if (value.startsWith("in ")) {
+    return t("taskDetailExtra.inDuration", {
+      duration: localizedCompactDuration(value.slice(3)),
+    });
+  }
+  if (value.endsWith(" ago")) {
+    return t("taskDetailExtra.durationAgo", {
+      duration: localizedCompactDuration(value.slice(0, -4)),
+    });
+  }
+  return localizedCompactDuration(value);
+}
+
+function recoveryLabel(state: "needed" | "in_progress" | "observe_only" | "escalated", kind: IssueRecoveryAction["kind"]) {
+  if (kind === "workspace_validation" && state === "needed") {
+    return t("taskDetailExtra.workspaceRecoveryNeeded");
+  }
+  if (state === "needed") return t("taskDetailExtra.recoveryNeeded");
+  if (state === "in_progress") return t("taskDetailExtra.recoveryInProgress");
+  if (state === "observe_only") return t("taskDetailExtra.observingActiveRun");
+  return t("taskDetailExtra.recoveryEscalated");
+}
 
 function BlockerRecoveryIndicator({ action }: { action: IssueRecoveryAction }) {
   const state = deriveActiveRecoveryDisplayState(action);
   if (!state) return null;
   const tone = RECOVERY_CHIP_DEFAULT_TONE[state];
   const Icon = tone.icon;
-  const label = recoveryChipLabel(state, action.kind);
+  const label = recoveryLabel(state, action.kind);
   return (
     <Badge variant="outline"
       data-testid="issue-blocked-notice-recovery-indicator"
@@ -39,7 +74,7 @@ function BlockerRecoveryIndicator({ action }: { action: IssueRecoveryAction }) {
       data-recovery-kind={action.kind}
       role="status"
       aria-label={label}
-      title={`${label} — open the source task to act.`}
+      title={t("taskDetailExtra.openSourceTaskToAct", { label })}
       className={`[&>svg]:size-2.5 gap-0.5 px-1.5 text-(length:--text-nano) ${tone.className}`}
     >
       <Icon className="h-2.5 w-2.5" aria-hidden />
@@ -59,12 +94,13 @@ function SuccessfulRunRetryNowControl({
   const dueAtIso = scheduledRetry.scheduledRetryAt
     ? new Date(scheduledRetry.scheduledRetryAt).toISOString()
     : null;
-  const relative = dueAtIso ? formatMonitorOffset(dueAtIso) : null;
-  const scheduleLabel = relative === "now"
-    ? "due now"
+  const rawRelative = dueAtIso ? formatMonitorOffset(dueAtIso) : null;
+  const relative = rawRelative && rawRelative !== "now" ? localizedMonitorOffset(rawRelative) : null;
+  const scheduleLabel = rawRelative === "now"
+    ? t("taskDetailExtra.dueNow")
     : relative
-      ? `scheduled ${relative}`
-      : "scheduled";
+      ? t("taskDetailExtra.scheduledWithOffset", { offset: relative })
+      : t("taskDetailExtra.scheduled");
   const success = retryNow.isSuccess
     && (retryNow.data?.outcome === "promoted" || retryNow.data?.outcome === "already_promoted");
 
@@ -72,7 +108,7 @@ function SuccessfulRunRetryNowControl({
     <div className="mt-2 rounded-md border border-amber-300/70 bg-background/80 p-2 dark:border-amber-500/40 dark:bg-background/40">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 text-xs leading-5 text-amber-900 dark:text-amber-100">
-          Paperclip will ask the assignee to choose the next step {scheduleLabel}. Retry now starts that follow-up immediately.
+              {t("taskDetailExtra.retryFollowupSchedule", { schedule: scheduleLabel })}
         </div>
         <Button
           type="button"
@@ -86,17 +122,17 @@ function SuccessfulRunRetryNowControl({
           {retryNow.isPending ? (
             <span className="inline-flex items-center gap-1.5">
               <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-              Retrying...
+                {t("taskDetailExtra.retrying")}
             </span>
           ) : success ? (
             <span className="inline-flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-              {retryNow.data?.outcome === "already_promoted" ? "Already promoted" : "Promoted"}
+                {retryNow.data?.outcome === "already_promoted" ? t("taskDetailExtra.alreadyPromoted") : t("taskDetailExtra.promoted")}
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5">
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-              Retry now
+                {t("taskDetailExtra.retryNow")}
             </span>
           )}
         </Button>
@@ -137,7 +173,23 @@ const WAITING_STEP_RANK: Record<WaitingStepStatus, number> = {
 };
 
 function waitingTaskStatusLabel(status: string): string {
-  return status.replace(/_/g, " ").replace(/\b\w/g, (character) => character.toUpperCase());
+  if (status === "backlog") return t("taskDetailExtra.statusBacklog");
+  if (status === "todo") return t("taskDetailExtra.statusTodo");
+  if (status === "in_progress") return t("taskDetailExtra.statusInProgress");
+  if (status === "in_review") return t("taskDetailExtra.statusInReview");
+  if (status === "done") return t("taskDetailExtra.statusDone");
+  if (status === "blocked") return t("taskDetailExtra.statusBlocked");
+  if (status === "cancelled") return t("taskDetailExtra.statusCancelled");
+  if (status === "queued") return t("taskDetailExtra.statusQueued");
+  if (status === "running") return t("taskDetailExtra.statusRunning");
+  if (status === "scheduled_retry") return t("taskDetailExtra.statusScheduledRetry");
+  return status;
+}
+
+function waitingStepStatusLabel(status: WaitingStepStatus) {
+  if (status === "done") return t("taskDetailExtra.waitingStepDone");
+  if (status === "running") return t("taskDetailExtra.waitingStepRunning");
+  return t("taskDetailExtra.waitingStepQueued");
 }
 
 function WaitingChipLink({
@@ -157,7 +209,7 @@ function WaitingChipLink({
       <StatusGlyph
         status={blocker.status}
         size="sm"
-        title={`${waitingTaskStatusLabel(blocker.status)} status`}
+        title={t("taskDetailExtra.statusTitle", { status: waitingTaskStatusLabel(blocker.status) })}
       />
       <span>{blocker.identifier ?? blocker.id.slice(0, 8)}</span>
       <span className="max-w-(--sz-18rem) truncate font-sans text-(length:--text-micro) text-blue-800 dark:text-blue-200">
@@ -165,7 +217,7 @@ function WaitingChipLink({
       </span>
       {running ? (
         <span className="ml-0.5 rounded-full bg-blue-500/15 px-1.5 py-0.5 text-(length:--text-nano) font-medium uppercase tracking-wide text-blue-700 dark:bg-blue-400/20 dark:text-blue-200">
-          running
+          {t("taskDetailExtra.waitingStepRunning")}
         </span>
       ) : null}
     </IssueLinkQuicklook>
@@ -232,7 +284,7 @@ function WaitingOnLiveWorkNotice({
     nowRunning.push(blocker);
   }
 
-  const queuedNoun = total === 1 ? "task" : "tasks";
+  const queuedNoun = total === 1 ? t("taskDetailExtra.taskNoun") : t("taskDetailExtra.tasksNoun");
 
   return (
     <div
@@ -259,7 +311,7 @@ function WaitingOnLiveWorkNotice({
             </div>
             <div
               role="progressbar"
-              aria-label="Blocker chain progress"
+                  aria-label={t("taskDetailExtra.blockerChainProgress")}
               aria-valuemin={0}
               aria-valuenow={doneCount}
               aria-valuemax={total}
@@ -277,7 +329,7 @@ function WaitingOnLiveWorkNotice({
                         : "bg-blue-200 dark:bg-blue-500/30",
                   )}
                   style={{ width: `${100 / total}%` }}
-                  title={`${blocker.identifier ?? blocker.id.slice(0, 8)}: ${status}`}
+                  title={`${blocker.identifier ?? blocker.id.slice(0, 8)}: ${waitingStepStatusLabel(status)}`}
                   aria-hidden
                 />
               ))}
@@ -394,7 +446,9 @@ export function IssueBlockedNotice({
       ? { issueId, scheduledRetry }
       : null;
 
-  const blockerLabel = blockers.length === 1 ? "the linked task" : "the linked tasks";
+  const blockerLabel = blockers.length === 1
+    ? t("taskDetailExtra.linkedTask")
+    : t("taskDetailExtra.linkedTasks");
   const terminalBlockers = blockers
     .flatMap((blocker) => blocker.terminalBlockers ?? [])
     .filter((blocker, index, all) => all.findIndex((candidate) => candidate.id === blocker.id) === index);
@@ -448,7 +502,7 @@ export function IssueBlockedNotice({
   // Rule B reopen path — we must not claim "a message won't reopen" for those.
   // Name the deepest unresolved leaf (prefer terminal leaves) with its status
   // so "I sent a message and nothing happened" can't recur silently.
-  const responsibleName = agentName ?? "the assignee";
+  const responsibleName = agentName ?? t("taskDetailExtra.assigneeFallback");
   const reopenSuppressed = issueStatus === "blocked" && !isStalled && blockers.length > 0;
   const unresolvedLeafBlockers = (() => {
     if (!reopenSuppressed) return [] as IssueRelationIssueSummary[];
@@ -541,7 +595,7 @@ export function IssueBlockedNotice({
               </p>
               <ul className="list-disc space-y-1 pl-5 text-xs leading-5 text-amber-900 dark:text-amber-100">
                 <li>{t("taskDetail.markDoneOrCancelled")}</li>
-                <li>{t("taskDetail.sendForReview")}</li>
+                <li>{t("taskDetailExtra.sendForReviewOrInput")}</li>
                 <li>{t("taskDetail.recordBlockerOwner")}</li>
                 <li>{t("taskDetail.delegateFollowup")}</li>
               </ul>
@@ -551,20 +605,20 @@ export function IssueBlockedNotice({
                     to={`/agents/${successfulRunHandoff.assigneeAgentId}/runs/${successfulRunHandoff.sourceRunId}`}
                     className="rounded-md border border-amber-300/70 bg-background/80 px-2 py-1 font-mono text-amber-950 hover:border-amber-500 hover:bg-amber-100 hover:underline dark:border-amber-500/40 dark:bg-background/40 dark:text-amber-100 dark:hover:bg-amber-500/15"
                   >
-                    run {successfulRunHandoff.sourceRunId.slice(0, 8)}
+                    {t("taskDetailExtra.runLabel")} {successfulRunHandoff.sourceRunId.slice(0, 8)}
                   </Link>
                 ) : successfulRunHandoff.sourceRunId ? (
                   <span className="rounded-md border border-amber-300/70 bg-background/80 px-2 py-1 font-mono text-amber-950 dark:border-amber-500/40 dark:bg-background/40 dark:text-amber-100">
-                    run {successfulRunHandoff.sourceRunId.slice(0, 8)}
+                    {t("taskDetailExtra.runLabel")} {successfulRunHandoff.sourceRunId.slice(0, 8)}
                   </span>
                 ) : null}
                 <span className="rounded-md border border-amber-300/70 bg-background/80 px-2 py-1 text-amber-900 dark:border-amber-500/40 dark:bg-background/40 dark:text-amber-100">
-                  Asked {agentName ?? "the assignee"} to choose the next step
+                  {t("taskDetailExtra.askedNextStep", { agent: agentName ?? t("taskDetailExtra.assigneeFallback") })}
                 </span>
               </div>
               {successfulRunHandoff.detectedProgressSummary ? (
                 <p className="text-xs leading-5 text-amber-800 dark:text-amber-200">
-                  Detected progress: {successfulRunHandoff.detectedProgressSummary}
+                  {t("taskDetailExtra.detectedProgress")}: {successfulRunHandoff.detectedProgressSummary}
                 </p>
               ) : null}
               {successfulRunRetryNow ? (
@@ -584,25 +638,23 @@ export function IssueBlockedNotice({
                 {blockers.length > 0
                   ? isStalled
                     ? stalledLeafBlockers.length > 1
-                      ? <>Work on this task is blocked by {blockerLabel}, but the chain is stalled in review without a clear next step. Resolve the stalled reviews below or remove them as blockers.</>
-                      : <>Work on this task is blocked by {blockerLabel}, but the chain is stalled in review without a clear next step. Resolve the stalled review below or remove it as a blocker.</>
+                      ? <>{t("taskDetailExtra.stalledMultiple", { blockerLabel })}</>
+                      : <>{t("taskDetailExtra.stalledSingle", { blockerLabel })}</>
                     : reopenSuppressed
-                      ? <>A message won&rsquo;t restart this task yet — it stays blocked by {blockerLabel} until {blockers.length === 1 ? "it is" : "they are"} done, then it reopens automatically. Comments still notify {responsibleName} for questions or triage in the meantime.</>
-                      : <>Work on this task is blocked by {blockerLabel} until {blockers.length === 1 ? "it is" : "they are"} complete. Comments still notify the assignee for questions or triage.</>
-                  : <>Work on this task is blocked until someone moves it back to To do. Comments still notify the assignee for questions or triage.</>}
+                       ? <>{t("taskDetailExtra.reopenSuppressedBody", { blockerLabel, responsibleName })}</>
+                      : <>{t("taskDetailExtra.blockedByBody", { blockerLabel })}</>
+                  : <>{t("taskDetailExtra.blockedUntilTodo")}</>}
               </p>
               {reopenSuppressed && reopenSuppressedLeafId ? (
                 <p
                   data-testid="issue-blocked-notice-reopen-suppressed"
                   className="text-xs font-medium leading-5 text-amber-900 dark:text-amber-100"
                 >
-                  Still blocked by{" "}
+                  {t("taskDetailExtra.stillBlockedBy")} {" "}
                   <span className="font-mono">{reopenSuppressedLeafId}</span>
                   {reopenSuppressedLeafStatus ? <> ({reopenSuppressedLeafStatus})</> : null}
                   {reopenSuppressedOtherCount > 0
-                    ? ` and ${reopenSuppressedOtherCount} other ${
-                        reopenSuppressedOtherCount === 1 ? "task" : "tasks"
-                      }`
+                    ? <> {t("taskDetailExtra.otherBlockedTasks", { count: reopenSuppressedOtherCount })}</>
                     : null}
                   .
                 </p>
@@ -615,14 +667,14 @@ export function IssueBlockedNotice({
               {showStalledRow ? (
                 <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                   <span className="text-xs font-medium text-amber-800 dark:text-amber-200">
-                    Stalled in review
+                    {t("taskDetailExtra.stalledInReview")}
                   </span>
                   {stalledLeafBlockers.map(renderBlockerChip)}
                 </div>
               ) : terminalBlockers.length > 0 ? (
                 <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                   <span className="text-xs font-medium text-amber-800 dark:text-amber-200">
-                    Ultimately waiting on
+                    {t("taskDetailExtra.ultimatelyWaitingOn")}
                   </span>
                   {terminalBlockers.map(renderBlockerChip)}
                 </div>
@@ -634,7 +686,7 @@ export function IssueBlockedNotice({
                 >
                   <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-800 dark:text-amber-200">
                     <Flag className="h-3 w-3" aria-hidden />
-                    Blocked by parked work
+                    {t("taskDetailExtra.blockedByParkedWork")}
                   </span>
                   {parkedBlockers.map(renderBlockerChip)}
                 </div>

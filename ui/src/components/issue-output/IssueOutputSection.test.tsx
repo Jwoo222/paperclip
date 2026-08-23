@@ -1,7 +1,12 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { setLocale } from "../../i18n";
 import type { IssueWorkProduct } from "@paperclipai/shared";
 import { IssueOutputSection } from "./IssueOutputSection";
+
+beforeEach(async () => {
+  await setLocale("en");
+});
 
 function makeWorkProduct(overrides: Partial<IssueWorkProduct> & { id: string }): IssueWorkProduct {
   return {

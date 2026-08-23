@@ -1,10 +1,15 @@
 // @vitest-environment node
 
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { setLocale } from "../i18n";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ISSUE_WRITE_DENIAL_CODES } from "@paperclipai/shared";
 import { IssueWriteDenialNotice } from "./IssueWriteDenialNotice";
 import { issueWriteDenialForActivity } from "../lib/issue-write-denial-activity";
+
+beforeEach(async () => {
+  await setLocale("en");
+});
 
 describe("IssueWriteDenialNotice", () => {
   it("answers all three plan §6 obligations for every code", () => {

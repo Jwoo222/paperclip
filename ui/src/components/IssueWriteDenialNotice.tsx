@@ -6,6 +6,7 @@ import {
   type IssueWriteDenialTone,
 } from "@paperclipai/shared";
 import { cn } from "../lib/utils";
+import { t } from "@/i18n";
 
 /**
  * Renders actionable copy for a denied issue write (the open cross-task write design (failure UX)).
@@ -64,6 +65,99 @@ const VISIBILITY_CODES: ReadonlySet<IssueWriteDenialCode> = new Set([
   "issue_write_not_visible",
 ]);
 
+function nonEmpty(value: string | null | undefined) {
+  const trimmed = value?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : null;
+}
+
+function localizedIssueWriteDenial(code: IssueWriteDenialCode, context: IssueWriteDenialContext) {
+  const base = describeIssueWriteDenial(code, context);
+  const issue = nonEmpty(context.issueIdentifier) ?? t("taskDetailExtra.denialThisTask");
+  const actor = nonEmpty(context.actorLabel) ?? t("taskDetailExtra.denialThisAgent");
+  const assignee = nonEmpty(context.assigneeLabel) ?? t("taskDetailExtra.denialCurrentAssignee");
+  const responsible = nonEmpty(context.responsibleUserName) ?? t("taskDetailExtra.responsibleUser");
+
+  switch (code) {
+    case "issue_write_not_visible":
+      return {
+        ...base,
+        boundary: t("taskDetailExtra.denialVisibilityBoundary"),
+        title: t("taskDetailExtra.denialVisibilityTitle"),
+        description: t("taskDetailExtra.denialVisibilityDescription", { issue, actor }),
+        whoCanAct: t("taskDetailExtra.denialVisibilityWho", { assignee }),
+        sanctionedPath: t("taskDetailExtra.denialVisibilityPath", { actor }),
+      };
+    case "issue_write_actor_class_excluded":
+      return {
+        ...base,
+        boundary: t("taskDetailExtra.denialActorClassBoundary"),
+        title: t("taskDetailExtra.denialActorClassTitle"),
+        description: t("taskDetailExtra.denialActorClassDescription", { actor, issue }),
+        whoCanAct: t("taskDetailExtra.denialActorClassWho"),
+        sanctionedPath: t("taskDetailExtra.denialActorClassPath"),
+      };
+    case "issue_write_responsible_user_ceiling":
+      return {
+        ...base,
+        boundary: t("taskDetailExtra.denialResponsibleCeilingBoundary"),
+        title: t("taskDetailExtra.denialResponsibleCeilingTitle"),
+        description: t("taskDetailExtra.denialResponsibleCeilingDescription", { responsible, issue }),
+        whoCanAct: t("taskDetailExtra.denialResponsibleCeilingWho", { responsible, issue }),
+        sanctionedPath: t("taskDetailExtra.denialResponsibleCeilingPath", { responsible }),
+      };
+    case "issue_write_responsible_user_unavailable":
+      return {
+        ...base,
+        boundary: t("taskDetailExtra.denialResponsibleUnavailableBoundary"),
+        title: t("taskDetailExtra.denialResponsibleUnavailableTitle"),
+        description: t("taskDetailExtra.denialResponsibleUnavailableDescription", { responsible, issue }),
+        whoCanAct: t("taskDetailExtra.denialResponsibleUnavailableWho", { actor }),
+        sanctionedPath: t("taskDetailExtra.denialResponsibleUnavailablePath"),
+      };
+    case "issue_write_assignee_run_lock":
+      return {
+        ...base,
+        boundary: t("taskDetailExtra.denialRunLockBoundary"),
+        title: t("taskDetailExtra.denialRunLockTitle"),
+        description: t("taskDetailExtra.denialRunLockDescription", { assignee, issue }),
+        whoCanAct: t("taskDetailExtra.denialRunLockWho", { assignee }),
+        sanctionedPath: t("taskDetailExtra.denialRunLockPath", { assignee }),
+      };
+    case "cross_issue_influence_cap_exceeded": {
+      const cap = context.cap ?? 20;
+      const count = context.count ?? null;
+      return {
+        ...base,
+        boundary: t("taskDetailExtra.denialCapBoundary", { cap }),
+        title: t("taskDetailExtra.denialCapTitle"),
+        description: count === null
+          ? t("taskDetailExtra.denialCapDescriptionNoAttempt", { cap, actor, issue })
+          : t("taskDetailExtra.denialCapDescription", { cap, count, actor, issue }),
+        whoCanAct: t("taskDetailExtra.denialCapWho", { actor, assignee, issue }),
+        sanctionedPath: t("taskDetailExtra.denialCapPath"),
+      };
+    }
+    case "cross_issue_influence_run_context_required":
+      return {
+        ...base,
+        boundary: t("taskDetailExtra.denialRunContextBoundary"),
+        title: t("taskDetailExtra.denialRunContextTitle"),
+        description: t("taskDetailExtra.denialRunContextDescription"),
+        whoCanAct: t("taskDetailExtra.denialRunContextWho", { actor }),
+        sanctionedPath: t("taskDetailExtra.denialRunContextPath"),
+      };
+    case "issue_write_attribution_spoof_rejected":
+      return {
+        ...base,
+        boundary: t("taskDetailExtra.denialAttributionBoundary"),
+        title: t("taskDetailExtra.denialAttributionTitle"),
+        description: t("taskDetailExtra.denialAttributionDescription"),
+        whoCanAct: t("taskDetailExtra.denialAttributionWho", { actor }),
+        sanctionedPath: t("taskDetailExtra.denialAttributionPath", { responsible }),
+      };
+  }
+}
+
 export function IssueWriteDenialNotice({
   code,
   context,
@@ -73,7 +167,7 @@ export function IssueWriteDenialNotice({
   context?: IssueWriteDenialContext;
   className?: string;
 }) {
-  const copy = describeIssueWriteDenial(code, context ?? {});
+  const copy = localizedIssueWriteDenial(code, context ?? {});
   const tone = TONE_CLASSES[copy.tone];
   const Icon = VISIBILITY_CODES.has(code) ? EyeOff : TONE_ICONS[copy.tone];
 
@@ -99,11 +193,11 @@ export function IssueWriteDenialNotice({
               label and the first words of the value together at every width. */}
           <dl className={cn("space-y-0.5 text-xs leading-5", tone.action)}>
             <div className="min-w-0">
-              <dt className="inline font-medium">Who can act:</dt>{" "}
+              <dt className="inline font-medium">{t("taskDetailExtra.whoCanAct")}</dt>{" "}
               <dd className="inline">{copy.whoCanAct}</dd>
             </div>
             <div className="min-w-0">
-              <dt className="inline font-medium">Try this:</dt>{" "}
+              <dt className="inline font-medium">{t("taskDetailExtra.tryThis")}</dt>{" "}
               <dd className="inline">{copy.sanctionedPath}</dd>
             </div>
           </dl>

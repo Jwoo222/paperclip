@@ -5,6 +5,7 @@ import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 import type { ExecutionWorkspace, Issue } from "@paperclipai/shared";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { setLocale } from "../i18n";
 import { IssueWorkspaceCard } from "./IssueWorkspaceCard";
 
 function act(callback: () => void | Promise<void>) {
@@ -129,7 +130,8 @@ describe("IssueWorkspaceCard", () => {
   let container: HTMLDivElement;
   let originalResizeObserver: typeof ResizeObserver | undefined;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await setLocale("en");
     originalResizeObserver = globalThis.ResizeObserver;
     globalThis.ResizeObserver = class ResizeObserver {
       observe() {}

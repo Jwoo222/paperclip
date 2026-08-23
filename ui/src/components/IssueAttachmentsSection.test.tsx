@@ -6,6 +6,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { setLocale } from "../i18n";
 import { IssueAttachmentsSection } from "./IssueAttachmentsSection";
 
 vi.mock("./MarkdownBody", () => ({
@@ -91,7 +92,8 @@ describe("IssueAttachmentsSection", () => {
   let queryClient: QueryClient;
   let fetchSpy: ReturnType<typeof vi.fn>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await setLocale("en");
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);

@@ -11,6 +11,7 @@ import {
 import { OutputPrimaryCard } from "./OutputPrimaryCard";
 import { OutputRow } from "./OutputRow";
 import { cn, relativeTime } from "@/lib/utils";
+import { i18n, t } from "@/i18n";
 
 interface IssueOutputSectionProps {
   workProducts: IssueWorkProduct[] | null | undefined;
@@ -43,7 +44,7 @@ function OutputMediaPreview({
   const isVideo = isVideoLikeOutput(meta.contentType, meta.originalFilename);
   const metaBits = [meta.contentType, formatBytes(meta.byteSize)];
   if (creatorName) metaBits.push(creatorName);
-  metaBits.push(relativeTime(item.createdAt));
+  metaBits.push(relativeTime(item.createdAt, i18n.resolvedLanguage));
 
   const preview = (
     <>
@@ -80,7 +81,7 @@ function OutputMediaPreview({
       <button
         type="button"
         className={className}
-        aria-label={`Browse ${filename} in gallery`}
+        aria-label={t("taskDetailExtra.browseFileGallery", { filename })}
         onClick={() => onMediaClick(item)}
       >
         {preview}
@@ -94,7 +95,7 @@ function OutputMediaPreview({
       target="_blank"
       rel="noreferrer"
       className={className}
-      aria-label={`Open ${filename}`}
+      aria-label={t("taskDetailExtra.openFile", { filename })}
     >
       {preview}
     </a>
@@ -120,10 +121,10 @@ export function IssueOutputSection({ workProducts, resolveCreatorName, onMediaCl
   const fileRest = rest.filter((item) => !isMediaOutput(item));
 
   return (
-    <section className="space-y-3" aria-label="Task outputs">
+    <section className="space-y-3" aria-label={t("taskDetailExtra.taskOutputs")}>
       <div className="flex items-center gap-2">
         <Play className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
-        <h3 className="text-sm font-medium text-muted-foreground">Output</h3>
+        <h3 className="text-sm font-medium text-muted-foreground">{t("taskDetailExtra.output")}</h3>
         <span className="text-xs text-muted-foreground">{count}</span>
       </div>
 
@@ -135,7 +136,7 @@ export function IssueOutputSection({ workProducts, resolveCreatorName, onMediaCl
 
       {rest.length > 0 ? (
         <div className="space-y-2">
-          <p className="text-(length:--text-micro) font-medium uppercase tracking-wide text-muted-foreground">Also produced</p>
+          <p className="text-(length:--text-micro) font-medium uppercase tracking-wide text-muted-foreground">{t("taskDetailExtra.alsoProduced")}</p>
           {mediaRest.length > 0 ? (
             <div className="grid grid-cols-4 gap-2">
               {mediaRest.map((item) => (

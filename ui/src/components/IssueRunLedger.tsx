@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
 import type { ActivityEvent, Issue, Agent } from "@paperclipai/shared";
-import { isResponsibleUserDenialCode, responsibleUserLabel } from "@paperclipai/shared";
+import { isResponsibleUserDenialCode } from "@paperclipai/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/lib/router";
 import { accessApi, type CurrentBoardAccess } from "../api/access";
@@ -16,11 +16,11 @@ import { useToastActions } from "../context/ToastContext";
 import { cn, relativeTime } from "../lib/utils";
 import { queryKeys } from "../lib/queryKeys";
 import { keepPreviousDataForSameQueryTail } from "../lib/query-placeholder-data";
-import { describeRunRetryState } from "../lib/runRetryState";
+import { describeRunRetryState, formatRetryReason } from "../lib/runRetryState";
 import { readSourceResolvedWatchdogFold } from "../lib/source-resolved-watchdog-fold";
 import { SourceResolvedFoldBadge } from "./SourceResolvedFoldBadge";
 import { ResponsibleUserDenialNotice } from "./ResponsibleUserDenialNotice";
-import { t } from "@/i18n";
+import { i18n, t, useTranslation } from "@/i18n";
 
 type IssueRunLedgerProps = {
   issueId: string;
@@ -76,61 +76,70 @@ type LivenessCopy = {
   description: string;
 };
 
-const LIVENESS_COPY: Record<RunLivenessState, LivenessCopy> = {
-  completed: {
-    label: t("taskDetail.completed"),
-    tone: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-    description: t("taskDetail.taskReachedTerminal"),
-  },
-  advanced: {
-    label: t("taskDetail.advanced"),
-    tone: "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
-    description: t("taskDetail.runProducedProgress"),
-  },
-  plan_only: {
-    label: t("taskDetail.planOnly"),
-    tone: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
-    description: t("taskDetail.planWithoutAction"),
-  },
-  empty_response: {
-    label: t("taskDetail.emptyResponse"),
-    tone: "border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-300",
-    description: t("taskDetail.runNoUsefulOutput"),
-  },
-  blocked: {
-    label: t("taskDetail.blocked"),
-    tone: "border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300",
-    description: t("taskDetail.runDeclaredBlocker"),
-  },
-  failed: {
-    label: t("taskDetail.failed"),
-    tone: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300",
-    description: t("taskDetail.runEndedUnsuccessfully"),
-  },
-  needs_followup: {
-    label: t("taskDetail.needsFollowup"),
-    tone: "border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300",
-    description: t("taskDetail.runNeedsFollowup"),
-  },
-};
+function livenessCopy() {
+  const copy: Record<RunLivenessState, LivenessCopy> = {
+    completed: {
+      label: t("taskDetail.completed"),
+      tone: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+      description: t("taskDetail.taskReachedTerminal"),
+    },
+    advanced: {
+      label: t("taskDetail.advanced"),
+      tone: "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
+      description: t("taskDetail.runProducedProgress"),
+    },
+    plan_only: {
+      label: t("taskDetail.planOnly"),
+      tone: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+      description: t("taskDetail.planWithoutAction"),
+    },
+    empty_response: {
+      label: t("taskDetail.emptyResponse"),
+      tone: "border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-300",
+      description: t("taskDetail.runNoUsefulOutput"),
+    },
+    blocked: {
+      label: t("taskDetail.blocked"),
+      tone: "border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300",
+      description: t("taskDetail.runDeclaredBlocker"),
+    },
+    failed: {
+      label: t("taskDetail.failed"),
+      tone: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300",
+      description: t("taskDetail.runEndedUnsuccessfully"),
+    },
+    needs_followup: {
+      label: t("taskDetail.needsFollowup"),
+      tone: "border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300",
+      description: t("taskDetail.runNeedsFollowup"),
+    },
+  };
+  return copy;
+}
 
-const PENDING_LIVENESS_COPY: LivenessCopy = {
-  label: t("taskDetail.checksAfterFinish"),
-  tone: "border-border bg-background text-muted-foreground",
-  description: t("taskDetail.livenessAfterFinish"),
-};
+function pendingLivenessCopy(): LivenessCopy {
+  return {
+    label: t("taskDetail.checksAfterFinish"),
+    tone: "border-border bg-background text-muted-foreground",
+    description: t("taskDetail.livenessAfterFinish"),
+  };
+}
 
-const RETRY_PENDING_LIVENESS_COPY: LivenessCopy = {
-  label: t("taskDetail.retryPending"),
-  tone: "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300",
-  description: t("taskDetail.automaticRetryPending"),
-};
+function retryPendingLivenessCopy(): LivenessCopy {
+  return {
+    label: t("taskDetail.retryPending"),
+    tone: "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300",
+    description: t("taskDetail.automaticRetryPending"),
+  };
+}
 
-const MISSING_LIVENESS_COPY: LivenessCopy = {
-  label: t("taskDetail.noLivenessData"),
-  tone: "border-border bg-background text-muted-foreground",
-  description: t("taskDetail.noPersistedLiveness"),
-};
+function missingLivenessCopy(): LivenessCopy {
+  return {
+    label: t("taskDetail.noLivenessData"),
+    tone: "border-border bg-background text-muted-foreground",
+    description: t("taskDetail.noPersistedLiveness"),
+  };
+}
 
 const TERMINAL_CHILD_STATUSES = new Set<Issue["status"]>(["done", "cancelled"]);
 const ACTIVE_RUN_STATUSES = new Set(["queued", "running"]);
@@ -142,20 +151,27 @@ type RunOutputSilenceCopy = {
   tone: string;
 };
 
-const RUN_OUTPUT_SILENCE_COPY: Partial<Record<RunOutputSilenceLevel, RunOutputSilenceCopy>> = {
-  suspicious: {
-    label: "Silence watch",
-    tone: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
-  },
-  critical: {
-    label: "Stale run",
-    tone: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300",
-  },
-  snoozed: {
-    label: "Silence snoozed",
-    tone: "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
-  },
-};
+function runOutputSilenceCopy(level: RunOutputSilenceLevel): RunOutputSilenceCopy | null {
+  if (level === "suspicious") {
+    return {
+      label: t("taskDetailExtra.silenceWatch"),
+      tone: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+    };
+  }
+  if (level === "critical") {
+    return {
+      label: t("taskDetailExtra.staleRun"),
+      tone: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300",
+    };
+  }
+  if (level === "snoozed") {
+    return {
+      label: t("taskDetailExtra.silenceSnoozed"),
+      tone: "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
+    };
+  }
+  return null;
+}
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
@@ -198,10 +214,10 @@ function modelProfileBadgeTone(summary: ModelProfileSummary) {
 }
 
 function modelProfileTitle(summary: ModelProfileSummary) {
-  const lines = [`Requested: ${summary.requested}`];
-  if (summary.applied) lines.push(`Applied: ${summary.applied}`);
-  if (summary.configSource) lines.push(`Source: ${summary.configSource}`);
-  if (summary.fallbackReason) lines.push(`Fallback: ${summary.fallbackReason}`);
+  const lines = [t("taskDetailExtra.profileRequested", { profile: summary.requested })];
+  if (summary.applied) lines.push(t("taskDetailExtra.profileApplied", { profile: summary.applied }));
+  if (summary.configSource) lines.push(t("taskDetailExtra.profileSource", { source: summary.configSource }));
+  if (summary.fallbackReason) lines.push(t("taskDetailExtra.profileFallback", { reason: summary.fallbackReason }));
   return lines.join("\n");
 }
 
@@ -215,13 +231,21 @@ function formatDuration(start: string | Date | null | undefined, end: string | D
   const endMs = end ? new Date(end).getTime() : Date.now();
   if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return null;
   const totalSeconds = Math.max(0, Math.round((endMs - startMs) / 1000));
-  if (totalSeconds < 60) return `${totalSeconds}s`;
+  if (totalSeconds < 60) return t("taskDetailExtra.durationSeconds", { count: totalSeconds });
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-  if (minutes < 60) return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
+  if (minutes < 60) {
+    const minutePart = t("taskDetailExtra.durationMinutes", { count: minutes });
+    return seconds > 0
+      ? `${minutePart} ${t("taskDetailExtra.durationSeconds", { count: seconds })}`
+      : minutePart;
+  }
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
-  return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  const hourPart = t("taskDetailExtra.durationHours", { count: hours });
+  return remainingMinutes > 0
+    ? `${hourPart} ${t("taskDetailExtra.durationMinutes", { count: remainingMinutes })}`
+    : hourPart;
 }
 
 function toIsoString(value: string | Date | null | undefined) {
@@ -286,7 +310,17 @@ function mergeRuns(
 }
 
 function statusLabel(status: string) {
-  return status.replace(/_/g, " ");
+  if (status === "backlog") return t("taskDetailExtra.statusBacklog");
+  if (status === "todo") return t("taskDetailExtra.statusTodo");
+  if (status === "in_progress") return t("taskDetailExtra.statusInProgress");
+  if (status === "in_review") return t("taskDetailExtra.statusInReview");
+  if (status === "done") return t("taskDetailExtra.statusDone");
+  if (status === "blocked") return t("taskDetailExtra.statusBlocked");
+  if (status === "cancelled") return t("taskDetailExtra.statusCancelled");
+  if (status === "queued") return t("taskDetailExtra.statusQueued");
+  if (status === "running") return t("taskDetailExtra.statusRunning");
+  if (status === "scheduled_retry") return t("taskDetailExtra.statusScheduledRetry");
+  return status;
 }
 
 function isActiveRun(run: Pick<LedgerRun, "status" | "isLive">) {
@@ -295,16 +329,16 @@ function isActiveRun(run: Pick<LedgerRun, "status" | "isLive">) {
 
 function runSummary(run: LedgerRun, agentMap: ReadonlyMap<string, Pick<Agent, "name">>) {
   const agentName = compactAgentName(run, agentMap);
-  if (run.status === "running") return `Running now by ${agentName}`;
-  if (run.status === "queued") return `Queued for ${agentName}`;
-  if (run.status === "scheduled_retry") return `Automatic retry scheduled for ${agentName}`;
-  return `${statusLabel(run.status)} by ${agentName}`;
+  if (run.status === "running") return t("taskDetailExtra.runRunningBy", { agent: agentName });
+  if (run.status === "queued") return t("taskDetailExtra.runQueuedFor", { agent: agentName });
+  if (run.status === "scheduled_retry") return t("taskDetailExtra.runAutomaticRetryFor", { agent: agentName });
+  return t("taskDetailExtra.runStatusBy", { status: statusLabel(run.status), agent: agentName });
 }
 
 function livenessCopyForRun(run: LedgerRun) {
-  if (run.status === "scheduled_retry") return RETRY_PENDING_LIVENESS_COPY;
-  if (run.livenessState) return LIVENESS_COPY[run.livenessState];
-  return isActiveRun(run) ? PENDING_LIVENESS_COPY : MISSING_LIVENESS_COPY;
+  if (run.status === "scheduled_retry") return retryPendingLivenessCopy();
+  if (run.livenessState) return livenessCopy()[run.livenessState];
+  return isActiveRun(run) ? pendingLivenessCopy() : missingLivenessCopy();
 }
 
 function stopReasonLabel(run: RunForIssue) {
@@ -313,46 +347,48 @@ function stopReasonLabel(run: RunForIssue) {
   const timeoutFired = result?.timeoutFired === true;
   const effectiveTimeoutSec = readNumber(result?.effectiveTimeoutSec);
   const timeoutText =
-    effectiveTimeoutSec && effectiveTimeoutSec > 0 ? `${effectiveTimeoutSec}s timeout` : null;
+    effectiveTimeoutSec && effectiveTimeoutSec > 0
+      ? t("taskDetailExtra.timeoutLimit", { count: effectiveTimeoutSec })
+      : null;
 
   if (timeoutFired || stopReason === "timeout") {
-    return timeoutText ? `timeout (${timeoutText})` : "timeout";
+    return timeoutText ? t("taskDetailExtra.timeoutWithValue", { value: timeoutText }) : t("taskDetailExtra.timeout");
   }
-  if (stopReason === "max_turns_exhausted" || stopReason === "turn_limit_exhausted") return "max turns exhausted";
-  if (stopReason === "budget_paused") return "budget paused";
-  if (stopReason === "cancelled") return "cancelled";
-  if (stopReason === "paused") return "paused by board";
-  if (stopReason === "process_lost") return "process lost";
-  if (stopReason === "unmanaged_background_task_stopped") return "unmanaged background task stopped";
-  if (stopReason === "adapter_failed") return "adapter failed";
-  if (stopReason === "completed") return timeoutText ? `completed (${timeoutText})` : "completed";
+  if (stopReason === "max_turns_exhausted" || stopReason === "turn_limit_exhausted") return t("taskDetailExtra.maxTurnsExhausted");
+  if (stopReason === "budget_paused") return t("taskDetailExtra.budgetPaused");
+  if (stopReason === "cancelled") return t("taskDetailExtra.cancelledStop");
+  if (stopReason === "paused") return t("taskDetailExtra.pausedByBoard");
+  if (stopReason === "process_lost") return t("taskDetailExtra.processLost");
+  if (stopReason === "unmanaged_background_task_stopped") return t("taskDetailExtra.backgroundTaskStopped");
+  if (stopReason === "adapter_failed") return t("taskDetailExtra.adapterFailed");
+  if (stopReason === "completed") return timeoutText ? t("taskDetailExtra.completedWithTimeout", { value: timeoutText }) : t("taskDetailExtra.completedStop");
   return timeoutText;
 }
 
 function stopStatusLabel(run: LedgerRun, stopReason: string | null) {
   if (stopReason) return stopReason;
-  if (run.status === "scheduled_retry") return "Retry pending";
-  if (run.status === "queued") return "Waiting to start";
-  if (run.status === "running") return "Still running";
-  if (!run.livenessState) return "Unavailable";
-  return "No stop reason";
+  if (run.status === "scheduled_retry") return t("taskDetailExtra.stopRetryPending");
+  if (run.status === "queued") return t("taskDetailExtra.stopWaitingToStart");
+  if (run.status === "running") return t("taskDetailExtra.stopStillRunning");
+  if (!run.livenessState) return t("taskDetailExtra.unavailable");
+  return t("taskDetailExtra.noStopReason");
 }
 
 function lastUsefulActionLabel(run: LedgerRun) {
-  if (run.status === "scheduled_retry") return "Waiting for next attempt";
-  if (run.lastUsefulActionAt) return relativeTime(run.lastUsefulActionAt);
-  if (isActiveRun(run)) return "No action recorded yet";
+  if (run.status === "scheduled_retry") return t("taskDetailExtra.waitingForNextAttempt");
+  if (run.lastUsefulActionAt) return relativeTime(run.lastUsefulActionAt, i18n.resolvedLanguage);
+  if (isActiveRun(run)) return t("taskDetailExtra.noActionRecordedYet");
   if (run.livenessState === "plan_only" || run.livenessState === "needs_followup") {
-    return "No concrete action";
+    return t("taskDetailExtra.noConcreteAction");
   }
-  if (run.livenessState === "empty_response") return "No useful output";
-  if (!run.livenessState) return "Unavailable";
-  return "None recorded";
+  if (run.livenessState === "empty_response") return t("taskDetailExtra.noUsefulOutput");
+  if (!run.livenessState) return t("taskDetailExtra.unavailable");
+  return t("taskDetailExtra.noneRecorded");
 }
 
 function continuationLabel(run: LedgerRun) {
   if (!run.continuationAttempt || run.continuationAttempt <= 0) return null;
-  return `Continuation attempt ${run.continuationAttempt}`;
+  return t("taskDetailExtra.continuationAttempt", { count: run.continuationAttempt });
 }
 
 function hasExhaustedContinuation(run: RunForIssue) {
@@ -373,12 +409,63 @@ function compactAgentName(run: LedgerRun, agentMap: ReadonlyMap<string, Pick<Age
 function formatSilenceAge(ms: number | null | undefined) {
   if (!ms || ms <= 0) return null;
   const totalMinutes = Math.floor(ms / 60_000);
-  if (totalMinutes < 1) return "under 1 minute";
-  if (totalMinutes < 60) return `${totalMinutes} minute${totalMinutes === 1 ? "" : "s"}`;
+  if (totalMinutes < 1) return t("taskDetailExtra.underMinute");
+  if (totalMinutes < 60) return t("taskDetailExtra.durationMinutes", { count: totalMinutes });
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  if (minutes === 0) return `${hours} hour${hours === 1 ? "" : "s"}`;
-  return `${hours}h ${minutes}m`;
+  if (minutes === 0) return t("taskDetailExtra.durationHours", { count: hours });
+  return `${t("taskDetailExtra.durationHours", { count: hours })} ${t("taskDetailExtra.durationMinutes", { count: minutes })}`;
+}
+
+function localizedRetryReason(reason: string | null | undefined) {
+  if (reason === "transient_failure") return t("taskDetailExtra.retryReasonTransientFailure");
+  if (reason === "missing_issue_comment") return t("taskDetailExtra.retryReasonMissingComment");
+  if (reason === "process_lost") return t("taskDetailExtra.retryReasonProcessLost");
+  if (reason === "assignment_recovery") return t("taskDetailExtra.retryReasonAssignmentRecovery");
+  if (reason === "issue_continuation_needed") return t("taskDetailExtra.retryReasonContinuationNeeded");
+  if (reason === "max_turns_continuation") return t("taskDetailExtra.retryReasonMaxTurns");
+  return formatRetryReason(reason);
+}
+
+function localizedRunDateTime(date: string | Date) {
+  const locale = i18n.resolvedLanguage?.toLowerCase().startsWith("ko") ? "ko-KR" : "en-US";
+  return new Date(date).toLocaleString(locale, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function localizedRetryState(
+  run: LedgerRun,
+  state: NonNullable<ReturnType<typeof describeRunRetryState>>,
+) {
+  const continuation = run.scheduledRetryReason === "max_turns_continuation";
+  const attempt = typeof run.scheduledRetryAttempt === "number" && run.scheduledRetryAttempt > 0
+    ? t("taskDetailExtra.attempt", { count: run.scheduledRetryAttempt })
+    : null;
+  const reason = localizedRetryReason(run.scheduledRetryReason);
+  const detailParts = [attempt, reason];
+  if (state.kind === "exhausted") detailParts.push(t("taskDetailExtra.automaticRetriesExhausted"));
+  const detail = detailParts.filter((part): part is string => Boolean(part)).join(" · ") || null;
+  const dueAt = run.scheduledRetryAt ? localizedRunDateTime(run.scheduledRetryAt) : null;
+  const secondary = state.kind === "scheduled"
+    ? dueAt
+      ? t(continuation ? "taskDetailExtra.nextContinuation" : "taskDetailExtra.nextRetry", { date: dueAt })
+      : t(continuation ? "taskDetailExtra.nextContinuationPending" : "taskDetailExtra.nextRetryPending")
+    : state.kind === "exhausted" && run.retryExhaustedReason
+      ? run.retryExhaustedReason.includes("Manual intervention required")
+        ? run.retryExhaustedReason
+        : `${run.retryExhaustedReason} ${t("taskDetailExtra.manualInterventionRequired")}`
+      : null;
+  const badgeLabel = state.kind === "scheduled"
+    ? t(continuation ? "taskDetailExtra.continuationScheduled" : "taskDetailExtra.retryScheduled")
+    : state.kind === "exhausted"
+      ? t(continuation ? "taskDetailExtra.continuationExhausted" : "taskDetailExtra.retryExhausted")
+      : t(continuation ? "taskDetailExtra.continuedRun" : "taskDetailExtra.retriedRun");
+  return { ...state, badgeLabel, detail, secondary };
 }
 
 function canBoardRecordWatchdogDecision(
@@ -397,11 +484,11 @@ function canBoardRecordWatchdogDecision(
 
 function watchdogDecisionErrorMessage(error: unknown) {
   if (error instanceof ApiError && error.status === 403) {
-    return "Only the board or the assigned recovery owner can record watchdog decisions";
+    return t("taskDetailExtra.onlyBoardRecoveryOwner");
   }
   return error instanceof Error && error.message.trim().length > 0
     ? error.message
-    : "Paperclip could not record the watchdog decision.";
+    : t("taskDetailExtra.watchdogRecordFailed");
 }
 
 export function IssueRunLedger({
@@ -458,7 +545,7 @@ export function IssueRunLedger({
       const dedupeSuffix = error instanceof ApiError ? String(error.status) : "error";
       setWatchdogDecisionError(message);
       pushToast({
-        title: "Watchdog decision not recorded",
+        title: t("taskDetailExtra.watchdogNotRecorded"),
         body: message,
         tone: "error",
         dedupeKey: `watchdog-decision:${issueId}:${dedupeSuffix}`,
@@ -500,6 +587,7 @@ export function IssueRunLedgerContent({
   watchdogDecisionError,
   onWatchdogDecision,
 }: IssueRunLedgerContentProps) {
+  useTranslation();
   const ledgerRuns = useMemo(() => mergeRuns(runs, liveRuns, activeRun), [activeRun, liveRuns, runs]);
   const latestRun = ledgerRuns[0] ?? null;
   const latestSilentRun = useMemo(
@@ -544,16 +632,16 @@ export function IssueRunLedgerContent({
   }, [activityEvents, canRenderActivityEvents, ledgerRuns]);
 
   return (
-    <section className="space-y-3" aria-label="Task run ledger">
+    <section className="space-y-3" aria-label={t("taskDetailExtra.runLedger")}>
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="text-sm font-medium text-muted-foreground">Run ledger</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">{t("taskDetailExtra.runLedger")}</h3>
           <p className="text-xs text-muted-foreground">
             {latestRun
               ? runSummary(latestRun, agentMap)
               : issueStatus === "in_progress"
-                ? "Waiting for the first run record."
-                : "No runs linked yet."}
+                ? t("taskDetailExtra.waitingFirstRun")
+                : t("taskDetailExtra.noRuns")}
           </p>
         </div>
         {latestRun ? (
@@ -561,7 +649,7 @@ export function IssueRunLedgerContent({
             to={`/agents/${latestRun.agentId}/runs/${latestRun.runId}`}
             className="shrink-0 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
           >
-            Latest run
+            {t("taskDetailExtra.latestRun")}
           </Link>
         ) : null}
       </div>
@@ -569,11 +657,19 @@ export function IssueRunLedgerContent({
       {children.total > 0 ? (
         <div className="rounded-md border border-border/70 px-3 py-2">
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="font-medium text-foreground">Child work</span>
+            <span className="font-medium text-foreground">{t("taskDetailExtra.childWork")}</span>
             <span className="text-muted-foreground">
               {children.active.length > 0
-                ? `${children.active.length} active, ${children.done} done, ${children.cancelled} cancelled`
-                : `all ${children.total} terminal (${children.done} done, ${children.cancelled} cancelled)`}
+                ? t("taskDetailExtra.childWorkActiveSummary", {
+                    active: children.active.length,
+                    done: children.done,
+                    cancelled: children.cancelled,
+                  })
+                : t("taskDetailExtra.childWorkTerminalSummary", {
+                    total: children.total,
+                    done: children.done,
+                    cancelled: children.cancelled,
+                  })}
             </span>
           </div>
           {children.active.length > 0 ? (
@@ -591,7 +687,7 @@ export function IssueRunLedgerContent({
               ))}
               {children.active.length > 4 ? (
                 <span className="rounded-md border border-border px-2 py-1 text-(length:--text-micro) text-muted-foreground">
-                  +{children.active.length - 4} more
+                  {t("taskDetailExtra.moreCount", { count: children.active.length - 4 })}
                 </span>
               ) : null}
             </div>
@@ -610,23 +706,25 @@ export function IssueRunLedgerContent({
         >
           <p className="font-medium">
             {latestSilentRun.outputSilence.level === "critical"
-              ? "Stale-run watchdog alert"
-              : "Output silence watchdog warning"}
+              ? t("taskDetailExtra.staleRunAlert")
+              : t("taskDetailExtra.silenceWarning")}
           </p>
           <p className="mt-1">
-            Latest active run has been silent for{" "}
-            {formatSilenceAge(latestSilentRun.outputSilence.silenceAgeMs) ?? "an extended period"}.
+            {t("taskDetailExtra.latestActiveSilent", {
+              duration: formatSilenceAge(latestSilentRun.outputSilence.silenceAgeMs)
+                ?? t("taskDetailExtra.extendedPeriod"),
+            })}
             {latestSilentRun.outputSilence.evaluationIssueIdentifier ? (
               <>
                 {" "}
-                Review{" "}
+                {t("taskDetailExtra.review")}{" "}
                 <Link
                   to={`/issues/${latestSilentRun.outputSilence.evaluationIssueIdentifier}`}
                   className="font-medium underline underline-offset-2"
                 >
                   {latestSilentRun.outputSilence.evaluationIssueIdentifier}
                 </Link>
-                {" "}for recovery context.
+                {" "}{t("taskDetailExtra.forRecoveryContext")}
               </>
             ) : null}
           </p>
@@ -643,7 +741,7 @@ export function IssueRunLedgerContent({
                   })}
                 disabled={pendingWatchdogDecision != null}
               >
-                Continue monitoring
+                {t("taskDetailExtra.continueMonitoring")}
               </button>
               <button
                 type="button"
@@ -658,7 +756,7 @@ export function IssueRunLedgerContent({
                   })}
                 disabled={pendingWatchdogDecision != null}
               >
-                Snooze 1h
+                {t("taskDetailExtra.snoozeOneHour")}
               </button>
               <button
                 type="button"
@@ -672,7 +770,7 @@ export function IssueRunLedgerContent({
                   })}
                 disabled={pendingWatchdogDecision != null}
               >
-                Mark false positive
+                {t("taskDetailExtra.markFalsePositive")}
               </button>
             </div>
           ) : null}
@@ -687,8 +785,8 @@ export function IssueRunLedgerContent({
       {feedItems.length === 0 ? (
         <div className="rounded-md border border-dashed border-border px-3 py-3 text-sm text-muted-foreground">
           {renderActivityEvent
-            ? "Runs and activity will appear here once this task has history."
-            : "Historical runs without liveness metadata will appear here once linked to this task."}
+            ? t("taskDetailExtra.noHistory")
+            : t("taskDetailExtra.historicalNoLiveness")}
         </div>
       ) : (
         <div className="space-y-1.5">
@@ -702,34 +800,38 @@ export function IssueRunLedgerContent({
             const duration = formatDuration(run.startedAt, run.finishedAt);
             const exhausted = hasExhaustedContinuation(run);
             const continuation = continuationLabel(run);
-            const retryState = describeRunRetryState(run);
+            const rawRetryState = describeRunRetryState(run);
+            const retryState = rawRetryState ? localizedRetryState(run, rawRetryState) : null;
             const agentName = compactAgentName(run, agentMap);
             const onBehalfOfLabel = run.responsibleUserId
-              ? responsibleUserLabel(resolveUserLabel?.(run.responsibleUserId))
+              ? resolveUserLabel?.(run.responsibleUserId)?.trim() || t("taskDetailExtra.responsibleUser")
               : null;
             const denialCode = isResponsibleUserDenialCode(run.errorCode) ? run.errorCode : null;
             const sourceResolvedFold = readSourceResolvedWatchdogFold(run.resultJson);
+            const outputSilenceCopy = run.outputSilence
+              ? runOutputSilenceCopy(run.outputSilence.level)
+              : null;
             return (
               <article
                 key={`run:${run.runId}`}
                 className="space-y-1.5 rounded-lg border border-border/60 px-3 py-2 text-xs text-muted-foreground"
               >
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="font-medium text-foreground">Run</span>
+                  <span className="font-medium text-foreground">{t("taskDetailExtra.runLabel")}</span>
                   <Link
                     to={`/agents/${run.agentId}/runs/${run.runId}`}
                     className="min-w-0 max-w-full truncate font-mono text-foreground hover:underline"
                   >
                     {run.runId.slice(0, 8)}
                   </Link>
-                  <span>by {agentName}</span>
+                  <span>{t("taskDetailExtra.byAgent", { agent: agentName })}</span>
                   {onBehalfOfLabel ? (
                     <span
                       data-testid="run-on-behalf-of"
                       className="min-w-0 max-w-full truncate text-muted-foreground"
-                      title={`Acting on behalf of ${onBehalfOfLabel}`}
+                      title={t("taskDetailExtra.actingOnBehalfOf", { label: onBehalfOfLabel })}
                     >
-                      on behalf of <span className="text-foreground">{onBehalfOfLabel}</span>
+                      {t("taskDetailExtra.onBehalfOf", { label: onBehalfOfLabel })}
                     </span>
                   ) : null}
                   <span className="rounded-md border border-border px-1.5 py-0.5 text-(length:--text-micro) capitalize text-muted-foreground">
@@ -738,7 +840,7 @@ export function IssueRunLedgerContent({
                   {run.isLive ? (
                     <span className="inline-flex items-center gap-1 rounded-md border border-blue-500/30 bg-blue-500/10 px-1.5 py-0.5 text-(length:--text-micro) text-blue-700 dark:text-blue-300">
                       <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                      live
+                      {t("taskDetailExtra.live")}
                     </span>
                   ) : null}
                   <span
@@ -752,7 +854,7 @@ export function IssueRunLedgerContent({
                   </span>
                   {exhausted ? (
                     <span className="rounded-md border border-red-500/30 bg-red-500/10 px-1.5 py-0.5 text-(length:--text-micro) font-medium text-red-700 dark:text-red-300">
-                      Exhausted
+                      {t("taskDetailExtra.exhausted")}
                     </span>
                   ) : null}
                   {continuation ? (
@@ -768,24 +870,27 @@ export function IssueRunLedgerContent({
                       {retryState.badgeLabel}
                     </span>
                   ) : null}
-                  {run.outputSilence && RUN_OUTPUT_SILENCE_COPY[run.outputSilence.level] ? (
+                  {outputSilenceCopy ? (
                     <span
                       className={cn(
                         "rounded-md border px-1.5 py-0.5 text-(length:--text-micro) font-medium",
-                        RUN_OUTPUT_SILENCE_COPY[run.outputSilence.level]?.tone,
+                        outputSilenceCopy.tone,
                       )}
                     >
-                      {RUN_OUTPUT_SILENCE_COPY[run.outputSilence.level]?.label}
+                      {outputSilenceCopy.label}
                     </span>
                   ) : null}
                   {(() => {
                     const profile = modelProfileForRun(run);
                     if (!profile) return null;
                     const label = profile.applied === profile.requested
-                      ? `Profile: ${profile.requested}`
+                      ? t("taskDetailExtra.runProfile", { profile: profile.requested })
                       : profile.applied
-                        ? `Profile: ${profile.requested} → ${profile.applied}`
-                        : `Profile: ${profile.requested} (unavailable)`;
+                        ? t("taskDetailExtra.runProfileApplied", {
+                            requested: profile.requested,
+                            applied: profile.applied,
+                          })
+                        : t("taskDetailExtra.runProfileUnavailable", { requested: profile.requested });
                     return (
                       <span
                         className={cn(
@@ -799,20 +904,20 @@ export function IssueRunLedgerContent({
                     );
                   })()}
                   {sourceResolvedFold ? <SourceResolvedFoldBadge /> : null}
-                  <span className="ml-auto shrink-0">{relativeTime(item.timestamp)}</span>
+                  <span className="ml-auto shrink-0">{relativeTime(item.timestamp, i18n.resolvedLanguage)}</span>
                 </div>
 
                 <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">
                   <div className="min-w-0">
-                    <span className="text-foreground">Elapsed</span>{" "}
-                    {duration ?? "unknown"}
+                    <span className="text-foreground">{t("taskDetailExtra.elapsedLabel")}</span>{" "}
+                    {duration ?? t("taskDetailExtra.unknownDuration")}
                   </div>
                   <div className="min-w-0">
-                    <span className="text-foreground">Last useful action</span>{" "}
+                    <span className="text-foreground">{t("taskDetailExtra.lastUsefulActionLabel")}</span>{" "}
                     {lastUsefulActionLabel(run)}
                   </div>
                   <div className="min-w-0">
-                    <span className="text-foreground">Stop</span>{" "}
+                    <span className="text-foreground">{t("taskDetailExtra.stopLabel")}</span>{" "}
                     {stopStatusLabel(run, stopReason)}
                   </div>
                 </div>
@@ -823,7 +928,7 @@ export function IssueRunLedgerContent({
                     {retryState.secondary ? <p>{retryState.secondary}</p> : null}
                     {retryState.retryOfRunId ? (
                       <p>
-                        Retry of{" "}
+                        {t("taskDetailExtra.retryOf")}{" "}
                         <Link
                           to={`/agents/${run.agentId}/runs/${retryState.retryOfRunId}`}
                           className="font-mono text-foreground hover:underline"
@@ -841,8 +946,8 @@ export function IssueRunLedgerContent({
                   return (
                     <p className="min-w-0 break-words text-(length:--text-micro) leading-5 text-amber-700 dark:text-amber-300">
                       {profile.requested === "cheap"
-                        ? "Cheap profile fell back to primary"
-                        : `${profile.requested} profile unavailable`}
+                        ? t("taskDetailExtra.cheapFallback")
+                        : t("taskDetailExtra.profileUnavailable", { profile: profile.requested })}
                       {": "}
                       <span className="font-mono">{profile.fallbackReason}</span>
                     </p>
@@ -864,7 +969,7 @@ export function IssueRunLedgerContent({
 
                 {run.nextAction ? (
                   <div className="min-w-0 rounded-md bg-accent/40 px-2 py-1.5 text-xs leading-5">
-                    <span className="font-medium text-foreground">Next action: </span>
+                    <span className="font-medium text-foreground">{t("taskDetailExtra.nextActionLabel")}</span>
                     <span className="break-words text-muted-foreground">{run.nextAction}</span>
                   </div>
                 ) : null}
@@ -873,7 +978,7 @@ export function IssueRunLedgerContent({
           })}
           {feedItems.length > 20 ? (
             <div className="px-3 py-2 text-xs text-muted-foreground">
-              {feedItems.length - 20} older items not shown
+              {t("taskDetailExtra.olderItemsNotShown", { count: feedItems.length - 20 })}
             </div>
           ) : null}
         </div>

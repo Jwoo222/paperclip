@@ -3,10 +3,15 @@
 import { act as reactAct, type ComponentProps, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { setLocale } from "../i18n";
 import { IssueThreadInteractionCard } from "./IssueThreadInteractionCard";
 import { ThemeProvider } from "../context/ThemeContext";
 import { TooltipProvider } from "./ui/tooltip";
+
+beforeEach(async () => {
+  await setLocale("en");
+});
 import {
   pendingAskUserQuestionsInteraction,
   commentExpiredAskUserQuestionsInteraction,
@@ -859,7 +864,11 @@ describe("IssueThreadInteractionCard tool-action card", () => {
     // already carries the "Expired · issue closed" label, so the footer must
     // not restate it.
     const footer = host.querySelector('[data-testid="interaction-issue-closed-footer"]');
-    expect(footer?.textContent).toContain("Apr 20");
+    const expectedDate = new Date(issueClosedRequestConfirmationInteraction.resolvedAt!).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+    expect(footer?.textContent).toContain(expectedDate);
     expect(footer?.textContent).not.toContain("Expired when the issue closed");
     // The "Expired · issue closed" label survives exactly once (the header
     // status badge); the duplicate body eyebrow was dropped.
