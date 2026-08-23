@@ -23,6 +23,26 @@ vi.mock("@/api/instanceSettings", () => ({
   instanceSettingsApi: mockInstanceSettingsApi,
 }));
 
+vi.mock("@/i18n", async () => {
+  const { default: messages } = await import("../i18n/locales/en/admin-extra.json");
+
+  function translate(key: string, options: Record<string, unknown> = {}) {
+    const value = key.split(".").reduce<unknown>((current, segment) => {
+      if (!current || typeof current !== "object") return undefined;
+      return (current as Record<string, unknown>)[segment];
+    }, messages);
+    if (typeof value !== "string") return key;
+    return value.replace(/\{\{\s*([^},\s]+)[^}]*\}\}/g, (_match, name: string) =>
+      String(options[name] ?? `{{${name}}}`),
+    );
+  }
+
+  return {
+    t: translate,
+    useTranslation: () => ({ t: translate, i18n: { language: "en" } }),
+  };
+});
+
 vi.mock("../context/BreadcrumbContext", () => ({
   useBreadcrumbs: () => ({ setBreadcrumbs: vi.fn() }),
 }));
