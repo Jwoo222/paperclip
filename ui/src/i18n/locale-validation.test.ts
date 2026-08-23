@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { t } from ".";
-import en from "./locales/en.json";
-import { localeMessages } from "./locales";
+import { i18n, t } from ".";
+import { localeMessages, SOURCE_LOCALE } from "./locales";
 import { validateLocaleMessages } from "./locale-validation";
 
+const en = localeMessages[SOURCE_LOCALE]!;
+
 describe("locale validation", () => {
-  it("resolves English messages with key and default fallbacks", () => {
-    expect(t("app.noCompanies.title")).toBe(en.app.noCompanies.title);
+  it("resolves English messages with key and default fallbacks", async () => {
+    await i18n.changeLanguage("en");
+    expect(t("app.noCompanies.title")).toBe("Create your first company");
     expect(t("app.missing", { defaultValue: "Fallback" })).toBe("Fallback");
     expect(t("app.missing")).toBe("app.missing");
   });
@@ -14,24 +16,29 @@ describe("locale validation", () => {
   it("accepts registered locale files", () => {
     expect(Object.keys(localeMessages)).toContain("en");
     for (const [locale, messages] of Object.entries(localeMessages)) {
-      expect(validateLocaleMessages(messages), locale).toEqual([]);
+      expect(
+        validateLocaleMessages(messages, en, { allowMissing: locale !== SOURCE_LOCALE }),
+        locale,
+      ).toEqual([]);
     }
   });
 
-  it("rejects missing and extra nested keys", () => {
+  it("allows missing localized keys for English fallback and rejects extra nested keys", () => {
     expect(
-      validateLocaleMessages({
-        app: {
-          noCompanies: {
-            title: en.app.noCompanies.title,
-            description: en.app.noCompanies.description,
-            unexpected: "Unexpected",
+      validateLocaleMessages(
+        {
+          app: {
+            noCompanies: {
+              title: "첫 회사를 만드세요",
+              unexpected: "Unexpected",
+            },
           },
         },
-      }),
+        en,
+        { allowMissing: true },
+      ),
     ).toEqual(
       expect.arrayContaining([
-        "app.noCompanies.newCompany is missing",
         "app.noCompanies.unexpected is not defined in English",
       ]),
     );
@@ -39,15 +46,46 @@ describe("locale validation", () => {
 
   it("rejects non-string leaves", () => {
     expect(
-      validateLocaleMessages({
-        app: {
-          noCompanies: {
-            ...en.app.noCompanies,
-            title: ["Create your first company"],
+      validateLocaleMessages(
+        {
+          app: {
+            noCompanies: {
+              title: ["Create your first company"],
+            },
           },
         },
-      }),
+        en,
+        { allowMissing: true },
+      ),
     ).toEqual(expect.arrayContaining(["app.noCompanies.title must be a string"]));
+  });
+
+  it("preserves interpolation, printf placeholders, tags, and links", () => {
+    const reference = {
+      notice: "Hello {{name}}: %s <strong>open</strong> [docs](https://example.com/docs)",
+    };
+
+    expect(
+      validateLocaleMessages(
+        { notice: "{{name}}님: %s <strong>열기</strong> [문서](https://example.com/docs)" },
+        reference,
+      ),
+    ).toEqual([]);
+
+    expect(
+      validateLocaleMessages(
+        { notice: "안녕하세요 %d <em>열기</em> [문서](https://example.com/ko)" },
+        reference,
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("interpolation placeholders must match"),
+        expect.stringContaining("printf placeholders must match"),
+        expect.stringContaining("HTML tags must match"),
+        expect.stringContaining("URLs must match"),
+        expect.stringContaining("Markdown link targets must match"),
+      ]),
+    );
   });
 
   it("requires interpolation placeholders to match English", () => {

@@ -1,6 +1,8 @@
-import en from "./locales/en.json";
-
 const MAX_STRING_LENGTH = 2_000;
+
+type LocaleValidationOptions = {
+  allowMissing?: boolean;
+};
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -14,6 +16,20 @@ function interpolationPlaceholders(value: string) {
   return Array.from(value.matchAll(/{{\s*([A-Za-z0-9_.-]+)\s*}}/g), (match) => match[1]).sort();
 }
 
+function printfPlaceholders(value: string) {
+  return Array.from(
+    value.matchAll(/%(?!%)(?:(?:\d+\$)|(?:\([A-Za-z0-9_.-]+\)))?[bcdeEfFgGiosuxX]/g),
+    (match) => match[0],
+  ).sort();
+}
+
+function htmlTagsIn(value: string) {
+  return Array.from(value.matchAll(/<\s*(\/?)\s*([A-Za-z][A-Za-z0-9:-]*)\b[^>]*>/g), (match) => {
+    const closing = match[1] ? "/" : "";
+    return `${closing}${match[2]!.toLowerCase()}`;
+  });
+}
+
 function hasRawHtml(value: string) {
   return /<\/?[A-Za-z][A-Za-z0-9:-]*(?:\s[^>]*)?>/.test(value);
 }
@@ -24,6 +40,10 @@ function hasEventHandlerAttribute(value: string) {
 
 function urlsIn(value: string) {
   return Array.from(value.matchAll(/\bhttps?:\/\/[^\s<>"')]+/gi), (match) => match[0]).sort();
+}
+
+function markdownLinkTargetsIn(value: string) {
+  return Array.from(value.matchAll(/\[[^\]]*]\(([^)\s]+)(?:\s+"[^"]*")?\)/g), (match) => match[1]!).sort();
 }
 
 function hasBlockedData(value: string, englishValue: string) {
@@ -57,6 +77,38 @@ function validateString(path: string[], candidateValue: string, englishValue: st
     );
   }
 
+  const candidatePrintf = printfPlaceholders(candidateValue);
+  const englishPrintf = printfPlaceholders(englishValue);
+  if (candidatePrintf.join("\u0000") !== englishPrintf.join("\u0000")) {
+    errors.push(
+      `${formatPath(path)} printf placeholders must match English exactly: expected ${JSON.stringify(
+        englishPrintf,
+      )}, received ${JSON.stringify(candidatePrintf)}`,
+    );
+  }
+
+  const candidateTags = htmlTagsIn(candidateValue);
+  const englishTags = htmlTagsIn(englishValue);
+  if (candidateTags.join("\u0000") !== englishTags.join("\u0000")) {
+    errors.push(
+      `${formatPath(path)} HTML tags must match English in order: expected ${JSON.stringify(
+        englishTags,
+      )}, received ${JSON.stringify(candidateTags)}`,
+    );
+  }
+
+  const candidateUrls = urlsIn(candidateValue);
+  const englishUrls = urlsIn(englishValue);
+  if (candidateUrls.join("\u0000") !== englishUrls.join("\u0000")) {
+    errors.push(`${formatPath(path)} URLs must match English exactly`);
+  }
+
+  const candidateMarkdownLinks = markdownLinkTargetsIn(candidateValue);
+  const englishMarkdownLinks = markdownLinkTargetsIn(englishValue);
+  if (candidateMarkdownLinks.join("\u0000") !== englishMarkdownLinks.join("\u0000")) {
+    errors.push(`${formatPath(path)} Markdown link targets must match English exactly`);
+  }
+
   for (const blockedPayload of hasBlockedData(candidateValue, englishValue)) {
     errors.push(`${formatPath(path)} contains disallowed ${blockedPayload}`);
   }
@@ -68,7 +120,13 @@ function validateString(path: string[], candidateValue: string, englishValue: st
   }
 }
 
-function validateNode(path: string[], candidate: unknown, englishReference: unknown, errors: string[]) {
+function validateNode(
+  path: string[],
+  candidate: unknown,
+  englishReference: unknown,
+  errors: string[],
+  options: LocaleValidationOptions,
+) {
   if (typeof englishReference === "string") {
     if (typeof candidate !== "string") {
       errors.push(`${formatPath(path)} must be a string`);
@@ -93,8 +151,10 @@ function validateNode(path: string[], candidate: unknown, englishReference: unkn
   const missingKeys = englishKeys.filter((key) => !candidateKeys.includes(key));
   const extraKeys = candidateKeys.filter((key) => !englishKeys.includes(key));
 
-  for (const key of missingKeys) {
-    errors.push(`${formatPath([...path, key])} is missing`);
+  if (!options.allowMissing) {
+    for (const key of missingKeys) {
+      errors.push(`${formatPath([...path, key])} is missing`);
+    }
   }
   for (const key of extraKeys) {
     errors.push(`${formatPath([...path, key])} is not defined in English`);
@@ -102,19 +162,27 @@ function validateNode(path: string[], candidate: unknown, englishReference: unkn
 
   for (const key of englishKeys) {
     if (key in candidate) {
-      validateNode([...path, key], candidate[key], englishReference[key], errors);
+      validateNode([...path, key], candidate[key], englishReference[key], errors, options);
     }
   }
 }
 
-export function validateLocaleMessages(candidate: unknown, englishReference: unknown = en) {
+export function validateLocaleMessages(
+  candidate: unknown,
+  englishReference: unknown,
+  options: LocaleValidationOptions = {},
+) {
   const errors: string[] = [];
-  validateNode([], candidate, englishReference, errors);
+  validateNode([], candidate, englishReference, errors, options);
   return errors;
 }
 
-export function assertValidLocaleMessages(candidate: unknown, englishReference: unknown = en) {
-  const errors = validateLocaleMessages(candidate, englishReference);
+export function assertValidLocaleMessages(
+  candidate: unknown,
+  englishReference: unknown,
+  options: LocaleValidationOptions = {},
+) {
+  const errors = validateLocaleMessages(candidate, englishReference, options);
   if (errors.length > 0) {
     throw new Error(`Invalid locale messages:\n${errors.join("\n")}`);
   }
