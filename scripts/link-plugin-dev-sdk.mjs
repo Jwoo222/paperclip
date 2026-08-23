@@ -78,7 +78,11 @@ export function linkSdkInto(packageDir) {
   try {
     const stat = lstatSync(linkTarget);
     if (stat.isSymbolicLink()) {
-      if (readlinkSync(linkTarget) === relativeSdkDir) {
+      const linkedPath = resolve(dirname(linkTarget), readlinkSync(linkTarget));
+      const sameTarget = process.platform === "win32"
+        ? linkedPath.toLowerCase() === resolve(sdkDir).toLowerCase()
+        : linkedPath === resolve(sdkDir);
+      if (sameTarget) {
         // Already linked to the in-repo SDK; nothing to do.
         return false;
       }
@@ -93,6 +97,13 @@ export function linkSdkInto(packageDir) {
     if (error?.code !== "ENOENT") throw error;
   }
 
-  symlinkSync(relativeSdkDir, linkTarget, "dir");
+  // Windows directory symlinks require either Developer Mode or administrator
+  // privileges. A junction has the same local-development behavior here and
+  // can be created by a normal user. Node requires an absolute junction target.
+  symlinkSync(
+    process.platform === "win32" ? sdkDir : relativeSdkDir,
+    linkTarget,
+    process.platform === "win32" ? "junction" : "dir",
+  );
   return true;
 }
