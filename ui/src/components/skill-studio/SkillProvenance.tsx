@@ -7,6 +7,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { skillStudioRoute } from "@/lib/company-skill-routes";
 import { formatLineageLabel } from "@/lib/skill-fork";
 import { Button } from "@/components/ui/button";
+import { skillText } from "@/pages/skills/skill-i18n";
 
 /**
  * Lineage chip for forked skills (PAP-13112, plan §3.1): "Forked from
@@ -37,11 +38,11 @@ export function SkillLineageChip({
     <Link
       to={skillStudioRoute(forkedFromSkillId)}
       className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-      title={`Forked from ${label}`}
+      title={`${skillText("Forked from")} ${label}`}
     >
       <GitFork className="h-3 w-3 shrink-0" />
       <span className="truncate">
-        Forked from <span className="font-medium text-foreground">{label}</span>
+        {skillText("Forked from")} <span className="font-medium text-foreground">{label}</span>
       </span>
     </Link>
   );
@@ -67,8 +68,8 @@ export function ProjectScanNotice({
       <FolderGit2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       <div className="min-w-0 flex-1">
         <span>
-          This skill lives in <span className="font-mono text-foreground">{location}</span>.
-          Saves write to the project working tree and are not committed.
+          {skillText("This skill lives in")} <span className="font-mono text-foreground">{location}</span>.
+          {" "}{skillText("Saves write to the project working tree and are not committed.")}
         </span>{" "}
         <Button
           type="button"
@@ -77,7 +78,7 @@ export function ProjectScanNotice({
           className="h-auto p-0 text-xs"
           onClick={onEditACopy}
         >
-          Edit a copy instead
+          {skillText("Edit a copy instead")}
         </Button>
       </div>
     </div>

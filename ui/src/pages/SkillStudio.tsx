@@ -76,6 +76,7 @@ import {
 import { isProjectScanSkill } from "@/lib/skill-fork";
 import { cn, formatCents, relativeTime } from "@/lib/utils";
 import { SkillCardIcon, type DiscoveryCard } from "./CompanySkills";
+import { skillText } from "./skills/skill-i18n";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -536,12 +537,12 @@ function StudioNewSkillPanel({
 
       <section className="space-y-3">
         <div>
-          <h2 className="text-sm font-medium text-foreground">Basics</h2>
-          <p className="text-xs text-muted-foreground">Name the skill and set the route-safe slug.</p>
+          <h2 className="text-sm font-medium text-foreground">{skillText("Basics")}</h2>
+          <p className="text-xs text-muted-foreground">{skillText("Name the skill and set the route-safe slug.")}</p>
         </div>
         <div className="grid gap-3 md:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="skill-name">Name</Label>
+            <Label htmlFor="skill-name">{skillText("Name")}</Label>
             <Input
               id="skill-name"
               value={draft.name}
@@ -559,7 +560,7 @@ function StudioNewSkillPanel({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="skill-slug">Slug</Label>
+            <Label htmlFor="skill-slug">{skillText("Slug")}</Label>
             <Input
               id="skill-slug"
               value={draft.slug}
@@ -574,7 +575,7 @@ function StudioNewSkillPanel({
           </div>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="skill-tagline">Tagline</Label>
+          <Label htmlFor="skill-tagline">{skillText("Tagline")}</Label>
           <Textarea
             id="skill-tagline"
             value={draft.tagline}
@@ -596,7 +597,7 @@ function StudioNewSkillPanel({
 
       <section className="space-y-3">
         <div>
-          <h2 className="text-sm font-medium text-foreground">Appearance</h2>
+          <h2 className="text-sm font-medium text-foreground">{skillText("Appearance")}</h2>
           <p className="text-xs text-muted-foreground">Tune how the skill appears in the store and Studio switcher.</p>
         </div>
         <div className="flex items-center gap-3">
@@ -643,7 +644,7 @@ function StudioNewSkillPanel({
 
       <section className="space-y-3">
         <div>
-          <h2 className="text-sm font-medium text-foreground">Sharing</h2>
+          <h2 className="text-sm font-medium text-foreground">{skillText("Sharing")}</h2>
           <p className="text-xs text-muted-foreground">Choose who can discover this skill inside Paperclip.</p>
         </div>
         <div className="grid gap-2 sm:grid-cols-3">

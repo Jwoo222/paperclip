@@ -16,6 +16,7 @@ import {
   reassignTargetIds,
 } from "@/lib/skill-fork";
 import { Button } from "@/components/ui/button";
+import { skillText } from "@/pages/skills/skill-i18n";
 import {
   Dialog,
   DialogContent,
@@ -111,7 +112,7 @@ export function ForkSkillDialog({
       const switched = result.reassignments.length;
       toast?.pushToast({
         tone: "success",
-        title: "Editing a copy",
+        title: skillText("Editing a copy"),
         body:
           switched > 0
             ? `Created a copy of ${skill.name} and switched ${switched} ${switched === 1 ? "agent" : "agents"} to it.`
@@ -124,7 +125,7 @@ export function ForkSkillDialog({
       toast?.pushToast({
         tone: "error",
         title: "Couldn't create a copy",
-        body: error instanceof Error ? error.message : "The fork request failed.",
+        body: error instanceof Error ? error.message : skillText("The fork request failed."),
       });
     },
   });
@@ -133,7 +134,7 @@ export function ForkSkillDialog({
   const forkLabel =
     reassign && agentCount > 0
       ? `Create copy & switch ${agentCount} ${agentCount === 1 ? "agent" : "agents"}`
-      : "Create copy";
+      : skillText("Create copy");
 
   const openExisting = () => {
     if (!reusableFork) return;
@@ -158,7 +159,7 @@ export function ForkSkillDialog({
 
         {reusableFork ? (
           <div className="rounded-md border border-primary/40 bg-primary/5 p-3 text-sm">
-            <p className="font-medium text-foreground">You already have a copy</p>
+            <p className="font-medium text-foreground">{skillText("You already have a copy")}</p>
             <p className="mt-0.5 text-muted-foreground">
               An unedited copy of this skill already exists. Open it instead of
               making another.
@@ -242,7 +243,7 @@ export function ForkSkillDialog({
             disabled={busy}
           >
             {busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
-            {reusableFork ? "Create another copy" : forkLabel}
+            {reusableFork ? skillText("Create another copy") : forkLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -36,6 +36,7 @@ import { useToastActions } from "../../context/ToastContext";
 import { queryKeys } from "../../lib/queryKeys";
 import { skillStudioRoute } from "../../lib/company-skill-routes";
 import { Button } from "@/components/ui/button";
+import { skillText } from "./skill-i18n";
 import {
   Dialog,
   DialogContent,
@@ -675,7 +676,7 @@ function PickProjectStep({
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {loading ? (
-          <div className="p-6 text-center text-sm text-muted-foreground">Loading projects…</div>
+          <div className="p-6 text-center text-sm text-muted-foreground">{skillText("Loading projects…")}</div>
         ) : error ? (
           <div
             className="m-5 flex items-start gap-3 rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive"
@@ -815,8 +816,8 @@ function ProjectSkillBrowser({
       <div className="shrink-0 border-b border-border/60 px-5 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium">Browse project folders</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">Open any folder and add directories or individual SKILL.md files.</p>
+          <p className="text-sm font-medium">{skillText("Browse project folders")}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{skillText("Open any folder and add directories or individual SKILL.md files.")}</p>
           </div>
           <Button variant="outline" size="sm" onClick={onBack}>
             <ArrowLeft className="mr-1 h-3.5 w-3.5" /> Discovered skills
@@ -891,10 +892,10 @@ function ProjectSkillBrowser({
             })}
           </ul>
         ) : (
-          <div className="p-8 text-center text-sm text-muted-foreground">This folder is empty.</div>
+          <div className="p-8 text-center text-sm text-muted-foreground">{skillText("This folder is empty.")}</div>
         )}
         {result?.truncated && (
-          <p className="border-t border-border/60 px-5 py-2 text-xs text-muted-foreground">Showing the first 250 entries.</p>
+          <p className="border-t border-border/60 px-5 py-2 text-xs text-muted-foreground">{skillText("Showing the first 250 entries.")}</p>
         )}
       </div>
     </div>
@@ -990,7 +991,7 @@ function SelectStep({
           <div className="mx-auto mb-4 w-fit bg-muted/50 p-4">
             <FolderSearch className="h-10 w-10 text-muted-foreground/50" />
           </div>
-          <p className="text-base font-semibold">No skills found</p>
+          <p className="text-base font-semibold">{skillText("No skills found")}</p>
           <p className="mt-1.5 text-sm text-muted-foreground">
             None of the well-known skill folders in this project's workspaces contain a{" "}
             <code className="rounded bg-muted px-1 py-0.5 text-xs">SKILL.md</code>. We searched{" "}
@@ -1028,7 +1029,7 @@ function SelectStep({
   return (
     <div className="flex min-h-0 flex-1 flex-col" data-testid="candidate-list">
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border/60 px-5 py-2.5">
-        <p className="text-xs text-muted-foreground">Choose discovered skills, or browse any workspace folder.</p>
+        <p className="text-xs text-muted-foreground">{skillText("Choose discovered skills, or browse any workspace folder.")}</p>
         <Button variant="outline" size="sm" onClick={() => onBrowseOpenChange(true)} data-testid="browse-project-folders">
           <FolderOpen className="mr-1.5 h-3.5 w-3.5" /> Browse folders
         </Button>
@@ -1183,7 +1184,7 @@ function ResultStep({ result }: ResultStepProps) {
         <div className="flex items-start gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3">
           <Link2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
           <div className="text-xs leading-relaxed text-muted-foreground">
-            <span className="font-medium text-foreground">No files were copied.</span> These skills
+            <span className="font-medium text-foreground">{skillText("No files were copied.")}</span> {skillText("These skills")}
             reference the files in the project workspace — editing them in Skill Studio saves
             directly back to those files.
           </div>
