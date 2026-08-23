@@ -533,7 +533,7 @@ function AttributionAvatar({
   actor: AttributionActor;
   via?: string | null;
 }) {
-  const accessibleLabel = via ? `${label}: ${actor.name} · via ${via}` : `${label}: ${actor.name}`;
+  const accessibleLabel = via ? `${label}: ${actor.name} · ${t("issueDetailResidual.via")} ${via}` : `${label}: ${actor.name}`;
   const testIdLabel = label.toLowerCase();
 
   return (
@@ -566,7 +566,7 @@ function AttributionAvatar({
             <div className="text-(length:--text-nano) font-medium uppercase leading-none text-background/70">{label}</div>
             <div className="max-w-48 truncate text-xs font-medium leading-4 text-background">{actor.name}</div>
             {via ? (
-              <div className="max-w-48 truncate text-(length:--text-nano) leading-3 text-background/60">via {via}</div>
+              <div className="max-w-48 truncate text-(length:--text-nano) leading-3 text-background/60">{t("issueDetailResidual.via")} {via}</div>
             ) : null}
           </div>
         </div>
@@ -716,10 +716,10 @@ function IssueDetailLoadingState({
               {headerSeed.originKind === "routine_execution" && headerSeed.originId ? (
                 <Badge variant="outline"
                   className="border-violet-500/30 bg-violet-500/10 text-(length:--text-nano) text-violet-600 dark:text-violet-400"
-                  title={`Routine execution from routine ${headerSeed.originId}`}
+                  title={t("issueDetailResidual.routineExecutionTitle", { id: headerSeed.originId })}
                 >
                   <Repeat className="h-3 w-3" />
-                  Routine
+                  {t("issueDetailResidual.routine")}
                 </Badge>
               ) : null}
               {/* Seeded header — same anatomy as the resolved one below, so the
@@ -734,7 +734,7 @@ function IssueDetailLoadingState({
               ) : (
                 <span className="inline-flex items-center gap-1 text-xs text-muted-foreground opacity-50 px-1 -mx-1 py-0.5">
                   <ProjectTile size="xs" />
-                  No project
+                  {t("taskDetail.noProject")}
                 </span>
               )}
             </>
@@ -848,14 +848,14 @@ function InboxMobileToolbar({
               onClick={() => { onCopy(); setMenuOpen(false); }}
             >
               <Copy className="h-3 w-3" />
-              Copy as markdown
+              {t("taskDetail.copyTaskMarkdown")}
             </button>
             <button
               className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
               onClick={() => { onProperties(); setMenuOpen(false); }}
             >
               <SlidersHorizontal className="h-3 w-3" />
-              Properties
+              {t("taskDetail.properties")}
             </button>
             {issueIdProp && (
               <button
@@ -863,7 +863,7 @@ function InboxMobileToolbar({
                 onClick={() => { onHide(); setMenuOpen(false); }}
               >
                 <EyeOff className="h-3 w-3" />
-                Hide this task
+                {t("issueDetailResidual.hideTask")}
               </button>
             )}
           </PopoverContent>
@@ -1775,7 +1775,7 @@ export function IssueDetail() {
     }
   }, [hasLiveRuns, locallyQueuedCommentRunIds.size]);
   const sourceBreadcrumb = useMemo(
-    () => readIssueDetailBreadcrumb(issueId, location.state, location.search) ?? { label: "Tasks", href: "/issues" },
+    () => readIssueDetailBreadcrumb(issueId, location.state, location.search) ?? { label: t("taskDetail.task"), href: "/issues" },
     [issueId, location.state, location.search],
   );
 
@@ -2032,7 +2032,7 @@ export function IssueDetail() {
       options.push({ id: `agent:${agent.id}`, label: agent.name });
     }
     if (currentUserId) {
-      options.push({ id: `user:${currentUserId}`, label: "Me" });
+      options.push({ id: `user:${currentUserId}`, label: t("issueWork.me") });
     }
     return options;
   }, [agents, companyMembers?.users, currentUserId]);
@@ -2295,7 +2295,7 @@ export function IssueDetail() {
       if (treeControlMode === "resume") {
         const pauseHoldId = treeControlState?.activePauseHold?.holdId;
         if (!pauseHoldId) {
-          throw new Error("No active subtree pause hold is available to resume.");
+          throw new Error(t("issueDetailResidual.noActivePauseHold"));
         }
         const releasedHold = await issuesApi.releaseTreeHold(issueId!, pauseHoldId, {
           reason: treeControlReason.trim() || null,
@@ -2379,7 +2379,7 @@ export function IssueDetail() {
     mutationFn: async ({ runId, scope }: { runId: string; scope: "leaf" | "subtree" }) => {
       const created = await issuesApi.createTreeHold(issueId!, {
         mode: "pause",
-        reason: "Paused from active run controls.",
+        reason: t("issueDetailResidual.pausedFromActiveRunControls"),
         releasePolicy: { strategy: "manual", note: scope === "leaf" ? "leaf_pause" : "full_pause" },
         metadata: { source: "issue_active_run_control", runId },
       });
@@ -3820,10 +3820,10 @@ export function IssueDetail() {
     mutationFn: async (
       request: import("../components/IssueRecoveryActionCard").RecoveryReissueRequest,
     ) => {
-      if (!issue) throw new Error("Task is not loaded yet.");
+      if (!issue) throw new Error(t("taskDetail.taskNotLoaded"));
       const sourceLabel = issue.identifier ?? "the stalled task";
       const descriptionLines = [
-        `Re-issued from ${sourceLabel} on an isolated git worktree after a workspace branch divergence.`,
+        t("taskDetail.reissueIsolatedDescription", { sourceLabel }),
         "",
         `- Base ref (live branch): \`${request.baseRef}\``,
         ...(request.expectedBranch ? [`- Recorded branch: \`${request.expectedBranch}\``] : []),
@@ -3833,7 +3833,7 @@ export function IssueDetail() {
         issue.description ?? "",
       ];
       return issuesApi.create(issue.companyId, {
-        title: `Re-issue (isolated): ${issue.title ?? sourceLabel}`,
+        title: t("taskDetail.reissueIsolatedTitle", { title: issue.title ?? sourceLabel }),
         description: descriptionLines.join("\n"),
         priority: issue.priority,
         projectId: issue.projectId ?? null,
@@ -4025,7 +4025,7 @@ export function IssueDetail() {
     const badges = new Map<string, string>();
     for (const child of childIssues) {
       if (!heldIssueIds.has(child.id)) continue;
-      badges.set(child.id, "Paused");
+      badges.set(child.id, t("issueDetailResidual.paused"));
     }
     return badges;
   }, [childIssues, heldIssueIds]);
@@ -4234,7 +4234,7 @@ export function IssueDetail() {
                 <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500" />
               </span>
-              Live
+              {t("issueDetailResidual.live")}
             </Badge>
           )}
 
@@ -4242,10 +4242,10 @@ export function IssueDetail() {
             <Link
               to={`/routines/${issue.originId}`}
               className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 border border-violet-500/30 px-2 py-0.5 text-(length:--text-nano) font-medium text-violet-600 dark:text-violet-400 shrink-0 hover:bg-violet-500/20 transition-colors"
-              title={`Routine execution from routine ${issue.originId}`}
+              title={t("issueDetailResidual.routineExecutionTitle", { id: issue.originId })}
             >
               <Repeat className="h-3 w-3" />
-              Routine
+              {t("issueDetailResidual.routine")}
             </Link>
           )}
 
@@ -4283,7 +4283,7 @@ export function IssueDetail() {
             return (
               <Badge variant="outline"
                 className={cn("text-(length:--text-nano)", workModeMeta.classes.badge)}
-                title={`This task is in ${workModeMeta.label.toLowerCase()}.`}
+                title={t("issueDetailResidual.workModeTitle", { mode: workModeMeta.label.toLowerCase() })}
               >
                 <WorkModeIcon className="h-3 w-3" aria-hidden />
                 {workModeMeta.label}
@@ -4320,7 +4320,7 @@ export function IssueDetail() {
           ) : (
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground opacity-50 px-1 -mx-1 py-0.5">
               <ProjectTile size="xs" />
-              No project
+              {t("taskDetail.noProject")}
             </span>
           )}
 
@@ -4450,7 +4450,7 @@ export function IssueDetail() {
                   }}
                 >
                   <PauseCircle className="h-3 w-3" />
-                  Pause work...
+                  {t("issueDetailResidual.pauseWork")}
                 </button>
               ) : null}
               {canResumeLeafWork ? (
@@ -4464,7 +4464,7 @@ export function IssueDetail() {
                   }}
                 >
                   <PlayCircle className="h-3 w-3" />
-                  Resume work
+                  {t("issueDetailResidual.resumeWork")}
                 </button>
               ) : null}
               {canShowSubtreeControls ? (
@@ -4479,7 +4479,7 @@ export function IssueDetail() {
                     }}
                   >
                     <PauseCircle className="h-3 w-3" />
-                    Pause subtree...
+                    {t("issueDetailResidual.pauseSubtree")}
                   </button>
                   {canResumeSubtree ? (
                     <button
@@ -4492,7 +4492,7 @@ export function IssueDetail() {
                       }}
                     >
                       <PlayCircle className="h-3 w-3" />
-                      Resume subtree
+                      {t("issueDetailResidual.resumeSubtree")}
                     </button>
                   ) : null}
                   <button
@@ -4505,7 +4505,7 @@ export function IssueDetail() {
                     }}
                   >
                     <XCircle className="h-3 w-3" />
-                    Cancel subtree...
+                    {t("issueDetailResidual.cancelSubtree")}
                   </button>
                   {canRestoreSubtree ? (
                     <button
@@ -4519,7 +4519,7 @@ export function IssueDetail() {
                       }}
                     >
                       <Repeat className="h-3 w-3" />
-                      Restore subtree...
+                      {t("issueDetailResidual.restoreSubtree")}
                     </button>
                   ) : null}
                 </>
@@ -4535,7 +4535,7 @@ export function IssueDetail() {
                 }}
               >
                 <EyeOff className="h-3 w-3" />
-                Hide this task
+                {t("issueDetailResidual.hideTask")}
               </button>
             </PopoverContent>
             </Popover>
@@ -4698,7 +4698,7 @@ export function IssueDetail() {
                       setTreeControlOpen(true);
                     }}
                   >
-                    View affected ({childIssues.length === 0 ? 1 : heldDescendantCount})
+                    {t("issueDetailResidual.viewAffected", { count: childIssues.length === 0 ? 1 : heldDescendantCount })}
                   </Button>
                   {canShowSubtreeControls ? (
                     <Button
@@ -4711,7 +4711,7 @@ export function IssueDetail() {
                         setTreeControlOpen(true);
                       }}
                     >
-                      Cancel subtree...
+                      {t("issueDetailResidual.cancelSubtree")}
                     </Button>
                   ) : null}
                 </div>
@@ -4719,7 +4719,7 @@ export function IssueDetail() {
             </div>
           ) : (
             <div className="text-xs">
-              This task is paused by ancestor{" "}
+              {t("issueDetailResidual.ancestorPausedPrefix")} {" "}
               {activePauseHoldRoot?.identifier ? (
                 <Link to={createIssueDetailPath(activePauseHoldRoot.identifier)} className="underline">
                   {activePauseHoldRoot.identifier}
@@ -4727,7 +4727,7 @@ export function IssueDetail() {
               ) : (
                 activePauseHold.rootIssueId.slice(0, 8)
               )}
-              . Resume from the root task to deliver deferred work.
+              {t("issueDetailResidual.ancestorPausedSuffix")}
             </div>
           )}
         </div>
@@ -4756,7 +4756,7 @@ export function IssueDetail() {
             searchFilters={{ descendantOf: issue.id, includeBlockedBy: true }}
             searchWithinLoadedIssues
             baseCreateIssueDefaults={buildSubIssueDefaultsForViewer(issue, currentUserId)}
-            createIssueLabel="Sub-task"
+            createIssueLabel={t("issueDetailResidual.subTask")}
             defaultSortField="workflow"
             showProgressSummary
             parentIssueIdForCostSummary={issue.id}
@@ -4767,7 +4767,7 @@ export function IssueDetail() {
         <div className="flex flex-wrap items-center justify-end gap-2 min-w-0">
           <Button variant="outline" size="sm" onClick={openNewSubIssue} className="shrink-0 shadow-none">
             <Plus className="mr-1.5 h-3.5 w-3.5" />
-            New Sub-task
+            {t("issueWork.newSubTask")}
           </Button>
         </div>
       )}
@@ -4915,15 +4915,15 @@ export function IssueDetail() {
         <TabsList variant="line" className={cn("w-full justify-start gap-1", shellSectionClass)}>
           <TabsTrigger value="chat" className="gap-1.5">
             <MessageSquare className="h-3.5 w-3.5" />
-            Chat
+            {t("issueDetailResidual.chatTab")}
           </TabsTrigger>
           <TabsTrigger value="activity" className="gap-1.5">
             <ActivityIcon className="h-3.5 w-3.5" />
-            Activity
+            {t("issueDetailResidual.activityTab")}
           </TabsTrigger>
           <TabsTrigger value="related-work" className="gap-1.5">
             <ListTree className="h-3.5 w-3.5" />
-            Related work
+            {t("issueDetailResidual.relatedWorkTab")}
           </TabsTrigger>
           {issuePluginTabItems.map((item) => (
             <TabsTrigger key={item.value} value={item.value}>
@@ -4955,7 +4955,7 @@ export function IssueDetail() {
                       description: issue.description ?? "",
                       author: issue.createdByAgentId ? "agent" : "human",
                       authorName: issue.createdByAgentId
-                        ? agentMap.get(issue.createdByAgentId)?.name ?? "Agent"
+                        ? agentMap.get(issue.createdByAgentId)?.name ?? t("taskDetail.agent")
                         : undefined,
                       agentIcon: issue.createdByAgentId
                         ? agentMap.get(issue.createdByAgentId)?.icon
@@ -5136,13 +5136,13 @@ export function IssueDetail() {
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-4">
             {treeControlMode === "cancel" ? (
               <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
-                Cancelling a subtree is destructive. Non-terminal tasks will be marked cancelled, and running or queued work will be interrupted where possible.
+                {t("issueDetailResidual.destructiveCancelWarning")}
               </div>
             ) : null}
 
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground">
-                Reason (optional)
+                {t("issueDetailResidual.reasonOptional")}
               </label>
               <Textarea
                 value={treeControlReason}
@@ -5194,7 +5194,7 @@ export function IssueDetail() {
                   checked={treeControlCancelConfirmed}
                   onChange={(event) => setTreeControlCancelConfirmed(event.target.checked)}
                 />
-                <span>I understand this will cancel {previewAffectedIssueCount} tasks.</span>
+                <span>{t("issueDetailResidual.cancelConfirmation", { count: previewAffectedIssueCount })}</span>
               </label>
             ) : null}
 
@@ -5216,7 +5216,7 @@ export function IssueDetail() {
                       void refetchTreeControlPreview();
                     }}
                   >
-                    Retry preview
+                    {t("issueDetailResidual.retryPreview")}
                   </Button>
                 </div>
               ) : treeControlPreview ? (
