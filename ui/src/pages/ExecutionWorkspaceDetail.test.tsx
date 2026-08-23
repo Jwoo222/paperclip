@@ -5,6 +5,7 @@ import type { ExecutionWorkspace, Project } from "@paperclipai/shared";
 import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { t } from "../i18n";
 import { ExecutionWorkspaceDetail } from "./ExecutionWorkspaceDetail";
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -297,7 +298,7 @@ describe("ExecutionWorkspaceDetail plugin slots", () => {
       companyId: "company-1",
       scopeKind: "project_workspace",
       scopeId: "project-workspace-1",
-      title: "Workspace summary",
+      title: t("workspaceUi.common.workspaceSummary"),
     }));
     const summary = container.querySelector('[data-testid="summary-slot-card"]');
     const issues = container.querySelector('[data-testid="issues-list"]');
@@ -330,8 +331,9 @@ describe("ExecutionWorkspaceDetail plugin slots", () => {
     await render();
 
     expect(container.textContent).toContain("Workspace plugin tab is not available.");
-    expect(container.querySelector('a[href="/execution-workspaces/workspace-1/issues"]')?.textContent).toBe("Back to tasks");
-    expect(container.textContent).not.toContain("Workspace routines");
+    expect(container.querySelector('a[href="/execution-workspaces/workspace-1/issues"]')?.textContent)
+      .toBe(t("workspaceUi.executionWorkspace.close.backToTasks"));
+    expect(container.textContent).not.toContain(t("workspaceUi.executionWorkspace.routines.title"));
     expect(container.querySelector('[data-testid="plugin-slot-mount"]')).toBeNull();
   });
 
@@ -346,13 +348,13 @@ describe("ExecutionWorkspaceDetail plugin slots", () => {
 
     const tabLabels = Array.from(container.querySelectorAll("[data-tab-value]")).map((tab) => tab.textContent);
     expect(tabLabels).toEqual([
-      "Tasks",
-      "Services",
+      t("workspaceUi.executionWorkspace.tabs.tasks"),
+      t("workspaceUi.executionWorkspace.tabs.services"),
       "Changes",
-      "Configuration",
-      "Runtime logs",
+      t("workspaceUi.executionWorkspace.tabs.configuration"),
+      t("workspaceUi.executionWorkspace.tabs.runtimeLogs"),
       "Inspect",
-      "Routines",
+      t("workspaceUi.executionWorkspace.tabs.routines"),
       "Default",
     ]);
   });

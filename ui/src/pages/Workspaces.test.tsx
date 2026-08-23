@@ -6,6 +6,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { WorkspaceOverviewItem, WorkspaceOverviewResponse } from "@paperclipai/shared";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { t } from "../i18n";
 import { Workspaces } from "./Workspaces";
 
 const mockExecutionWorkspacesApi = vi.hoisted(() => ({
@@ -187,20 +188,21 @@ describe("Workspaces", () => {
     expect(mockSummarySlotCard).toHaveBeenCalledWith(expect.objectContaining({
       companyId: "company-1",
       scopeKind: "workspaces_overview",
-      title: "Workspace summary",
+      title: t("workspaceUi.workspaces.summaryTitle"),
     }));
-    const heading = Array.from(container.querySelectorAll("h2")).find((node) => node.textContent === "Workspaces");
+    const heading = Array.from(container.querySelectorAll("h2"))
+      .find((node) => node.textContent === t("workspaceUi.workspaces.title"));
     const summaryCard = container.querySelector('[data-testid="summary-slot-card"]');
     expect(heading && summaryCard ? Boolean(heading.compareDocumentPosition(summaryCard) & Node.DOCUMENT_POSITION_FOLLOWING) : false).toBe(true);
     expect(container.textContent).toContain("Paperclip App");
     expect(container.textContent).toContain("Workspace Alpha");
     expect(container.textContent).toContain("PAP-11916");
     expect(container.textContent).toContain("+1 more");
-    expect(container.textContent).toContain("Showing 1 of 2 workspaces.");
+    expect(container.textContent).toContain(t("workspaceUi.workspaces.showing", { shown: 1, total: 2 }));
     expect(container.querySelector('a[href="/projects/paperclip-app/workspaces"]')).not.toBeNull();
 
     const loadMoreButton = Array.from(container.querySelectorAll("button"))
-      .find((button) => button.textContent === "Load more");
+      .find((button) => button.textContent === t("workspaceUi.workspaces.loadMore"));
     expect(loadMoreButton).not.toBeNull();
     await act(async () => {
       loadMoreButton!.dispatchEvent(new MouseEvent("click", { bubbles: true }));

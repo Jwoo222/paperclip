@@ -1,0 +1,249 @@
+{
+  "workspaceUi": {
+    "common": {
+      "loading": "불러오는 중...",
+      "loadingWorkspace": "워크스페이스를 불러오는 중…",
+      "workspaceName": "워크스페이스 이름",
+      "repoUrl": "저장소 URL",
+      "project": "프로젝트",
+      "workspaceId": "워크스페이스 ID",
+      "repo": "저장소",
+      "none": "없음",
+      "never": "실행 기록 없음",
+      "updated": "업데이트됨",
+      "copied": "복사됨",
+      "backToWorkspaces": "워크스페이스로 돌아가기",
+      "advancedRuntimeJson": "고급 런타임 JSON",
+      "workspaceCommandsJson": "워크스페이스 명령 JSON",
+      "saveChanges": "변경사항 저장",
+      "reset": "초기화",
+      "noUnsavedChanges": "저장되지 않은 변경사항이 없습니다.",
+      "workspaceCommands": "워크스페이스 명령",
+      "servicesAndJobs": "서비스 및 작업",
+      "noServicesStarted": "아직 시작된 서비스가 없습니다.",
+      "noCommandConfig": "아직 정의된 워크스페이스 명령 설정이 없습니다.",
+      "noJobs": "설정된 일회성 작업이 없습니다.",
+      "loadingPlugin": "워크스페이스 플러그인을 불러오는 중...",
+      "backToConfiguration": "설정으로 돌아가기",
+      "workspaceSummary": "워크스페이스 요약"
+    },
+    "errors": {
+      "commandsJsonObject": "워크스페이스 명령 JSON은 객체여야 합니다.",
+      "invalidJson": "잘못된 JSON입니다.",
+      "invalidRepoUrl": "저장소 URL이 올바른 URL이 아닙니다."
+    },
+    "workspaces": {
+      "breadcrumb": "워크스페이스",
+      "title": "워크스페이스",
+      "summaryTitle": "워크스페이스 요약",
+      "summaryDescription": "요약 에이전트가 프로젝트별 워크스페이스 활동, 실행 중인 서비스와 후속 조치가 필요한 항목을 추적합니다.",
+      "empty": "아직 워크스페이스 활동이 없습니다.",
+      "workspaceCount": "워크스페이스 {{count}}개",
+      "workspaceCount_one": "워크스페이스 {{count}}개",
+      "workspaceCount_other": "워크스페이스 {{count}}개",
+      "showing": "워크스페이스 {{total}}개 중 {{shown}}개 표시",
+      "loadMore": "더 불러오기"
+    },
+    "orgChart": {
+      "breadcrumb": "조직도",
+      "selectCompany": "조직도를 보려면 회사를 선택하세요.",
+      "empty": "정의된 조직 계층이 없습니다.",
+      "importCompany": "회사 가져오기",
+      "exportCompany": "회사 내보내기",
+      "zoomIn": "확대",
+      "zoomOut": "축소",
+      "fitToScreen": "화면에 맞추기",
+      "fitChartToScreen": "조직도를 화면에 맞추기"
+    },
+    "projectWorkspace": {
+      "projects": "프로젝트",
+      "eyebrow": "프로젝트 워크스페이스",
+      "makePrimary": "기본으로 지정",
+      "primaryNotice": "이 워크스페이스는 프로젝트의 기본 코드베이스입니다.",
+      "configurationDescription": "Paperclip이 프로젝트에 연결할 실제 워크스페이스를 설정합니다. 각 워크스페이스의 체크아웃 방식과 하위 실행 워크스페이스의 기본 런타임 서비스를 정하며, 필요한 경우 설정·정리 명령을 재정의할 수 있습니다.",
+      "notFound": "이 프로젝트에서 워크스페이스를 찾을 수 없습니다.",
+      "facts": "워크스페이스 정보",
+      "currentState": "현재 상태",
+      "localPath": "로컬 경로",
+      "repoRef": "저장소 ref",
+      "defaultRef": "기본 ref",
+      "sharedKey": "공유 워크스페이스 키",
+      "remoteProvider": "원격 제공자",
+      "remoteRef": "원격 워크스페이스 ref",
+      "setupCommand": "설정 명령",
+      "cleanupCommand": "정리 명령",
+      "setupHint": "이 워크스페이스에 사용자 지정 초기화가 필요할 때 실행됩니다",
+      "cleanupHint": "프로젝트 수준 실행 워크스페이스를 해제하기 전에 실행됩니다",
+      "commandsHint": "실행 워크스페이스는 별도 재정의가 없으면 이 설정을 상속합니다. 기존 `services` 배열도 계속 사용할 수 있지만, `commands`는 서비스와 작업을 모두 지원합니다.",
+      "runtimeDisabledHint": "프로젝트 워크스페이스에서 로컬 명령을 실행하려면 작업 디렉터리가 필요하며, 서비스에는 런타임 설정도 필요합니다.",
+      "servicesDescription": "장시간 실행되는 서비스는 이곳에서 계속 관리하고, 일회성 작업은 필요할 때 이 워크스페이스에서 실행합니다. 실행 워크스페이스는 별도 재정의가 없으면 이 설정을 상속합니다.",
+      "runtimeJsonDescription": "Paperclip은 이 JSON에서 서비스와 작업을 구성합니다. 먼저 이름이 지정된 명령을 편집하고, 고급 수명주기·포트·준비 상태·환경 설정이 필요할 때만 원시 JSON을 사용하세요.",
+      "tabs": {
+        "configuration": "설정"
+      },
+      "visibility": {
+        "label": "표시 범위",
+        "default": "기본",
+        "advanced": "고급"
+      },
+      "sourceType": {
+        "label": "소스 유형",
+        "local_path": {
+          "label": "로컬 git 체크아웃",
+          "description": "Paperclip이 직접 사용할 수 있는 로컬 경로입니다."
+        },
+        "non_git_path": {
+          "label": "로컬 non-git 경로",
+          "description": "git 방식으로 관리되지 않는 로컬 폴더입니다."
+        },
+        "git_repo": {
+          "label": "원격 git 저장소",
+          "description": "선택적 ref와 로컬 체크아웃을 사용할 수 있는 저장소 URL입니다."
+        },
+        "remote_managed": {
+          "label": "원격 관리 워크스페이스",
+          "description": "외부 참조로 추적되는 호스팅 워크스페이스입니다."
+        }
+      },
+      "errors": {
+        "save": "워크스페이스를 저장하지 못했습니다.",
+        "update": "워크스페이스를 업데이트하지 못했습니다.",
+        "control": "워크스페이스 명령을 제어하지 못했습니다.",
+        "load": "워크스페이스를 불러오지 못했습니다",
+        "remoteSourceRequired": "원격 관리 워크스페이스에는 원격 워크스페이스 ref 또는 저장소 URL이 필요합니다.",
+        "pathOrRepoRequired": "워크스페이스에는 로컬 경로 또는 저장소 URL 중 하나 이상이 필요합니다.",
+        "absolutePath": "로컬 워크스페이스 경로는 절대 경로여야 합니다."
+      },
+      "runtime": {
+        "jobCompleted": "워크스페이스 작업이 완료되었습니다.",
+        "serviceStopped": "워크스페이스 서비스가 중지되었습니다. 작업 실행은 일시 중지되지 않습니다.",
+        "serviceRestarted": "워크스페이스 서비스가 재시작되었습니다. 작업 실행은 일시 중지되지 않습니다.",
+        "serviceStarted": "워크스페이스 서비스가 시작되었습니다."
+      }
+    },
+    "executionWorkspace": {
+      "tabs": {
+        "tasks": "업무",
+        "services": "서비스",
+        "configuration": "설정",
+        "runtimeLogs": "런타임 로그",
+        "routines": "루틴"
+      },
+      "noServicesStarted": "이 실행 워크스페이스에서 아직 시작된 서비스가 없습니다.",
+      "noCommandConfig": "이 실행 워크스페이스에 아직 정의된 명령 설정이 없습니다.",
+      "runtimeDisabledHint": "실행 워크스페이스에서 로컬 명령을 실행하려면 작업 디렉터리가 필요하며, 서비스에는 런타임 설정도 필요합니다.",
+      "errors": {
+        "duplicatePort": "포트 {{port}}가 여러 서비스에 할당되어 있습니다: {{services}}.",
+        "invalidPort": "{{name}}에 잘못된 고정 포트가 지정되었습니다.",
+        "save": "실행 워크스페이스를 저장하지 못했습니다.",
+        "control": "워크스페이스 명령을 제어하지 못했습니다.",
+        "load": "워크스페이스를 불러오지 못했습니다",
+        "buildUpdate": "워크스페이스 업데이트를 준비하지 못했습니다."
+      },
+      "phases": {
+        "worktreeSetup": "worktree 설정",
+        "configFreshness": "설정 최신성 확인",
+        "provision": "프로비저닝",
+        "runtimeProvision": "런타임 프로비저닝",
+        "teardown": "해제",
+        "worktreeCleanup": "worktree 정리",
+        "finalize": "마무리"
+      },
+      "runtime": {
+        "eager": "즉시 프로비저닝 · 워크스페이스 설정 중 완료",
+        "deferred": "지연됨",
+        "deferredHint": "첫 런타임 서비스가 시작되기 전에 한 번 실행됩니다.",
+        "provisioning": "프로비저닝 중…",
+        "provisioned": "프로비저닝 완료",
+        "failed": "프로비저닝 실패",
+        "viewLogs": "런타임 로그 보기",
+        "defaultServiceName": "서비스 {{count}}",
+        "jobCompleted": "워크스페이스 작업이 완료되었습니다.",
+        "serviceStopped": "워크스페이스 서비스가 중지되었습니다.",
+        "serviceRestarted": "워크스페이스 서비스가 재시작되었습니다.",
+        "serviceStarted": "워크스페이스 서비스가 시작되었습니다."
+      },
+      "routines": {
+        "title": "워크스페이스 루틴",
+        "description": "워크스페이스 전용 변수를 사용하는 루틴을 이 실행 워크스페이스에서 실행할 수 있습니다.",
+        "empty": "아직 워크스페이스 전용 변수를 사용하는 루틴이 없습니다.",
+        "loading": "루틴을 불러오는 중...",
+        "loadError": "루틴을 불러오지 못했습니다.",
+        "defaultAgentSet": "기본 에이전트 지정됨",
+        "chooseAgentWhenRunning": "실행할 때 에이전트 선택",
+        "lastRun": "마지막 실행: {{value}}",
+        "running": "실행 중...",
+        "runNow": "지금 실행",
+        "startedTitle": "루틴 실행 시작",
+        "startedBody": "이 실행 워크스페이스에서 루틴 실행을 생성했습니다.",
+        "failedTitle": "루틴 실행 실패",
+        "failedBody": "루틴 실행을 시작하지 못했습니다."
+      },
+      "settings": {
+        "title": "워크스페이스 설정",
+        "description": "이 실행 워크스페이스에 연결된 실제 경로, 저장소, 브랜치, 프로비저닝, 해제 및 런타임 재정의를 편집합니다. 저장된 변경사항은 이후 실행에 적용되며, 설정이 바뀌면 Paperclip이 재사용 워크스페이스를 새로 고치거나 교체할 수 있습니다.",
+        "general": "일반",
+        "namePlaceholder": "실행 워크스페이스 이름",
+        "sourceControl": "소스 관리",
+        "branchName": "브랜치 이름",
+        "branchHint": "격리된 worktree에 유용합니다",
+        "baseRef": "기준 ref",
+        "paths": "경로",
+        "workingDirectory": "작업 디렉터리",
+        "workingDirectoryPlaceholder": "/path/to/worktree 또는 provider ref",
+        "providerRef": "제공자 경로 / ref",
+        "lifecycleCommands": "수명주기 명령",
+        "provisionCommand": "프로비저닝 명령",
+        "provisionHint": "Paperclip이 이 실행 워크스페이스를 준비할 때 실행됩니다",
+        "runtimeProvisionCommand": "런타임 프로비저닝 명령",
+        "runtimeProvisionHint": "첫 런타임 서비스가 시작되기 전에 한 번 실행됩니다. 즉시 프로비저닝을 유지하려면 비워 두세요.",
+        "teardownCommand": "해제 명령",
+        "teardownHint": "실행 워크스페이스를 보관하거나 정리할 때 실행됩니다",
+        "cleanupCommand": "정리 명령",
+        "cleanupHint": "해제 전에 실행하는 워크스페이스별 정리입니다",
+        "runtimeConfig": "런타임 설정",
+        "runtimeConfigSource": "런타임 설정 출처",
+        "runtimeOverride": "이 실행 워크스페이스가 프로젝트 워크스페이스의 런타임 설정을 재정의하고 있습니다.",
+        "runtimeInherited": "이 실행 워크스페이스가 프로젝트 워크스페이스의 런타임 설정을 상속하고 있습니다.",
+        "runtimeMissing": "이 실행 워크스페이스와 프로젝트 워크스페이스에 런타임 설정이 없습니다.",
+        "resetToInherit": "상속 설정으로 초기화",
+        "runtimeOverrideHint": "이 실행 워크스페이스에 다른 서비스나 작업 동작이 꼭 필요할 때만 상속된 명령 모델을 재정의하세요.",
+        "inheritRuntime": "프로젝트 워크스페이스 런타임 설정 상속",
+        "servicePorts": "서비스 포트",
+        "servicePortsHint": "서비스에 고정 포트를 지정하거나 비워 두어 자동 설정을 사용하세요. 상속된 서비스를 편집하면 실행 워크스페이스 런타임 재정의가 생성됩니다.",
+        "fixedPort": "고정 포트",
+        "servicePortsFooter": "Paperclip은 서비스 시작 시 고정 포트를 다시 확인하고 워크스페이스 간 충돌을 거부합니다."
+      },
+      "context": {
+        "title": "워크스페이스 맥락",
+        "description": "연결된 객체 및 관계",
+        "projectWorkspace": "프로젝트 워크스페이스",
+        "sourceTask": "원본 업무",
+        "derivedFrom": "파생 원본",
+        "runtimeProvisioning": "런타임 프로비저닝"
+      },
+      "location": {
+        "title": "실제 위치",
+        "description": "경로 및 ref",
+        "opened": "열림",
+        "lastUsed": "최근 사용",
+        "cleanup": "정리",
+        "notScheduled": "예약되지 않음"
+      },
+      "logs": {
+        "title": "런타임 및 정리 로그",
+        "description": "최근 작업",
+        "loading": "워크스페이스 작업을 불러오는 중…",
+        "loadError": "워크스페이스 작업을 불러오지 못했습니다.",
+        "empty": "기록된 워크스페이스 작업이 아직 없습니다."
+      },
+      "close": {
+        "retry": "닫기 재시도",
+        "close": "워크스페이스 닫기",
+        "backToTasks": "업무로 돌아가기"
+      },
+      "eyebrow": "실행 워크스페이스",
+      "summaryDescription": "요약 에이전트가 최신 워크스페이스 상태와 다음 단계, 운영자 확인이 필요한 항목을 정리합니다."
+    }
+  }
+}

@@ -5,6 +5,7 @@ import type { Project, ProjectWorkspace } from "@paperclipai/shared";
 import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { t } from "../i18n";
 import { ProjectWorkspaceDetail } from "./ProjectWorkspaceDetail";
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -239,7 +240,8 @@ describe("ProjectWorkspaceDetail plugin tabs", () => {
 
     await render();
 
-    expect(container.querySelector('[data-tab-value="configuration"]')?.textContent).toBe("Configuration");
+    expect(container.querySelector('[data-tab-value="configuration"]')?.textContent)
+      .toBe(t("workspaceUi.projectWorkspace.tabs.configuration"));
     expect(container.querySelector('[data-tab-value="plugin:paperclip.quality:quality-tab"]')?.textContent).toBe("Quality");
     expect(container.querySelector('[data-tab-value="changes"]')).toBeNull();
     expect(container.querySelector('[data-testid="plugin-slot-mount"]')).not.toBeNull();
@@ -275,7 +277,12 @@ describe("ProjectWorkspaceDetail plugin tabs", () => {
     await render();
 
     const tabLabels = Array.from(container.querySelectorAll("[data-tab-value]")).map((tab) => tab.textContent);
-    expect(tabLabels).toEqual(["Early", "Configuration", "Late", "Default"]);
+    expect(tabLabels).toEqual([
+      "Early",
+      t("workspaceUi.projectWorkspace.tabs.configuration"),
+      "Late",
+      "Default",
+    ]);
   });
 
   it("navigates plugin tabs with only the generic plugin tab parameter", async () => {

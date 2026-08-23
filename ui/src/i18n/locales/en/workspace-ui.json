@@ -1,0 +1,249 @@
+{
+  "workspaceUi": {
+    "common": {
+      "loading": "Loading...",
+      "loadingWorkspace": "Loading workspace…",
+      "workspaceName": "Workspace name",
+      "repoUrl": "Repo URL",
+      "project": "Project",
+      "workspaceId": "Workspace ID",
+      "repo": "Repo",
+      "none": "None",
+      "never": "Never",
+      "updated": "Updated",
+      "copied": "Copied",
+      "backToWorkspaces": "Back to workspaces",
+      "advancedRuntimeJson": "Advanced runtime JSON",
+      "workspaceCommandsJson": "Workspace commands JSON",
+      "saveChanges": "Save changes",
+      "reset": "Reset",
+      "noUnsavedChanges": "No unsaved changes.",
+      "workspaceCommands": "Workspace commands",
+      "servicesAndJobs": "Services and jobs",
+      "noServicesStarted": "No services have been started for this workspace yet.",
+      "noCommandConfig": "No workspace command config is defined for this workspace yet.",
+      "noJobs": "No one-shot jobs are configured for this workspace yet.",
+      "loadingPlugin": "Loading workspace plugin...",
+      "backToConfiguration": "Back to configuration",
+      "workspaceSummary": "Workspace summary"
+    },
+    "errors": {
+      "commandsJsonObject": "Workspace commands JSON must be a JSON object.",
+      "invalidJson": "Invalid JSON.",
+      "invalidRepoUrl": "Repo URL must be a valid URL."
+    },
+    "workspaces": {
+      "breadcrumb": "Workspaces",
+      "title": "Workspaces",
+      "summaryTitle": "Workspace summary",
+      "summaryDescription": "Summarizer tracks workspace activity, live services, and follow-up needs across projects.",
+      "empty": "No workspace activity yet.",
+      "workspaceCount": "{{count}} workspace",
+      "workspaceCount_one": "{{count}} workspace",
+      "workspaceCount_other": "{{count}} workspaces",
+      "showing": "Showing {{shown}} of {{total}} workspaces.",
+      "loadMore": "Load more"
+    },
+    "orgChart": {
+      "breadcrumb": "Org Chart",
+      "selectCompany": "Select a company to view the org chart.",
+      "empty": "No organizational hierarchy defined.",
+      "importCompany": "Import company",
+      "exportCompany": "Export company",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "fitToScreen": "Fit to screen",
+      "fitChartToScreen": "Fit chart to screen"
+    },
+    "projectWorkspace": {
+      "projects": "Projects",
+      "eyebrow": "Project workspace",
+      "makePrimary": "Make primary",
+      "primaryNotice": "This is the project’s primary codebase workspace.",
+      "configurationDescription": "Configure the concrete workspace Paperclip attaches to this project. These values drive per-workspace checkout behavior, default runtime services for child execution workspaces, and let you override setup or cleanup commands when one workspace needs special handling.",
+      "notFound": "Workspace not found for this project.",
+      "facts": "Workspace facts",
+      "currentState": "Current state",
+      "localPath": "Local path",
+      "repoRef": "Repo ref",
+      "defaultRef": "Default ref",
+      "sharedKey": "Shared workspace key",
+      "remoteProvider": "Remote provider",
+      "remoteRef": "Remote workspace ref",
+      "setupCommand": "Setup command",
+      "cleanupCommand": "Cleanup command",
+      "setupHint": "Runs when this workspace needs custom bootstrap",
+      "cleanupHint": "Runs before project-level execution workspace teardown",
+      "commandsHint": "Execution workspaces inherit this config unless they override it. Legacy `services` arrays still work, but `commands` supports both services and jobs.",
+      "runtimeDisabledHint": "Project workspaces need a working directory before local commands can run, and services also need runtime config.",
+      "servicesDescription": "Long-running services stay supervised here, while one-shot jobs run on demand against this workspace. Execution workspaces inherit this config unless they override it.",
+      "runtimeJsonDescription": "Paperclip derives services and jobs from this JSON. Prefer editing named commands first; use raw JSON for advanced lifecycle, port, readiness, or environment settings.",
+      "tabs": {
+        "configuration": "Configuration"
+      },
+      "visibility": {
+        "label": "Visibility",
+        "default": "Default",
+        "advanced": "Advanced"
+      },
+      "sourceType": {
+        "label": "Source type",
+        "local_path": {
+          "label": "Local git checkout",
+          "description": "A local path Paperclip can use directly."
+        },
+        "non_git_path": {
+          "label": "Local non-git path",
+          "description": "A local folder without git semantics."
+        },
+        "git_repo": {
+          "label": "Remote git repo",
+          "description": "A repo URL with optional refs and local checkout."
+        },
+        "remote_managed": {
+          "label": "Remote-managed workspace",
+          "description": "A hosted workspace tracked by external reference."
+        }
+      },
+      "errors": {
+        "save": "Failed to save workspace.",
+        "update": "Failed to update workspace.",
+        "control": "Failed to control workspace commands.",
+        "load": "Failed to load workspace",
+        "remoteSourceRequired": "Remote-managed workspaces require a remote workspace ref or repo URL.",
+        "pathOrRepoRequired": "Workspace requires at least one local path or repo URL.",
+        "absolutePath": "Local workspace path must be absolute."
+      },
+      "runtime": {
+        "jobCompleted": "Workspace job completed.",
+        "serviceStopped": "Workspace service stopped. Task execution is not paused.",
+        "serviceRestarted": "Workspace service restarted. Task execution is not paused.",
+        "serviceStarted": "Workspace service started."
+      }
+    },
+    "executionWorkspace": {
+      "tabs": {
+        "tasks": "Tasks",
+        "services": "Services",
+        "configuration": "Configuration",
+        "runtimeLogs": "Runtime logs",
+        "routines": "Routines"
+      },
+      "noServicesStarted": "No services have been started for this execution workspace yet.",
+      "noCommandConfig": "No workspace command config is defined for this execution workspace yet.",
+      "runtimeDisabledHint": "Execution workspaces need a working directory before local commands can run, and services also need runtime config.",
+      "errors": {
+        "duplicatePort": "Port {{port}} is assigned to multiple services: {{services}}.",
+        "invalidPort": "{{name}} has an invalid fixed port.",
+        "save": "Failed to save execution workspace.",
+        "control": "Failed to control workspace commands.",
+        "load": "Failed to load workspace",
+        "buildUpdate": "Failed to build workspace update."
+      },
+      "phases": {
+        "worktreeSetup": "Worktree setup",
+        "configFreshness": "Config freshness",
+        "provision": "Provision",
+        "runtimeProvision": "Runtime provision",
+        "teardown": "Teardown",
+        "worktreeCleanup": "Worktree cleanup",
+        "finalize": "Finalize"
+      },
+      "runtime": {
+        "eager": "Eager · provisioned during workspace setup",
+        "deferred": "Deferred",
+        "deferredHint": "Runs once before the first runtime-service start.",
+        "provisioning": "Provisioning…",
+        "provisioned": "Provisioned",
+        "failed": "Provisioning failed",
+        "viewLogs": "View runtime logs",
+        "defaultServiceName": "Service {{count}}",
+        "jobCompleted": "Workspace job completed.",
+        "serviceStopped": "Workspace service stopped.",
+        "serviceRestarted": "Workspace service restarted.",
+        "serviceStarted": "Workspace service started."
+      },
+      "routines": {
+        "title": "Workspace routines",
+        "description": "Routines that use workspace-specific variables can be run against this execution workspace.",
+        "empty": "No routines use workspace-specific variables yet.",
+        "loading": "Loading routines...",
+        "loadError": "Failed to load routines.",
+        "defaultAgentSet": "Default agent set",
+        "chooseAgentWhenRunning": "Choose agent when running",
+        "lastRun": "Last run: {{value}}",
+        "running": "Running...",
+        "runNow": "Run now",
+        "startedTitle": "Routine started",
+        "startedBody": "Paperclip created a run using this execution workspace.",
+        "failedTitle": "Routine run failed",
+        "failedBody": "Paperclip could not start the routine run."
+      },
+      "settings": {
+        "title": "Workspace settings",
+        "description": "Edit the concrete path, repo, branch, provisioning, teardown, and runtime overrides attached to this execution workspace. Saved changes affect future runs; Paperclip may refresh or replace a reused workspace when config changes.",
+        "general": "General",
+        "namePlaceholder": "Execution workspace name",
+        "sourceControl": "Source control",
+        "branchName": "Branch name",
+        "branchHint": "Useful for isolated worktrees",
+        "baseRef": "Base ref",
+        "paths": "Paths",
+        "workingDirectory": "Working directory",
+        "workingDirectoryPlaceholder": "/path/to/worktree or provider ref",
+        "providerRef": "Provider path / ref",
+        "lifecycleCommands": "Lifecycle commands",
+        "provisionCommand": "Provision command",
+        "provisionHint": "Runs when Paperclip prepares this execution workspace",
+        "runtimeProvisionCommand": "Runtime provision command",
+        "runtimeProvisionHint": "Runs once before the first runtime-service start. Leave empty to keep eager provisioning.",
+        "teardownCommand": "Teardown command",
+        "teardownHint": "Runs when the execution workspace is archived or cleaned up",
+        "cleanupCommand": "Cleanup command",
+        "cleanupHint": "Workspace-specific cleanup before teardown",
+        "runtimeConfig": "Runtime config",
+        "runtimeConfigSource": "Runtime config source",
+        "runtimeOverride": "This execution workspace currently overrides the project workspace runtime config.",
+        "runtimeInherited": "This execution workspace is inheriting the project workspace runtime config.",
+        "runtimeMissing": "No runtime config is currently defined on this execution workspace or its project workspace.",
+        "resetToInherit": "Reset to inherit",
+        "runtimeOverrideHint": "Override the inherited workspace command model only when this execution workspace truly needs different service or job behavior.",
+        "inheritRuntime": "Inherit project workspace runtime config",
+        "servicePorts": "Service ports",
+        "servicePortsHint": "Set a fixed port for a service or leave it blank to use its configured automatic behavior. Editing an inherited service creates an execution-workspace runtime override.",
+        "fixedPort": "Fixed port",
+        "servicePortsFooter": "Paperclip checks fixed ports again when a service starts and rejects cross-workspace conflicts."
+      },
+      "context": {
+        "title": "Workspace context",
+        "description": "Linked objects and relationships",
+        "projectWorkspace": "Project workspace",
+        "sourceTask": "Source task",
+        "derivedFrom": "Derived from",
+        "runtimeProvisioning": "Runtime provisioning"
+      },
+      "location": {
+        "title": "Concrete location",
+        "description": "Paths and refs",
+        "opened": "Opened",
+        "lastUsed": "Last used",
+        "cleanup": "Cleanup",
+        "notScheduled": "Not scheduled"
+      },
+      "logs": {
+        "title": "Runtime and cleanup logs",
+        "description": "Recent operations",
+        "loading": "Loading workspace operations…",
+        "loadError": "Failed to load workspace operations.",
+        "empty": "No workspace operations have been recorded yet."
+      },
+      "close": {
+        "retry": "Retry close",
+        "close": "Close workspace",
+        "backToTasks": "Back to tasks"
+      },
+      "eyebrow": "Execution workspace",
+      "summaryDescription": "Summarizer keeps the latest workspace status, next step, and operator-needed items here."
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { t } from "../i18n";
 import {
   getConfiguredRuntimeServicePortWarnings,
   readConfiguredRuntimeServicePorts,
@@ -40,7 +41,18 @@ describe("execution workspace service port configuration", () => {
       { collection: "commands", index: 0, name: "Web", port: 3100, invalidPort: false },
       { collection: "commands", index: 1, name: "Admin", port: 3100, invalidPort: false },
       { collection: "services", index: 0, name: "Worker", port: 3200, invalidPort: false },
-    ])).toEqual(["Port 3100 is assigned to multiple services: Web, Admin."]);
+    ])).toEqual([
+      t("workspaceUi.executionWorkspace.errors.duplicatePort", {
+        port: 3100,
+        services: "Web, Admin",
+      }),
+    ]);
+  });
+
+  it("localizes generated service names without changing configured names", () => {
+    expect(readConfiguredRuntimeServicePorts({
+      commands: [{ kind: "service", command: "pnpm dev" }],
+    })[0]?.name).toBe(t("workspaceUi.executionWorkspace.runtime.defaultServiceName", { count: 1 }));
   });
 
   it("preserves auto-port metadata when switching between automatic and fixed ports", () => {
