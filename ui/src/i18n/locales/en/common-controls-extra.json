@@ -47,6 +47,21 @@
     "scrollableTable": "Scrollable table",
     "duplicateAgentConfirm": "Duplicate {{name}} as {{nextName}}?",
     "insertOperator": "Insert operator {{token}}",
+    "previewLoadFailed": "Unable to load task preview.",
+    "richEditorUnavailable": "Rich editor unavailable for this markdown. Showing raw source instead.",
+    "retryRichEditor": "Retry rich editor",
+    "artifact": {
+      "image": "Image",
+      "document": "Document",
+      "text": "Text",
+      "file": "File",
+      "openNewTab": "Open file in new tab",
+      "downloadFile": "Download file",
+      "lastEdited": "Last edited {{date}}",
+      "oneArtifact": "1 artifact",
+      "artifactCount": "{{count}} artifacts",
+      "updated": "Updated {{date}}"
+    },
     "perMonth": "{{amount}}/mo",
     "time": {
       "justNow": "just now",

@@ -3,6 +3,7 @@ import { Download, ExternalLink, Paperclip, Play } from "lucide-react";
 import type { CompanyArtifact } from "@/api/artifacts";
 import { Link } from "@/lib/router";
 import { cn, formatDate } from "@/lib/utils";
+import { t } from "@/i18n";
 
 interface ArtifactCardProps {
   artifact: CompanyArtifact;
@@ -35,7 +36,7 @@ function PlaceholderPreview({ label }: { label?: string }) {
 function ImagePreview({ artifact }: { artifact: CompanyArtifact }) {
   const [errored, setErrored] = useState(false);
   if (errored || !artifact.contentPath) {
-    return <PlaceholderPreview label="Image" />;
+    return <PlaceholderPreview label={t("commonControls.artifact.image")} />;
   }
   return (
     <PreviewFrame>
@@ -134,7 +135,13 @@ function VideoPreview({ artifact }: { artifact: CompanyArtifact }) {
 function TextPreview({ artifact }: { artifact: CompanyArtifact }) {
   const preview = artifact.previewText?.trim();
   if (!preview) {
-    return <PlaceholderPreview label={artifact.source === "document" ? "Document" : "Text"} />;
+    return (
+      <PlaceholderPreview
+        label={artifact.source === "document"
+          ? t("commonControls.artifact.document")
+          : t("commonControls.artifact.text")}
+      />
+    );
   }
   return (
     <PreviewFrame className="bg-card">
@@ -158,7 +165,7 @@ export function ArtifactPreview({ artifact }: { artifact: CompanyArtifact }) {
     case "document":
       return <TextPreview artifact={artifact} />;
     case "file":
-      return <PlaceholderPreview label="File" />;
+      return <PlaceholderPreview label={t("commonControls.artifact.file")} />;
     case "empty":
     default:
       return <PlaceholderPreview />;
@@ -212,12 +219,12 @@ export function ArtifactCard({ artifact }: ArtifactCardProps) {
           </h3>
           <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
             {artifact.openPath ? (
-              <SecondaryAction href={artifact.openPath} title="Open file in new tab">
+              <SecondaryAction href={artifact.openPath} title={t("commonControls.artifact.openNewTab")}>
                 <ExternalLink className="h-3.5 w-3.5" />
               </SecondaryAction>
             ) : null}
             {artifact.downloadPath ? (
-              <SecondaryAction href={artifact.downloadPath} download title="Download file">
+              <SecondaryAction href={artifact.downloadPath} download title={t("commonControls.artifact.downloadFile")}>
                 <Download className="h-3.5 w-3.5" />
               </SecondaryAction>
             ) : null}
@@ -225,7 +232,7 @@ export function ArtifactCard({ artifact }: ArtifactCardProps) {
         </div>
 
         <div className="mt-0.5 flex items-center gap-1.5 text-(length:--text-micro) text-muted-foreground/65">
-          <span>Last edited {formatDate(artifact.updatedAt)}</span>
+          <span>{t("commonControls.artifact.lastEdited", { date: formatDate(artifact.updatedAt) })}</span>
           {artifact.createdByAgent ? (
             <>
               <span className="text-muted-foreground/50">·</span>

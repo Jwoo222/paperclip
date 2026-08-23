@@ -47,6 +47,21 @@
     "scrollableTable": "스크롤 가능한 표",
     "duplicateAgentConfirm": "{{name}}을(를) {{nextName}} 이름으로 복제할까요?",
     "insertOperator": "{{token}} 연산자 삽입",
+    "previewLoadFailed": "업무 미리보기를 불러오지 못했습니다.",
+    "richEditorUnavailable": "이 Markdown은 서식 편집기에서 열 수 없어 원문으로 표시합니다.",
+    "retryRichEditor": "서식 편집기 다시 시도",
+    "artifact": {
+      "image": "이미지",
+      "document": "문서",
+      "text": "텍스트",
+      "file": "파일",
+      "openNewTab": "새 탭에서 파일 열기",
+      "downloadFile": "파일 다운로드",
+      "lastEdited": "마지막 편집 {{date}}",
+      "oneArtifact": "산출물 1개",
+      "artifactCount": "산출물 {{count}}개",
+      "updated": "업데이트 {{date}}"
+    },
     "perMonth": "{{amount}}/월",
     "time": {
       "justNow": "방금",
