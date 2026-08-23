@@ -54,6 +54,7 @@
   },
   "dependencies": {
     "@agentclientprotocol/claude-agent-acp": "^0.63.0",
+    "@anthropic-ai/sdk": "0.93.0",
     "@paperclipai/adapter-utils": "workspace:*",
     "picocolors": "^1.1.1"
   },

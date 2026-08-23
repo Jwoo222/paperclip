@@ -26,7 +26,26 @@ Invoke-RestMethod http://127.0.0.1:3100/api/health
 corepack pnpm paperclipai doctor --data-dir "$env:LOCALAPPDATA\Paperclip-KO"
 corepack pnpm --filter @paperclipai/ui typecheck
 corepack pnpm check:token-gates
+corepack pnpm audit --prod --audit-level high
 ```
+
+This branch pins patched transitive dependencies so the production audit has no moderate, high, or
+critical findings. Two low findings remain: one apparent package-name false positive for the local `cli`
+workspace and one install-time dependency under the unused SQLite peer toolchain. Re-run the audit
+after dependency updates because advisory results can change.
+
+If a nested repository script resolves the Codex-bundled pnpm instead of the repository's pinned
+pnpm 9.15.4, create and prepend a local Corepack shim before running the script:
+
+```powershell
+$paperclipCorepackBin = "$env:LOCALAPPDATA\Paperclip-KO\corepack-bin"
+New-Item -ItemType Directory -Force -Path $paperclipCorepackBin | Out-Null
+corepack enable pnpm --install-directory $paperclipCorepackBin
+$env:PATH = "$paperclipCorepackBin;$env:PATH"
+pnpm --version
+```
+
+The expected version is `9.15.4`.
 
 ## Codex agent defaults
 
