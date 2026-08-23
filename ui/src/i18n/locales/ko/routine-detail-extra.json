@@ -1,0 +1,107 @@
+{
+  "routineDetailExtra": {
+    "sections": {
+      "overview": "개요", "triggers": "트리거", "variables": "변수", "secrets": "보안 키",
+      "delivery": "전달 설정", "runs": "실행", "activity": "활동", "history": "기록", "skipTo": "섹션으로 건너뛰기"
+    },
+    "status": { "archived": "보관됨", "draft": "초안", "active": "활성", "paused": "일시 중지" },
+    "errors": {
+      "selectCompany": "보안 키를 만들 회사를 선택하세요",
+      "clipboardDenied": "클립보드 접근이 거부되었습니다.",
+      "saveFailed": "Paperclip에서 루틴을 저장하지 못했습니다.",
+      "runFailed": "Paperclip에서 루틴 실행을 시작하지 못했습니다.",
+      "updateFailed": "Paperclip에서 루틴을 업데이트하지 못했습니다.", "createTriggerFailed": "Paperclip에서 트리거를 만들지 못했습니다.", "updateTriggerFailed": "Paperclip에서 트리거를 업데이트하지 못했습니다.", "deleteTriggerFailed": "Paperclip에서 트리거를 삭제하지 못했습니다.", "rotateFailed": "Paperclip에서 웹훅 보안 키를 교체하지 못했습니다."
+    },
+    "toast": {
+      "copied": "{{label}} 복사됨", "changed": "루틴 변경됨", "changedBody": "다른 사용자가 루틴을 업데이트했습니다. 최신 리비전을 확인하려면 다시 불러오세요.",
+      "saveFailed": "루틴 저장 실패", "runStarted": "루틴 실행 시작됨", "runFailed": "루틴 실행 실패",
+      "saved": "루틴 저장됨", "paused": "자동화가 일시 중지되었습니다.", "enabled": "자동화가 활성화되었습니다.",
+      "updateFailed": "루틴 업데이트 실패", "defaultAgentRequired": "기본 에이전트 필요", "setDefaultAgent": "루틴 자동화를 켜기 전에 기본 에이전트를 설정하세요.", "webhookCreated": "웹훅 트리거가 생성되었습니다", "triggerAdded": "트리거가 추가되었습니다", "scheduleSaved": "루틴 일정이 저장되었습니다.", "addTriggerFailed": "트리거 추가 실패", "triggerSaved": "트리거가 저장되었습니다", "cadenceSaved": "루틴 실행 주기가 저장되었습니다.", "updateTriggerFailed": "트리거 업데이트 실패", "triggerDeleted": "트리거가 삭제되었습니다", "deleteTriggerFailed": "트리거 삭제 실패", "secretRotated": "웹훅 보안 키가 교체되었습니다", "rotateFailed": "웹훅 보안 키 교체 실패"
+    },
+    "variables": {
+      "title": "변수",
+      "detected": "제목과 지시사항의 {{placeholder}} 자리표시자에서 감지했습니다.",
+      "promptBeforeRun": "각 수동 실행 전에 사용자에게 이 값을 입력받습니다.",
+      "label": "레이블",
+      "type": "유형",
+      "defaultValue": "기본값",
+      "required": "필수",
+      "noDefault": "기본값 없음",
+      "true": "참",
+      "false": "거짓",
+      "options": "옵션",
+      "defaultOption": "기본 옵션",
+      "showHelp": "변수 도움말 표시",
+      "dialogTitle": "루틴 변수",
+      "dialogDescription": "입력값을 요청하는 방법과 Paperclip이 자동으로 채우는 변수를 안내합니다.",
+      "customTitle": "사용자 변수",
+      "customDescription": "제목이나 지시사항 어디에나 {{placeholder}}를 입력하세요. Paperclip이 각 자리표시자를 감지해 변수 목록에 표시하고 실행 전에 값을 요청합니다.",
+      "ruleName": "이름은 문자로 시작해야 하며 문자, 숫자, 밑줄을 사용할 수 있습니다.",
+      "ruleType": "유형(text, textarea, number, boolean, select, date), 기본값, 필수 여부를 선택하세요.",
+      "ruleDate": "startDate처럼 대문자 Date로 끝나는 변수 이름은 기본적으로 날짜 변수로 생성됩니다.",
+      "ruleReuse": "제목과 지시사항에서 같은 이름을 사용하면 하나의 변수로 처리됩니다.",
+      "builtinTitle": "기본 제공 변수",
+      "builtinDescription": "자동으로 입력되는 변수입니다. 별도 설정이 필요 없으며 변수 목록에는 표시되지 않습니다.",
+      "placeholder": "자리표시자",
+      "example": "예시",
+      "description": "설명"
+    },
+    "run": {
+      "title": "루틴 실행",
+      "description": "이번 실행에 사용할 에이전트와 선택적 프로젝트를 정하세요. 루틴 기본값이 미리 입력되며 변경되지 않습니다.",
+      "agentRequired": "에이전트 *",
+      "agent": "에이전트",
+      "selectAgent": "에이전트 선택",
+      "searchAgents": "에이전트 검색...",
+      "noAgents": "에이전트가 없습니다.",
+      "project": "프로젝트",
+      "noProject": "프로젝트 없음",
+      "searchProjects": "프로젝트 검색...",
+      "noProjects": "프로젝트가 없습니다.",
+      "noValue": "값 없음",
+      "chooseValue": "값 선택",
+      "defaultAgentRequired": "이번 실행에는 기본 에이전트가 필요합니다.",
+      "missing": "누락: {{fields}}",
+      "chooseWorkspace": "실행하기 전에 기존 워크스페이스를 선택하세요.",
+      "cancel": "취소",
+      "running": "실행 중...",
+      "submit": "루틴 실행"
+    },
+    "trigger": {
+      "webhook": "웹훅",
+      "api": "API",
+      "label": "레이블",
+      "schedule": "일정",
+      "signingMode": "서명 방식",
+      "replayWindow": "재생 창(초)",
+      "delete": "삭제",
+      "rotateSecret": "보안 키 교체",
+      "save": "트리거 저장",
+      "signing": { "bearer": "Authorization 헤더에 공유 bearer 토큰이 있어야 합니다.", "hmac_sha256": "공유 보안 키를 사용해 요청에 HMAC SHA-256 서명이 있어야 합니다.", "github_hmac": "GitHub 방식의 X-Hub-Signature-256 헤더를 허용합니다(원문 본문 HMAC, 타임스탬프 없음).", "none": "인증 없음 — 웹훅 URL 자체가 공유 보안 키 역할을 합니다." }
+    },
+    "saveBar": {
+      "changedElsewhere": "다른 곳에서 루틴이 변경되었습니다. 병합하려면 다시 불러오세요.",
+      "unsaved": "저장하지 않은 변경 {{count}}개",
+      "pending": "대기 중인 변경",
+      "reloadLatest": "최신 내용 불러오기",
+      "overwrite": "그래도 덮어쓰기",
+      "overwriteHelp": "최신 리비전을 현재 로컬 변경으로 바꿉니다.",
+      "discard": "버리기",
+      "save": "변경사항 저장",
+      "discardTitle": "변경사항을 버릴까요?",
+      "discardDescription": "이 섹션에서 저장하지 않은 변경 {{count}}개를 되돌립니다.",
+      "keepEditing": "계속 편집",
+      "discardChanges": "변경사항 버리기",
+      "readOnly": "읽기 전용 — 이 루틴의 소유자가 아닙니다."
+    },
+    "overview": {
+      "triggers": "트리거", "none": "없음", "active": "활성 {{count}}개", "nextFire": "다음 실행 {{time}}", "noSchedule": "일정 없음",
+      "secrets": "보안 키", "bound": "연결 {{count}}개", "manageSecrets": "연결된 보안 키 관리", "lastRun": "최근 실행", "noRuns": "실행 없음", "triggerRun": "실행 시작", "noActivity": "아직 활동이 없습니다.", "viewActivity": "모든 활동 보기", "noResponsible": "담당자 없음", "searchResponsible": "담당자 검색...", "noResponsibleFound": "담당자를 찾을 수 없습니다.", "noProject": "프로젝트 없음", "searchProjects": "프로젝트 검색...", "noProjectsFound": "프로젝트를 찾을 수 없습니다."
+    },
+    "triggers": { "none": "아직 트리거가 없습니다", "count": "트리거 {{count}}개", "addTitle": "트리거 추가", "comingSoon": "출시 예정", "adding": "추가 중...", "add": "트리거 추가" },
+    "secrets": { "reserved": "이 루틴이 만드는 모든 작업에 루틴 보안 키가 적용됩니다. 프로젝트 및 에이전트 환경 변수의 같은 키를 덮어씁니다. {{prefix}} 이름은 예약되어 있습니다.", "saveNow": "지금 저장하세요. Paperclip은 보안 키 값을 다시 표시하지 않습니다." },
+    "delivery": { "concurrency": "동시 실행 정책", "catchUp": "놓친 실행 보충 정책", "advanced": "고급 실행 정책", "scope": "활동 게이트 범위", "noSchedule": "활동 기준으로 실행을 제한하려면 일정 트리거를 추가하세요. 웹훅, 수동, API 실행은 항상 진행됩니다." },
+    "runs": { "filterDate": "날짜로 필터링", "date": "날짜", "noMatch": "필터와 일치하는 실행이 없습니다.", "clearFilters": "필터 지우기" },
+    "activity": { "empty": "아직 활동이 없습니다." }
+  }
+}

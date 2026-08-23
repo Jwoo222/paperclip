@@ -128,8 +128,8 @@ export function RunsSection() {
                 </SelectContent>
               </Select>
               <Select value={dateFilter} onValueChange={setDateFilter}>
-                <SelectTrigger size="sm" className="h-8 w-auto gap-1.5 text-xs" aria-label="Filter by date">
-                  <span className="text-muted-foreground">Date:</span>
+                <SelectTrigger size="sm" className="h-8 w-auto gap-1.5 text-xs" aria-label={t("routineDetailExtra.runs.filterDate")}>
+                  <span className="text-muted-foreground">{t("routineDetailExtra.runs.date")}:</span>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -147,8 +147,8 @@ export function RunsSection() {
           {filtered.length === 0 ? (
             <EmptyState
               icon={SlidersHorizontal}
-              message="No runs match these filters."
-              action="Clear filters"
+              message={t("routineDetailExtra.runs.noMatch")}
+              action={t("routineDetailExtra.runs.clearFilters")}
               onAction={clearFilters}
             />
           ) : (
@@ -200,6 +200,7 @@ export function RunsSection() {
 }
 
 export function ActivitySection() {
+  const { t } = useTranslation();
   const ctx = useRoutineDetail();
   const { activity } = ctx;
   const events = activity ?? [];
@@ -225,7 +226,7 @@ export function ActivitySection() {
   }, [events]);
 
   if (events.length === 0) {
-    return <EmptyState icon={ActivityIcon} message="No activity yet." />;
+    return <EmptyState icon={ActivityIcon} message={t("routineDetailExtra.activity.empty")} />;
   }
 
   return (

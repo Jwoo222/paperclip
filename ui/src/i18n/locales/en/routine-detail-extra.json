@@ -1,0 +1,107 @@
+{
+  "routineDetailExtra": {
+    "sections": {
+      "overview": "Overview", "triggers": "Triggers", "variables": "Variables", "secrets": "Secrets",
+      "delivery": "Delivery", "runs": "Runs", "activity": "Activity", "history": "History", "skipTo": "Skip to section"
+    },
+    "status": { "archived": "Archived", "draft": "Draft", "active": "Active", "paused": "Paused" },
+    "errors": {
+      "selectCompany": "Select a company to create secrets",
+      "clipboardDenied": "Clipboard access was denied.",
+      "saveFailed": "Paperclip could not save the routine.",
+      "runFailed": "Paperclip could not start the routine run.",
+      "updateFailed": "Paperclip could not update the routine.", "createTriggerFailed": "Paperclip could not create the trigger.", "updateTriggerFailed": "Paperclip could not update the trigger.", "deleteTriggerFailed": "Paperclip could not delete the trigger.", "rotateFailed": "Paperclip could not rotate the webhook secret."
+    },
+    "toast": {
+      "copied": "{{label}} copied", "changed": "Routine changed", "changedBody": "Someone else updated this routine. Reload to see the latest revision.",
+      "saveFailed": "Failed to save routine", "runStarted": "Routine run started", "runFailed": "Routine run failed",
+      "saved": "Routine saved", "paused": "Automation paused.", "enabled": "Automation enabled.",
+      "updateFailed": "Failed to update routine", "defaultAgentRequired": "Default agent required", "setDefaultAgent": "Set a default agent before enabling routine automation.", "webhookCreated": "Webhook trigger created", "triggerAdded": "Trigger added", "scheduleSaved": "The routine schedule was saved.", "addTriggerFailed": "Failed to add trigger", "triggerSaved": "Trigger saved", "cadenceSaved": "The routine cadence update was saved.", "updateTriggerFailed": "Failed to update trigger", "triggerDeleted": "Trigger deleted", "deleteTriggerFailed": "Failed to delete trigger", "secretRotated": "Webhook secret rotated", "rotateFailed": "Failed to rotate webhook secret"
+    },
+    "variables": {
+      "title": "Variables",
+      "detected": "Detected from {{placeholder}} placeholders in the title and instructions.",
+      "promptBeforeRun": "Prompt the user for this value before each manual run.",
+      "label": "Label",
+      "type": "Type",
+      "defaultValue": "Default value",
+      "required": "Required",
+      "noDefault": "No default",
+      "true": "True",
+      "false": "False",
+      "options": "Options",
+      "defaultOption": "Default option",
+      "showHelp": "Show variable help",
+      "dialogTitle": "Routine variables",
+      "dialogDescription": "How to prompt for inputs and which variables Paperclip fills in automatically.",
+      "customTitle": "Custom variables",
+      "customDescription": "Type {{placeholder}} anywhere in the title or instructions. Paperclip detects each placeholder, lists it under Variables, and prompts for a value before each run.",
+      "ruleName": "Names must start with a letter and may use letters, numbers, and underscores.",
+      "ruleType": "Pick a type (text, textarea, number, boolean, select, date), default value, and whether it is required.",
+      "ruleDate": "Variable names ending in capital Date, such as startDate, are created as date variables by default.",
+      "ruleReuse": "The same name reused across the title and instructions is treated as one variable.",
+      "builtinTitle": "Built-in variables",
+      "builtinDescription": "These are filled in automatically — no setup needed and they will not appear in the Variables list.",
+      "placeholder": "Placeholder",
+      "example": "Example",
+      "description": "Description"
+    },
+    "run": {
+      "title": "Run routine",
+      "description": "Choose the agent and optional project for this one run. Routine defaults are prefilled and won't be changed.",
+      "agentRequired": "Agent *",
+      "agent": "Agent",
+      "selectAgent": "Select an agent",
+      "searchAgents": "Search agents...",
+      "noAgents": "No agents found.",
+      "project": "Project",
+      "noProject": "No project",
+      "searchProjects": "Search projects...",
+      "noProjects": "No projects found.",
+      "noValue": "No value",
+      "chooseValue": "Choose a value",
+      "defaultAgentRequired": "Default agent required for this run.",
+      "missing": "Missing: {{fields}}",
+      "chooseWorkspace": "Choose an existing workspace before running.",
+      "cancel": "Cancel",
+      "running": "Running...",
+      "submit": "Run routine"
+    },
+    "trigger": {
+      "webhook": "Webhook",
+      "api": "API",
+      "label": "Label",
+      "schedule": "Schedule",
+      "signingMode": "Signing mode",
+      "replayWindow": "Replay window (seconds)",
+      "delete": "Delete",
+      "rotateSecret": "Rotate secret",
+      "save": "Save trigger",
+      "signing": { "bearer": "Expect a shared bearer token in the Authorization header.", "hmac_sha256": "Expect an HMAC SHA-256 signature over the request using the shared secret.", "github_hmac": "Accept GitHub-style X-Hub-Signature-256 header (HMAC over raw body, no timestamp).", "none": "No authentication — the webhook URL itself acts as a shared secret." }
+    },
+    "saveBar": {
+      "changedElsewhere": "Routine changed elsewhere. Reload to merge.",
+      "unsaved": "{{count}} unsaved changes",
+      "pending": "Pending changes",
+      "reloadLatest": "Reload latest",
+      "overwrite": "Overwrite anyway",
+      "overwriteHelp": "Replaces the newer revision with your local edits.",
+      "discard": "Discard",
+      "save": "Save changes",
+      "discardTitle": "Discard changes?",
+      "discardDescription": "This will revert {{count}} unsaved changes in this section.",
+      "keepEditing": "Keep editing",
+      "discardChanges": "Discard changes",
+      "readOnly": "Read-only — you don't own this routine."
+    },
+    "overview": {
+      "triggers": "Triggers", "none": "None", "active": "{{count}} active", "nextFire": "Next fire {{time}}", "noSchedule": "No schedule",
+      "secrets": "Secrets", "bound": "{{count}} bound", "manageSecrets": "Manage bound secrets", "lastRun": "Last run", "noRuns": "No runs", "triggerRun": "Trigger a run", "noActivity": "No activity yet.", "viewActivity": "View all activity", "noResponsible": "No responsible", "searchResponsible": "Search responsible...", "noResponsibleFound": "No responsible found.", "noProject": "No project", "searchProjects": "Search projects...", "noProjectsFound": "No projects found."
+    },
+    "triggers": { "none": "No triggers yet", "count": "{{count}} triggers", "addTitle": "Add trigger", "comingSoon": "COMING SOON", "adding": "Adding...", "add": "Add trigger" },
+    "secrets": { "reserved": "Routine secrets apply to every task this routine creates. They override matching keys in project and agent env. {{prefix}} names are reserved.", "saveNow": "Save this now. Paperclip will not show the secret value again." },
+    "delivery": { "concurrency": "Concurrency policy", "catchUp": "Catch-up policy", "advanced": "Advanced run policy", "scope": "Activity gate scope", "noSchedule": "Add a schedule trigger to gate runs on activity. Webhook, manual, and API fires always run." },
+    "runs": { "filterDate": "Filter by date", "date": "Date", "noMatch": "No runs match these filters.", "clearFilters": "Clear filters" },
+    "activity": { "empty": "No activity yet." }
+  }
+}

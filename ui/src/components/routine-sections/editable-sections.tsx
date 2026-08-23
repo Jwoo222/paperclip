@@ -162,9 +162,9 @@ export function OverviewSection({
             options={assigneeOptions}
             recentOptionIds={recentAssigneeIds}
                 placeholder={t("operations.routines.responsible")}
-            noneLabel="No responsible"
-            searchPlaceholder="Search responsible..."
-            emptyMessage="No responsible found."
+            noneLabel={t("routineDetailExtra.overview.noResponsible")}
+            searchPlaceholder={t("routineDetailExtra.overview.searchResponsible")}
+            emptyMessage={t("routineDetailExtra.overview.noResponsibleFound")}
             onChange={(assigneeAgentId) =>
               setEditDraft((current) => ({ ...current, assigneeAgentId }))
             }
@@ -209,9 +209,9 @@ export function OverviewSection({
             options={projectOptions}
             recentOptionIds={recentProjectIds}
                 placeholder={t("operations.routines.project")}
-            noneLabel="No project"
-            searchPlaceholder="Search projects..."
-            emptyMessage="No projects found."
+            noneLabel={t("routineDetailExtra.overview.noProject")}
+            searchPlaceholder={t("routineDetailExtra.overview.searchProjects")}
+            emptyMessage={t("routineDetailExtra.overview.noProjectsFound")}
             onChange={(projectId) => setEditDraft((current) => ({ ...current, projectId }))}
             onConfirm={() => descriptionEditorRef.current?.focus()}
             renderTriggerValue={(option) =>
@@ -325,25 +325,25 @@ export function OverviewSection({
       <div className="grid gap-3 sm:grid-cols-3">
         <SummaryCard
           icon={Clock3}
-          label="Triggers"
-          value={activeTriggers === 0 ? "None" : `${activeTriggers} active`}
-          hint={nextFire ? `Next fire ${nextFire}` : "No schedule"}
+          label={t("routineDetailExtra.overview.triggers")}
+          value={activeTriggers === 0 ? t("routineDetailExtra.overview.none") : t("routineDetailExtra.overview.active", { count: activeTriggers })}
+          hint={nextFire ? t("routineDetailExtra.overview.nextFire", { time: nextFire }) : t("routineDetailExtra.overview.noSchedule")}
           to={() => navigateToSection("triggers")}
           ariaLabel={`${activeTriggers} triggers. Open triggers.`}
         />
         <SummaryCard
           icon={KeyRound}
-          label="Secrets"
-          value={boundSecrets === 0 ? "None" : `${boundSecrets} bound`}
-          hint="Manage bound secrets"
+          label={t("routineDetailExtra.overview.secrets")}
+          value={boundSecrets === 0 ? t("routineDetailExtra.overview.none") : t("routineDetailExtra.overview.bound", { count: boundSecrets })}
+          hint={t("routineDetailExtra.overview.manageSecrets")}
           to={() => navigateToSection("secrets")}
           ariaLabel={`${boundSecrets} secrets bound. Open secrets.`}
         />
         <SummaryCard
           icon={Play}
-          label="Last run"
-          value={lastRun ? lastRun.status.replaceAll("_", " ") : "No runs"}
-          hint={lastRun ? timeAgo(lastRun.triggeredAt) : "Trigger a run"}
+          label={t("routineDetailExtra.overview.lastRun")}
+          value={lastRun ? lastRun.status.replaceAll("_", " ") : t("routineDetailExtra.overview.noRuns")}
+          hint={lastRun ? timeAgo(lastRun.triggeredAt) : t("routineDetailExtra.overview.triggerRun")}
           to={() => navigateToSection("runs")}
           ariaLabel={lastRun ? `Last run ${lastRun.status}. Open runs.` : "No runs. Open runs."}
         />
@@ -355,7 +355,7 @@ export function OverviewSection({
           Recent activity
         </p>
         {recentActivity.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No activity yet.</p>
+              <p className="text-xs text-muted-foreground">{t("routineDetailExtra.overview.noActivity")}</p>
         ) : (
           <div className="divide-y divide-border/60">
             {recentActivity.map((event) => (
@@ -376,7 +376,7 @@ export function OverviewSection({
               onClick={() => navigateToSection("activity")}
               className="flex items-center gap-1 pt-2 text-xs text-muted-foreground hover:text-foreground"
             >
-              View all activity <ArrowRight className="h-3 w-3" />
+              {t("routineDetailExtra.overview.viewActivity")} <ArrowRight className="h-3 w-3" />
             </button>
           </div>
         )}
@@ -441,8 +441,8 @@ export function TriggersSection() {
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-muted-foreground">
           {routine.triggers.length === 0
-            ? "No triggers yet"
-            : `${routine.triggers.length} trigger${routine.triggers.length === 1 ? "" : "s"}`}
+            ? t("routineDetailExtra.triggers.none")
+            : t("routineDetailExtra.triggers.count", { count: routine.triggers.length })}
         </p>
         <Button
           size="sm"
@@ -467,7 +467,7 @@ export function TriggersSection() {
       {/* Add trigger form — expand-on-click drawer */}
       {addOpen ? (
       <div className="space-y-3 rounded-lg border border-border p-4">
-        <p className="text-sm font-medium">Add trigger</p>
+        <p className="text-sm font-medium">{t("routineDetailExtra.triggers.addTitle")}</p>
         <div className="grid gap-3 md:grid-cols-2">
           <div className="space-y-1.5">
             <Label className="text-xs">{t("operations.routines.kind")}</Label>
@@ -482,7 +482,7 @@ export function TriggersSection() {
                 {triggerKinds.map((kind) => (
                   <SelectItem key={kind} value={kind} disabled={kind === "webhook"}>
                     {kind}
-                    {kind === "webhook" ? " — COMING SOON" : ""}
+                    {kind === "webhook" ? ` — ${t("routineDetailExtra.triggers.comingSoon")}` : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -522,7 +522,7 @@ export function TriggersSection() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  {signingModeDescriptions[newTrigger.signingMode]}
+                  {t(`routineDetailExtra.trigger.signing.${newTrigger.signingMode}`)}
                 </p>
               </div>
               {!SIGNING_MODES_WITHOUT_REPLAY_WINDOW.has(newTrigger.signingMode) && (
@@ -555,7 +555,7 @@ export function TriggersSection() {
             }
             disabled={addDisabled}
           >
-            {createTrigger.isPending ? "Adding..." : "Add trigger"}
+            {createTrigger.isPending ? t("routineDetailExtra.triggers.adding") : t("routineDetailExtra.triggers.add")}
           </Button>
         </div>
       </div>
@@ -596,13 +596,11 @@ export function VariablesSection() {
     <div className="space-y-4">
       <div className="flex items-center gap-3 rounded-md border border-border bg-muted/20 px-4 py-3 text-xs">
         <span className="flex-1 text-muted-foreground">
-          Variables are auto-detected from <code className="font-mono">{"{{placeholders}}"}</code> in
-          the title &amp; instructions. The variable name is read-only — rename by editing the
-          placeholder.
+          {t("routineDetailExtra.variables.autoDetected", { placeholder: "{{placeholders}}" })}
         </span>
         <Button variant="secondary" size="sm" onClick={() => navigateToSection("overview")}>
           <Edit3 className="mr-1.5 h-3.5 w-3.5" />
-          Edit instructions
+          {t("routineDetailExtra.variables.editInstructions")}
         </Button>
       </div>
 
@@ -626,6 +624,7 @@ export function VariablesSection() {
 }
 
 export function SecretsSection() {
+  const { t } = useTranslation();
   const ctx = useRoutineDetail();
   const { editDraft, setEditDraft, availableSecrets, createSecret, secretMessage, copySecretValue } = ctx;
 
@@ -647,8 +646,7 @@ export function SecretsSection() {
   return (
     <div className="space-y-4">
       <div className="rounded-md border border-border bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
-        Routine secrets apply to every task this routine creates. They override matching keys in
-        project and agent env. <span className="font-mono">PAPERCLIP_*</span> names are reserved.
+        {t("routineDetailExtra.secrets.reserved", { prefix: "PAPERCLIP_*" })}
       </div>
 
       {secretMessage ? (
@@ -656,7 +654,7 @@ export function SecretsSection() {
           <div>
             <p className="font-medium">{secretMessage.title}</p>
             <p className="text-xs text-muted-foreground">
-              Save this now. Paperclip will not show the secret value again.
+              {t("routineDetailExtra.secrets.saveNow")}
             </p>
           </div>
           <div className="space-y-3">
@@ -707,7 +705,7 @@ export function DeliverySection() {
     <div className="space-y-6">
       <div className="space-y-3">
         <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-          Concurrency
+          {t("routineDetailExtra.delivery.concurrency")}
         </p>
         <RadioCardGroup
           ariaLabel="Concurrency policy"
@@ -720,7 +718,7 @@ export function DeliverySection() {
       </div>
       <div className="space-y-3">
         <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-          Catch-up
+          {t("routineDetailExtra.delivery.catchUp")}
         </p>
         <RadioCardGroup
           ariaLabel="Catch-up policy"
@@ -733,7 +731,7 @@ export function DeliverySection() {
       </div>
       <div className="space-y-3">
         <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-          Advanced run policy
+          {t("routineDetailExtra.delivery.advanced")}
         </p>
         <RadioCardGroup
           ariaLabel="Advanced run policy"
@@ -746,8 +744,7 @@ export function DeliverySection() {
         />
         {!hasScheduleTrigger ? (
           <p className="text-xs text-muted-foreground">
-            Add a schedule trigger to gate runs on activity. Webhook, manual, and API fires always
-            run.
+            {t("routineDetailExtra.delivery.noSchedule")}
           </p>
         ) : gateEnabled ? (
           <div className="space-y-2 rounded-lg border border-border p-3">
