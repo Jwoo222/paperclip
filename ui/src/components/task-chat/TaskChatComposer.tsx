@@ -31,6 +31,7 @@ import { nextWorkMode, workModeMetaFor, workModeMetaList } from "@/lib/work-mode
 import type { InlineEntityOption } from "@/components/InlineEntitySelector";
 import type { MentionOption } from "@/components/MarkdownEditor";
 import type { IssueAttachment, IssueWorkMode } from "@paperclipai/shared";
+import { t } from "@/i18n";
 
 /** Structurally identical to IssueChatThread's module-private CommentReassignment. */
 interface CommentReassignment {
@@ -72,21 +73,26 @@ function modeHue(mode: IssueWorkMode): string {
   return MODE_HUE[mode] ?? "var(--tc-mode-agent)";
 }
 
-const MODE_DESCRIPTION: Partial<Record<IssueWorkMode, string>> = {
-  standard: "Make changes and run work",
-  planning: "Draft a plan before acting",
-  ask: "Answer questions only, no changes",
-};
+function modeDescription(mode: IssueWorkMode): string {
+  switch (mode) {
+    case "planning":
+      return t("chatUiExtra.planningModeDescription");
+    case "ask":
+      return t("chatUiExtra.askModeDescription");
+    default:
+      return t("chatUiExtra.standardModeDescription");
+  }
+}
 
 /** v7 per-mode placeholder copy; `{agent}` is the pending assignee's name. */
 function modePlaceholder(mode: IssueWorkMode, agentName: string): string {
   switch (mode) {
     case "planning":
-      return `Plan with ${agentName} — shapes the plan doc, no code changes…`;
+      return t("chatUiExtra.planningPlaceholder", { agent: agentName });
     case "ask":
-      return `Ask ${agentName} a question — read-only, nothing runs…`;
+      return t("chatUiExtra.askPlaceholder", { agent: agentName });
     default:
-      return `Message ${agentName} — describe what you want done…`;
+      return t("chatUiExtra.messagePlaceholder", { agent: agentName });
   }
 }
 
@@ -199,8 +205,8 @@ export function TaskChatComposer({
   const showAssignee = Boolean(enableReassign && reassignOptions && reassignOptions.length > 0);
   const assigneeValue = pendingAssignee ?? currentAssigneeValue;
   const assigneeLabel =
-    reassignOptions?.find((o) => o.id === assigneeValue)?.label ?? "Unassigned";
-  const assigneeName = assigneeLabel === "Unassigned" ? "the agent" : assigneeLabel;
+    reassignOptions?.find((o) => o.id === assigneeValue)?.label ?? t("chatUiExtra.unassigned");
+  const assigneeName = assigneeLabel === t("chatUiExtra.unassigned") ? t("chatUiExtra.theAgent") : assigneeLabel;
   const effectivePlaceholder = placeholder ?? modePlaceholder(pendingMode, assigneeName);
 
   /** Upload an image and return its URL for inline `![](src)` markdown. */
@@ -208,10 +214,10 @@ export function TaskChatComposer({
     if (onAttachImage) {
       const attachment = await onAttachImage(file);
       if (attachment?.contentPath) return attachment.contentPath;
-      throw new Error("Upload did not return a file URL");
+      throw new Error(t("chatUiExtra.uploadUrlMissing"));
     }
     if (onImageUpload) return onImageUpload(file);
-    throw new Error("This file type cannot be attached here");
+    throw new Error(t("chatUiExtra.fileTypeCannotAttach"));
   }
 
   /** Non-image files: attach to the task and track in the chip row. */
@@ -223,7 +229,7 @@ export function TaskChatComposer({
         setAttachments((prev) =>
           prev.map((item) =>
             item.id === id
-              ? { ...item, status: "error", error: "This file type cannot be attached here" }
+              ? { ...item, status: "error", error: t("chatUiExtra.fileTypeCannotAttach") }
               : item,
           ),
         );
@@ -242,7 +248,7 @@ export function TaskChatComposer({
       setAttachments((prev) =>
         prev.map((item) =>
           item.id === id
-            ? { ...item, status: "error", error: err instanceof Error ? err.message : "Upload failed" }
+            ? { ...item, status: "error", error: err instanceof Error ? err.message : t("chatUiExtra.uploadFailed") }
             : item,
         ),
       );
@@ -267,7 +273,7 @@ export function TaskChatComposer({
           name: file.name,
           size: file.size,
           status: "error",
-          error: err instanceof Error ? err.message : "Upload failed",
+          error: err instanceof Error ? err.message : t("chatUiExtra.uploadFailed"),
         },
       ]);
     }
@@ -390,7 +396,7 @@ export function TaskChatComposer({
           ref={editorRef}
           value={body}
           onChange={setBody}
-          placeholder={disabled ? (disabledReason ?? "Composer disabled") : effectivePlaceholder}
+          placeholder={disabled ? (disabledReason ?? t("chatUiExtra.composerDisabled")) : effectivePlaceholder}
           readOnly={disabled}
           mentions={mentions}
           onSubmit={() => void submit()}
@@ -435,15 +441,15 @@ export function TaskChatComposer({
                   <AttachmentTitle className="max-w-48">{attachment.name}</AttachmentTitle>
                   <AttachmentDescription className="max-w-48">
                     {attachment.status === "uploading"
-                      ? "Uploading…"
+                      ? t("chatUiExtra.uploading")
                       : attachment.status === "error"
-                        ? (attachment.error ?? "Upload failed")
+                        ? (attachment.error ?? t("chatUiExtra.uploadFailed"))
                         : [kind.label, sizeLabel].filter(Boolean).join(" · ")}
                   </AttachmentDescription>
                 </AttachmentContent>
                 <AttachmentActions>
                   <AttachmentAction
-                    aria-label={`Remove ${attachment.name}`}
+                    aria-label={t("chatUiExtra.removeAttachment", { name: attachment.name })}
                     onClick={() =>
                       setAttachments((prev) => prev.filter((item) => item.id !== attachment.id))
                     }
@@ -470,8 +476,8 @@ export function TaskChatComposer({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={disabled}
-              title="Attach file"
-              aria-label="Attach file"
+              title={t("chatUiExtra.attachFile")}
+              aria-label={t("chatUiExtra.attachFile")}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
               data-testid="task-chat-composer-attach"
             >
@@ -511,7 +517,7 @@ export function TaskChatComposer({
                   <Icon className="h-4 w-4 shrink-0" style={{ color: modeHue(m.value) }} aria-hidden />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="font-medium">{m.label}</span>
-                    <span className="text-xs text-muted-foreground">{MODE_DESCRIPTION[m.value] ?? ""}</span>
+                    <span className="text-xs text-muted-foreground">{modeDescription(m.value)}</span>
                   </span>
                   {selected ? <Check className="h-4 w-4 shrink-0" aria-hidden /> : null}
                 </DropdownMenuItem>
@@ -558,12 +564,12 @@ export function TaskChatComposer({
           }
           title={
             uploadPending
-              ? "Waiting for upload to finish"
+              ? t("chatUiExtra.waitingForUpload")
               : uploadFailed
-                ? "Remove the failed attachment to send"
-                : "Send (⌘+Enter)"
+                ? t("chatUiExtra.removeFailedAttachment")
+                : t("chatUiExtra.sendWithShortcut")
           }
-          aria-label="Send"
+          aria-label={t("chatUiExtra.send")}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-transform hover:scale-105 disabled:scale-100 disabled:bg-muted disabled:text-muted-foreground"
           data-testid="task-chat-composer-send"
         >

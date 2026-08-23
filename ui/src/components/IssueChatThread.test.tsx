@@ -7,6 +7,7 @@ import { createRoot } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Agent } from "@paperclipai/shared";
+import { t } from "@/i18n";
 import {
   IssueChatThread,
   VIRTUALIZED_THREAD_ROW_THRESHOLD,
@@ -350,7 +351,7 @@ describe("IssueChatThread", () => {
       );
     });
 
-    expect(container.textContent).toContain("Jump to latest");
+    expect(container.textContent).toContain(t("chatUiExtra.jumpToLatest"));
     expect(container.textContent).not.toContain("Chat (");
 
     const viewport = container.querySelector('[data-testid="thread-viewport"]') as HTMLDivElement | null;
@@ -508,7 +509,7 @@ describe("IssueChatThread", () => {
         );
       });
 
-      const copyButton = container.querySelector('button[aria-label="Copy message"]') as HTMLButtonElement | null;
+      const copyButton = container.querySelector(`button[aria-label="${t("chatUiExtra.copyMessage")}"]`) as HTMLButtonElement | null;
       expect(copyButton).not.toBeNull();
 
       await act(async () => {
@@ -961,7 +962,7 @@ describe("IssueChatThread", () => {
     });
 
     const jump = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Jump to latest",
+      (button) => button.textContent === t("chatUiExtra.jumpToLatest"),
     ) as HTMLButtonElement | undefined;
     expect(jump).toBeDefined();
 
@@ -1018,7 +1019,7 @@ describe("IssueChatThread", () => {
     });
 
     const jump = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Jump to latest",
+      (button) => button.textContent === t("chatUiExtra.jumpToLatest"),
     ) as HTMLButtonElement | undefined;
     expect(jump).toBeDefined();
 
@@ -1078,7 +1079,7 @@ describe("IssueChatThread", () => {
     });
 
     const jump = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Jump to latest",
+      (button) => button.textContent === t("chatUiExtra.jumpToLatest"),
     ) as HTMLButtonElement | undefined;
     expect(jump).toBeDefined();
 
@@ -1214,7 +1215,7 @@ describe("IssueChatThread", () => {
     expect(scrollIntoViewMock).not.toHaveBeenCalled();
 
     const jump = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Jump to latest",
+      (button) => button.textContent === t("chatUiExtra.jumpToLatest"),
     ) as HTMLButtonElement | undefined;
     expect(jump).toBeDefined();
 
@@ -1372,7 +1373,7 @@ describe("IssueChatThread", () => {
     elementScrollToMock.mockClear();
 
     const jump = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Jump to latest",
+      (button) => button.textContent === t("chatUiExtra.jumpToLatest"),
     ) as HTMLButtonElement | undefined;
     expect(jump).toBeDefined();
 
@@ -1430,7 +1431,7 @@ describe("IssueChatThread", () => {
     });
 
     const jump = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Jump to latest",
+      (button) => button.textContent === t("chatUiExtra.jumpToLatest"),
     ) as HTMLButtonElement | undefined;
     expect(jump).toBeDefined();
 
@@ -1503,7 +1504,7 @@ describe("IssueChatThread", () => {
     });
 
     const jump = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Jump to latest",
+      (button) => button.textContent === t("chatUiExtra.jumpToLatest"),
     ) as HTMLButtonElement | undefined;
     expect(jump).toBeDefined();
 
@@ -1874,16 +1875,16 @@ describe("IssueChatThread", () => {
       );
     });
 
-    const deleteButtons = Array.from(container.querySelectorAll("button[aria-label='Delete comment']"));
+    const deleteButtons = Array.from(container.querySelectorAll(`button[aria-label='${t("chatUiExtra.deleteComment")}']`));
     expect(deleteButtons).toHaveLength(1);
 
     await act(async () => {
       deleteButtons[0]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    expect(document.body.textContent).toContain("Delete comment?");
+    expect(document.body.textContent).toContain(t("chatUiExtra.deleteCommentQuestion"));
     const confirmButton = Array.from(document.body.querySelectorAll("button"))
-      .find((button) => button.textContent === "Delete comment");
+      .find((button) => button.textContent === t("chatUiExtra.deleteComment"));
     expect(confirmButton).toBeTruthy();
 
     await act(async () => {
@@ -1935,8 +1936,8 @@ describe("IssueChatThread", () => {
 
     expect(container.textContent).toContain("You deleted this comment");
     expect(container.textContent).not.toContain("Sensitive deleted body");
-    expect(container.querySelector("button[aria-label='Delete comment']")).toBeNull();
-    expect(container.querySelector("button[aria-label='Copy message']")).toBeNull();
+    expect(container.querySelector(`button[aria-label='${t("chatUiExtra.deleteComment")}']`)).toBeNull();
+    expect(container.querySelector(`button[aria-label='${t("chatUiExtra.copyMessage")}']`)).toBeNull();
 
     flushAct(() => {
       root.unmount();
@@ -2447,7 +2448,7 @@ describe("IssueChatThread", () => {
     });
 
     expect(container.textContent).toContain("No run output captured.");
-    expect(container.textContent).not.toContain("Jump to latest");
+    expect(container.textContent).not.toContain(t("chatUiExtra.jumpToLatest"));
 
     const viewport = container.querySelector('[data-testid="thread-viewport"]') as HTMLDivElement | null;
     expect(viewport?.className).toContain("space-y-3");
@@ -2901,7 +2902,7 @@ describe("IssueChatThread", () => {
 
     const editor = container.querySelector('textarea[aria-label="Issue chat editor"]') as HTMLTextAreaElement | null;
     expect(editor).not.toBeNull();
-    expect(editor?.placeholder).toBe("Reply");
+    expect(editor?.placeholder).toBe(t("chatUiExtra.reply"));
 
     act(() => {
       const valueSetter = Object.getOwnPropertyDescriptor(
@@ -3078,7 +3079,7 @@ describe("IssueChatThread", () => {
     const attachmentList = container.querySelector('[data-testid="issue-chat-composer-attachments"]');
     expect(attachmentList).not.toBeNull();
     expect(container.textContent).toContain("report.pdf");
-    expect(container.textContent).toContain("Attached to task");
+    expect(container.textContent).toContain(t("chatUiExtra.attachedToTask"));
 
     await act(async () => {
       root.unmount();
@@ -3178,7 +3179,7 @@ describe("IssueChatThread", () => {
     expect(attachmentList).not.toBeNull();
     expect(attachmentList?.className).toContain("mb-3");
     expect(container.textContent).toContain("report.pdf");
-    expect(container.textContent).toContain("Attached to task");
+    expect(container.textContent).toContain(t("chatUiExtra.attachedToTask"));
 
     await act(async () => {
       root.unmount();
@@ -3275,7 +3276,7 @@ describe("IssueChatThread", () => {
 
     const editor = container.querySelector('textarea[aria-label="Issue chat editor"]') as HTMLTextAreaElement | null;
     const submitButton = Array.from(container.querySelectorAll("button")).find(
-      (element) => element.textContent === "Send",
+      (element) => element.textContent === t("chatUiExtra.send"),
     ) as HTMLButtonElement | undefined;
     expect(editor).not.toBeNull();
     expect(submitButton).toBeDefined();
@@ -3336,7 +3337,7 @@ describe("IssueChatThread", () => {
 
     const editor = container.querySelector('textarea[aria-label="Issue chat editor"]') as HTMLTextAreaElement | null;
     const submitButton = Array.from(container.querySelectorAll("button")).find(
-      (element) => element.textContent === "Send",
+      (element) => element.textContent === t("chatUiExtra.send"),
     ) as HTMLButtonElement | undefined;
     expect(editor).not.toBeNull();
     expect(submitButton).toBeDefined();
@@ -3357,7 +3358,7 @@ describe("IssueChatThread", () => {
     expect(appendMock).not.toHaveBeenCalled();
     const dialog = document.querySelector('[data-testid="issue-chat-no-assignee-dialog"]');
     expect(dialog).not.toBeNull();
-    expect(dialog?.textContent).toContain("No responsible selected");
+    expect(dialog?.textContent).toContain(t("chatUiExtra.noResponsibleSelected"));
     expect(dialog?.textContent).toContain("no agent will be woken");
 
     const sendAnyway = document.querySelector(
@@ -3409,7 +3410,7 @@ describe("IssueChatThread", () => {
 
     const editor = container.querySelector('textarea[aria-label="Issue chat editor"]') as HTMLTextAreaElement | null;
     const submitButton = Array.from(container.querySelectorAll("button")).find(
-      (element) => element.textContent === "Send",
+      (element) => element.textContent === t("chatUiExtra.send"),
     ) as HTMLButtonElement | undefined;
 
     act(() => {
@@ -3491,7 +3492,7 @@ describe("IssueChatThread", () => {
     });
 
     expect(appendMock).toHaveBeenCalledTimes(1);
-    expect(document.body.textContent).not.toContain("No responsible selected");
+    expect(document.body.textContent).not.toContain(t("chatUiExtra.noResponsibleSelected"));
 
     act(() => {
       root.unmount();

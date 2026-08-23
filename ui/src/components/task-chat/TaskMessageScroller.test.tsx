@@ -3,9 +3,10 @@
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { t } from "@/i18n";
 import { TaskMessageScroller } from "./TaskMessageScroller";
 
-const PILL_SELECTOR = 'button[aria-label="Scroll to latest"]';
+const PILL_SELECTOR = `button[aria-label="${t("chatUiExtra.scrollToLatest")}"]`;
 
 /**
  * jsdom has no layout, so scroll geometry is faked per element: scrollHeight /

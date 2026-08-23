@@ -3,6 +3,7 @@
 import { act, forwardRef, useImperativeHandle, useRef } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { t } from "@/i18n";
 
 // Same mock the InlineEditor tests use: the rich markdown editor is not
 // jsdom-renderable; a textarea keeps the InlineEditor edit-mode contract.
@@ -133,7 +134,7 @@ describe("TaskChatDescriptionBubble (PAP-375)", () => {
     render(makeBrief({ description: "" }));
     expect(container.querySelector('[data-testid="task-chat-description-bubble"]')).toBeNull();
     const ghost = container.querySelector('[data-testid="task-chat-description-ghost"]');
-    expect(ghost?.textContent).toContain("Add a description");
+    expect(ghost?.textContent).toContain(t("chatUiExtra.addDescription"));
 
     click(ghost);
     expect(container.querySelector('[data-testid="task-chat-description-ghost"]')).toBeNull();
