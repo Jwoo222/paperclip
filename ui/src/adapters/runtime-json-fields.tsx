@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { AdapterConfigFieldsProps } from "./types";
+import { t } from "@/i18n";
 import { Field, help } from "../components/agent-config-primitives";
 
 // TODO(issue-worktree-support): re-enable this UI once the workflow is ready to ship.
@@ -74,7 +75,7 @@ export function RuntimeServicesJsonField({
   const value = isCreate ? values?.runtimeServicesJson ?? "" : draft;
 
   return (
-    <Field label="Runtime services JSON" hint={help.runtimeServicesJson}>
+    <Field label={t("adapterTools.openclaw.runtimeServicesJson")} hint={help.runtimeServicesJson}>
       <textarea
         className={`${inputClass} min-h-[148px]`}
         value={value}
@@ -106,7 +107,7 @@ export function PayloadTemplateJsonField({
   const value = isCreate ? values?.payloadTemplateJson ?? "" : draft;
 
   return (
-    <Field label="Payload template JSON" hint={help.payloadTemplateJson}>
+    <Field label={t("adapterTools.openclaw.payloadTemplateJson")} hint={help.payloadTemplateJson}>
       <textarea
         className={`${inputClass} min-h-[132px]`}
         value={value}
