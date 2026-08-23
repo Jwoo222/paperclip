@@ -2,6 +2,15 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { deriveAgentUrlKey, deriveProjectUrlKey, normalizeProjectUrlKey, hasNonAsciiContent } from "@paperclipai/shared";
 import type { BillingType, FinanceDirection, FinanceEventKind } from "@paperclipai/shared";
+import i18n from "@/i18n";
+
+function displayLocale(locale?: string): string {
+  return locale ?? i18n.resolvedLanguage ?? i18n.language ?? "en";
+}
+
+function dateLocale(locale?: string): string {
+  return displayLocale(locale).toLowerCase().startsWith("ko") ? "ko-KR" : "en-US";
+}
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -47,19 +56,21 @@ export function formatNumber(n: number): string {
  */
 export function formatProjectBudget(budget: { amountCents: number; windowKind: string }): string {
   const amount = formatCents(budget.amountCents);
-  return budget.windowKind === "calendar_month_utc" ? `${amount}/mo` : amount;
+  return budget.windowKind === "calendar_month_utc"
+    ? i18n.getFixedT(displayLocale())("commonControls.perMonth", { amount })
+    : amount;
 }
 
-export function formatDate(date: Date | string, locale = "en"): string {
-  return new Date(date).toLocaleDateString(locale.toLowerCase().startsWith("ko") ? "ko-KR" : "en-US", {
+export function formatDate(date: Date | string, locale?: string): string {
+  return new Date(date).toLocaleDateString(dateLocale(locale), {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
 }
 
-export function formatDateTime(date: Date | string): string {
-  return new Date(date).toLocaleString("en-US", {
+export function formatDateTime(date: Date | string, locale?: string): string {
+  return new Date(date).toLocaleString(dateLocale(locale), {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -68,26 +79,27 @@ export function formatDateTime(date: Date | string): string {
   });
 }
 
-export function formatShortDate(date: Date | string): string {
-  return new Date(date).toLocaleString("en-US", {
+export function formatShortDate(date: Date | string, locale?: string): string {
+  return new Date(date).toLocaleString(dateLocale(locale), {
     month: "short",
     day: "numeric",
   });
 }
 
-export function relativeTime(date: Date | string, locale = "en"): string {
+export function relativeTime(date: Date | string, locale?: string): string {
   const now = Date.now();
   const then = new Date(date).getTime();
   const diffSec = Math.round((now - then) / 1000);
-  const korean = locale.toLowerCase().startsWith("ko");
-  if (diffSec < 60) return korean ? "방금" : "just now";
+  const resolvedLocale = displayLocale(locale);
+  const translate = i18n.getFixedT(resolvedLocale);
+  if (diffSec < 60) return translate("commonControls.time.justNow");
   const diffMin = Math.round(diffSec / 60);
-  if (diffMin < 60) return korean ? `${diffMin}분 전` : `${diffMin}m ago`;
+  if (diffMin < 60) return translate("commonControls.time.minutesAgo", { count: diffMin });
   const diffHr = Math.round(diffMin / 60);
-  if (diffHr < 24) return korean ? `${diffHr}시간 전` : `${diffHr}h ago`;
+  if (diffHr < 24) return translate("commonControls.time.hoursAgo", { count: diffHr });
   const diffDay = Math.round(diffHr / 24);
-  if (diffDay < 30) return korean ? `${diffDay}일 전` : `${diffDay}d ago`;
-  return formatDate(date, locale);
+  if (diffDay < 30) return translate("commonControls.time.daysAgo", { count: diffDay });
+  return formatDate(date, resolvedLocale);
 }
 
 export function formatTokens(n: number): string {

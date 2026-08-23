@@ -4,29 +4,31 @@ const DAY = 24 * HOUR;
 const WEEK = 7 * DAY;
 const MONTH = 30 * DAY;
 
-export function timeAgo(date: Date | string, locale = "en"): string {
+export function timeAgo(date: Date | string, locale?: string): string {
   const now = Date.now();
   const then = new Date(date).getTime();
   const seconds = Math.round((now - then) / 1000);
-  const korean = locale.toLowerCase().startsWith("ko");
+  const displayLocale = locale ?? i18n.resolvedLanguage ?? i18n.language ?? "en";
+  const translate = i18n.getFixedT(displayLocale);
 
-  if (seconds < MINUTE) return korean ? "방금" : "just now";
+  if (seconds < MINUTE) return translate("commonControls.time.justNow");
   if (seconds < HOUR) {
     const m = Math.floor(seconds / MINUTE);
-    return korean ? `${m}분 전` : `${m}m ago`;
+    return translate("commonControls.time.minutesAgo", { count: m });
   }
   if (seconds < DAY) {
     const h = Math.floor(seconds / HOUR);
-    return korean ? `${h}시간 전` : `${h}h ago`;
+    return translate("commonControls.time.hoursAgo", { count: h });
   }
   if (seconds < WEEK) {
     const d = Math.floor(seconds / DAY);
-    return korean ? `${d}일 전` : `${d}d ago`;
+    return translate("commonControls.time.daysAgo", { count: d });
   }
   if (seconds < MONTH) {
     const w = Math.floor(seconds / WEEK);
-    return korean ? `${w}주 전` : `${w}w ago`;
+    return translate("commonControls.time.weeksAgo", { count: w });
   }
   const mo = Math.floor(seconds / MONTH);
-  return korean ? `${mo}개월 전` : `${mo}mo ago`;
+  return translate("commonControls.time.monthsAgo", { count: mo });
 }
+import i18n from "@/i18n";
