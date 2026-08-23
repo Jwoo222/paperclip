@@ -47,12 +47,12 @@ import type {
   AgentInstructionsFileSummary,
   HeartbeatRun,
 } from "@paperclipai/shared";
-import { useTranslation } from "@/i18n";
+import { t as translate, useTranslation } from "@/i18n";
 
 export function RunButton({
   onClick,
   disabled,
-  label = "Run now",
+  label = translate("agentManagement.actions.runNow"),
   size = "sm",
 }: {
   onClick: () => void;
@@ -161,8 +161,8 @@ export function AgentActionButtons({
   agent,
   companyId,
   size = "sm",
-  assignLabel = "Assign Task",
-  runLabel = "Run now",
+  assignLabel,
+  runLabel,
   showStatus = true,
   actionsDisabled = false,
   workActionsDisabled = false,
@@ -216,8 +216,8 @@ export function AgentActionButtons({
   const canonicalAgentRef = agentRouteRef(agent);
   const isPaused = agent.status === "paused";
   const isError = agent.status === "error";
-  const displayAssignLabel = assignLabel === "Assign Task" ? t("agentManagement.actions.assignTask", { defaultValue: "Assign Task" }) : assignLabel;
-  const displayRunLabel = runLabel === "Run now" ? t("agentManagement.actions.runNow", { defaultValue: "Run now" }) : runLabel;
+  const displayAssignLabel = assignLabel ?? t("agentManagement.actions.assignTask", { defaultValue: "Assign Task" });
+  const displayRunLabel = runLabel ?? t("agentManagement.actions.runNow", { defaultValue: "Run now" });
 
   const reportError = useCallback(
     (message: string) => {
@@ -303,7 +303,10 @@ export function AgentActionButtons({
   const handleDuplicateAgent = useCallback(() => {
     if (duplicateAgent.isPending) return;
     const nextName = duplicateAgentName(agent.name);
-    const confirmed = window.confirm(`Duplicate ${agent.name} as ${nextName}?`);
+    const confirmed = window.confirm(t("commonControls.duplicateAgentConfirm", {
+      name: agent.name,
+      nextName,
+    }));
     setMoreOpen(false);
     if (!confirmed) return;
     duplicateAgent.mutate();

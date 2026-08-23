@@ -20,8 +20,8 @@ export function AgentSelect({
   agents,
   value,
   onChange,
-  placeholder = "Select agent…",
-  emptyMessage = "No agents yet.",
+  placeholder,
+  emptyMessage,
   disabled = false,
   triggerClassName,
   id,
@@ -36,6 +36,8 @@ export function AgentSelect({
   id?: string;
 }) {
   const { t } = useTranslation();
+  const resolvedPlaceholder = placeholder ?? t("commonControls.selectAgent");
+  const resolvedEmptyMessage = emptyMessage ?? t("commonControls.noAgentsYet");
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("");
   const selectedAgent = agents.find((agent) => agent.id === value);
@@ -66,7 +68,7 @@ export function AgentSelect({
           disabled={disabled}
         >
           <span className={cn("min-w-0 truncate", !selectedAgent && "text-muted-foreground")}>
-            {selectedAgent?.name ?? placeholder}
+            {selectedAgent?.name ?? resolvedPlaceholder}
           </span>
           <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
         </Button>
@@ -82,7 +84,7 @@ export function AgentSelect({
           />
         </div>
         {agents.length === 0 ? (
-          <div className="px-3 py-4 text-sm text-muted-foreground">{emptyMessage}</div>
+          <div className="px-3 py-4 text-sm text-muted-foreground">{resolvedEmptyMessage}</div>
         ) : (
           <div className="max-h-60 overflow-y-auto py-1">
             {filteredAgents.map((agent) => (
@@ -90,7 +92,7 @@ export function AgentSelect({
                 key={agent.id}
                 type="button"
                 className="flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-accent/30"
-                aria-label={`Select ${agent.name}`}
+                aria-label={t("commonControls.selectNamedAgent", { name: agent.name })}
                 onClick={() => {
                   onChange(agent.id);
                   setOpen(false);
@@ -132,7 +134,7 @@ export function AgentMultiSelect({
   triggerClassName,
   contentAlign = "start",
   headerContent,
-  emptyMessage = "No agents yet.",
+  emptyMessage,
   showSelectionPreview = true,
   onOpenChange,
 }: {
@@ -159,6 +161,7 @@ export function AgentMultiSelect({
   onOpenChange?: (open: boolean) => void;
 }) {
   const { t } = useTranslation();
+  const resolvedEmptyMessage = emptyMessage ?? t("commonControls.noAgentsYet");
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("");
   const [draftAgentIds, setDraftAgentIds] = useState<Set<string>>(new Set(selectedAgentIds));
@@ -239,7 +242,7 @@ export function AgentMultiSelect({
             <Skeleton className="h-6 w-full" />
           </div>
         ) : agents.length === 0 ? (
-          <div className="px-3 py-4 text-sm text-muted-foreground">{emptyMessage}</div>
+          <div className="px-3 py-4 text-sm text-muted-foreground">{resolvedEmptyMessage}</div>
         ) : (
           <div className="max-h-60 overflow-y-auto py-1">
             {filteredAgents.map((agent) => {
@@ -256,7 +259,7 @@ export function AgentMultiSelect({
                   <Checkbox
                     checked={workingAgentIds.has(agent.id)}
                     disabled={optionDisabled}
-                    aria-label={`Allow ${agent.name}`}
+                    aria-label={t("commonControls.allowNamedAgent", { name: agent.name })}
                     onCheckedChange={(checked) => {
                       const next = new Set(workingAgentIds);
                       if (checked) next.add(agent.id);
@@ -314,7 +317,9 @@ export function AgentMultiSelect({
             </div>
           ))}
           {selectedAgents.length > 3 ? (
-            <p className="px-1.5 pt-0.5 text-xs text-muted-foreground">and {selectedAgents.length - 3} more</p>
+            <p className="px-1.5 pt-0.5 text-xs text-muted-foreground">
+              {t("commonControls.andMore", { count: selectedAgents.length - 3 })}
+            </p>
           ) : null}
         </div>
       ) : null}
