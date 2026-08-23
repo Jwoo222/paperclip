@@ -1,0 +1,19 @@
+{
+  "markdownEditorResidual": {
+    "errors": {
+      "renderFailed": "리치 편집기를 표시하지 못했습니다.",
+      "contentLoadFailed": "리치 편집기에서 내용을 불러오지 못했습니다.",
+      "noImageHandler": "이미지 업로드 처리기를 사용할 수 없습니다.",
+      "imageUploadFailed": "이미지 업로드에 실패했습니다."
+    },
+    "mention": {
+      "task": "업무",
+      "project": "프로젝트",
+      "user": "사용자",
+      "skill": "스킬",
+      "routine": "루틴"
+    },
+    "dropFile": "업로드할 파일을 놓으세요.",
+    "dropImage": "업로드할 이미지를 놓으세요."
+  }
+}

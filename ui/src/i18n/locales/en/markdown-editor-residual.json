@@ -1,0 +1,19 @@
+{
+  "markdownEditorResidual": {
+    "errors": {
+      "renderFailed": "Rich editor failed to render",
+      "contentLoadFailed": "Rich editor failed to load content",
+      "noImageHandler": "No image upload handler",
+      "imageUploadFailed": "Image upload failed"
+    },
+    "mention": {
+      "task": "Task",
+      "project": "Project",
+      "user": "User",
+      "skill": "Skill",
+      "routine": "Routine"
+    },
+    "dropFile": "Drop file to upload",
+    "dropImage": "Drop image to upload"
+  }
+}

@@ -220,7 +220,7 @@ function isSafeMarkdownLinkUrl(url: string): boolean {
 function richEditorErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
-  return "Rich editor failed to render";
+  return t("markdownEditorResidual.errors.renderFailed", { defaultValue: "Rich editor failed to render" });
 }
 
 /* ---- Mention detection helpers ---- */
@@ -791,7 +791,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
         const activeElement = document.activeElement;
         if (activeElement === editable || editable.contains(activeElement)) return;
         if (isRichEditorDomEmpty(editable, editorValue, placeholder)) {
-          setRichEditorError("Rich editor failed to load content");
+          setRichEditorError(t("markdownEditorResidual.errors.contentLoadFailed", { defaultValue: "Rich editor failed to load content" }));
         }
       }, 0);
     };
@@ -820,7 +820,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
     const imageHandler = hasImageUpload
       ? async (file: File) => {
           const handler = imageUploadHandlerRef.current;
-          if (!handler) throw new Error("No image upload handler");
+          if (!handler) throw new Error(t("markdownEditorResidual.errors.noImageHandler", { defaultValue: "No image upload handler" }));
           try {
             const src = await handler(file);
             setUploadError(null);
@@ -845,7 +845,9 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
             }, 100);
             return src;
           } catch (err) {
-            const message = err instanceof Error ? err.message : "Image upload failed";
+            const message = err instanceof Error
+              ? err.message
+              : t("markdownEditorResidual.errors.imageUploadFailed", { defaultValue: "Image upload failed" });
             setUploadError(message);
             throw err;
           }
@@ -1465,27 +1467,27 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
                 )}
                 {option.kind === "issue" && (
                   <span className="ml-auto text-(length:--text-nano) uppercase tracking-wide text-muted-foreground">
-                    Task
+                    {t("markdownEditorResidual.mention.task", { defaultValue: "Task" })}
                   </span>
                 )}
                 {option.kind === "project" && option.projectId && (
                   <span className="ml-auto text-(length:--text-nano) uppercase tracking-wide text-muted-foreground">
-                    Project
+                    {t("markdownEditorResidual.mention.project", { defaultValue: "Project" })}
                   </span>
                 )}
                 {option.kind === "user" && (
                   <span className="ml-auto text-(length:--text-nano) uppercase tracking-wide text-muted-foreground">
-                    User
+                    {t("markdownEditorResidual.mention.user", { defaultValue: "User" })}
                   </span>
                 )}
                 {option.kind === "skill" && (
                   <span className="ml-auto text-(length:--text-nano) uppercase tracking-wide text-muted-foreground">
-                    Skill
+                    {t("markdownEditorResidual.mention.skill", { defaultValue: "Skill" })}
                   </span>
                 )}
                 {option.kind === "routine" && (
                   <span className="ml-auto text-(length:--text-nano) uppercase tracking-wide text-muted-foreground">
-                    Routine
+                    {t("markdownEditorResidual.mention.routine", { defaultValue: "Routine" })}
                   </span>
                 )}
               </button>
@@ -1501,7 +1503,9 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
             !bordered && "inset-0 rounded-sm",
           )}
         >
-          Drop {onDropFile ? "file" : "image"} to upload
+          {onDropFile
+            ? t("markdownEditorResidual.dropFile", { defaultValue: "Drop file to upload" })
+            : t("markdownEditorResidual.dropImage", { defaultValue: "Drop image to upload" })}
         </div>
       )}
       {uploadError && (
