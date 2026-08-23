@@ -275,7 +275,7 @@ export function SummarySlotCard({
               variant="outline"
               onClick={() => setSelectedRevisionId(null)}
             >
-              Latest
+              {t("statusTraining.summary.latest")}
             </Button>
           ) : null}
           {latestDocument && !generationFailed ? (
@@ -287,7 +287,7 @@ export function SummarySlotCard({
               disabled={!selector || generateMutation.isPending || Boolean(isGenerating)}
             >
               {generateMutation.isPending ? <Loader2 className="animate-spin" /> : <RefreshCw />}
-              Refresh
+              {t("statusTraining.cards.refresh")}
             </Button>
           ) : null}
         </div>
@@ -316,7 +316,7 @@ export function SummarySlotCard({
             </div>
             {needsSetup.status === "pending_approval" ? null : (
               <Button type="button" size="sm" onClick={() => setConfigureOpen(true)}>
-                Set up Summarizer
+                {t("statusTraining.summary.setupSummarizer")}
               </Button>
             )}
           </div>
@@ -347,7 +347,7 @@ export function SummarySlotCard({
             </Button>
           }
         >
-          Existing summaries remain readable, but new summaries will not be generated until the agent resumes.
+          {t("summarySlotResidual.pausedDescription", { defaultValue: "Existing summaries remain readable, but new summaries will not be generated until the agent resumes." })}
         </InlineBanner>
       ) : null}
 
@@ -363,7 +363,7 @@ export function SummarySlotCard({
           title={t("statusTraining.summary.loadFailed")}
           actions={
             <Button type="button" size="sm" variant="outline" onClick={() => void slotQuery.refetch()}>
-              Retry
+              {t("statusTraining.summary.retry")}
             </Button>
           }
         >

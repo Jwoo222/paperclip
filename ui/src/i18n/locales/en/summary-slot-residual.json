@@ -1,0 +1,5 @@
+{
+  "summarySlotResidual": {
+    "pausedDescription": "Existing summaries remain readable, but new summaries will not be generated until the agent resumes."
+  }
+}
