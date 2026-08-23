@@ -25,6 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "../i18n";
 
 const ARTIFACTS_PAGE_SIZE = 30;
 const SEARCH_DEBOUNCE_MS = 250;
@@ -62,6 +63,7 @@ export function artifactGroupByLabel(value: ArtifactGroupBy): string {
 }
 
 export function Artifacts() {
+  const { t } = useTranslation();
   const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -218,16 +220,16 @@ export function Artifacts() {
   useEffect(() => {
     if (viewingSelectedStack && selectedGroup) {
       setBreadcrumbs([
-        { label: "Artifacts", href: "/artifacts" },
+        { label: t("coreNavigation.artifacts.title", { defaultValue: "Artifacts" }), href: "/artifacts" },
         { label: `${selectedGroup.issue.identifier} · ${selectedGroup.title}` },
       ]);
     } else {
-      setBreadcrumbs([{ label: "Artifacts" }]);
+      setBreadcrumbs([{ label: t("coreNavigation.artifacts.title", { defaultValue: "Artifacts" }) }]);
     }
-  }, [setBreadcrumbs, viewingSelectedStack, selectedGroup]);
+  }, [setBreadcrumbs, viewingSelectedStack, selectedGroup, t]);
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Package} message="Select a company to view artifacts." />;
+    return <EmptyState icon={Package} message={t("coreNavigation.artifacts.selectCompany", { defaultValue: "Select a company to view artifacts." })} />;
   }
 
   const showGroupCards = viewingStackList;
@@ -235,15 +237,15 @@ export function Artifacts() {
 
   const emptyMessage = showGroupCards
     ? searching
-      ? "No artifact stacks match this search."
-      : "No artifact stacks yet."
+      ? t("coreNavigation.artifacts.noStackSearch", { defaultValue: "No artifact stacks match this search." })
+      : t("coreNavigation.artifacts.noStacks", { defaultValue: "No artifact stacks yet." })
     : searching
-      ? "No artifacts match this search."
+      ? t("coreNavigation.artifacts.noSearch", { defaultValue: "No artifacts match this search." })
       : viewingSelectedStack
-        ? "No artifacts in this stack match the current filters."
+        ? t("coreNavigation.artifacts.noInStack", { defaultValue: "No artifacts in this stack match the current filters." })
         : kind === "all"
-          ? "No artifacts yet. Outputs attached to issues will appear here."
-          : "No artifacts of this type yet.";
+          ? t("coreNavigation.artifacts.noArtifacts", { defaultValue: "No artifacts yet. Outputs attached to issues will appear here." })
+          : t("coreNavigation.artifacts.noType", { defaultValue: "No artifacts of this type yet." });
 
   return (
     <div className="w-full max-w-6xl space-y-5">
@@ -253,15 +255,15 @@ export function Artifacts() {
           <Input
             value={draftQuery}
             onChange={(event) => setDraftQuery(event.currentTarget.value)}
-            placeholder="Search artifacts..."
-            aria-label="Search artifacts"
+            placeholder={t("coreNavigation.artifacts.searchPlaceholder", { defaultValue: "Search artifacts..." })}
+            aria-label={t("coreNavigation.artifacts.searchLabel", { defaultValue: "Search artifacts" })}
             className="h-9 pl-9 pr-9 text-sm"
           />
           {draftQuery.length > 0 ? (
             <button
               type="button"
               onClick={() => setDraftQuery("")}
-              aria-label="Clear artifact search"
+              aria-label={t("coreNavigation.artifacts.clearSearch", { defaultValue: "Clear artifact search" })}
               className="absolute right-2 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
             >
               <X className="h-3.5 w-3.5" />
@@ -276,8 +278,8 @@ export function Artifacts() {
                 type="button"
                 variant="outline"
                 size="icon"
-                aria-label={`Group artifacts (currently ${artifactGroupByLabel(groupBy)})`}
-                title="Group artifacts"
+                aria-label={t("coreNavigation.artifacts.groupCurrent", { group: artifactGroupByLabel(groupBy), defaultValue: `Group artifacts (currently ${artifactGroupByLabel(groupBy)})` })}
+                title={t("coreNavigation.artifacts.group", { defaultValue: "Group artifacts" })}
                 data-testid="artifact-group-control"
                 data-group-by={groupBy}
                 className={cn("h-8 w-8 shrink-0", grouping && "bg-accent")}
@@ -286,7 +288,7 @@ export function Artifacts() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuLabel>Group by</DropdownMenuLabel>
+              <DropdownMenuLabel>{t("coreNavigation.artifacts.groupBy", { defaultValue: "Group by" })}</DropdownMenuLabel>
               {ARTIFACT_GROUP_OPTIONS.map((option) => (
                 <DropdownMenuItem
                   key={option.value}
@@ -295,14 +297,14 @@ export function Artifacts() {
                   onSelect={() => selectGroupBy(option.value)}
                   className="justify-between"
                 >
-                  {option.label}
+                  {t(`coreNavigation.artifacts.${option.value === "parent_task" ? "parentTask" : option.value}`, { defaultValue: option.label })}
                   {groupBy === option.value ? <Check className="h-3.5 w-3.5" /> : null}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Filter artifacts by type">
+          <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label={t("coreNavigation.artifacts.filterByType", { defaultValue: "Filter artifacts by type" })}>
             {ARTIFACT_KIND_FILTERS.map((filter) => (
               <button
                 key={filter.value}
@@ -317,7 +319,7 @@ export function Artifacts() {
                     : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                 )}
               >
-                {filter.label}
+                {t(`coreNavigation.artifacts.${filter.value === "image" ? "images" : filter.value === "video" ? "videos" : filter.value === "document" ? "documents" : filter.value === "file" ? "files" : filter.value}`, { defaultValue: filter.label })}
               </button>
             ))}
           </div>
@@ -332,7 +334,7 @@ export function Artifacts() {
             className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
           >
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-            All stacks
+            {t("coreNavigation.artifacts.allStacks", { defaultValue: "All stacks" })}
           </Link>
           {selectedGroup ? (
             <span className="truncate text-muted-foreground">
@@ -362,11 +364,11 @@ export function Artifacts() {
           </div>
           <div ref={loadMoreRef} className="flex min-h-10 items-center justify-center pb-2 text-xs text-muted-foreground">
             {isFetchingNextPage
-              ? "Loading more artifacts..."
+              ? t("coreNavigation.artifacts.loadingMore", { defaultValue: "Loading more artifacts..." })
               : hasNextPage
                 ? null
                 : isFetching
-                  ? "Updating artifacts..."
+                  ? t("coreNavigation.artifacts.updating", { defaultValue: "Updating artifacts..." })
                   : null}
           </div>
         </>

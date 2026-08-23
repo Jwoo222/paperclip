@@ -49,6 +49,7 @@ import { DecisionDateChips, type AttentionCustomRange } from "../components/Deci
 import { DecisionResolver } from "../components/DecisionResolver";
 import { DecisionTrainingDrawer } from "../components/DecisionTrainingDrawer";
 import { IssueGroupHeader } from "../components/IssueGroupHeader";
+import { useTranslation } from "../i18n";
 
 /** Curtain rows never expand; module-level so memoized rows see one identity. */
 const noopToggleExpand = () => {};
@@ -87,6 +88,7 @@ function findScrollContainer(element: HTMLElement | null): HTMLElement | null {
 }
 
 export function WhatNeedsMe() {
+  const { t } = useTranslation();
   const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -140,8 +142,8 @@ export function WhatNeedsMe() {
   );
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Decisions" }]);
-  }, [setBreadcrumbs]);
+    setBreadcrumbs([{ label: t("coreNavigation.attention.title", { defaultValue: "Decisions" }) }]);
+  }, [setBreadcrumbs, t]);
 
   // Re-hydrate per-company preferences when the company changes.
   useEffect(() => {
@@ -437,11 +439,11 @@ export function WhatNeedsMe() {
       pushToast({
         id: `attention-dismiss-${item.id}`,
         dedupeKey: `attention-dismiss-${item.dismissalKey}`,
-        title: "Dismissed",
+        title: t("coreNavigation.attention.dismissed", { defaultValue: "Dismissed" }),
         body: item.subject.title ?? undefined,
         tone: "info",
         ttlMs: 8000,
-        action: { label: "Undo", onClick: () => handleUndoDismiss(item) },
+        action: { label: t("coreNavigation.attention.undo", { defaultValue: "Undo" }), onClick: () => handleUndoDismiss(item) },
       });
     },
     [dismiss, handleUndoDismiss, pushToast],
@@ -516,7 +518,7 @@ export function WhatNeedsMe() {
   }, [handleDismiss, keyboardItems, navigate, selectedAttentionId]);
 
   if (!selectedCompanyId) {
-    return <p className="text-sm text-muted-foreground">Select a company first.</p>;
+    return <p className="text-sm text-muted-foreground">{t("coreNavigation.attention.selectCompany", { defaultValue: "Select a company first." })}</p>;
   }
 
   if (isLoading) {
@@ -528,7 +530,7 @@ export function WhatNeedsMe() {
   return (
     <div ref={rootRef} className="max-w-3xl space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-bold">Decisions</h1>
+        <h1 className="text-xl font-bold">{t("coreNavigation.attention.title", { defaultValue: "Decisions" })}</h1>
         <DecisionsToolbar
           visibleCount={visibleCount}
           filterOptions={filterOptions}
@@ -643,7 +645,7 @@ export function WhatNeedsMe() {
 
           {snoozedItems.length > 0 && (
             <Curtain
-              label="Snoozed"
+                      label={t("coreNavigation.attention.snoozed", { defaultValue: "Snoozed" })}
               count={snoozedItems.length}
               open={snoozedOpen}
               onToggle={() => setSnoozedOpen((prev) => !prev)}
@@ -667,7 +669,7 @@ export function WhatNeedsMe() {
 
           {dismissedItems.length > 0 && (
             <Curtain
-              label="Dismissed"
+              label={t("coreNavigation.attention.dismissed", { defaultValue: "Dismissed" })}
               count={dismissedItems.length}
               open={dismissedOpen}
               onToggle={() => setDismissedOpen((prev) => !prev)}
@@ -691,7 +693,7 @@ export function WhatNeedsMe() {
 
           {agingItems.length > 0 && (
             <Curtain
-              label="Aging"
+              label={t("coreNavigation.attention.aging", { defaultValue: "Aging" })}
               count={agingItems.length}
               open={agingOpen}
               onToggle={() => setAgingOpen((prev) => !prev)}
@@ -723,13 +725,13 @@ export function WhatNeedsMe() {
 
       <div className="space-y-4">
         <Curtain
-          label="Decided"
+          label={t("coreNavigation.attention.decided", { defaultValue: "Decided" })}
           count={decisionHistoryCount(decidedDecisions?.length)}
           open={decidedOpen}
           onToggle={() => setDecidedOpen((prev) => !prev)}
         >
           {decidedDecisionsLoading ? (
-            <p className="text-xs text-muted-foreground">Loading decided decisions…</p>
+            <p className="text-xs text-muted-foreground">{t("coreNavigation.attention.loadingDecided", { defaultValue: "Loading decided decisions…" })}</p>
           ) : (decidedDecisions?.length ?? 0) > 0 ? (
             decidedDecisions!.slice(0, DECISION_HISTORY_VISIBLE_LIMIT).map((decision) => (
               <DecisionResolver
@@ -741,18 +743,18 @@ export function WhatNeedsMe() {
               />
             ))
           ) : (
-            <p className="text-xs text-muted-foreground">No decided decisions.</p>
+            <p className="text-xs text-muted-foreground">{t("coreNavigation.attention.noDecided", { defaultValue: "No decided decisions." })}</p>
           )}
         </Curtain>
 
         <Curtain
-          label="Expired"
+          label={t("coreNavigation.attention.expired", { defaultValue: "Expired" })}
           count={decisionHistoryCount(expiredDecisions?.length)}
           open={expiredOpen}
           onToggle={() => setExpiredOpen((prev) => !prev)}
         >
           {expiredDecisionsLoading ? (
-            <p className="text-xs text-muted-foreground">Loading expired decisions…</p>
+            <p className="text-xs text-muted-foreground">{t("coreNavigation.attention.loadingExpired", { defaultValue: "Loading expired decisions…" })}</p>
           ) : (expiredDecisions?.length ?? 0) > 0 ? (
             expiredDecisions!.slice(0, DECISION_HISTORY_VISIBLE_LIMIT).map((decision) => (
               <DecisionResolver
@@ -764,7 +766,7 @@ export function WhatNeedsMe() {
               />
             ))
           ) : (
-            <p className="text-xs text-muted-foreground">No expired decisions.</p>
+            <p className="text-xs text-muted-foreground">{t("coreNavigation.attention.noExpired", { defaultValue: "No expired decisions." })}</p>
           )}
         </Curtain>
       </div>
@@ -798,15 +800,23 @@ export function DecisionBundleHeader({
   originIssue: AttentionSubject | null;
   count: number;
 }) {
-  const noun = count === 1 ? "decision" : "decisions";
+  const { t } = useTranslation();
+  const noun = count === 1
+    ? t("coreNavigation.attention.decision", { defaultValue: "decision" })
+    : t("coreNavigation.attention.decisions", { defaultValue: "decisions" });
   return (
     <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-sm border-l-2 border-violet-500/60 bg-violet-500/5 px-3 py-1.5 text-xs">
       <span className="font-semibold text-violet-800 dark:text-violet-200">
-        {agentName ?? "An agent"} proposed {count} {noun}
+        {t("coreNavigation.attention.proposal", {
+          agent: agentName ?? t("coreNavigation.attention.anAgent", { defaultValue: "An agent" }),
+          count,
+          noun,
+          defaultValue: "{{agent}} proposed {{count}} {{noun}}",
+        })}
       </span>
       {originIssue && (originIssue.identifier || originIssue.title) && (
         <span className="text-muted-foreground">
-          {"· from "}
+          {t("coreNavigation.attention.from", { defaultValue: "· from " })}
           {originIssue.href ? (
             <a href={originIssue.href} className="hover:underline">
               {originIssue.identifier ?? originIssue.title}
@@ -817,34 +827,38 @@ export function DecisionBundleHeader({
         </span>
       )}
       {title && <span className="text-muted-foreground">· {title}</span>}
-      <span className="text-muted-foreground">· {count} pending</span>
+      <span className="text-muted-foreground">
+        {t("coreNavigation.attention.pending", { count, defaultValue: "· {{count}} pending" })}
+      </span>
     </div>
   );
 }
 
 function CaughtUpNote({ filtered }: { filtered: boolean }) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-xl border border-dashed border-border py-10 text-center">
       <p className="text-sm font-medium text-foreground">
-        {filtered ? "No decisions match your filters." : "You're all caught up."}
+        {filtered ? t("coreNavigation.attention.emptyFiltered", { defaultValue: "No decisions match your filters." }) : t("coreNavigation.attention.emptyAllCaughtUp", { defaultValue: "You're all caught up." })}
       </p>
       {filtered && (
-        <p className="mt-1 text-xs text-muted-foreground">Adjust or clear the filters to see the rest.</p>
+        <p className="mt-1 text-xs text-muted-foreground">{t("coreNavigation.attention.adjustFilters", { defaultValue: "Adjust or clear the filters to see the rest." })}</p>
       )}
     </div>
   );
 }
 
 function ZeroState() {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20 text-center">
       <div className="mb-4 rounded-full bg-green-500/10 p-4">
         <CheckCircle2 className="h-10 w-10 text-green-500" />
       </div>
-      <p className="text-lg font-semibold text-foreground">You're all caught up</p>
+      <p className="text-lg font-semibold text-foreground">{t("coreNavigation.attention.emptyAllCaughtUp", { defaultValue: "You're all caught up" })}</p>
       <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
         <Inbox className="h-4 w-4" />
-        Nothing needs a decision from you right now.
+        {t("coreNavigation.attention.nothingNeedsDecision", { defaultValue: "Nothing needs a decision from you right now." })}
       </p>
     </div>
   );

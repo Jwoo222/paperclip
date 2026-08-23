@@ -1,0 +1,36 @@
+{
+  "coreNavigation": {
+    "inbox": {
+      "title": "받은 편지함", "search": "받은 편지함 검색…", "mine": "내 업무", "recent": "최근", "unread": "읽지 않음", "blocked": "차단됨", "all": "전체", "markAllRead": "모두 읽음 처리", "category": "분류", "allCategories": "모든 분류", "myRecentTasks": "내 최근 업무", "joinRequests": "참여 요청", "approvals": "승인", "failedRuns": "실패한 실행", "alerts": "알림", "approvalStatus": "승인 상태", "allApprovalStatuses": "모든 승인 상태", "needsAction": "조치 필요", "resolved": "처리됨", "selectCompany": "회사를 선택하면 받은 편지함을 볼 수 있습니다.", "emptySearch": "검색 조건에 맞는 항목이 없습니다.", "emptyZero": "받은 편지함이 비어 있습니다.", "emptyNew": "새 항목이 없습니다.", "emptyRecent": "최근 항목이 없습니다.", "emptyFiltered": "현재 필터에 맞는 항목이 없습니다.", "markRead": "읽음 처리", "dismiss": "닫기", "dismissFromInbox": "받은 편지함에서 숨기기", "retry": "재시도", "retrying": "재시도 중…", "group": "그룹", "sort": "정렬", "columnVisibility": "표시할 받은 편지함 열 선택", "enableNesting": "상위·하위 업무 표시", "disableNesting": "상위·하위 업무 표시 해제", "allReadConfirm": "모두 읽음 처리할까요?", "allReadDescription": "읽지 않은 {{count}}개 {{itemLabel}}을(를) 읽음 처리합니다.", "item": "항목", "items": "항목", "archived": "보관됨", "otherResults": "기타 결과", "newTaskIn": "{{name}}에 새 업무", "subTask": "하위 업무", "subTasks": "하위 업무", "agentErrors": "{{count}}개 {{agentLabel}} 오류", "agent": "에이전트에 오류", "agents": "에이전트에 오류", "runError": "실행 중 오류가 발생했습니다.", "humanJoinRequest": "사용자 참여 요청", "agentJoinRequest": "에이전트 참여 요청", "failedApprove": "승인하지 못했습니다", "failedReject": "거부하지 못했습니다", "failedApproveJoin": "참여 요청을 승인하지 못했습니다", "failedRejectJoin": "참여 요청을 거부하지 못했습니다", "retrySkipped": "재시도를 건너뛰었습니다.", "failedArchive": "업무를 보관하지 못했습니다", "failedUndoArchive": "받은 편지함 보관을 취소하지 못했습니다"
+    },
+    "attention": {
+      "anAgent": "에이전트",
+      "from": "· 출처: ",
+      "pending": "· {{count}}개 대기 중",
+      "nothingNeedsDecision": "지금 결정할 항목이 없습니다.",
+      "title": "의사결정", "selectCompany": "먼저 회사를 선택하세요.", "undo": "되돌리기", "dismissed": "숨김", "snoozed": "다시 알림 대기", "aging": "오래된 항목", "decided": "결정 완료", "expired": "만료됨", "loadingDecided": "결정 완료 항목을 불러오는 중…", "noDecided": "결정 완료 항목이 없습니다.", "loadingExpired": "만료된 결정 항목을 불러오는 중…", "noExpired": "만료된 결정 항목이 없습니다.", "proposal": "{{agent}}이(가) {{count}}개의 {{noun}}을(를) 제안했습니다", "decision": "결정", "decisions": "결정", "emptyFiltered": "필터에 맞는 결정 항목이 없습니다.", "emptyAllCaughtUp": "모든 항목을 확인했습니다.", "adjustFilters": "나머지 항목을 보려면 필터를 조정하거나 해제하세요."
+    },
+    "search": {
+      "initialDescription": "업무, 댓글, 계획 문서, 아티팩트, 에이전트, 프로젝트를 한곳에서 관련도순으로 검색합니다.",
+      "recentSearches": "최근 검색",
+      "typeIdentifier": "다음 식별자를 입력하면",
+      "retry": "재시도",
+      "openTasks": "업무 필터 열기",
+      "noResults": "“{{query}}”에 대한 검색 결과가 없습니다",
+      "title": "검색", "queryPlaceholder": "업무, 댓글, 문서, 아티팩트, 에이전트, 프로젝트 검색…", "queryLabel": "검색어", "clear": "검색 지우기", "all": "전체", "tasks": "업무", "comments": "댓글", "documents": "문서", "artifacts": "아티팩트", "agents": "에이전트", "projects": "프로젝트", "allScopes": "모든 범위", "tryOperators": "다음과 같이 입력해 보세요", "or": "또는", "typeToSearch": "입력하면 회사 기록을 검색합니다.", "identifierLookup": "식별자 검색:", "jumpToTask": "입력하면 해당 업무로 바로 이동합니다.", "quotedPhrases": "구문 검색:", "quotedHelp": "문구를 따옴표로 묶으면 정확히 일치하는 내용을 찾습니다.", "commandPalette": "⌘K:", "commandHelp": "검색어가 입력된 명령 팔레트를 다시 엽니다.", "runFailed": "검색을 실행하지 못했습니다", "serverReturned": "서버가 {{status}}를 반환했습니다.", "requestFailed": "요청에 실패했습니다.", "resultsPreserved": "입력과 필터는 유지되어 있으니 다시 시도하세요.", "tryFewer": "검색어를 줄이거나 특징적인 단어 하나만 사용해 보세요.", "identifierShortcut": "식별자 바로가기를 사용하세요:", "wrapPhrases": "여러 단어로 된 문구는 따옴표로 묶으세요.", "filter": "개 필터", "filters": "개 필터", "active": "적용됨", "updating": "업데이트 중…"
+    },
+    "artifacts": {
+      "title": "아티팩트", "all": "전체", "images": "이미지", "videos": "동영상", "documents": "문서", "text": "텍스트", "files": "파일", "none": "없음", "task": "업무", "parentTask": "상위 업무", "selectCompany": "회사를 선택하면 아티팩트를 볼 수 있습니다.", "searchPlaceholder": "아티팩트 검색...", "searchLabel": "아티팩트 검색", "clearSearch": "아티팩트 검색 지우기", "group": "아티팩트 그룹화", "groupCurrent": "아티팩트 그룹화 (현재 {{group}})", "groupBy": "그룹 기준", "filterByType": "아티팩트 유형으로 필터", "allStacks": "모든 스택", "noStackSearch": "검색 조건에 맞는 아티팩트 스택이 없습니다.", "noStacks": "아티팩트 스택이 아직 없습니다.", "noSearch": "검색 조건에 맞는 아티팩트가 없습니다.", "noInStack": "현재 필터에 맞는 스택 내 아티팩트가 없습니다.", "noArtifacts": "아티팩트가 아직 없습니다. 업무에 첨부된 결과물이 여기에 표시됩니다.", "noType": "이 유형의 아티팩트가 아직 없습니다.", "loadingMore": "아티팩트를 더 불러오는 중...", "updating": "아티팩트 업데이트 중..."
+    },
+    "timeline": {
+      "range": "범위",
+      "sevenDays": "7일",
+      "thirtyDays": "30일",
+      "delegated": "위임",
+      "automation": "자동화",
+      "cancelled": "취소됨",
+      "now": "현재",
+      "title": "업무 타임라인", "selectCompany": "회사를 선택하면 업무 타임라인을 볼 수 있습니다.", "runs": "실행", "agents": "에이전트", "runTime": "실행 시간", "tokensUsed": "사용 토큰", "notTracked": "추적되지 않음", "today": "오늘", "to": "~", "startDate": "타임라인 시작일", "endDate": "타임라인 종료일", "zoomControls": "타임라인 확대/축소", "zoomOut": "축소", "zoomIn": "확대", "resetZoom": "확대/축소 초기화", "chooseDates": "시작일과 종료일을 선택하세요.", "dateOrder": "시작일은 종료일보다 앞서야 합니다.", "loadFailed": "타임라인을 불러오지 못했습니다. 집계 API를 사용할 수 없을 수 있습니다.", "noActivity": "이 기간에는 활동이 없습니다.", "run": "회 실행", "runsPlural": "회 실행"
+    }
+  }
+}
