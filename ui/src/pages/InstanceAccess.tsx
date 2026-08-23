@@ -218,7 +218,9 @@ export function InstanceAccess() {
                     onClick={() => updateCompanyAccessMutation.mutate()}
                     disabled={updateCompanyAccessMutation.isPending}
                   >
-                    {updateCompanyAccessMutation.isPending ? "Saving…" : "Save company access"}
+                    {updateCompanyAccessMutation.isPending
+                      ? t("settingsSecurity.savingCompanyAccess", { defaultValue: "Saving…" })
+                      : t("settingsSecurity.saveCompanyAccess", { defaultValue: "Save company access" })}
                   </Button>
                 </div>
               </div>
@@ -234,7 +236,19 @@ export function InstanceAccess() {
                       <div>
                         <div className="font-medium">{membership.companyName || membership.companyId}</div>
                         <div className="text-muted-foreground">
-                          {membership.membershipRole || "unset"} • {membership.status}
+                          {membership.membershipRole === "owner"
+                            ? t("settingsSecurity.owner", { defaultValue: "Owner" })
+                            : membership.membershipRole === "operator"
+                              ? t("settingsSecurity.operator", { defaultValue: "Operator" })
+                              : membership.membershipRole || t("settingsSecurity.unset", { defaultValue: "Unset" })}
+                          {" • "}
+                          {membership.status === "active"
+                            ? t("settingsSecurity.active", { defaultValue: "Active" })
+                            : membership.status === "pending"
+                              ? t("settingsSecurity.pending", { defaultValue: "Pending" })
+                              : membership.status === "suspended"
+                                ? t("settingsSecurity.suspended", { defaultValue: "Suspended" })
+                                : membership.status}
                         </div>
                       </div>
                       <div className="text-xs text-muted-foreground">

@@ -1239,7 +1239,7 @@ export function Routines() {
               result={railFolderResult}
               selection={folderSelection}
               allLabel={t("routinesExtra.general.allRoutines", { defaultValue: "All routines" })}
-              itemLabelPlural="routines"
+              itemLabelPlural={t("operations.common.routines", { defaultValue: "Routines" })}
               loading={foldersLoading}
               onSelect={setFolderSelection}
               onCreate={() => openCreateFolder()}
@@ -1258,7 +1258,9 @@ export function Routines() {
                 <div className="flex min-w-0 items-center gap-2 text-sm">
                   <FolderSwatch color={activeFolder?.color} />
                   <span className="truncate font-medium">{folderSelection === "unfiled" ? t("operations.routines.unfiled", { defaultValue: "Unfiled" }) : activeFolder?.name ?? t("routinesExtra.group.folder", { defaultValue: "Folder" })}</span>
-                  <span className="text-muted-foreground">{sortedRoutines.length} routine{sortedRoutines.length === 1 ? "" : "s"}</span>
+                  <span className="text-muted-foreground">
+                    {t("routinesExtra.general.routineCount", { defaultValue: "{{count}} routine", count: sortedRoutines.length })}
+                  </span>
                 </div>
               )}
             </div>
@@ -1266,7 +1268,7 @@ export function Routines() {
           {routineViewState.groupBy === "folder" && !hasRoutineFolders && !foldersLoading && visibleRoutines.length > 0 ? (
             <AllUnfiledBanner
               storageKey={`paperclip:routines-folder-nudge:${selectedCompanyId ?? "none"}`}
-              itemLabelPlural="routines"
+              itemLabelPlural={t("operations.common.routines", { defaultValue: "Routines" })}
               onCreateFolder={() => openCreateFolder()}
             />
           ) : null}
@@ -1403,7 +1405,7 @@ export function Routines() {
       <DeleteFolderDialog
         open={deleteFolderTarget !== null}
         folder={deleteFolderTarget}
-        itemLabelPlural="routines"
+        itemLabelPlural={t("operations.common.routines", { defaultValue: "Routines" })}
         pending={deleteFolder.isPending}
         onOpenChange={(open) => {
           if (!open) setDeleteFolderTarget(null);

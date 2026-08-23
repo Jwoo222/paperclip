@@ -520,7 +520,7 @@ export function CompanySettings() {
            */}
           <div className="grid grid-cols-1 gap-y-4 sm:grid-cols-[1fr_auto_auto] sm:items-center sm:gap-x-4 sm:gap-y-2.5">
             <div className="hidden text-xs font-medium text-muted-foreground uppercase tracking-wide sm:block">
-              {tr("kind", "Kind")}
+              {tr("kindHeader", "Kind")}
             </div>
             <div className="hidden text-xs font-medium text-muted-foreground uppercase tracking-wide sm:block">
               {tr("defaultPolicy", "Default policy")}

@@ -33,7 +33,7 @@
       "add": "추가",
       "newTopLevel": "새 최상위 폴더…",
       "noCompanyFolders": "아직 회사 폴더가 없습니다."
-      ,"system":"시스템","mySkills":"내 스킬","company":"회사","projects":"프로젝트","bundled":"번들","createFirst":"첫 폴더 만들기","groupIntoFolders":"{{items}}을(를) 폴더로 묶어 깔끔하게 정리하세요.","folderActions":"{{name}} 폴더 작업","newFolderDots":"새 폴더...","editFolder":"폴더 편집","createFolder":"폴더 만들기","organizeRoutines":"이 회사의 루틴을 정리합니다.","organizeSkills":"설치된 회사 스킬을 정리합니다.","useColor":"폴더 색상 {{color}} 사용","none":"없음","saving":"저장 중...","save":"저장","selected":"{{count}}개 선택됨","allFolders":"{{items}} 폴더","deleteDescription":"이 폴더의 {{count}}개 {{items}}은(는) 삭제되지 않고 미분류로 이동합니다.","skillFolders":"스킬 폴더","allSkills":"모든 스킬","resizeFolders":"스킬 폴더 크기 조절","collapseFolder":"폴더 접기","expandFolder":"폴더 펼치기"
+      ,"system":"시스템","mySkills":"내 스킬","company":"회사","projects":"프로젝트","bundled":"번들","createFirst":"첫 폴더 만들기","groupIntoFolders":"{{items}} 항목을 폴더로 묶어 깔끔하게 정리하세요.","folderActions":"{{name}} 폴더 작업","newFolderDots":"새 폴더...","editFolder":"폴더 편집","createFolder":"폴더 만들기","organizeRoutines":"이 회사의 루틴을 정리합니다.","organizeSkills":"설치된 회사 스킬을 정리합니다.","useColor":"폴더 색상 {{color}} 사용","none":"없음","saving":"저장 중...","save":"저장","selected":"{{count}}개 선택됨","allFolders":"{{items}} 폴더","deleteDescription":"이 폴더의 {{items}} {{count}}개는 삭제되지 않고 미분류로 이동합니다.","skillFolders":"스킬 폴더","allSkills":"모든 스킬","resizeFolders":"스킬 폴더 크기 조절","collapseFolder":"폴더 접기","expandFolder":"폴더 펼치기"
     },
     "workspace": {
       "projectWorkspace": "프로젝트 작업공간",
