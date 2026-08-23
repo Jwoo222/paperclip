@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { setLocale } from "@/i18n";
 import {
   BookOpen,
   Brain,
@@ -12,6 +13,10 @@ import {
 } from "lucide-react";
 import { McpIcon } from "./McpIcon";
 import { isGenericToolName, mcpToolSegment, statusLabelIcon, toolTaxonomy } from "./tool-taxonomy";
+
+beforeEach(async () => {
+  await setLocale("en");
+});
 
 describe("toolTaxonomy", () => {
   it("maps each family to its icon and verb", () => {

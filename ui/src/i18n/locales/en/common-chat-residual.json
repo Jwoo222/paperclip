@@ -1,0 +1,6 @@
+{
+  "commonChatResidual": {
+    "accountingModel": "Accounting model",
+    "accountingDescription": "Paperclip separates request-level inference usage from account-level finance events. This keeps provider reporting accurate when the biller is OpenRouter, Cloudflare, Bedrock, or another intermediary."
+  }
+}

@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { setLocale } from "@/i18n";
 import type { TranscriptEntry } from "@/adapters";
 import {
   assembleThreadItems,
@@ -17,6 +18,10 @@ import {
   type SettledTurnMergeMeta,
   type ThreadBackboneEntry,
 } from "./transcript-adapter";
+
+beforeEach(async () => {
+  await setLocale("en");
+});
 import type { TaskChatItem, TaskChatTurnItem } from "./task-chat-model";
 
 const TS = "2026-07-31T12:00:00.000Z";

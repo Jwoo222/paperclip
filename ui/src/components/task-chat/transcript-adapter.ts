@@ -14,6 +14,7 @@ import type {
   TaskChatTurnItem,
 } from "./task-chat-model";
 import { isGenericToolName, mcpToolSegment, toolTaxonomy } from "./tool-taxonomy";
+import { t } from "@/i18n";
 
 const TERMINAL_STATUSES = new Set([
   "failed",
@@ -120,7 +121,7 @@ export function summarizeToolInput(input: unknown): string | undefined {
  */
 export function toolDisplayName(name: string | undefined | null): string {
   const raw = (name ?? "").trim();
-  if (isGenericToolName(raw)) return "Tool";
+  if (isGenericToolName(raw)) return t("commonChatTools.genericTool");
   const mcp = mcpToolSegment(raw);
   if (mcp) return mcp;
   return raw.charAt(0).toUpperCase() + raw.slice(1);
@@ -134,7 +135,9 @@ function thoughtDurationLabel(startTs: string | undefined, endTs: string): strin
   if (!Number.isFinite(start) || !Number.isFinite(end)) return undefined;
   const secs = Math.round((end - start) / 1000);
   if (secs < 1) return undefined;
-  return secs < 60 ? `Thought for ${secs}s` : `Thought for ${Math.floor(secs / 60)}m ${secs % 60}s`;
+  return secs < 60
+    ? t("commonChatTools.thoughtForSeconds", { seconds: secs })
+    : t("commonChatTools.thoughtForMinutesSeconds", { minutes: Math.floor(secs / 60), seconds: secs % 60 });
 }
 
 const DETAIL_MAX = 600;
@@ -355,7 +358,7 @@ function formatDurationLabel(ms: number): string | undefined {
 function formatTokensLabel(tokens: number): string | undefined {
   if (!Number.isFinite(tokens) || tokens <= 0) return undefined;
   const label = tokens >= 1000 ? `${(tokens / 1000).toFixed(1)}k` : `${tokens}`;
-  return `${label} tokens`;
+  return t("commonChatTools.formatTokens", { label });
 }
 
 /** First→last ts span of a transcript, or undefined when unknowable. */
@@ -660,9 +663,9 @@ export function deriveRunStatusLabel(entries: readonly TranscriptEntry[]): {
         }
       }
       const selfTalk = flattenSelfTalk(parts.join(""));
-      return { label: "Responding", selfTalk: selfTalk || undefined };
+      return { label: t("commonChatTools.responding"), selfTalk: selfTalk || undefined };
     }
-    if (entry.kind === "thinking") return { label: "Thinking" };
+    if (entry.kind === "thinking") return { label: t("commonChatTools.thinking") };
   }
-  return { label: "Running" };
+  return { label: t("commonChatTools.running") };
 }

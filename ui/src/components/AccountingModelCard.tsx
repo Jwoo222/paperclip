@@ -1,26 +1,27 @@
 import { Database, Gauge, ReceiptText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { t } from "@/i18n";
 
 const SURFACES = [
   {
-    title: "Inference ledger",
-    description: "Request-scoped usage and billed runs from cost_events.",
+    title: t("commonChatTools.inferenceLedger"),
+    description: t("commonChatTools.inferenceDescription"),
     icon: Database,
-    points: ["tokens + billed dollars", "provider, biller, model", "subscription and overage aware"],
+    points: [t("commonChatTools.inferenceTokens"), t("commonChatTools.providerBillerModel"), t("commonChatTools.subscriptionAware")],
     tone: "from-sky-500/12 via-sky-500/6 to-transparent",
   },
   {
-    title: "Finance ledger",
-    description: "Account-level charges that are not one prompt-response pair.",
+    title: t("commonChatTools.financeLedger"),
+    description: t("commonChatTools.financeDescription"),
     icon: ReceiptText,
-    points: ["top-ups, refunds, fees", "Bedrock provisioned or training charges", "credit expiries and adjustments"],
+    points: [t("commonChatTools.topupsRefundsFees"), t("commonChatTools.bedrockCharges"), t("commonChatTools.creditAdjustments")],
     tone: "from-amber-500/14 via-amber-500/6 to-transparent",
   },
   {
-    title: "Live quotas",
-    description: "Provider or biller windows that can stop traffic in real time.",
+    title: t("commonChatTools.liveQuotas"),
+    description: t("commonChatTools.quotasDescription"),
     icon: Gauge,
-    points: ["provider quota windows", "biller credit systems", "errors surfaced directly"],
+    points: [t("commonChatTools.providerQuotaWindows"), t("commonChatTools.billerCreditSystems"), t("commonChatTools.errorsDirect")],
     tone: "from-emerald-500/14 via-emerald-500/6 to-transparent",
   },
 ] as const;
@@ -31,11 +32,10 @@ export function AccountingModelCard() {
       <div className="absolute inset-0 bg-(image:--gradient-extract-3)" />
       <CardHeader className="relative px-5 pt-5 pb-2">
         <CardTitle className="text-sm font-semibold uppercase tracking-(--tracking-caps) text-muted-foreground">
-          Accounting model
+          {t("commonChatResidual.accountingModel")}
         </CardTitle>
         <CardDescription className="max-w-2xl text-sm leading-6">
-          Paperclip now separates request-level inference usage from account-level finance events.
-          That keeps provider reporting honest when the biller is OpenRouter, Cloudflare, Bedrock, or another intermediary.
+          {t("commonChatResidual.accountingDescription")}
         </CardDescription>
       </CardHeader>
       <CardContent className="relative grid gap-3 px-5 pb-5 md:grid-cols-3">

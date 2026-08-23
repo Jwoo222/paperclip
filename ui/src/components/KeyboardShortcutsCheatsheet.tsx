@@ -27,49 +27,49 @@ interface ShortcutSection {
 
 const sections: ShortcutSection[] = [
   {
-    title: "Inbox",
+    title: t("commonChatTools.inbox"),
     shortcuts: [
-      { keys: ["j"], label: "Move down" },
-      { keys: ["↓"], label: "Move down" },
-      { keys: ["k"], label: "Move up" },
-      { keys: ["↑"], label: "Move up" },
-      { keys: ["←"], label: "Collapse selected group" },
-      { keys: ["→"], label: "Expand selected group" },
-      { keys: ["Enter"], label: "Open selected item" },
-      { keys: ["a"], label: "Archive item" },
-      { keys: ["y"], label: "Archive item" },
-      { keys: ["r"], label: "Mark as read" },
-      { keys: ["U"], label: "Mark as unread" },
+      { keys: ["j"], label: t("commonChatTools.moveDown") },
+      { keys: ["↓"], label: t("commonChatTools.moveDown") },
+      { keys: ["k"], label: t("commonChatTools.moveUp") },
+      { keys: ["↑"], label: t("commonChatTools.moveUp") },
+      { keys: ["←"], label: t("commonChatTools.collapseGroup") },
+      { keys: ["→"], label: t("commonChatTools.expandGroup") },
+      { keys: ["Enter"], label: t("commonChatTools.openItem") },
+      { keys: ["a"], label: t("commonChatTools.archiveItem") },
+      { keys: ["y"], label: t("commonChatTools.archiveItem") },
+      { keys: ["r"], label: t("commonChatTools.markRead") },
+      { keys: ["U"], label: t("commonChatTools.markUnread") },
     ],
   },
   {
-    title: "Task detail",
+    title: t("commonChatTools.taskDetail"),
     shortcuts: [
-      { keys: ["y"], label: "Quick-archive back to inbox" },
-      { keys: ["g", "i"], label: "Go to inbox" },
-      { keys: ["g", "c"], label: "Focus comment composer" },
+      { keys: ["y"], label: t("commonChatTools.quickArchive") },
+      { keys: ["g", "i"], label: t("commonChatTools.goInbox") },
+      { keys: ["g", "c"], label: t("commonChatTools.focusComposer") },
     ],
   },
   {
-    title: "Decisions",
+    title: t("commonChatTools.decisions"),
     shortcuts: [
-      { keys: ["j"], label: "Move down" },
-      { keys: ["↓"], label: "Move down" },
-      { keys: ["k"], label: "Move up" },
-      { keys: ["↑"], label: "Move up" },
-      { keys: ["Enter"], label: "Open or close selected decision" },
-      { keys: ["x"], label: "Dismiss selected decision" },
+      { keys: ["j"], label: t("commonChatTools.moveDown") },
+      { keys: ["↓"], label: t("commonChatTools.moveDown") },
+      { keys: ["k"], label: t("commonChatTools.moveUp") },
+      { keys: ["↑"], label: t("commonChatTools.moveUp") },
+      { keys: ["Enter"], label: t("commonChatTools.openCloseDecision") },
+      { keys: ["x"], label: t("commonChatTools.dismissDecision") },
     ],
   },
   {
-    title: "Global",
+    title: t("commonChatTools.global"),
     shortcuts: [
-      { keys: ["/"], label: "Search current page or quick search" },
-      { keys: ["c"], label: "New task" },
-      { keys: ["["], label: "Toggle sidebar" },
-      { keys: [META_KEY, "B"], label: "Collapse or expand sidebar", combo: true },
-      { keys: ["]"], label: "Toggle panel" },
-      { keys: ["?"], label: "Show keyboard shortcuts" },
+      { keys: ["/"], label: t("commonChatTools.searchPage") },
+      { keys: ["c"], label: t("commonChatTools.newTask") },
+      { keys: ["["], label: t("commonChatTools.toggleSidebar") },
+      { keys: [META_KEY, "B"], label: t("commonChatTools.collapseExpandSidebar"), combo: true },
+      { keys: ["]"], label: t("commonChatTools.togglePanel") },
+      { keys: ["?"], label: t("commonChatTools.showShortcuts") },
     ],
   },
 ];
@@ -103,7 +103,7 @@ export function KeyboardShortcutsCheatsheetContent() {
                       <span key={key} className="flex items-center gap-1">
                         {i > 0 && (
                           <span className="text-xs text-muted-foreground">
-                            {shortcut.combo ? "+" : "then"}
+                            {shortcut.combo ? "+" : t("commonChatTools.then")}
                           </span>
                         )}
                         <KeyCap>{key}</KeyCap>

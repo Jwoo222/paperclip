@@ -1,0 +1,6 @@
+{
+  "commonChatResidual": {
+    "accountingModel": "회계 모델",
+    "accountingDescription": "Paperclip은 요청별 추론 사용량과 계정 단위 재무 이벤트를 구분합니다. 결제 주체가 OpenRouter, Cloudflare, Bedrock 또는 다른 중개 서비스인 경우에도 제공업체 보고를 정확하게 유지할 수 있습니다."
+  }
+}

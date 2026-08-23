@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { McpIcon } from "./McpIcon";
+import { t } from "@/i18n";
 
 /** Lucide icons and hand-rolled SVGs (the MCP logo) share this shape. */
 export type ToolIcon = ComponentType<SVGProps<SVGSVGElement>>;
@@ -69,15 +70,26 @@ export function mcpToolSegment(name: string): string | null {
 }
 
 const FAMILY_META: Record<Exclude<ToolFamily, "mcp">, Omit<ToolTaxonomyEntry, "family">> = {
-  terminal: { icon: Terminal, verbLabel: "Running a command" },
-  grep: { icon: SearchCode, verbLabel: "Grepping" },
-  search: { icon: Search, verbLabel: "Searching" },
-  read: { icon: BookOpen, verbLabel: "Reading files" },
+  terminal: { icon: Terminal, verbLabel: "" },
+  grep: { icon: SearchCode, verbLabel: "" },
+  search: { icon: Search, verbLabel: "" },
+  read: { icon: BookOpen, verbLabel: "" },
   // Board round-4 feedback asked for the terminal glyph on edits as well.
-  edit: { icon: Terminal, verbLabel: "Editing files" },
-  web: { icon: ChevronsLeftRightEllipsis, verbLabel: "Fetching the web" },
-  agent: { icon: Network, verbLabel: "Delegating" },
-  other: { icon: Wrench, verbLabel: "Working" },
+  edit: { icon: Terminal, verbLabel: "" },
+  web: { icon: ChevronsLeftRightEllipsis, verbLabel: "" },
+  agent: { icon: Network, verbLabel: "" },
+  other: { icon: Wrench, verbLabel: "" },
+};
+
+const FAMILY_VERB_KEYS: Record<Exclude<ToolFamily, "mcp">, string> = {
+  terminal: "commonChatTools.runningCommand",
+  grep: "commonChatTools.grepping",
+  search: "commonChatTools.searching",
+  read: "commonChatTools.readingFiles",
+  edit: "commonChatTools.editingFiles",
+  web: "commonChatTools.fetchingWeb",
+  agent: "commonChatTools.delegating",
+  other: "commonChatTools.working",
 };
 
 function classify(n: string): Exclude<ToolFamily, "mcp"> {
@@ -103,11 +115,11 @@ function classify(n: string): Exclude<ToolFamily, "mcp"> {
 /** Map a raw tool name to its taxonomy entry; unknown/empty names → Wrench. */
 export function toolTaxonomy(name: string | undefined | null): ToolTaxonomyEntry {
   const raw = (name ?? "").trim();
-  if (!raw) return { family: "other", ...FAMILY_META.other };
+  if (!raw) return { family: "other", ...FAMILY_META.other, verbLabel: t(FAMILY_VERB_KEYS.other) };
   const mcpTool = mcpToolSegment(raw);
-  if (mcpTool) return { family: "mcp", icon: McpIcon, verbLabel: `Using ${mcpTool}` };
+  if (mcpTool) return { family: "mcp", icon: McpIcon, verbLabel: t("commonChatTools.usingTool", { tool: mcpTool }) };
   const family = classify(raw.toLowerCase());
-  return { family, ...FAMILY_META[family] };
+  return { family, ...FAMILY_META[family], verbLabel: t(FAMILY_VERB_KEYS[family]) };
 }
 
 /**

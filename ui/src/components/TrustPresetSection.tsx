@@ -13,8 +13,6 @@ import {
   lowTrustBoundaryHasScope,
   setSingleLowTrustBoundaryTarget,
   summarizeLowTrustBoundaryTarget,
-  TRUST_PRESET_DESCRIPTIONS,
-  TRUST_PRESET_LABELS,
   type LowTrustBoundaryTarget,
 } from "../lib/trust-policy-ui";
 import { cn } from "../lib/utils";
@@ -46,9 +44,9 @@ export interface LowTrustBoundaryCandidate {
 type LowTrustBoundaryTargetType = LowTrustBoundaryTarget["type"];
 
 const BOUNDARY_TARGET_LABELS: Record<LowTrustBoundaryTargetType, string> = {
-  project: "Project",
-  root_issue: "Root issue",
-  issue: "Issue",
+  project: t("commonChatTools.project"),
+  root_issue: t("commonChatTools.rootIssue"),
+  issue: t("commonChatTools.issue"),
 };
 
 export function TrustPresetSection({
@@ -114,11 +112,11 @@ export function TrustPresetSection({
             onChange={(event) => handlePresetChange(event.target.value)}
             disabled={disabled}
           >
-            <option value="standard">{TRUST_PRESET_LABELS.standard}</option>
-            <option value="low_trust_review">{TRUST_PRESET_LABELS.low_trust_review}</option>
+            <option value="standard">{t("commonChatTools.standardPreset")}</option>
+            <option value="low_trust_review">{t("commonChatTools.lowTrustPreset")}</option>
           </select>
         </Field>
-        <p className="text-xs text-muted-foreground">{TRUST_PRESET_DESCRIPTIONS[preset]}</p>
+        <p className="text-xs text-muted-foreground">{preset === "low_trust_review" ? t("commonChatTools.lowTrustPresetDescription") : t("commonChatTools.standardPresetDescription")}</p>
 
         {lowTrust ? (
           <div
@@ -143,8 +141,8 @@ export function TrustPresetSection({
                 </p>
                 <p className="mt-1 text-xs leading-5">
                   {hasScope
-                    ? "This agent can only read and mutate work inside its assigned review boundary. Raw output is quarantined from higher-trust agents until a trusted reviewer promotes it."
-                    : "This agent is set to low-trust review, but no project, root issue, or issue scope is set in the core policy. Add a scope before this agent can run without denial."}
+                    ? t("commonChatTools.lowTrustScoped")
+                    : t("commonChatTools.lowTrustNoScope")}
                 </p>
               </div>
               {boundaryEditable ? (
@@ -173,7 +171,7 @@ export function TrustPresetSection({
                           {candidatesLoading
                             ? t("sharedOperationsExtra.loading")
                             : targetCandidates.length === 0
-                              ? `No ${targetType === "project" ? "projects" : "issues"} available`
+                              ? targetType === "project" ? t("commonChatTools.noProjects") : t("commonChatTools.noIssues")
                               : t("sharedOperationsExtra.selectBoundary")}
                         </option>
                         {targetCandidates.map((candidate) => (
@@ -186,7 +184,7 @@ export function TrustPresetSection({
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-xs text-muted-foreground">
-                      CE saves one containment boundary at a time. Saved policies include this company id.
+                      {t("commonChatTools.ceBoundarySaved")}
                     </p>
                     {boundaryTarget ? (
                       <Button
@@ -206,19 +204,19 @@ export function TrustPresetSection({
                 <div className="rounded-md border border-border/70 bg-background/70 p-3 text-foreground">
                   <p className="text-sm font-medium">{t("sharedOperationsExtra.managedByEeApi")}</p>
                   <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    This policy has {summarizeLowTrustBoundaryTarget(boundary).toLowerCase()} and cannot be edited by the CE single-boundary editor.
+                    {t("commonChatTools.eeBoundaryLocked", { summary: summarizeLowTrustBoundaryTarget(boundary).toLowerCase() })}
                   </p>
                 </div>
               )}
               <p className="text-xs text-muted-foreground">
-                Want to set more than one containment boundary?{" "}
+                {t("commonChatTools.moreThanOneBoundary")}{" "}
                 <a
                   className="underline underline-offset-2 hover:text-foreground"
                   href="https://paperclip.ing/ee"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Get Paperclip EE.
+                  {t("commonChatTools.getPaperclipEe")}
                 </a>
               </p>
               <CollapsibleSection
@@ -227,17 +225,17 @@ export function TrustPresetSection({
                 onToggle={() => setPolicyOpen((open) => !open)}
               >
                 <div className="divide-y divide-border/60 text-foreground">
-                  <PolicyRow label="Preset" value="Low-trust review v1" />
-                  <PolicyRow label="Raw output" value="Quarantined from higher-trust agents" />
-                  <PolicyRow label="Projects" value={formatCount(boundary?.projectIds, "project", "projects")} />
-                  <PolicyRow label="Root issue" value={boundary?.rootIssueId ? boundary.rootIssueId.slice(0, 8) : "-"} />
-                  <PolicyRow label="Explicit issues" value={formatCount(boundary?.issueIds, "issue", "issues")} />
-                  <PolicyRow label="Allowed agents" value={formatCount(boundary?.allowedAgentIds, "agent", "agents")} />
-                  <PolicyRow label="Allowed tools" value={boundary?.allowedToolClasses?.join(" · ") || "-"} />
-                  <PolicyRow label="Allowed secrets" value={formatCount(boundary?.allowedSecretBindingIds, "binding", "bindings")} />
-                  <PolicyRow label="Promotion target" value={boundary?.outputPromotionTarget?.issueId?.slice(0, 8) ?? "-"} />
+                  <PolicyRow label={t("commonChatTools.preset")} value={t("commonChatTools.lowTrustReviewV1")} />
+                  <PolicyRow label={t("commonChatTools.rawOutput")} value={t("commonChatTools.quarantinedHigherTrust")} />
+                  <PolicyRow label={t("commonChatTools.projects")} value={formatCount(boundary?.projectIds, t("commonChatTools.project"), t("commonChatTools.projects"))} />
+                  <PolicyRow label={t("commonChatTools.rootIssue")} value={boundary?.rootIssueId ? boundary.rootIssueId.slice(0, 8) : "-"} />
+                  <PolicyRow label={t("commonChatTools.explicitIssues")} value={formatCount(boundary?.issueIds, t("commonChatTools.issue"), t("commonChatTools.explicitIssues"))} />
+                  <PolicyRow label={t("commonChatTools.allowedAgents")} value={formatCount(boundary?.allowedAgentIds, t("sharedOperationsExtra.agent"), t("commonChatTools.allowedAgents"))} />
+                  <PolicyRow label={t("commonChatTools.allowedTools")} value={boundary?.allowedToolClasses?.join(" · ") || "-"} />
+                  <PolicyRow label={t("commonChatTools.allowedSecrets")} value={formatCount(boundary?.allowedSecretBindingIds, t("commonChatTools.binding"), t("commonChatTools.allowedSecrets"))} />
+                  <PolicyRow label={t("commonChatTools.promotionTarget")} value={boundary?.outputPromotionTarget?.issueId?.slice(0, 8) ?? "-"} />
                   <PolicyRow
-                    label="EE fields"
+                    label={t("commonChatTools.eeFields")}
                     value={Object.keys(policy ?? {}).some((key) => !["trustPreset", "reviewPreset", "trustBoundary"].includes(key))
                       ? t("sharedOperationsExtra.customPolicyPreserved")
                       : "-"}
@@ -250,7 +248,7 @@ export function TrustPresetSection({
 
         {managedPermissions.authorizationPolicy?.reviewPreset ? null : (
           <p className="text-xs text-muted-foreground">
-            Advanced permissions remain editable through the EE permissions extension when installed.
+            {t("commonChatTools.advancedPermissionsEe")}
           </p>
         )}
       </div>
