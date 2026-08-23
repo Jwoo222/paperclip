@@ -1,0 +1,78 @@
+{
+  "entryLegacy": {
+    "common": {
+      "unknown": "알 수 없음"
+    },
+    "notFound": {
+      "breadcrumb": "페이지를 찾을 수 없음",
+      "companyTitle": "회사를 찾을 수 없습니다",
+      "pageTitle": "페이지를 찾을 수 없습니다",
+      "companyDescription": "접두사 \"{{prefix}}\"에 해당하는 회사가 없습니다.",
+      "pageDescription": "존재하지 않는 경로입니다.",
+      "requestedPath": "요청한 경로:",
+      "openDashboard": "대시보드 열기",
+      "goHome": "홈으로"
+    },
+    "auth": {
+      "failed": "인증에 실패했습니다.",
+      "signInTitle": "Paperclip 로그인",
+      "signUpTitle": "Paperclip 계정 만들기",
+      "signInDescription": "이 인스턴스에 접속하려면 이메일과 비밀번호로 로그인하세요.",
+      "signUpDescription": "이 인스턴스에서 사용할 계정을 만드세요. v1에서는 이메일 확인이 필요하지 않습니다.",
+      "requiredFields": "필수 항목을 모두 입력하세요.",
+      "name": "이름",
+      "email": "이메일",
+      "password": "비밀번호",
+      "working": "처리 중…",
+      "signIn": "로그인",
+      "createAccount": "계정 만들기",
+      "needAccount": "계정이 없나요?",
+      "alreadyAccount": "이미 계정이 있나요?",
+      "createOne": "계정 만들기"
+    },
+    "boardClaim": {
+      "invalidUrl": "잘못된 운영자 소유권 확인 URL입니다.",
+      "loading": "소유권 확인 정보를 불러오는 중...",
+      "unavailableTitle": "소유권 확인을 진행할 수 없습니다",
+      "invalidOrExpired": "확인 요청이 잘못되었거나 만료되었습니다.",
+      "unavailable": "소유권 확인을 진행할 수 없습니다.",
+      "claimedTitle": "운영자 소유권을 확인했습니다",
+      "claimedDescription": "이 인스턴스가 인증된 사용자 계정에 연결되었습니다.",
+      "openBoard": "운영 화면 열기",
+      "signInRequired": "로그인이 필요합니다",
+      "signInDescription": "로그인하거나 계정을 만든 뒤 이 페이지로 돌아와 운영자 소유권을 확인하세요.",
+      "signInOrCreate": "로그인 / 계정 만들기",
+      "claimTitle": "운영자 소유권 확인",
+      "claimDescription": "사용자를 인스턴스 관리자로 승격하고 로컬 신뢰 모드의 회사 소유권 접근 권한을 이전합니다.",
+      "failed": "운영자 소유권을 확인하지 못했습니다.",
+      "claiming": "확인 중…",
+      "claim": "소유권 확인"
+    },
+    "myTasks": {
+      "title": "내 업무",
+      "selectCompany": "내 업무를 보려면 회사를 선택하세요.",
+      "empty": "내게 할당된 업무가 없습니다."
+    },
+    "org": {
+      "title": "조직도",
+      "selectCompany": "조직도를 보려면 회사를 선택하세요.",
+      "empty": "조직에 에이전트가 없습니다. 에이전트를 만들어 조직도를 구성하세요.",
+      "collapse": "{{name}} 접기",
+      "expand": "{{name}} 펼치기"
+    },
+    "newAgent": {
+      "createFailed": "에이전트를 만들지 못했습니다.",
+      "openCodeModelRequired": "OpenCode 모델은 provider/model 형식으로 직접 지정해야 합니다.",
+      "advancedConfiguration": "고급 에이전트 구성",
+      "titlePlaceholder": "직함(예: 엔지니어링 부문 부사장)",
+      "companySkills": "회사 스킬",
+      "companySkillsDescription": "회사 라이브러리의 선택 스킬입니다. Paperclip 기본 런타임 스킬은 자동으로 추가됩니다.",
+      "noCompanySkills": "설치된 선택 회사 스킬이 없습니다.",
+      "firstIsCeo": "첫 에이전트는 CEO가 됩니다",
+      "testing": "테스트 중...",
+      "testAgent": "에이전트 테스트",
+      "creating": "생성 중…",
+      "create": "에이전트 생성"
+    }
+  }
+}

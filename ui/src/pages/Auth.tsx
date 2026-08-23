@@ -9,10 +9,12 @@ import { AsciiArtAnimation } from "@/components/AsciiArtAnimation";
 import { PaperclipLoading } from "@/components/AnimatedPaperclipIcon";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Sparkles } from "lucide-react";
+import { useTranslation } from "@/i18n";
 
 type AuthMode = "sign_in" | "sign_up";
 
 export function AuthPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -59,7 +61,7 @@ export function AuthPage() {
       navigate(nextPath, { replace: true });
     },
     onError: (err) => {
-      setError(err instanceof Error ? err.message : "Authentication failed");
+      setError(err instanceof Error ? err.message : t("entryLegacy.auth.failed", { defaultValue: "Authentication failed" }));
     },
   });
 
@@ -90,12 +92,14 @@ export function AuthPage() {
           </div>
 
           <h1 className="text-xl font-semibold">
-            {mode === "sign_in" ? "Sign in to Paperclip" : "Create your Paperclip account"}
+            {mode === "sign_in"
+              ? t("entryLegacy.auth.signInTitle", { defaultValue: "Sign in to Paperclip" })
+              : t("entryLegacy.auth.signUpTitle", { defaultValue: "Create your Paperclip account" })}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {mode === "sign_in"
-              ? "Use your email and password to access this instance."
-              : "Create an account for this instance. Email confirmation is not required in v1."}
+              ? t("entryLegacy.auth.signInDescription", { defaultValue: "Use your email and password to access this instance." })
+              : t("entryLegacy.auth.signUpDescription", { defaultValue: "Create an account for this instance. Email confirmation is not required in v1." })}
           </p>
 
           <form
@@ -106,7 +110,7 @@ export function AuthPage() {
               event.preventDefault();
               if (mutation.isPending) return;
               if (!canSubmit) {
-                setError("Please fill in all required fields.");
+                setError(t("entryLegacy.auth.requiredFields", { defaultValue: "Please fill in all required fields." }));
                 return;
               }
               mutation.mutate();
@@ -114,7 +118,9 @@ export function AuthPage() {
           >
             {mode === "sign_up" && (
               <div>
-                <label htmlFor="name" className="text-xs text-muted-foreground mb-1 block">Name</label>
+                <label htmlFor="name" className="text-xs text-muted-foreground mb-1 block">
+                  {t("entryLegacy.auth.name", { defaultValue: "Name" })}
+                </label>
                 <input
                   id="name"
                   name="name"
@@ -131,7 +137,9 @@ export function AuthPage() {
               </div>
             )}
             <div>
-              <label htmlFor="email" className="text-xs text-muted-foreground mb-1 block">Email</label>
+              <label htmlFor="email" className="text-xs text-muted-foreground mb-1 block">
+                {t("entryLegacy.auth.email", { defaultValue: "Email" })}
+              </label>
               <input
                 id="email"
                 name="email"
@@ -148,7 +156,9 @@ export function AuthPage() {
               />
             </div>
             <div>
-              <label htmlFor="password" className="text-xs text-muted-foreground mb-1 block">Password</label>
+              <label htmlFor="password" className="text-xs text-muted-foreground mb-1 block">
+                {t("entryLegacy.auth.password", { defaultValue: "Password" })}
+              </label>
               <input
                 id="password"
                 name="password"
@@ -175,15 +185,17 @@ export function AuthPage() {
               className={`w-full ${!canSubmit && !mutation.isPending ? "opacity-50" : ""}`}
             >
               {mutation.isPending
-                ? "Working…"
+                ? t("entryLegacy.auth.working", { defaultValue: "Working…" })
                 : mode === "sign_in"
-                  ? "Sign In"
-                  : "Create Account"}
+                  ? t("entryLegacy.auth.signIn", { defaultValue: "Sign In" })
+                  : t("entryLegacy.auth.createAccount", { defaultValue: "Create Account" })}
             </Button>
           </form>
 
           <div className="mt-5 text-sm text-muted-foreground">
-            {mode === "sign_in" ? "Need an account?" : "Already have an account?"}{" "}
+            {mode === "sign_in"
+              ? t("entryLegacy.auth.needAccount", { defaultValue: "Need an account?" })
+              : t("entryLegacy.auth.alreadyAccount", { defaultValue: "Already have an account?" })}{" "}
             <button
               type="button"
               className="font-medium text-foreground underline underline-offset-2"
@@ -192,7 +204,9 @@ export function AuthPage() {
                 setMode(mode === "sign_in" ? "sign_up" : "sign_in");
               }}
             >
-              {mode === "sign_in" ? "Create one" : "Sign in"}
+              {mode === "sign_in"
+                ? t("entryLegacy.auth.createOne", { defaultValue: "Create one" })
+                : t("entryLegacy.auth.signIn", { defaultValue: "Sign in" })}
             </button>
           </div>
         </div>

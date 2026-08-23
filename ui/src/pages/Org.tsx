@@ -11,6 +11,7 @@ import { PageSkeleton } from "../components/PageSkeleton";
 import { ChevronRight, GitBranch } from "lucide-react";
 import { cn } from "../lib/utils";
 import { agentStatusDot, agentStatusDotDefault } from "../lib/status-colors";
+import { useTranslation } from "@/i18n";
 
 function OrgTree({
   nodes,
@@ -39,6 +40,7 @@ function OrgTreeNode({
   depth: number;
   hrefFn: (id: string) => string;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
   const hasChildren = node.reports.length > 0;
 
@@ -52,6 +54,9 @@ function OrgTreeNode({
         {hasChildren ? (
           <button
             className="p-0.5"
+            aria-label={expanded
+              ? t("entryLegacy.org.collapse", { name: node.name, defaultValue: "Collapse {{name}}" })
+              : t("entryLegacy.org.expand", { name: node.name, defaultValue: "Expand {{name}}" })}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -74,8 +79,15 @@ function OrgTreeNode({
           )}
         />
         <span className="font-medium flex-1">{node.name}</span>
-        <span className="text-xs text-muted-foreground">{node.role}</span>
-        <StatusBadge status={node.status} />
+        <span className="text-xs text-muted-foreground">
+          {t(`agentManagement.roles.${node.role}`, { defaultValue: node.role })}
+        </span>
+        <StatusBadge
+          status={node.status}
+          label={t(`agentManagement.status.${node.status === "active" ? "idle" : node.status}`, {
+            defaultValue: node.status.replace(/_/g, " "),
+          })}
+        />
       </Link>
       {hasChildren && expanded && (
         <OrgTree nodes={node.reports} depth={depth + 1} hrefFn={hrefFn} />
@@ -85,12 +97,13 @@ function OrgTreeNode({
 }
 
 export function Org() {
+  const { t } = useTranslation();
   const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Org Chart" }]);
-  }, [setBreadcrumbs]);
+    setBreadcrumbs([{ label: t("entryLegacy.org.title", { defaultValue: "Org Chart" }) }]);
+  }, [setBreadcrumbs, t]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: queryKeys.org(selectedCompanyId!),
@@ -99,7 +112,7 @@ export function Org() {
   });
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={GitBranch} message="Select a company to view org chart." />;
+    return <EmptyState icon={GitBranch} message={t("entryLegacy.org.selectCompany", { defaultValue: "Select a company to view org chart." })} />;
   }
 
   if (isLoading) {
@@ -113,7 +126,7 @@ export function Org() {
       {data && data.length === 0 && (
         <EmptyState
           icon={GitBranch}
-          message="No agents in the organization. Create agents to build your org chart."
+          message={t("entryLegacy.org.empty", { defaultValue: "No agents in the organization. Create agents to build your org chart." })}
         />
       )}
 
