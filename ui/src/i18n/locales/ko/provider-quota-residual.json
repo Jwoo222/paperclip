@@ -1,0 +1,36 @@
+{
+  "providerQuota": {
+    "summary": {
+      "input": "입력",
+      "output": "출력",
+      "apiRuns_one": "API 약 {{count}}회",
+      "apiRuns_other": "API 약 {{count}}회",
+      "subscriptionRuns_one": "구독 약 {{count}}회",
+      "subscriptionRuns_other": "구독 약 {{count}}회"
+    },
+    "budget": {
+      "periodSpend": "기간 지출",
+      "percentOfAllocation": "배정액의 {{percent}}%",
+      "thisWeek": "이번 주",
+      "perWeek": "주당 약 {{amount}}"
+    },
+    "rollingWindows": "최근 구간별 사용량",
+    "tokenAbbreviation": "토큰",
+    "subscription": {
+      "title": "구독 사용량",
+      "runCount_one": "{{count}}회 실행",
+      "runCount_other": "{{count}}회 실행",
+      "total": "합계",
+      "percentOfTokenUsage": "전체 토큰 중 구독 사용 비율 {{percent}}%"
+    },
+    "model": {
+      "percentOfProviderTokens": "이 제공업체 토큰의 {{percent}}%",
+      "percentOfProviderCost": "이 제공업체 비용의 {{percent}}%"
+    },
+    "subscriptionQuota": "구독 한도",
+    "quota": {
+      "usedPercent": "{{percent}}% 사용",
+      "resetsOn": "{{date}}에 초기화"
+    }
+  }
+}

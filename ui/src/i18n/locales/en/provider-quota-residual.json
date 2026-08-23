@@ -1,0 +1,36 @@
+{
+  "providerQuota": {
+    "summary": {
+      "input": "in",
+      "output": "out",
+      "apiRuns_one": "~{{count}} API run",
+      "apiRuns_other": "~{{count}} API runs",
+      "subscriptionRuns_one": "~{{count}} subscription run",
+      "subscriptionRuns_other": "~{{count}} subscription runs"
+    },
+    "budget": {
+      "periodSpend": "Period spend",
+      "percentOfAllocation": "{{percent}}% of allocation",
+      "thisWeek": "This week",
+      "perWeek": "~{{amount}} / wk"
+    },
+    "rollingWindows": "Rolling windows",
+    "tokenAbbreviation": "tok",
+    "subscription": {
+      "title": "Subscription",
+      "runCount_one": "{{count}} run",
+      "runCount_other": "{{count}} runs",
+      "total": "total",
+      "percentOfTokenUsage": "{{percent}}% of token usage via subscription"
+    },
+    "model": {
+      "percentOfProviderTokens": "{{percent}}% of provider tokens",
+      "percentOfProviderCost": "{{percent}}% of provider cost"
+    },
+    "subscriptionQuota": "Subscription quota",
+    "quota": {
+      "usedPercent": "{{percent}}% used",
+      "resetsOn": "resets {{date}}"
+    }
+  }
+}
