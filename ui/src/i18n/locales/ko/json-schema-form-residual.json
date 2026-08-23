@@ -1,0 +1,42 @@
+{
+  "jsonSchemaFormResidual": {
+    "validation": {
+      "required": "필수 입력 항목입니다.",
+      "invalidSecretReference": "보안 값 참조가 올바르지 않습니다.",
+      "minCharacters": "{{count}}자 이상 입력해야 합니다.",
+      "maxCharacters": "{{count}}자 이하로 입력해야 합니다.",
+      "pattern": "다음 패턴과 일치해야 합니다: {{pattern}}",
+      "validNumber": "올바른 숫자를 입력하세요.",
+      "minimum": "{{value}} 이상이어야 합니다.",
+      "maximum": "{{value}} 이하여야 합니다.",
+      "exclusiveMinimum": "{{value}}보다 커야 합니다.",
+      "exclusiveMaximum": "{{value}}보다 작아야 합니다.",
+      "wholeNumber": "정수여야 합니다.",
+      "multipleOf": "{{value}}의 배수여야 합니다.",
+      "minItems": "항목이 {{count}}개 이상이어야 합니다.",
+      "maxItems": "항목이 {{count}}개 이하여야 합니다."
+    },
+    "selectOption": "옵션 선택",
+    "none": "없음",
+    "secret": {
+      "hiddenSummary": "민감한 값 — {{count}}자를 숨겼습니다. 눈 모양 버튼을 눌러 표시하세요.",
+      "hide": "보안 값 숨기기",
+      "show": "보안 값 표시",
+      "description": "기존 회사 보안 값을 선택하거나 원본 값을 붙여 넣으세요. 저장하면 Paperclip이 보안 값으로 보관합니다.",
+      "selectExisting": "기존 보안 값 선택",
+      "noActive": "활성 보안 값이 없습니다. 새로 만들거나 아래에 원본 값을 붙여 넣으세요.",
+      "hideRawInput": "원본 값 입력란 숨기기",
+      "pasteRaw": "또는 원본 값 붙여 넣기"
+    },
+    "array": {
+      "addItem": "항목 추가",
+      "add": "추가",
+      "item": "항목 {{count}}",
+      "removeItem": "항목 제거",
+      "empty": "추가된 항목이 없습니다."
+    },
+    "advancedOptions": "고급 옵션",
+    "moreOptions": "추가 옵션",
+    "noOptions": "사용할 수 있는 구성 옵션이 없습니다."
+  }
+}

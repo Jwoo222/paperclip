@@ -1,0 +1,42 @@
+{
+  "jsonSchemaFormResidual": {
+    "validation": {
+      "required": "This field is required",
+      "invalidSecretReference": "Invalid secret reference",
+      "minCharacters": "Must be at least {{count}} characters",
+      "maxCharacters": "Must be at most {{count}} characters",
+      "pattern": "Must match pattern: {{pattern}}",
+      "validNumber": "Must be a valid number",
+      "minimum": "Must be at least {{value}}",
+      "maximum": "Must be at most {{value}}",
+      "exclusiveMinimum": "Must be greater than {{value}}",
+      "exclusiveMaximum": "Must be less than {{value}}",
+      "wholeNumber": "Must be a whole number",
+      "multipleOf": "Must be a multiple of {{value}}",
+      "minItems": "Must have at least {{count}} items",
+      "maxItems": "Must have at most {{count}} items"
+    },
+    "selectOption": "Select an option",
+    "none": "None",
+    "secret": {
+      "hiddenSummary": "Sensitive — {{count}} characters hidden. Click the eye to reveal.",
+      "hide": "Hide secret",
+      "show": "Show secret",
+      "description": "Pick an existing company secret, or paste a raw value (Paperclip will store it as a secret on save).",
+      "selectExisting": "Select an existing secret",
+      "noActive": "No active secrets yet. Create one or paste a raw value below.",
+      "hideRawInput": "Hide raw value input",
+      "pasteRaw": "Or paste a raw value"
+    },
+    "array": {
+      "addItem": "Add item",
+      "add": "Add",
+      "item": "Item {{count}}",
+      "removeItem": "Remove item",
+      "empty": "No items added yet."
+    },
+    "advancedOptions": "Advanced options",
+    "moreOptions": "More options",
+    "noOptions": "No configuration options available."
+  }
+}

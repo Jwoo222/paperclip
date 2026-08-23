@@ -2,8 +2,13 @@
 
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { JsonSchemaForm, getDefaultValues } from "./JsonSchemaForm";
+import { setLocale } from "@/i18n";
+
+beforeAll(async () => {
+  await setLocale("en");
+});
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
