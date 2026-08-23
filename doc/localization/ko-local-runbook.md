@@ -17,6 +17,9 @@ The launcher uses these local-only defaults:
 - deployment mode: `local_trusted`, loopback only
 - company deletion: disabled through the process environment
 
+The default browser opens automatically after the health check succeeds. A desktop shortcut can
+target this script through `powershell.exe -NoProfile -ExecutionPolicy Bypass -File <script-path>`.
+
 Close the launcher window or press `Ctrl+C` to stop the foreground server.
 
 ## Validate

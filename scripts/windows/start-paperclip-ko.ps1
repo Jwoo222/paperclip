@@ -36,6 +36,25 @@ Write-Host "Starting Paperclip Korean edition..." -ForegroundColor Cyan
 Write-Host "Data: $DataDir" -ForegroundColor DarkGray
 Write-Host "Close this window or press Ctrl+C to stop Paperclip." -ForegroundColor DarkGray
 
+# Open the board after the local server becomes healthy. The background job
+# keeps startup non-blocking while the foreground process continues to show logs.
+Start-Job -ScriptBlock {
+  param([string]$Url)
+
+  for ($attempt = 0; $attempt -lt 60; $attempt++) {
+    try {
+      $response = Invoke-RestMethod -Uri $Url -TimeoutSec 2
+      if ($response.status -eq "ok") {
+        Start-Process $Url
+        break
+      }
+    } catch {
+      # The server is still starting.
+    }
+    Start-Sleep -Seconds 1
+  }
+} -ArgumentList $healthUrl | Out-Null
+
 & corepack pnpm paperclipai run --data-dir $DataDir --instance $InstanceId
 if ($LASTEXITCODE -ne 0) {
   throw "Paperclip exited with code $LASTEXITCODE."
