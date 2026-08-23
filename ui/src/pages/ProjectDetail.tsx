@@ -496,7 +496,7 @@ export function ProjectDetail() {
       ),
     onSuccess: (updatedProject, archived) => {
       invalidateProject();
-      const name = updatedProject?.name ?? project?.name ?? "Project";
+      const name = updatedProject?.name ?? project?.name ?? t("overview.projects.project");
       if (archived) {
         pushToast({ title: `"${name}" has been archived`, tone: "success" });
         navigate("/dashboard");
@@ -529,8 +529,8 @@ export function ProjectDetail() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Projects", href: "/projects" },
-      { label: project?.name ?? routeProjectRef ?? "Project" },
+      { label: t("overview.projects.title"), href: "/projects" },
+      { label: project?.name ?? routeProjectRef ?? t("overview.projects.project") },
     ]);
   }, [setBreadcrumbs, project, routeProjectRef]);
 
@@ -640,7 +640,7 @@ export function ProjectDetail() {
       companyId: resolvedCompanyId ?? "",
       scopeType: "project",
       scopeId: project?.id ?? routeProjectRef,
-      scopeName: project?.name ?? "Project",
+    scopeName: project?.name ?? t("overview.projects.project"),
       metric: "billed_cents",
       windowKind: "lifetime",
       amount: 0,
@@ -837,7 +837,7 @@ export function ProjectDetail() {
         companyId={resolvedCompanyId}
         scopeKind="project"
         scopeId={project.id}
-        title="Project summary"
+        title={t("overview.projectDetail.showSummary")}
         description="Summarizer keeps the latest project status, next step, and operator-needed items here."
       />
 
@@ -875,12 +875,12 @@ export function ProjectDetail() {
       <Tabs value={activeTab ?? "list"} onValueChange={(value) => handleTabChange(value as ProjectTab)}>
         <PageTabBar
           items={[
-            { value: "list", label: "Tasks" },
-            { value: "overview", label: "Overview" },
+            { value: "list", label: t("overview.projects.tasks") },
+            { value: "overview", label: t("overview.projects.title") },
             ...(project.managedByPlugin ? [{ value: "plugin-operations", label: "Plugin operations" }] : []),
-            ...(showWorkspacesTab ? [{ value: "workspaces", label: "Workspaces" }] : []),
-            { value: "configuration", label: "Configuration" },
-            { value: "budget", label: "Budget" },
+            ...(showWorkspacesTab ? [{ value: "workspaces", label: t("projectsWorkspaces.workspace.projectWorkspace") }] : []),
+            { value: "configuration", label: t("overview.projectProperties.executionWorkspaces") },
+            { value: "budget", label: t("overview.projectDetail.budget") },
             ...pluginTabItems.map((item) => ({
               value: item.value,
               label: item.label,
