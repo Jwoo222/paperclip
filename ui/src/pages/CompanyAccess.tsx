@@ -44,11 +44,11 @@ export function CompanyAccess() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
-      { label: "Settings", href: "/company/settings" },
-      { label: "Members" },
+      { label: selectedCompany?.name ?? t("companyAccessResidual.company"), href: "/dashboard" },
+      { label: t("companyAccessResidual.settings"), href: "/company/settings" },
+      { label: t("companyAccessResidual.members") },
     ]);
-  }, [selectedCompany?.name, setBreadcrumbs]);
+  }, [selectedCompany?.name, setBreadcrumbs, t]);
 
   const membersQuery = useQuery({
     queryKey: queryKeys.access.companyMembers(selectedCompanyId ?? ""),
@@ -86,14 +86,14 @@ export function CompanyAccess() {
       setEditingMemberId(null);
       await refreshAccessData();
       pushToast({
-        title: "Member updated",
+        title: t("companyAccessResidual.memberUpdated"),
         tone: "success",
       });
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to update member",
-        body: error instanceof Error ? error.message : "Unknown error",
+        title: t("companyAccessResidual.memberUpdateFailed"),
+        body: error instanceof Error ? error.message : t("companyAccessResidual.unknownError"),
         tone: "error",
       });
     },
@@ -104,14 +104,14 @@ export function CompanyAccess() {
     onSuccess: async () => {
       await refreshAccessData();
       pushToast({
-        title: "Join request approved",
+        title: t("companyAccessResidual.joinApproved"),
         tone: "success",
       });
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to approve join request",
-        body: error instanceof Error ? error.message : "Unknown error",
+        title: t("companyAccessResidual.joinApproveFailed"),
+        body: error instanceof Error ? error.message : t("companyAccessResidual.unknownError"),
         tone: "error",
       });
     },
@@ -122,14 +122,14 @@ export function CompanyAccess() {
     onSuccess: async () => {
       await refreshAccessData();
       pushToast({
-        title: "Join request rejected",
+        title: t("companyAccessResidual.joinRejected"),
         tone: "success",
       });
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to reject join request",
-        body: error instanceof Error ? error.message : "Unknown error",
+        title: t("companyAccessResidual.joinRejectFailed"),
+        body: error instanceof Error ? error.message : t("companyAccessResidual.unknownError"),
         tone: "error",
       });
     },
@@ -174,18 +174,18 @@ export function CompanyAccess() {
         await queryClient.invalidateQueries({ queryKey: queryKeys.issues.listTouchedByMe(selectedCompanyId) });
       }
       pushToast({
-        title: "Member removed",
+        title: t("companyAccessResidual.memberRemoved"),
         body:
           result.reassignedIssueCount > 0
-            ? `${result.reassignedIssueCount} assigned task${result.reassignedIssueCount === 1 ? "" : "s"} cleaned up.`
+            ? t("companyAccessResidual.assignedTasksCleaned", { count: result.reassignedIssueCount })
             : undefined,
         tone: "success",
       });
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to remove member",
-        body: error instanceof Error ? error.message : "Unknown error",
+        title: t("companyAccessResidual.memberRemoveFailed"),
+        body: error instanceof Error ? error.message : t("companyAccessResidual.unknownError"),
         tone: "error",
       });
     },
@@ -213,10 +213,10 @@ export function CompanyAccess() {
   if (membersQuery.error) {
     const message =
       membersQuery.error instanceof ApiError && membersQuery.error.status === 403
-        ? "You do not have permission to manage company members."
+        ? t("companyAccessResidual.noMemberPermission")
         : membersQuery.error instanceof Error
           ? membersQuery.error.message
-          : "Failed to load company members.";
+          : t("companyAccessResidual.loadMembersFailed");
     return <div className="text-sm text-destructive">{message}</div>;
   }
 
@@ -243,16 +243,16 @@ export function CompanyAccess() {
           <h1 className="text-lg font-semibold">{t("settingsSecurity.companyMembers", { defaultValue: "Company Members" })}</h1>
         </div>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          Manage the people who can work in {selectedCompany?.name}. Members can collaborate across the company by default.
+          {t("companyAccessResidual.managePeople", { company: selectedCompany?.name })}
         </p>
         <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-          Core keeps this page focused on membership, invite approvals, and safe member removal.
+          {t("companyAccessResidual.coreScope")}
         </div>
       </div>
 
       {access && !access.currentUserRole && (
         <div className="rounded-xl border border-amber-500/40 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
-          This account can manage access here through instance-admin privileges, but it does not currently hold an active company membership.
+          {t("companyAccessResidual.instanceAdminNotice")}
         </div>
       )}
 
@@ -263,7 +263,7 @@ export function CompanyAccess() {
           <h2 className="text-base font-semibold">{t("settingsSecurity.humans", { defaultValue: "Humans" })}</h2>
           </div>
           <p className="max-w-3xl text-sm text-muted-foreground">
-            Manage human company memberships and status here.
+            {t("companyAccessResidual.manageHumanMemberships")}
           </p>
         </div>
 
@@ -273,10 +273,10 @@ export function CompanyAccess() {
               <div>
                 <h3 className="text-sm font-semibold">{t("settingsSecurity.pendingHumanJoins", { defaultValue: "Pending human joins" })}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Review pending join requests before they become active company members.
+                  {t("companyAccessResidual.reviewPending")}
                 </p>
               </div>
-              <Badge variant="outline">{pendingHumanJoinRequests.length} pending</Badge>
+              <Badge variant="outline">{t("companyAccessResidual.pendingCount", { count: pendingHumanJoinRequests.length })}</Badge>
             </div>
             <div className="space-y-3">
               {pendingHumanJoinRequests.map((request) => (
@@ -286,22 +286,27 @@ export function CompanyAccess() {
                     request.requesterUser?.name ||
                     request.requestEmailSnapshot ||
                     request.requestingUserId ||
-                    "Unknown human requester"
+                    t("companyAccessResidual.unknownRequester")
                   }
                   subtitle={
                     request.requesterUser?.email ||
                     request.requestEmailSnapshot ||
                     request.requestingUserId ||
-                    "No email available"
+                    t("companyAccessResidual.noEmail")
                   }
                   context={
                     request.invite
-                      ? `${request.invite.allowedJoinTypes} join invite${request.invite.humanRole ? ` • default role ${request.invite.humanRole}` : ""}`
-                      : "Invite metadata unavailable"
+                      ? t("companyAccessResidual.inviteContext", {
+                          type: t(`companyAccessResidual.audience.${request.invite.allowedJoinTypes}`),
+                          role: request.invite.humanRole
+                            ? t("companyAccessResidual.defaultRoleSuffix", { role: t(`companyAccessResidual.roles.${request.invite.humanRole}`) })
+                            : "",
+                        })
+                      : t("companyAccessResidual.inviteMetadataUnavailable")
                   }
-                  detail={`Submitted ${new Date(request.createdAt).toLocaleString()}`}
-                  approveLabel="Approve human"
-                  rejectLabel="Reject human"
+                  detail={t("companyAccessResidual.submittedAt", { date: new Date(request.createdAt).toLocaleString() })}
+                  approveLabel={t("companyAccessResidual.approveHuman")}
+                  rejectLabel={t("companyAccessResidual.rejectHuman")}
                   disabled={joinRequestActionPending}
                   onApprove={() => approveJoinRequestMutation.mutate(request.id)}
                   onReject={() => rejectJoinRequestMutation.mutate(request.id)}
@@ -335,18 +340,22 @@ export function CompanyAccess() {
                   </div>
                   <div className="text-sm">
                     {member.membershipRole
-                      ? HUMAN_COMPANY_MEMBERSHIP_ROLE_LABELS[member.membershipRole]
-                      : "Unset"}
+                      ? t(`companyAccessResidual.roles.${member.membershipRole}`, {
+                          defaultValue: HUMAN_COMPANY_MEMBERSHIP_ROLE_LABELS[member.membershipRole],
+                        })
+                      : t("settingsSecurity.unset", { defaultValue: "Unset" })}
                   </div>
                   <div>
                     <Badge variant={member.status === "active" ? "secondary" : member.status === "suspended" ? "destructive" : "outline"}>
-                      {member.status.replace("_", " ")}
+                      {t(`companyAccessResidual.memberStatus.${member.status}`, {
+                        defaultValue: member.status.replace("_", " "),
+                      })}
                     </Badge>
                   </div>
                   <div className="space-y-1 text-right">
                     <div className="flex justify-end gap-2">
                       <Button size="sm" variant="outline" onClick={() => setEditingMemberId(member.id)}>
-                        Edit
+                        {t("companyAccessResidual.edit")}
                       </Button>
                       <Button
                         size="sm"
@@ -356,7 +365,7 @@ export function CompanyAccess() {
                         title={removalReason ?? undefined}
                       >
                         <Trash2 className="mr-1 h-3.5 w-3.5" />
-                        Remove
+                        {t("companyAccessResidual.remove")}
                       </Button>
                     </div>
                     {removalReason ? (
@@ -375,7 +384,9 @@ export function CompanyAccess() {
           <DialogHeader>
             <DialogTitle>{t("settingsSecurity.editMember", { defaultValue: "Edit member" })}</DialogTitle>
             <DialogDescription>
-              Update company role and membership status for {editingMember?.user?.name || editingMember?.user?.email || editingMember?.principalId}.
+              {t("companyAccessResidual.updateMemberDescription", {
+                name: editingMember?.user?.name || editingMember?.user?.email || editingMember?.principalId,
+              })}
             </DialogDescription>
           </DialogHeader>
           {editingMember && (
@@ -393,7 +404,7 @@ export function CompanyAccess() {
                     <option value="">{t("settingsSecurity.unset", { defaultValue: "Unset" })}</option>
                     {Object.entries(HUMAN_COMPANY_MEMBERSHIP_ROLE_LABELS).map(([value, label]) => (
                       <option key={value} value={value}>
-                        {label}
+                          {t(`companyAccessResidual.roles.${value}`, { defaultValue: label })}
                       </option>
                     ))}
                   </select>
@@ -417,7 +428,7 @@ export function CompanyAccess() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingMemberId(null)}>
-              Cancel
+              {t("settingsSecurity.cancel", { defaultValue: "Cancel" })}
             </Button>
             <Button
               onClick={() => {
@@ -430,7 +441,7 @@ export function CompanyAccess() {
               }}
               disabled={updateMemberMutation.isPending}
             >
-              {updateMemberMutation.isPending ? "Saving…" : "Save member"}
+              {updateMemberMutation.isPending ? t("companyAccessResidual.saving") : t("companyAccessResidual.saveMember")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -441,7 +452,7 @@ export function CompanyAccess() {
           <DialogHeader>
             <DialogTitle>{t("settingsSecurity.removeMember", { defaultValue: "Remove member" })}</DialogTitle>
             <DialogDescription>
-              Archive {memberDisplayName(removingMember)} and move active assignments before hiding this user from assignment fields.
+              {t("companyAccessResidual.removeMemberDescription", { name: memberDisplayName(removingMember) })}
             </DialogDescription>
           </DialogHeader>
           {removingMember && (
@@ -451,8 +462,8 @@ export function CompanyAccess() {
                 <div className="text-sm text-muted-foreground">{removingMember.user?.email || removingMember.principalId}</div>
                 <div className="mt-2 text-sm text-muted-foreground">
                   {assignedIssuesQuery.isLoading
-                    ? "Checking assigned tasks..."
-                    : `${assignedIssues.length} open assigned task${assignedIssues.length === 1 ? "" : "s"}`}
+                    ? t("companyAccessResidual.checkingAssignedTasks")
+                    : t("companyAccessResidual.openAssignedTasks", { count: assignedIssues.length })}
                 </div>
               </div>
 
@@ -493,7 +504,7 @@ export function CompanyAccess() {
                     ))}
                     {assignedIssues.length > 6 ? (
                       <div className="px-3 py-2 text-sm text-muted-foreground">
-                        {assignedIssues.length - 6} more task{assignedIssues.length - 6 === 1 ? "" : "s"}
+                        {t("companyAccessResidual.moreTasks", { count: assignedIssues.length - 6 })}
                       </div>
                     ) : null}
                   </div>
