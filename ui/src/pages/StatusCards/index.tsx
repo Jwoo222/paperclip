@@ -144,14 +144,14 @@ export function StatusCards() {
           <Loader2 className="h-4 w-4 animate-spin" /> Loading cards…
         </div>
       ) : activeQuery.isError ? (
-        <InlineBanner tone="danger" title="Could not load status cards">
-          {activeQuery.error instanceof Error ? activeQuery.error.message : "Try again."}
+        <InlineBanner tone="danger" title={t("statusTraining.cards.loadFailed")}>
+          {activeQuery.error instanceof Error ? activeQuery.error.message : t("statusTraining.cards.tryAgain")}
         </InlineBanner>
       ) : activeCards.length === 0 ? (
         <EmptyState
           icon={FlaskConical}
-          title="No status cards yet"
-          message="Create a card to keep a living summary of the issues you care about."
+          title={t("statusTraining.cards.noCards")}
+          message={t("statusTraining.cards.noCardsDescription")}
           action={selectedCompanyId ? t("operations.statusCards.newCard") : undefined}
           onAction={() => setCreateOpen(true)}
         />
@@ -182,7 +182,7 @@ export function StatusCards() {
             onClick={() => setShowArchived((prev) => !prev)}
             className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
           >
-            {showArchived ? "Hide archived" : `Show archived (${archivedCards.length})`}
+            {showArchived ? t("statusTraining.cards.hideArchived") : t("statusTraining.cards.showArchived", { count: archivedCards.length })}
           </button>
           {showArchived
             ? archivedCards.map((card) => (

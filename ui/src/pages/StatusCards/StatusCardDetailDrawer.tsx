@@ -29,6 +29,7 @@ import {
   defaultSettingsValue,
   type StatusCardSettingsValue,
 } from "./StatusCardSettingsForm";
+import { t } from "@/i18n";
 import { SummarizerAgentSelect } from "./SummarizerAgentSelect";
 import {
   formatCents,
@@ -104,7 +105,7 @@ export function StatusCardDetailDrawer({
   const generatingIssue = useMemo<SummarySlotIssueRef | null>(
     () =>
       card && lifecycle === "updating" && card.generatingIssueId
-        ? { id: card.generatingIssueId, identifier: null, title: card.title ?? "Status update", status: "in_progress" }
+        ? { id: card.generatingIssueId, identifier: null, title: card.title ?? t("statusTraining.cards.statusUpdate"), status: "in_progress" }
         : null,
     [card, lifecycle],
   );
@@ -126,9 +127,9 @@ export function StatusCardDetailDrawer({
     },
     onSuccess: async () => {
       await invalidateCard();
-      setActionNote("Refresh queued — the Summarizer is updating this card.");
+      setActionNote(t("statusTraining.cards.refreshQueued"));
     },
-    onError: (err) => setActionError(err instanceof Error ? err.message : "Could not refresh the card."),
+    onError: (err) => setActionError(err instanceof Error ? err.message : t("statusTraining.cards.refreshFailed")),
   });
 
   const recompileMutation = useMutation({
@@ -139,9 +140,9 @@ export function StatusCardDetailDrawer({
     },
     onSuccess: async () => {
       await invalidateCard();
-      setActionNote("Run queued — the Summarizer is updating this card.");
+      setActionNote(t("statusTraining.cards.runQueued"));
     },
-    onError: (err) => setActionError(err instanceof Error ? err.message : "Could not run the card."),
+    onError: (err) => setActionError(err instanceof Error ? err.message : t("statusTraining.cards.runFailed")),
   });
 
   const saveSettingsMutation = useMutation({
@@ -168,7 +169,7 @@ export function StatusCardDetailDrawer({
         queryClient.invalidateQueries({ queryKey: queryKeys.statusCards.detail(card.id) }),
       ]);
     },
-    onError: (err) => setActionError(err instanceof Error ? err.message : "Could not save settings."),
+    onError: (err) => setActionError(err instanceof Error ? err.message : t("statusTraining.cards.saveFailed")),
   });
 
   if (!card) return null;
@@ -210,7 +211,7 @@ export function StatusCardDetailDrawer({
         <SheetHeader className="border-b border-border p-4">
           <div className="flex items-center gap-2 pr-8">
             <span className={cn("inline-block h-2.5 w-2.5 shrink-0 rounded-full", presentation.dotClassName)} aria-hidden="true" />
-            <SheetTitle className="min-w-0 flex-1 truncate text-lg">{card.title ?? "Untitled card"}</SheetTitle>
+                <SheetTitle className="min-w-0 flex-1 truncate text-lg">{card.title ?? t("statusTraining.cards.untitled")}</SheetTitle>
             <Badge variant="outline">{presentation.label}</Badge>
             {lifecycle === "compiling" ? (
               <Button
@@ -226,7 +227,7 @@ export function StatusCardDetailDrawer({
                 ) : (
                   <Wand2 className="h-3.5 w-3.5" />
                 )}
-                {setupRunning ? "Setting up…" : recompileMutation.isPending ? "Running…" : "Run now"}
+                {setupRunning ? t("statusTraining.cards.settingUpShort") : recompileMutation.isPending ? t("statusTraining.cards.running") : t("statusTraining.cards.runNow")}
               </Button>
             ) : (
               <Button
@@ -236,31 +237,31 @@ export function StatusCardDetailDrawer({
                 disabled={refreshMutation.isPending || lifecycle === "updating"}
               >
                 <RefreshCw className={cn("h-3.5 w-3.5", refreshMutation.isPending && "animate-spin")} />
-                {refreshMutation.isPending ? "Refreshing…" : "Refresh"}
+            {refreshMutation.isPending ? t("statusTraining.cards.refreshing") : t("statusTraining.cards.refresh")}
               </Button>
             )}
           </div>
           <p className="text-xs text-muted-foreground">
-            {card.lastGeneratedAt ? `Updated ${relativeTime(card.lastGeneratedAt)}` : "No summary yet"} ·{" "}
+            {card.lastGeneratedAt ? t("statusTraining.cards.updated", { time: relativeTime(card.lastGeneratedAt) }) : t("statusTraining.cards.noSummary")} ·{" "}
             {describeRefreshPolicy(card.refreshPolicy)}
           </p>
         </SheetHeader>
 
         <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 flex-1 flex-col gap-0">
           <TabsList variant="line" className="w-full justify-start gap-4 border-b border-border px-4">
-            <TabsTrigger value="summary">Summary</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-            <TabsTrigger value="watched">Watched issues</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
+            <TabsTrigger value="summary">{t("statusTraining.cards.summary")}</TabsTrigger>
+            <TabsTrigger value="settings">{t("statusTraining.cards.settings")}</TabsTrigger>
+            <TabsTrigger value="watched">{t("statusTraining.cards.watchedIssues")}</TabsTrigger>
+            <TabsTrigger value="history">{t("statusTraining.cards.history")}</TabsTrigger>
           </TabsList>
 
           {actionError ? (
             <div className="px-4 pt-3">
-              <InlineBanner tone="warning" title="Heads up">{actionError}</InlineBanner>
+              <InlineBanner tone="warning" title={t("statusTraining.cards.headsUp")}>{actionError}</InlineBanner>
             </div>
           ) : actionNote ? (
             <div className="px-4 pt-3">
-              <InlineBanner tone="info" title="Working on it">{actionNote}</InlineBanner>
+              <InlineBanner tone="info" title={t("statusTraining.cards.workingOnIt")}>{actionNote}</InlineBanner>
             </div>
           ) : null}
 
@@ -276,7 +277,7 @@ export function StatusCardDetailDrawer({
                       value={selectedRevisionId ?? "__latest__"}
                       onValueChange={(value) => setSelectedRevisionId(value === "__latest__" ? null : value)}
                     >
-                      <SelectTrigger size="sm" className="w-auto gap-1.5" aria-label="Select summary revision">
+                      <SelectTrigger size="sm" className="w-auto gap-1.5" aria-label={t("statusTraining.summary.selectRevision")}>
                         <History className="h-3.5 w-3.5" aria-hidden="true" />
                         <SelectValue />
                       </SelectTrigger>
@@ -338,8 +339,8 @@ export function StatusCardDetailDrawer({
                       <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
                     )}
                     {setupRunning
-                      ? "Setting up — the first summary is generated automatically once this finishes."
-                      : "Setup didn’t finish. Run it now to try again."}
+                      ? t("statusTraining.cards.setupInProgress")
+                      : t("statusTraining.cards.setupRetry")}
                   </p>
                   {setupRunning && card.generatingIssueId ? (
                     <Link
@@ -360,7 +361,7 @@ export function StatusCardDetailDrawer({
               {displayedChanges.length > 0 ? (
                 <section className="space-y-2">
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {selectedRevision ? "Integrated in this revision" : "Integrated in this update"} (
+                    {selectedRevision ? t("statusTraining.cards.integratedRevision") : t("statusTraining.cards.integratedUpdate")} (
                     {displayedChanges.length} {displayedChanges.length === 1 ? "change" : "changes"})
                   </h3>
                   <div className="space-y-1.5">
@@ -380,7 +381,7 @@ export function StatusCardDetailDrawer({
                   <Loader2 className="h-4 w-4 animate-spin" /> Loading history…
                 </div>
               ) : updates.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No updates recorded yet.</p>
+                <p className="text-sm text-muted-foreground">{t("statusTraining.cards.noUpdates")}</p>
               ) : (
                 <>
                   <div className="text-xs text-muted-foreground">
@@ -426,8 +427,8 @@ export function StatusCardDetailDrawer({
                   <Loader2 className="h-4 w-4 animate-spin" /> Matching issues…
                 </div>
               ) : dryRunQuery.isError ? (
-                <InlineBanner tone="danger" title="Could not load matched issues">
-                  {dryRunQuery.error instanceof Error ? dryRunQuery.error.message : "Try again."}
+                <InlineBanner tone="danger" title={t("statusTraining.cards.matchedIssuesFailed")}>
+                  {dryRunQuery.error instanceof Error ? dryRunQuery.error.message : t("statusTraining.cards.tryAgain")}
                 </InlineBanner>
               ) : (
                 <MatchedIssueList
@@ -439,24 +440,24 @@ export function StatusCardDetailDrawer({
 
             <TabsContent value="settings" className="mt-0 space-y-6">
               <section className="space-y-2">
-                <h3 className="text-sm font-semibold">Card name</h3>
+                <h3 className="text-sm font-semibold">{t("statusTraining.cards.cardName")}</h3>
                 <Input
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
-                  placeholder="Auto-named from the query"
+                  placeholder={t("statusTraining.cards.autoNamed")}
                   className="text-sm"
-                  aria-label="Card name"
+                  aria-label={t("statusTraining.cards.cardName")}
                 />
               </section>
 
               <section className="space-y-2">
-                <h3 className="text-sm font-semibold">What this card watches & reports</h3>
+                <h3 className="text-sm font-semibold">{t("statusTraining.cards.watchesReports")}</h3>
                 <Textarea
                   value={interest}
                   onChange={(event) => setInterest(event.target.value)}
                   rows={3}
                   className="text-sm"
-                  aria-label="What this card watches & reports"
+                  aria-label={t("statusTraining.cards.watchesReports")}
                 />
                 <p className="text-xs text-muted-foreground">
                   This one message drives the whole card: the agent compiles the watch query from it
@@ -465,7 +466,7 @@ export function StatusCardDetailDrawer({
               </section>
 
               <section className="space-y-2">
-                <h3 className="text-sm font-semibold">Agent</h3>
+                <h3 className="text-sm font-semibold">{t("statusTraining.cards.agent")}</h3>
                 <SummarizerAgentSelect
                   companyId={card.companyId}
                   value={summarizerAgentId}
@@ -515,8 +516,8 @@ function QueryDebugSection({ card }: { card: StatusCardView }) {
         </pre>
         <p className="text-xs text-muted-foreground">
           {card.queryCompiledAt
-            ? `Compiled by Summarizer ${relativeTime(card.queryCompiledAt)} · version ${card.queryVersion}. Edit “What this card watches” above to rebuild it.`
-            : "Not compiled yet. The query builds automatically once the card finishes setting up."}
+            ? t("statusTraining.cardsExtra.compiledBySummarizer", { time: relativeTime(card.queryCompiledAt), version: card.queryVersion })
+            : t("statusTraining.cards.notCompiled")}
         </p>
       </CollapsibleContent>
     </Collapsible>
@@ -558,7 +559,7 @@ function MatchedIssueList({ queries, mentioned }: { queries: StatusCardDryRun["q
       ) : null}
       {mentionedOnly.length > 0 ? (
         <div className="space-y-1.5">
-          <p className="text-xs font-medium text-muted-foreground">Mentioned in the latest update</p>
+          <p className="text-xs font-medium text-muted-foreground">{t("statusTraining.cards.mentionedLatest")}</p>
           {mentionedOnly.map((issue) => (
             <WatchedIssueRow key={issue.id} issue={issue} />
           ))}

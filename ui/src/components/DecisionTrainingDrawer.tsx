@@ -20,6 +20,7 @@ import { useToastActions } from "../context/ToastContext";
 import { queryKeys } from "../lib/queryKeys";
 import { codeResolutionLabel, decisionTrainingHref, trainingTargetForItem } from "../lib/decisionTraining";
 import { relativeTime } from "../lib/utils";
+import { t } from "@/i18n";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import {
@@ -41,8 +42,7 @@ import {
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
 
-const NOTES_PLACEHOLDER =
-  "How you thought about it, what signals mattered, what you decided and why…";
+const NOTES_PLACEHOLDER = "statusTraining.training.notesPlaceholder";
 
 interface DecisionTrainingDrawerProps {
   open: boolean;
@@ -87,12 +87,12 @@ export function DecisionTrainingDrawer({
         <SheetHeader className="border-b border-border">
           <SheetTitle className="flex items-center gap-2">
             <GraduationCap className="size-4 text-muted-foreground" />
-            {savedExampleId ? "Training example" : "Train this decision"}
+            {savedExampleId ? t("statusTraining.training.example") : t("statusTraining.training.trainDecision")}
           </SheetTitle>
           <SheetDescription>
             {savedExampleId
-              ? "The frozen state is read-only; your notes stay editable."
-              : "Freeze this decision's state and record how you'd want it decided."}
+              ? t("statusTraining.training.frozenNotesDescription")
+              : t("statusTraining.training.freezeDescription")}
           </SheetDescription>
         </SheetHeader>
 
@@ -152,13 +152,13 @@ function CreateState({
     onSuccess: (example) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.attention(companyId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.decisionTraining.list(companyId) });
-      pushToast({ title: "Decision trained", tone: "success" });
+      pushToast({ title: t("statusTraining.training.decisionTrained"), tone: "success" });
       onCreated(example);
     },
     onError: (error) => {
       pushToast({
-        title: "Could not train this decision",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: t("statusTraining.training.couldNotTrain"),
+        body: error instanceof Error ? error.message : t("statusTraining.training.tryAgain"),
         tone: "error",
       });
     },
@@ -177,13 +177,13 @@ function CreateState({
             id="training-notes"
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
-            placeholder={NOTES_PLACEHOLDER}
+            placeholder={t(NOTES_PLACEHOLDER)}
             className="min-h-40 text-sm"
           />
         </section>
 
         <SnapshotPreview
-          heading="State frozen with this example"
+          heading={t("statusTraining.training.stateFrozen")}
           snapshot={preview.data?.snapshot ?? null}
           cutoffAt={preview.data?.cutoffAt ?? null}
           loading={preview.isLoading}
@@ -230,13 +230,13 @@ function SavedState({
     onSuccess: (updated) => {
       queryClient.setQueryData(queryKeys.decisionTraining.detail(exampleId), updated);
       queryClient.invalidateQueries({ queryKey: queryKeys.decisionTraining.list(companyId) });
-      pushToast({ title: "Notes updated", tone: "success" });
+      pushToast({ title: t("statusTraining.training.notesUpdated"), tone: "success" });
       setEditing(false);
     },
     onError: (error) => {
       pushToast({
-        title: "Could not update notes",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: t("statusTraining.training.couldNotUpdateNotes"),
+        body: error instanceof Error ? error.message : t("statusTraining.training.tryAgain"),
         tone: "error",
       });
     },
@@ -247,13 +247,13 @@ function SavedState({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.attention(companyId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.decisionTraining.list(companyId) });
-      pushToast({ title: "Training example deleted", tone: "info" });
+      pushToast({ title: t("statusTraining.training.exampleDeleted"), tone: "info" });
       onDeleted();
     },
     onError: (error) => {
       pushToast({
-        title: "Could not delete example",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: t("statusTraining.training.couldNotDelete"),
+        body: error instanceof Error ? error.message : t("statusTraining.training.tryAgain"),
         tone: "error",
       });
     },
@@ -269,7 +269,7 @@ function SavedState({
   if (example.isError || !example.data) {
     return (
       <div className="p-4 text-sm text-destructive">
-        {example.isError ? (example.error as Error).message : "Example not found."}
+        {example.isError ? (example.error as Error).message : t("statusTraining.training.exampleNotFound")}
       </div>
     );
   }
@@ -277,8 +277,8 @@ function SavedState({
   const record = example.data;
   const edited = record.updatedAt !== record.createdAt;
   const authorLabel = currentUserId && record.createdByUserId === currentUserId
-    ? "You"
-    : `User ${record.createdByUserId.slice(0, 8)}`;
+    ? t("statusTraining.training.you")
+    : t("statusTraining.trainingLabels2.user", { id: record.createdByUserId.slice(0, 8) });
 
   const startEditing = () => {
     setDraftNotes(record.notes);
@@ -296,13 +296,13 @@ function SavedState({
           <span className="font-medium text-foreground">{authorLabel}</span>
           <span>·</span>
           <span title={new Date(record.createdAt).toLocaleString()}>
-            Created {relativeTime(record.createdAt)}
+            {t("statusTraining.training.created")} {relativeTime(record.createdAt)}
           </span>
           {edited && (
             <>
               <span>·</span>
               <span title={new Date(record.updatedAt).toLocaleString()}>
-                Edited {relativeTime(record.updatedAt)}
+                {t("statusTraining.training.edited")} {relativeTime(record.updatedAt)}
               </span>
             </>
           )}
@@ -311,10 +311,10 @@ function SavedState({
         {/* Notes — the one editable surface */}
         <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-foreground">Notes</span>
+            <span className="text-sm font-medium text-foreground">{t("statusTraining.training.notes")}</span>
             {!editing && (
               <Button variant="ghost" size="xs" onClick={startEditing}>
-                <Pencil className="size-3.5" /> Edit
+      <Pencil className="size-3.5" /> {t("statusTraining.training.edit")}
               </Button>
             )}
           </div>
@@ -323,7 +323,7 @@ function SavedState({
               <Textarea
                 value={draftNotes}
                 onChange={(event) => setDraftNotes(event.target.value)}
-                placeholder={NOTES_PLACEHOLDER}
+                placeholder={t(NOTES_PLACEHOLDER)}
                 className="min-h-40 text-sm"
               />
               <div className="flex justify-end gap-2">
@@ -332,24 +332,24 @@ function SavedState({
                 </Button>
                 <Button size="sm" onClick={() => saveNotes.mutate()} disabled={saveNotes.isPending}>
                   {saveNotes.isPending && <Loader2 className="size-4 animate-spin" />}
-                  Save notes
+                  {t("statusTraining.training.saveNotes")}
                 </Button>
               </div>
             </div>
           ) : record.notes ? (
             <p className="whitespace-pre-wrap text-sm text-foreground">{record.notes}</p>
           ) : (
-            <p className="text-sm italic text-muted-foreground">No notes yet.</p>
+            <p className="text-sm italic text-muted-foreground">{t("statusTraining.training.noNotesYet")}</p>
           )}
           {record.notesHistory.length > 0 && (
             <p className="text-(length:--text-nano) text-muted-foreground">
-              {record.notesHistory.length} previous {record.notesHistory.length === 1 ? "revision" : "revisions"}
+              {t("statusTraining.trainingExtra.previousRevisions", { count: record.notesHistory.length })}
             </p>
           )}
         </section>
 
         <SnapshotPreview
-          heading="Frozen state"
+          heading={t("statusTraining.training.frozenState")}
           snapshot={record.snapshot}
           cutoffAt={record.cutoffAt}
           readOnly
@@ -362,23 +362,23 @@ function SavedState({
           <AlertDialogTrigger asChild>
             <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" disabled={remove.isPending}>
               {remove.isPending ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-              Delete
+              {t("statusTraining.trainingExtra.delete")}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete this training example?</AlertDialogTitle>
+              <AlertDialogTitle>{t("statusTraining.training.deleteExampleQuestion")}</AlertDialogTitle>
               <AlertDialogDescription>
-                This removes the frozen snapshot and your notes. This can't be undone.
+                {t("statusTraining.trainingExtra.deleteDescription")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{t("statusTraining.training.cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 onClick={() => remove.mutate()}
               >
-                Delete
+                {t("statusTraining.trainingExtra.delete")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -386,7 +386,7 @@ function SavedState({
 
         <Button asChild variant="outline" size="sm">
           <Link to={decisionTrainingHref(record.id)}>
-            Open full record
+            {t("statusTraining.trainingLabels.openFullRecord")}
             <ExternalLink className="size-3.5" />
           </Link>
         </Button>
@@ -399,15 +399,24 @@ function SavedState({
 function DecisionContext({ item, outcome }: { item: AttentionItem; outcome: string | null }) {
   return (
     <section className="space-y-1 rounded-md border border-border bg-muted/30 px-3 py-2" data-testid="training-context">
-      <p className="text-(length:--text-nano) font-medium uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
-        Decision
+            <p className="text-(length:--text-nano) font-medium uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
+        {t("statusTraining.training.decision")}
       </p>
-      <p className="line-clamp-2 text-sm font-medium text-foreground">{item.subject.title ?? "Decision"}</p>
+      <p className="line-clamp-2 text-sm font-medium text-foreground">{item.subject.title ?? t("statusTraining.training.decision")}</p>
       <p className="text-xs text-muted-foreground">
-        {outcome ? `Resolved · ${outcome}` : "Decision pending — cutoff will be now"}
+        {outcome ? t("statusTraining.training.resolved", { outcome }) : t("statusTraining.training.decisionPending")}
       </p>
     </section>
   );
+}
+
+function localizedCodeResolution(resolution: Parameters<typeof codeResolutionLabel>[0]): string {
+  switch (resolution) {
+    case "exact": return t("statusTraining.trainingExtra.codeResolutionExact");
+    case "nearest_run": return t("statusTraining.trainingExtra.codeResolutionNearestRun");
+    case "workspace": return t("statusTraining.trainingExtra.codeResolutionWorkspace");
+    case "none": return t("statusTraining.trainingExtra.codeResolutionNone");
+  }
 }
 
 /**
@@ -438,14 +447,14 @@ function SnapshotPreview({
         <span className="text-sm font-medium text-foreground">{heading}</span>
         {readOnly && (
           <span className="inline-flex items-center gap-1 text-(length:--text-nano) uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
-            <Lock className="size-3" /> Read-only
+            <Lock className="size-3" /> {t("statusTraining.training.readOnly")}
           </span>
         )}
       </div>
 
       {loading && (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" /> Capturing current state…
+          <Loader2 className="size-4 animate-spin" /> {t("statusTraining.trainingExtra.capturingState")}
         </p>
       )}
       {error && <p className="text-sm text-destructive">{error}</p>}
@@ -454,33 +463,33 @@ function SnapshotPreview({
         <div className="divide-y divide-border rounded-md border border-border">
           <SnapshotRow
             icon={<Clock className="size-4" />}
-            label="Cutoff"
-            value={cutoffAt ? new Date(cutoffAt).toLocaleString() : "now"}
+            label={t("statusTraining.training.cutoff")}
+            value={cutoffAt ? new Date(cutoffAt).toLocaleString() : t("statusTraining.trainingExtra.now")}
             href={exampleId ? decisionTrainingHref(exampleId) : undefined}
           />
           <SnapshotRow
             icon={<MessageSquare className="size-4" />}
-            label="Comments"
+            label={t("statusTraining.training.comments")}
             value={
               snapshot.cutoff.commentCount === 0
-                ? "None before cutoff"
-                : `${snapshot.cutoff.commentCount} · last ${snapshot.cutoff.lastCommentId?.slice(0, 8) ?? "—"}`
+                ? t("statusTraining.training.noneBeforeCutoff")
+                : t("statusTraining.trainingExtra.commentsMeta", { count: snapshot.cutoff.commentCount, last: snapshot.cutoff.lastCommentId?.slice(0, 8) ?? "—" })
             }
             href={exampleId ? decisionTrainingHref(exampleId) : undefined}
           />
           <SnapshotRow
             icon={<Play className="size-4" />}
-            label="Runs"
-            value={snapshot.runs.length === 0 ? "None before cutoff" : `${snapshot.runs.length} before cutoff`}
+            label={t("statusTraining.training.runs")}
+            value={snapshot.runs.length === 0 ? t("statusTraining.training.noneBeforeCutoff") : t("statusTraining.training.beforeCutoff", { count: snapshot.runs.length })}
             href={exampleId ? decisionTrainingHref(exampleId) : undefined}
           />
           <SnapshotRow
             icon={<GitCommitHorizontal className="size-4" />}
-            label="Commit"
+            label={t("statusTraining.training.commit")}
             value={
               snapshot.code.commitSha
-                ? `${snapshot.code.commitSha.slice(0, 10)} · ${codeResolutionLabel(snapshot.code.resolution)}`
-                : codeResolutionLabel(snapshot.code.resolution)
+                ? `${snapshot.code.commitSha.slice(0, 10)} · ${localizedCodeResolution(snapshot.code.resolution)}`
+                : localizedCodeResolution(snapshot.code.resolution)
             }
             href={exampleId ? decisionTrainingHref(exampleId) : undefined}
           />

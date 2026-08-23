@@ -22,6 +22,7 @@ import {
 } from "@/lib/status-card-state";
 import { formatCents, formatTokens } from "./format";
 import type { StatusCardView } from "./types";
+import { t } from "@/i18n";
 
 export interface StatusCardTileProps {
   card: StatusCardView;
@@ -72,7 +73,7 @@ export function StatusCardTile({
   const generatingIssue = useMemo<SummarySlotIssueRef | null>(
     () =>
       lifecycle === "updating" && card.generatingIssueId
-        ? { id: card.generatingIssueId, identifier: null, title: card.title ?? "Status update", status: "in_progress" }
+        ? { id: card.generatingIssueId, identifier: null, title: card.title ?? t("statusTraining.cards.statusUpdate"), status: "in_progress" }
         : null,
     [lifecycle, card.generatingIssueId, card.title],
   );
@@ -112,30 +113,30 @@ export function StatusCardTile({
           )}
           title={card.title ?? card.interestPrompt}
         >
-          {card.title ?? "New card"}
+          {card.title ?? t("statusTraining.cards.newCard")}
         </span>
         <div onClick={(event) => event.stopPropagation()}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="-mr-1 -mt-1 h-7 w-7 text-muted-foreground" aria-label="Card actions">
+              <Button variant="ghost" size="icon" className="-mr-1 -mt-1 h-7 w-7 text-muted-foreground" aria-label={t("statusTraining.cards.cardActions")}>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={onOpen}>Open detail</DropdownMenuItem>
+              <DropdownMenuItem onSelect={onOpen}>{t("statusTraining.cards.openDetail")}</DropdownMenuItem>
               <DropdownMenuItem onSelect={onRefresh} disabled={refreshPending || lifecycle === "updating"}>
-                Refresh now
+                {t("statusTraining.cards.refreshNow")}
               </DropdownMenuItem>
               {(lifecycle === "compiling" && !setupRunning) || lifecycle === "error" ? (
                 <DropdownMenuItem onSelect={onRecompile} disabled={recompilePending}>
-                  Run now
+                  {t("statusTraining.cards.runNow")}
                 </DropdownMenuItem>
               ) : null}
-              <DropdownMenuItem onSelect={onEditInterest}>Edit interest &amp; settings</DropdownMenuItem>
-              <DropdownMenuItem onSelect={onOpenDebug}>Query debug</DropdownMenuItem>
+              <DropdownMenuItem onSelect={onEditInterest}>{t("statusTraining.cards.editInterest")}</DropdownMenuItem>
+              <DropdownMenuItem onSelect={onOpenDebug}>{t("statusTraining.cards.queryDebug")}</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={onArchive} variant="destructive">
-                Archive
+                {t("statusTraining.cards.archive")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -154,7 +155,7 @@ export function StatusCardTile({
               ) : (
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" />
               )}
-              <span>{setupRunning ? "Setting up your card…" : "Setup didn’t finish"}</span>
+              <span>{setupRunning ? t("statusTraining.cards.settingUp") : t("statusTraining.cards.setupDidNotFinish")}</span>
             </div>
             <p className="mt-1 line-clamp-2 text-muted-foreground">“{card.interestPrompt}”</p>
             {setupRunning ? (
@@ -166,7 +167,7 @@ export function StatusCardTile({
                 className="mt-2 inline-flex items-center gap-1.5 font-medium text-foreground underline-offset-2 hover:underline"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-                View setup task
+                {t("statusTraining.cards.viewSetupTask")}
               </Link>
             ) : (
               // The first run stalled (agent run died mid-setup) and the card
@@ -178,7 +179,7 @@ export function StatusCardTile({
                 className="mt-2 inline-flex items-center gap-1.5 font-medium text-foreground underline-offset-2 hover:underline disabled:opacity-60"
               >
                 <Wand2 className={cn("h-3.5 w-3.5", recompilePending && "animate-pulse")} />
-                {recompilePending ? "Starting…" : "Run now"}
+                {recompilePending ? t("statusTraining.cards.starting") : t("statusTraining.cards.runNow")}
               </button>
             )}
           </div>
@@ -191,8 +192,8 @@ export function StatusCardTile({
               <span className="min-w-0 flex-1 truncate" title={draftStream.statusLine ?? undefined}>
                 {draftStream.statusLine
                   ?? (card.pendingChangeCount > 0
-                    ? `Integrating ${card.pendingChangeCount} ${card.pendingChangeCount === 1 ? "change" : "changes"}…`
-                    : "Updating now…")}
+                    ? t("statusTraining.cards.integratingChanges", { count: card.pendingChangeCount })
+                    : t("statusTraining.cards.updatingNow"))}
               </span>
               {card.generatingIssueId ? (
                 <Link
@@ -201,7 +202,7 @@ export function StatusCardTile({
                   className="inline-flex shrink-0 items-center gap-1 font-medium underline-offset-2 hover:underline"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
-                  View update task
+                  {t("statusTraining.cards.viewUpdateTask")}
                 </Link>
               ) : null}
             </div>
@@ -216,9 +217,9 @@ export function StatusCardTile({
             className="flex w-full items-center justify-between gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 px-3 py-1.5 text-left text-xs text-foreground transition-colors hover:bg-amber-500/10 disabled:opacity-60"
           >
             <span>
-              {card.pendingChangeCount} {card.pendingChangeCount === 1 ? "change" : "changes"} since last update
+              {t("statusTraining.cards.changesSinceUpdate", { count: card.pendingChangeCount })}
             </span>
-            <span className="shrink-0 font-medium text-amber-700 dark:text-amber-400">Refresh</span>
+            <span className="shrink-0 font-medium text-amber-700 dark:text-amber-400">{t("statusTraining.cards.refresh")}</span>
           </button>
         ) : null}
 
@@ -226,14 +227,14 @@ export function StatusCardTile({
           <div className="flex items-center justify-between gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-1.5 text-xs">
             <span className="flex items-center gap-1.5 text-destructive">
               <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-              Last update failed
+              {t("statusTraining.cards.lastUpdateFailed")}
             </span>
             <span className="flex shrink-0 items-center gap-3">
               <button type="button" onClick={stopClick(onRefresh)} disabled={refreshPending} className="font-medium text-destructive hover:underline disabled:opacity-60">
-                Retry
+                {t("statusTraining.cards.retry")}
               </button>
               <button type="button" onClick={stopClick(onOpen)} className="text-muted-foreground hover:underline">
-                Details
+                {t("statusTraining.cards.details")}
               </button>
             </span>
           </div>
@@ -244,8 +245,8 @@ export function StatusCardTile({
             <PauseCircle className="h-3.5 w-3.5 shrink-0 text-orange-500" />
             <span>
               {lifecycle === "paused_budget"
-                ? "Daily token cap reached — auto-updates paused"
-                : "Outside active hours — auto-updates paused"}
+                ? t("statusTraining.cards.dailyCapReached")
+                : t("statusTraining.cards.outsideActiveHours")}
             </span>
           </div>
         ) : null}
@@ -254,7 +255,7 @@ export function StatusCardTile({
       {/* Summary body — kept visible for stale/error/updating/paused (never blank) */}
       <div className="min-h-0 flex-1 overflow-hidden px-4 pt-2">
         {lifecycle === "error" && card.summaryBody ? (
-          <p className="mb-1 text-(length:--text-micro) text-muted-foreground">Showing last good summary:</p>
+          <p className="mb-1 text-(length:--text-micro) text-muted-foreground">{t("statusTraining.cards.lastGoodSummary")}</p>
         ) : null}
         {hasSummary ? (
           <MarkdownBody className="text-xs leading-6 text-foreground [&_p]:my-0.5">{card.summaryBody!}</MarkdownBody>
@@ -265,7 +266,7 @@ export function StatusCardTile({
         ) : lifecycle === "updating" && draftStream.draft ? (
           <MarkdownBody className="text-xs leading-6 text-foreground [&_p]:my-0.5">{draftStream.draft}</MarkdownBody>
         ) : (
-          <p className="text-xs text-muted-foreground">No summary yet.</p>
+          <p className="text-xs text-muted-foreground">{t("statusTraining.cards.noSummary")}</p>
         )}
       </div>
 
@@ -273,7 +274,7 @@ export function StatusCardTile({
       <div className="mt-auto flex items-center justify-between gap-2 border-t border-border px-4 py-2.5">
         <span className="truncate text-(length:--text-micro) text-muted-foreground">
           {lifecycle === "compiling" ? (
-            "setting up · first summary pending"
+            t("statusTraining.cards.settingUpPending")
           ) : (
             <>
               {freshnessLabel} · {policyLabel}
@@ -292,7 +293,7 @@ export function StatusCardTile({
             className="h-7 w-7 shrink-0 text-muted-foreground"
             onClick={stopClick(onRefresh)}
             disabled={refreshPending}
-            aria-label="Refresh card"
+            aria-label={t("statusTraining.cards.refreshCard")}
           >
             <RefreshCw className={cn("h-3.5 w-3.5", refreshPending && "animate-spin")} />
           </Button>
