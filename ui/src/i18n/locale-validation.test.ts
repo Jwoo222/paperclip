@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { i18n, t } from ".";
 import { localeMessages, SOURCE_LOCALE } from "./locales";
@@ -5,12 +7,44 @@ import { validateLocaleMessages } from "./locale-validation";
 
 const en = localeMessages[SOURCE_LOCALE]!;
 
+function sourceFilesUnder(directory: string): string[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const fullPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) return sourceFilesUnder(fullPath);
+    if (!entry.isFile() || !/\.(?:ts|tsx)$/.test(entry.name) || /\.test\.(?:ts|tsx)$/.test(entry.name)) {
+      return [];
+    }
+    return [fullPath];
+  });
+}
+
+function hasMessageKey(messages: Record<string, unknown>, key: string) {
+  let cursor: unknown = messages;
+  for (const segment of key.split(".")) {
+    if (!cursor || typeof cursor !== "object" || Array.isArray(cursor) || !(segment in cursor)) {
+      return false;
+    }
+    cursor = (cursor as Record<string, unknown>)[segment];
+  }
+  return typeof cursor === "string";
+}
+
 describe("locale validation", () => {
   it("resolves English messages with key and default fallbacks", async () => {
     await i18n.changeLanguage("en");
     expect(t("app.noCompanies.title")).toBe("Create your first company");
     expect(t("app.missing", { defaultValue: "Fallback" })).toBe("Fallback");
     expect(t("app.missing")).toBe("app.missing");
+  });
+
+  it("uses Korean messages and falls back to English for partial locales", async () => {
+    await i18n.changeLanguage("ko");
+    expect(t("shell.dashboard")).toBe("대시보드");
+
+    await i18n.changeLanguage("de");
+    expect(t("shell.dashboard")).toBe("Dashboard");
+
+    await i18n.changeLanguage("en");
   });
 
   it("accepts registered locale files", () => {
@@ -21,6 +55,24 @@ describe("locale validation", () => {
         locale,
       ).toEqual([]);
     }
+  });
+
+  it("defines every literal UI translation key in the English source catalog", () => {
+    const sourceRoot = path.resolve(process.cwd(), "ui", "src");
+    const missing = new Set<string>();
+
+    for (const file of sourceFilesUnder(sourceRoot)) {
+      const source = readFileSync(file, "utf8");
+      if (!/from\s+["'][^"']*i18n["']/.test(source)) continue;
+      for (const match of source.matchAll(/\bt\(\s*["']([^"']+)["']/g)) {
+        const key = match[1]!;
+        if (!hasMessageKey(en, key)) {
+          missing.add(`${path.relative(sourceRoot, file)}: ${key}`);
+        }
+      }
+    }
+
+    expect([...missing].sort()).toEqual([]);
   });
 
   it("allows missing localized keys for English fallback and rejects extra nested keys", () => {
