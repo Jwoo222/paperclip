@@ -1,0 +1,20 @@
+{
+  "issueChatResidual": {
+    "usingTool": "Using {{tool}}",
+    "noOutputStillRunning": "no output for {{elapsed}} - still running",
+    "elapsedAgo": "{{elapsed}} ago",
+    "toolLabel": "Tool: {{tool}}",
+    "argsLabel": "Args",
+    "resultLabel": "Result",
+    "inputLabel": "Input",
+    "followUp": "Follow-up",
+    "viewRun": "View run",
+    "running": "Running",
+    "staleDispositionWarning": "Stale disposition warning",
+    "status": "Status",
+    "assignee": "Assignee",
+    "workspace": "Workspace",
+    "run": "run",
+    "deletedThisComment": "deleted this comment"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "issueChatResidual": {
+    "usingTool": "{{tool}} 사용 중",
+    "noOutputStillRunning": "{{elapsed}} 동안 출력이 없습니다. 아직 실행 중입니다.",
+    "elapsedAgo": "{{elapsed}} 전",
+    "toolLabel": "도구: {{tool}}",
+    "argsLabel": "인수",
+    "resultLabel": "결과",
+    "inputLabel": "입력",
+    "followUp": "후속 작업",
+    "viewRun": "실행 보기",
+    "running": "실행 중",
+    "staleDispositionWarning": "오래된 처리 상태 경고",
+    "status": "상태",
+    "assignee": "담당자",
+    "workspace": "작업공간",
+    "run": "실행",
+    "deletedThisComment": "이 댓글을 삭제했습니다"
+  }
+}
