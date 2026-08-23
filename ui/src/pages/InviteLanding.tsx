@@ -14,6 +14,7 @@ import { getAdapterLabel } from "../adapters/adapter-display-registry";
 import { clearPendingInviteToken, rememberPendingInviteToken } from "../lib/invite-memory";
 import { queryKeys } from "../lib/queryKeys";
 import { formatDate } from "../lib/utils";
+import { useTranslation } from "@/i18n";
 
 type AuthMode = "sign_in" | "sign_up";
 type AuthFeedback = { tone: "error" | "info"; message: string };
@@ -160,6 +161,7 @@ function AwaitingJoinApprovalPanel({
   claimApiKeyPath = null,
   onboardingTextUrl = null,
 }: AwaitingJoinApprovalPanelProps) {
+  const { t } = useTranslation();
   const approverLabel = invitedByUserName ?? "A company admin";
 
   return (
@@ -179,11 +181,11 @@ function AwaitingJoinApprovalPanel({
             Your request is still awaiting approval. {approverLabel} must approve your request to join.
           </p>
           <div className="border border-zinc-800 p-3">
-            <p className="text-xs text-zinc-500 mb-1">Approval page</p>
-            <p className="text-sm text-zinc-200">Company Settings → Members</p>
+            <p className="text-xs text-zinc-500 mb-1">{t("settingsSecurity.approvalPage", { defaultValue: "Approval page" })}</p>
+            <p className="text-sm text-zinc-200">{t("settingsSecurity.companySettingsMembers", { defaultValue: "Company Settings → Members" })}</p>
           </div>
           <p className="text-sm text-zinc-400">
-            Ask them to visit <span className="text-zinc-200">Company Settings → Members</span> to approve your request.
+            {t("settingsSecurity.askVisitMembers", { defaultValue: "Ask them to visit" })} <span className="text-zinc-200">{t("settingsSecurity.companySettingsMembers", { defaultValue: "Company Settings → Members" })}</span> {t("settingsSecurity.toApproveRequest", { defaultValue: "to approve your request." })}
           </p>
           <p className="text-xs text-zinc-500">
             Refresh this page after you've been approved — you'll be redirected automatically.
@@ -191,7 +193,7 @@ function AwaitingJoinApprovalPanel({
         </div>
         {claimSecret && claimApiKeyPath ? (
           <div className="mt-4 space-y-1 border border-zinc-800 p-3 text-xs text-zinc-400">
-            <div className="text-zinc-200">Claim secret</div>
+            <div className="text-zinc-200">{t("settingsSecurity.claimSecret", { defaultValue: "Claim secret" })}</div>
             <div className="font-mono break-all">{claimSecret}</div>
             <div className="font-mono break-all">POST {claimApiKeyPath}</div>
           </div>
@@ -207,6 +209,7 @@ function AwaitingJoinApprovalPanel({
 }
 
 export function InviteLandingPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { setSelectedCompanyId } = useCompany();
@@ -411,22 +414,22 @@ export function InviteLandingPage() {
   }, [invite, isCurrentMember, sessionQuery.data, showsAgentForm]);
 
   if (!token) {
-    return <div className="mx-auto max-w-xl py-10 text-sm text-destructive">Invalid invite token.</div>;
+    return <div className="mx-auto max-w-xl py-10 text-sm text-destructive">{t("settingsSecurity.invalidInviteToken", { defaultValue: "Invalid invite token." })}</div>;
   }
 
   if (inviteQuery.isLoading || healthQuery.isLoading || sessionQuery.isLoading) {
-    return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Loading invite...</div>;
+    return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">{t("settingsSecurity.loadingInvite", { defaultValue: "Loading invite..." })}</div>;
   }
 
   if (isCheckingExistingMembership) {
-    return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Checking your access...</div>;
+    return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">{t("settingsSecurity.checkingAccess", { defaultValue: "Checking your access..." })}</div>;
   }
 
   if (inviteQuery.error || !invite) {
     return (
       <div className="mx-auto max-w-xl py-10">
         <div className="border border-border bg-card p-6" data-testid="invite-error">
-          <h1 className="text-lg font-semibold">Invite not available</h1>
+          <h1 className="text-lg font-semibold">{t("settingsSecurity.inviteNotAvailable", { defaultValue: "Invite not available" })}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             This invite may be expired, revoked, or already used.
           </p>
@@ -440,7 +443,7 @@ export function InviteLandingPage() {
     inviteJoinRequestType === "human" &&
     isCurrentMember
   ) {
-    return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Opening company...</div>;
+    return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">{t("settingsSecurity.openingCompany", { defaultValue: "Opening company..." })}</div>;
   }
 
   if (inviteJoinRequestStatus === "pending_approval" && !canCompleteAcceptedHumanInvite) {
@@ -458,7 +461,7 @@ export function InviteLandingPage() {
     return (
       <div className="mx-auto max-w-xl py-10">
         <div className="border border-border bg-card p-6" data-testid="invite-error">
-          <h1 className="text-lg font-semibold">Invite not available</h1>
+          <h1 className="text-lg font-semibold">{t("settingsSecurity.inviteNotAvailable", { defaultValue: "Invite not available" })}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {inviteJoinRequestStatus === "rejected"
               ? "This join request was not approved."
@@ -473,10 +476,10 @@ export function InviteLandingPage() {
     return (
       <div className="min-h-screen bg-zinc-950 px-6 py-12 text-zinc-100">
         <div className="mx-auto max-w-md border border-zinc-800 bg-zinc-950 p-6">
-          <h1 className="text-lg font-semibold">Bootstrap complete</h1>
+          <h1 className="text-lg font-semibold">{t("settingsSecurity.bootstrapComplete", { defaultValue: "Bootstrap complete" })}</h1>
           <div className="mt-4">
             <Button asChild className="rounded-none">
-              <Link to="/">Open board</Link>
+              <Link to="/">{t("settingsSecurity.openBoard", { defaultValue: "Open board" })}</Link>
             </Button>
           </div>
         </div>
@@ -506,11 +509,11 @@ export function InviteLandingPage() {
                 companyBrandColor={companyBrandColor}
                 className="h-12 w-12 border border-zinc-800 rounded-none"
               />
-              <h1 className="text-lg font-semibold">You joined the company</h1>
+              <h1 className="text-lg font-semibold">{t("settingsSecurity.joinedCompany", { defaultValue: "You joined the company" })}</h1>
             </div>
             <div className="mt-4">
               <Button asChild className="w-full rounded-none">
-                <Link to="/">Open board</Link>
+                <Link to="/">{t("settingsSecurity.openBoard", { defaultValue: "Open board" })}</Link>
               </Button>
             </div>
           </div>
@@ -560,28 +563,28 @@ export function InviteLandingPage() {
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="border border-zinc-800 p-3">
-                <div className="text-xs uppercase tracking-(--tracking-caps) text-zinc-500">Company</div>
+                <div className="text-xs uppercase tracking-(--tracking-caps) text-zinc-500">{t("settingsSecurity.company", { defaultValue: "Company" })}</div>
                 <div className="mt-1 text-sm text-zinc-100">{companyDisplayName}</div>
               </div>
               <div className="border border-zinc-800 p-3">
-                <div className="text-xs uppercase tracking-(--tracking-caps) text-zinc-500">Invited by</div>
+                <div className="text-xs uppercase tracking-(--tracking-caps) text-zinc-500">{t("settingsSecurity.invitedBy", { defaultValue: "Invited by" })}</div>
                 <div className="mt-1 text-sm text-zinc-100">{invitedByUserName ?? "Paperclip board"}</div>
               </div>
               <div className="border border-zinc-800 p-3">
-                <div className="text-xs uppercase tracking-(--tracking-caps) text-zinc-500">Requested access</div>
+                <div className="text-xs uppercase tracking-(--tracking-caps) text-zinc-500">{t("settingsSecurity.requestedAccess", { defaultValue: "Requested access" })}</div>
                 <div className="mt-1 text-sm text-zinc-100">
                   {showsAgentForm ? "Agent join request" : requestedHumanRole ?? "Company access"}
                 </div>
               </div>
               <div className="border border-zinc-800 p-3">
-                <div className="text-xs uppercase tracking-(--tracking-caps) text-zinc-500">Invite expires</div>
+                <div className="text-xs uppercase tracking-(--tracking-caps) text-zinc-500">{t("settingsSecurity.inviteExpires", { defaultValue: "Invite expires" })}</div>
                 <div className="mt-1 text-sm text-zinc-100">{formatDate(invite.expiresAt)}</div>
               </div>
             </div>
 
             {inviteMessage ? (
               <div className="border border-amber-500/40 bg-amber-500/10 p-4">
-                <div className="text-xs uppercase tracking-(--tracking-caps) text-amber-200/80">Message from inviter</div>
+                <div className="text-xs uppercase tracking-(--tracking-caps) text-amber-200/80">{t("settingsSecurity.messageFromInviter", { defaultValue: "Message from inviter" })}</div>
                 <p className="mt-2 text-sm leading-6 text-amber-50">{inviteMessage}</p>
               </div>
             ) : null}
@@ -597,13 +600,13 @@ export function InviteLandingPage() {
             {showsAgentForm ? (
               <div className="space-y-4">
                 <div>
-                  <h2 className="text-lg font-semibold">Submit agent details</h2>
+                  <h2 className="text-lg font-semibold">{t("settingsSecurity.submitAgentDetails", { defaultValue: "Submit agent details" })}</h2>
                   <p className="mt-1 text-sm text-zinc-400">
                     This invite will create an approval request for a new agent in {companyDisplayName}.
                   </p>
                 </div>
                 <label className="block text-sm">
-                  <span className="mb-1 block text-zinc-400">Agent name</span>
+                  <span className="mb-1 block text-zinc-400">{t("settingsSecurity.agentName", { defaultValue: "Agent name" })}</span>
                   <input
                     className={fieldClassName}
                     value={agentName}
@@ -611,7 +614,7 @@ export function InviteLandingPage() {
                   />
                 </label>
                 <label className="block text-sm">
-                  <span className="mb-1 block text-zinc-400">Adapter type</span>
+                  <span className="mb-1 block text-zinc-400">{t("settingsSecurity.adapterType", { defaultValue: "Adapter type" })}</span>
                   <select
                     className={fieldClassName}
                     value={adapterType}
@@ -625,7 +628,7 @@ export function InviteLandingPage() {
                   </select>
                 </label>
                 <label className="block text-sm">
-                  <span className="mb-1 block text-zinc-400">Capabilities</span>
+                  <span className="mb-1 block text-zinc-400">{t("settingsSecurity.capabilities", { defaultValue: "Capabilities" })}</span>
                   <textarea
                     className={fieldClassName}
                     rows={4}
@@ -703,7 +706,7 @@ export function InviteLandingPage() {
                 >
                   {authMode === "sign_up" ? (
                     <label className="block text-sm" htmlFor="invite-name">
-                      <span className="mb-1 block text-zinc-400">Name</span>
+                      <span className="mb-1 block text-zinc-400">{t("settingsSecurity.name", { defaultValue: "Name" })}</span>
                       <input
                         id="invite-name"
                         name="name"
@@ -723,7 +726,7 @@ export function InviteLandingPage() {
                     </label>
                   ) : null}
                   <label className="block text-sm" htmlFor="invite-email">
-                    <span className="mb-1 block text-zinc-400">Email</span>
+                    <span className="mb-1 block text-zinc-400">{t("settingsSecurity.email", { defaultValue: "Email" })}</span>
                     <input
                       id="invite-email"
                       name="email"
@@ -743,7 +746,7 @@ export function InviteLandingPage() {
                     />
                   </label>
                   <label className="block text-sm" htmlFor="invite-password">
-                    <span className="mb-1 block text-zinc-400">Password</span>
+                    <span className="mb-1 block text-zinc-400">{t("settingsSecurity.password", { defaultValue: "Password" })}</span>
                     <input
                       id="invite-password"
                       name="password"

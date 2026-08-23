@@ -3,6 +3,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PopoverTitle, PopoverDescription } from "@/components/ui/popover";
+import { useTranslation } from "@/i18n";
 
 const SECRET_NAME_RE = /^[a-z][a-z0-9_]*$/;
 
@@ -35,6 +36,7 @@ export function SecretPopoverForm({
   onCancel,
   onSubmit,
 }: SecretPopoverFormProps) {
+  const { t } = useTranslation();
   const [name, setName] = useState(initialName);
   const [value, setValue] = useState(initialValue);
   const [reveal, setReveal] = useState(false);
@@ -83,7 +85,7 @@ export function SecretPopoverForm({
       </div>
 
       <label className="block space-y-1">
-        <span className="text-(length:--text-micro) font-medium text-muted-foreground">Name</span>
+        <span className="text-(length:--text-micro) font-medium text-muted-foreground">{t("settingsSecurity.name", { defaultValue: "Name" })}</span>
         <input
           className={cn(fieldClass, nameError && "border-destructive focus-visible:ring-destructive/40")}
           value={name}
@@ -105,7 +107,7 @@ export function SecretPopoverForm({
       </label>
 
       <label className="block space-y-1">
-        <span className="text-(length:--text-micro) font-medium text-muted-foreground">Value</span>
+        <span className="text-(length:--text-micro) font-medium text-muted-foreground">{t("settingsSecurity.value", { defaultValue: "Value" })}</span>
         <div className="relative">
           <input
             className={cn(fieldClass, "pr-8", valueError && "border-destructive focus-visible:ring-destructive/40")}

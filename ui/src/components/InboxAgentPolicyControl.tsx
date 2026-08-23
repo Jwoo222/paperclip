@@ -10,24 +10,7 @@ import { AgentIcon } from "./AgentIconPicker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { RadioCardGroup, type RadioCardOption } from "@/components/ui/radio-card";
-
-const MODE_OPTIONS: RadioCardOption[] = [
-  {
-    value: "open",
-    title: "Any of my agents",
-    description: "Let any agent you manage archive tasks out of your inbox.",
-  },
-  {
-    value: "allowlist",
-    title: "Only chosen agents",
-    description: "Restrict inbox tidying to the agents you pick below.",
-  },
-  {
-    value: "disabled",
-    title: "Off",
-    description: "Agents can never archive tasks from your inbox.",
-  },
-];
+import { useTranslation } from "@/i18n";
 
 function policyKey(mode: InboxAgentPolicyMode, allowedAgentIds: string[]): string {
   return `${mode}:${[...allowedAgentIds].sort().join(",")}`;
@@ -46,6 +29,7 @@ interface Draft {
  * "Archived by …" attribution live elsewhere (inbox rows / properties pane).
  */
 export function InboxAgentPolicyControl({ companyId }: { companyId: string | null | undefined }) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<Draft | null>(null);
   const lastServerKeyRef = useRef<string | null>(null);
@@ -66,6 +50,11 @@ export function InboxAgentPolicyControl({ companyId }: { companyId: string | nul
     () => (agentsQuery.data ?? []).filter(isAgentTaskTarget),
     [agentsQuery.data],
   );
+  const modeOptions: RadioCardOption[] = [
+    { value: "open", title: t("settingsSecurity.anyAgents", { defaultValue: "Any of my agents" }), description: t("settingsSecurity.anyAgentsDescription", { defaultValue: "Let any agent you manage archive tasks out of your inbox." }) },
+    { value: "allowlist", title: t("settingsSecurity.onlyChosenAgents", { defaultValue: "Only chosen agents" }), description: t("settingsSecurity.onlyChosenAgentsDescription", { defaultValue: "Restrict inbox tidying to the agents you pick below." }) },
+    { value: "disabled", title: t("settingsSecurity.off", { defaultValue: "Off" }), description: t("settingsSecurity.inboxPolicyOffDescription", { defaultValue: "Agents can never archive tasks from your inbox." }) },
+  ];
 
   // Adopt server state on first load, or on refetch when the user has not
   // diverged from the previously-synced snapshot (so a background refetch never
@@ -100,13 +89,13 @@ export function InboxAgentPolicyControl({ companyId }: { companyId: string | nul
   if (policyQuery.error) {
     return (
       <div className="text-sm text-destructive">
-        {policyQuery.error instanceof Error ? policyQuery.error.message : "Failed to load inbox agent policy."}
+          {policyQuery.error instanceof Error ? policyQuery.error.message : t("settingsSecurity.failedLoadInboxPolicy", { defaultValue: "Failed to load inbox agent policy." })}
       </div>
     );
   }
 
   if (policyQuery.isLoading || !draft) {
-    return <div className="text-sm text-muted-foreground">Loading inbox agent policy…</div>;
+    return <div className="text-sm text-muted-foreground">{t("settingsSecurity.loadingInboxPolicy", { defaultValue: "Loading inbox agent policy…" })}</div>;
   }
 
   const toggleAgent = (agentId: string, checked: boolean) => {
@@ -120,31 +109,30 @@ export function InboxAgentPolicyControl({ companyId }: { companyId: string | nul
   };
 
   return (
-    <section className="space-y-4" aria-label="Let agents tidy my inbox">
+    <section className="space-y-4" aria-label={t("settingsSecurity.tidyInbox", { defaultValue: "Let agents tidy my inbox" })}>
       <div className="space-y-1">
         <div className="flex items-center gap-2">
           <Inbox className="h-5 w-5 text-muted-foreground" />
-          <h2 className="text-base font-semibold">Let agents tidy my inbox</h2>
+          <h2 className="text-base font-semibold">{t("settingsSecurity.tidyInbox", { defaultValue: "Let agents tidy my inbox" })}</h2>
         </div>
         <p className="max-w-2xl text-sm text-muted-foreground">
-          Choose whether the agents you manage may archive tasks out of your inbox on your behalf. You can
-          undo any archive, and every agent archive is attributed in the task&apos;s properties.
+          {t("settingsSecurity.tidyInboxDescription", { defaultValue: "Choose whether the agents you manage may archive tasks out of your inbox on your behalf. You can undo any archive, and every agent archive is attributed in the task&apos;s properties." })}
         </p>
       </div>
 
       <RadioCardGroup
-        ariaLabel="Inbox agent archiving policy"
+        ariaLabel={t("settingsSecurity.inboxPolicy", { defaultValue: "Inbox agent archiving policy" })}
         value={draft.mode}
         onValueChange={(value) => setDraft((current) => (current ? { ...current, mode: value as InboxAgentPolicyMode } : current))}
-        options={MODE_OPTIONS}
+        options={modeOptions}
         className="max-w-2xl"
       />
 
       {draft.mode === "allowlist" ? (
         <div className="max-w-2xl space-y-2 rounded-md border border-border p-3">
-          <div className="text-sm font-medium">Agents allowed to tidy my inbox</div>
+          <div className="text-sm font-medium">{t("settingsSecurity.allowedInboxAgents", { defaultValue: "Agents allowed to tidy my inbox" })}</div>
           {selectableAgents.length === 0 ? (
-            <p className="text-xs text-muted-foreground">You don&apos;t manage any agents yet.</p>
+            <p className="text-xs text-muted-foreground">{t("settingsSecurity.noManagedAgents", { defaultValue: "You don&apos;t manage any agents yet." })}</p>
           ) : (
             <ul className="space-y-1.5">
               {selectableAgents.map((agent) => {
@@ -171,13 +159,13 @@ export function InboxAgentPolicyControl({ companyId }: { companyId: string | nul
 
       {updateMutation.error ? (
         <div className="max-w-2xl rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-          {updateMutation.error instanceof Error ? updateMutation.error.message : "Failed to save inbox agent policy."}
+          {updateMutation.error instanceof Error ? updateMutation.error.message : t("settingsSecurity.failedSaveInboxPolicy", { defaultValue: "Failed to save inbox agent policy." })}
         </div>
       ) : null}
 
       <div className="flex max-w-2xl items-center justify-end gap-3">
         {updateMutation.isSuccess && !isDirty ? (
-          <span className="text-xs text-muted-foreground" role="status">Saved</span>
+          <span className="text-xs text-muted-foreground" role="status">{t("settingsSecurity.saved", { defaultValue: "Saved" })}</span>
         ) : null}
         <Button
           type="button"
@@ -185,7 +173,7 @@ export function InboxAgentPolicyControl({ companyId }: { companyId: string | nul
           onClick={() => draft && updateMutation.mutate(draft)}
         >
           {updateMutation.isPending ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}
-          {updateMutation.isPending ? "Saving…" : "Save"}
+          {updateMutation.isPending ? t("settingsSecurity.savingEllipsis", { defaultValue: "Saving…" }) : t("settingsSecurity.save", { defaultValue: "Save" })}
         </Button>
       </div>
     </section>

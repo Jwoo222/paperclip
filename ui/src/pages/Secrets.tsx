@@ -105,6 +105,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "../lib/utils";
+import { useTranslation } from "@/i18n";
 import { copyTextToClipboard } from "../lib/clipboard";
 import { PageTabBar } from "../components/PageTabBar";
 import { AgentSelect } from "../components/AgentMultiSelect";
@@ -647,6 +648,7 @@ export function getAwsManagedPathPreview(input: {
 }
 
 export function Secrets() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
@@ -1787,7 +1789,7 @@ export function Secrets() {
 
   if (!selectedCompanyId) {
     return (
-      <div className="p-6 text-sm text-muted-foreground">Select a company to manage secrets.</div>
+      <div className="p-6 text-sm text-muted-foreground">{t("settingsSecurity.selectCompanySecrets", { defaultValue: "Select a company to manage secrets." })}</div>
     );
   }
 
@@ -1796,7 +1798,7 @@ export function Secrets() {
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div className="flex items-center gap-2">
         <KeyRound className="h-5 w-5 text-muted-foreground" />
-        <h1 className="text-lg font-semibold">Secrets</h1>
+        <h1 className="text-lg font-semibold">{t("settingsSecurity.secrets", { defaultValue: "Secrets" })}</h1>
       </div>
 
       <Tabs
@@ -1839,9 +1841,9 @@ export function Secrets() {
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search by name, key, ref"
+                placeholder={t("settingsSecurity.searchSecrets", { defaultValue: "Search by name, key, ref" })}
                 className="pl-7 text-xs sm:text-sm"
-                aria-label="Search secrets"
+                aria-label={t("settingsSecurity.searchSecrets", { defaultValue: "Search secrets" })}
                 data-page-search-target="true"
               />
             </div>
@@ -1973,7 +1975,7 @@ export function Secrets() {
                   </div>
                 ) : searching ? (
                   <div className="mb-3">
-                    <div className="text-sm font-medium text-foreground">Search results</div>
+                    <div className="text-sm font-medium text-foreground">{t("settingsSecurity.searchResults", { defaultValue: "Search results" })}</div>
                     <div className="text-xs text-muted-foreground">
                       {filteredRows.length} {filteredRows.length === 1 ? "match" : "matches"} across all
                       folders{folderPath ? ` · searching everywhere, not just ${folderPath}` : ""}
@@ -2013,10 +2015,10 @@ export function Secrets() {
                     role="row"
                     className="grid grid-cols-(--gtc-54) items-center gap-3 bg-muted/40 px-3 py-2 text-xs uppercase tracking-wide text-muted-foreground"
                   >
-                    <div role="columnheader" className="font-medium">Secret</div>
-                    <div role="columnheader" className="font-medium">Status</div>
-                    <div role="columnheader" className="font-medium">Version / coverage</div>
-                    <div role="columnheader" className="font-medium">Updated</div>
+                    <div role="columnheader" className="font-medium">{t("settingsSecurity.secret", { defaultValue: "Secret" })}</div>
+                    <div role="columnheader" className="font-medium">{t("settingsSecurity.status", { defaultValue: "Status" })}</div>
+                    <div role="columnheader" className="font-medium">{t("settingsSecurity.versionCoverage", { defaultValue: "Version / coverage" })}</div>
+                    <div role="columnheader" className="font-medium">{t("settingsSecurity.updated", { defaultValue: "Updated" })}</div>
                     <div role="columnheader" className="sr-only">Actions</div>
                   </div>
                   <div role="rowgroup">
@@ -2508,7 +2510,7 @@ export function Secrets() {
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Secret references</DialogTitle>
+            <DialogTitle>{t("settingsSecurity.secretReferences", { defaultValue: "Secret references" })}</DialogTitle>
             <DialogDescription>
               {usageDialogSecret
                 ? `${usageDialogSecret.name} is referenced by ${usageDialogSecret.referenceCount ?? 0} ${

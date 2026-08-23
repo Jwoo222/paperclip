@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type { CompanySecret, UserSecretDefinition } from "@paperclipai/shared";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -87,6 +88,7 @@ export function EnvironmentVariableRow({
   focusRequest,
   onFocusConsumed,
 }: EnvironmentVariableRowProps) {
+  const { t } = useTranslation();
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const valueInputRef = useRef<HTMLInputElement | null>(null);
   const valueCellRef = useRef<HTMLDivElement | null>(null);
@@ -280,15 +282,15 @@ export function EnvironmentVariableRow({
                 </Tooltip>
                 <DropdownMenuContent align="start" className="w-56">
                   <DropdownMenuItem className="flex-col items-start gap-0.5" onSelect={() => switchSource("text")}>
-                    <span className="text-sm">Text value</span>
-                    <span className="text-(length:--text-micro) text-muted-foreground">Store the value inline as plain text.</span>
+                    <span className="text-sm">{t("settingsSecurity.textValue", { defaultValue: "Text value" })}</span>
+                    <span className="text-(length:--text-micro) text-muted-foreground">{t("settingsSecurity.textValueDescription", { defaultValue: "Store the value inline as plain text." })}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="flex-col items-start gap-0.5" onSelect={() => switchSource("secret")}>
-                    <span className="text-sm">Company secret</span>
-                    <span className="text-(length:--text-micro) text-muted-foreground">Resolve a stored company secret at run start.</span>
+                    <span className="text-sm">{t("settingsSecurity.companySecret", { defaultValue: "Company secret" })}</span>
+                    <span className="text-(length:--text-micro) text-muted-foreground">{t("settingsSecurity.companySecretDescription", { defaultValue: "Resolve a stored company secret at run start." })}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="flex-col items-start gap-0.5" onSelect={() => switchSource("user_secret")}>
-                    <span className="text-sm">User secret</span>
+                    <span className="text-sm">{t("settingsSecurity.userSecret", { defaultValue: "User secret" })}</span>
                     <span className="text-(length:--text-micro) text-muted-foreground">
                       Resolve the responsible user&apos;s own value at run start.
                     </span>
@@ -464,8 +466,8 @@ export function EnvironmentVariableRow({
                     onChange={(event) => onPatch({ required: event.target.value === "required" })}
                     className="border-l border-border bg-transparent px-2 py-1.5 text-xs font-medium text-muted-foreground outline-none disabled:pointer-events-none"
                   >
-                    <option value="required">Required</option>
-                    <option value="optional">Optional</option>
+                    <option value="required">{t("settingsSecurity.required", { defaultValue: "Required" })}</option>
+                    <option value="optional">{t("settingsSecurity.optional", { defaultValue: "Optional" })}</option>
                   </select>
                 </div>
               )}

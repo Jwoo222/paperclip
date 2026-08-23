@@ -9,6 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { normalizeSearchText } from "@/lib/searchable-select";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n";
 
 interface SecretOption extends SearchableSelectOption {
   kind?: "secret" | "folder" | "back";
@@ -154,6 +155,7 @@ export function SecretPicker({
   triggerClassName,
   disablePortal,
 }: SecretPickerProps) {
+  const { t } = useTranslation();
   const [currentPathKey, setCurrentPathKey] = useState("");
   const boundSecret = useMemo(
     () => secrets.find((secret) => secret.id === secretId) ?? null,
@@ -253,7 +255,7 @@ export function SecretPicker({
       deriveGroups={deriveGroups}
       disabled={disabled}
       disablePortal={disablePortal}
-      placeholder="Select secret…"
+      placeholder={t("settingsSecurity.selectSecret", { defaultValue: "Select secret…" })}
       searchPlaceholder="Search secrets…"
       emptyMessage="No matching secrets"
       triggerClassName={cn(
@@ -264,7 +266,7 @@ export function SecretPicker({
       )}
       renderValue={(option) => {
         if (!option) {
-          return <span className="text-muted-foreground">Select secret…</span>;
+          return <span className="text-muted-foreground">{t("settingsSecurity.selectSecret", { defaultValue: "Select secret…" })}</span>;
         }
         if (option.missing) {
           return (
@@ -326,7 +328,7 @@ export function SecretPicker({
                 Create secret <span className="font-mono">&ldquo;{query.trim()}&rdquo;</span>…
               </span>
             ) : (
-              <span>Create new secret…</span>
+              <span>{t("settingsSecurity.createNewSecret", { defaultValue: "Create new secret…" })}</span>
             )}
           </span>
         ),

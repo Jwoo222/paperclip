@@ -41,6 +41,7 @@ import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { useCompany } from "@/context/CompanyContext";
 import { useToast } from "@/context/ToastContext";
 import { queryKeys } from "@/lib/queryKeys";
+import { useTranslation } from "@/i18n";
 import { Link, useNavigate, useParams } from "@/lib/router";
 import { buildSameOriginWebSocketUrl } from "@/lib/websocket-url";
 import {
@@ -1143,6 +1144,7 @@ function EnvironmentImageTemplatePanel({
 }
 
 export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps) {
+  const { t } = useTranslation();
   const { environmentId: routeEnvironmentId } = useParams<{ environmentId?: string }>();
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompany();
@@ -1594,14 +1596,14 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
   );
 
   if (!selectedCompanyId) {
-    return <div className="text-sm text-muted-foreground">Select a company context to manage environment secrets and bindings.</div>;
+    return <div className="text-sm text-muted-foreground">{t("settingsSecurity.selectCompanyEnvironment", { defaultValue: "Select a company context to manage environment secrets and bindings." })}</div>;
   }
 
   if (!environmentsEnabled) {
     return (
       <div className="max-w-3xl space-y-4">
         <div className="rounded-md border border-border px-4 py-4 text-sm text-muted-foreground">
-          Enable Environments in instance experimental settings to manage shared execution targets.
+          {t("settingsSecurity.enableEnvironmentsHint", { defaultValue: "Enable Environments in instance experimental settings to manage shared execution targets." })}
         </div>
       </div>
     );
@@ -1614,7 +1616,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
         <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-1">
-              <div className="text-sm font-medium">Default</div>
+              <div className="text-sm font-medium">{t("settingsSecurity.default", { defaultValue: "Default" })}</div>
             </div>
             <div className="min-w-(--sz-18rem) flex-1">
               <select
@@ -1624,7 +1626,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
                   defaultEnvironmentMutation.mutate(event.target.value || null)}
                 disabled={defaultEnvironmentMutation.isPending}
               >
-                <option value="">Local</option>
+                <option value="">{t("settingsSecurity.local", { defaultValue: "Local" })}</option>
                 {nonLocalEnvironments.map((environment) => (
                   <option key={environment.id} value={environment.id}>
                     {environment.name} · {environment.driver}
@@ -1638,7 +1640,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
         <div className="space-y-3">
           <div className="flex justify-end">
             <Button size="sm" asChild>
-              <Link to={`${ENVIRONMENTS_PATH}/new`}>Add environment</Link>
+              <Link to={`${ENVIRONMENTS_PATH}/new`}>{t("settingsSecurity.addEnvironment", { defaultValue: "Add environment" })}</Link>
             </Button>
           </div>
           {savedEnvironments.map((environment) => {
@@ -1675,7 +1677,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
                         })()}
                       </div>
                     ) : (
-                      <div className="text-xs text-muted-foreground">Runs on this Paperclip host.</div>
+                      <div className="text-xs text-muted-foreground">{t("settingsSecurity.runsOnHost", { defaultValue: "Runs on this Paperclip host." })}</div>
                     )}
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -1694,7 +1696,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
                       </Button>
                     ) : null}
                     <Button size="sm" variant="ghost" asChild>
-                      <Link to={environmentEditPath(environment.id)}>Edit</Link>
+                      <Link to={environmentEditPath(environment.id)}>{t("settingsSecurity.edit", { defaultValue: "Edit" })}</Link>
                     </Button>
                   </div>
                 </div>
@@ -1727,10 +1729,10 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
 
       {isEnvironmentFormPage && mode === "edit" && environments !== undefined && !editingEnvironment ? (
         <div className="space-y-3 rounded-md border border-border px-4 py-4 text-sm">
-          <div className="font-medium">Environment not found</div>
-          <div className="text-muted-foreground">The environment may have been removed or is not available in this company.</div>
+          <div className="font-medium">{t("settingsSecurity.environmentNotFound", { defaultValue: "Environment not found" })}</div>
+          <div className="text-muted-foreground">{t("settingsSecurity.environmentNotFoundHint", { defaultValue: "The environment may have been removed or is not available in this company." })}</div>
           <Button size="sm" variant="outline" asChild>
-            <Link to={ENVIRONMENTS_PATH}>Back to environments</Link>
+            <Link to={ENVIRONMENTS_PATH}>{t("settingsSecurity.backToEnvironments", { defaultValue: "Back to environments" })}</Link>
           </Button>
         </div>
       ) : null}
@@ -1755,7 +1757,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
 
           <div className="px-6 py-4">
             <div className="space-y-4">
-              <Field label="Name" hint="Operator-facing name for this execution target.">
+              <Field label={t("settingsSecurity.name", { defaultValue: "Name" })} hint={t("settingsSecurity.environmentNameHint", { defaultValue: "Operator-facing name for this execution target." })}>
                 <input
                   className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                   type="text"
@@ -1763,7 +1765,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
                   onChange={(e) => setEnvironmentForm((current) => ({ ...current, name: e.target.value }))}
                 />
               </Field>
-              <Field label="Description" hint="Optional note about what this machine is for.">
+              <Field label={t("settingsSecurity.description", { defaultValue: "Description" })} hint={t("settingsSecurity.environmentDescriptionHint", { defaultValue: "Optional note about what this machine is for." })}>
                 <input
                   className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                   type="text"
@@ -1771,7 +1773,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
                   onChange={(e) => setEnvironmentForm((current) => ({ ...current, description: e.target.value }))}
                 />
               </Field>
-              <Field label="Driver" hint="Sandbox stores plugin-backed provider config on the shared environment seam. SSH stores a remote machine target.">
+              <Field label={t("settingsSecurity.driver", { defaultValue: "Driver" })} hint={t("settingsSecurity.driverHint", { defaultValue: "Sandbox stores plugin-backed provider config on the shared environment seam. SSH stores a remote machine target." })}>
                 <select
                   className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                   value={environmentForm.driver}
@@ -1807,7 +1809,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
 
               {environmentForm.driver === "ssh" ? (
                 <div className="grid gap-3 md:grid-cols-2">
-                  <Field label="Host" hint="DNS name or IP address for the remote machine.">
+                  <Field label={t("settingsSecurity.host", { defaultValue: "Host" })} hint={t("settingsSecurity.hostHint", { defaultValue: "DNS name or IP address for the remote machine." })}>
                     <input
                       className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                       type="text"
@@ -1815,7 +1817,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
                       onChange={(e) => setEnvironmentForm((current) => ({ ...current, sshHost: e.target.value }))}
                     />
                   </Field>
-                  <Field label="Port" hint="Defaults to 22.">
+                  <Field label={t("settingsSecurity.port", { defaultValue: "Port" })} hint={t("settingsSecurity.portHint", { defaultValue: "Defaults to 22." })}>
                     <input
                       className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                       type="number"
@@ -1825,7 +1827,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
                       onChange={(e) => setEnvironmentForm((current) => ({ ...current, sshPort: e.target.value }))}
                     />
                   </Field>
-                  <Field label="Username" hint="SSH username.">
+                  <Field label={t("settingsSecurity.username", { defaultValue: "Username" })} hint={t("settingsSecurity.usernameHint", { defaultValue: "SSH username." })}>
                     <input
                       className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                       type="text"
@@ -1833,7 +1835,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
                       onChange={(e) => setEnvironmentForm((current) => ({ ...current, sshUsername: e.target.value }))}
                     />
                   </Field>
-                  <Field label="Remote workspace path" hint="Absolute path that Paperclip will verify during SSH connection tests.">
+                  <Field label={t("settingsSecurity.remoteWorkspacePath", { defaultValue: "Remote workspace path" })} hint={t("settingsSecurity.remoteWorkspacePathHint", { defaultValue: "Absolute path that Paperclip will verify during SSH connection tests." })}>
                     <input
                       className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                       type="text"
@@ -1843,7 +1845,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
                         setEnvironmentForm((current) => ({ ...current, sshRemoteWorkspacePath: e.target.value }))}
                     />
                   </Field>
-                  <Field label="Private key" hint="Optional PEM private key. Leave blank to rely on the server's SSH agent or default keychain.">
+                  <Field label={t("settingsSecurity.privateKey", { defaultValue: "Private key" })} hint={t("settingsSecurity.privateKeyHint", { defaultValue: "Optional PEM private key. Leave blank to rely on the server's SSH agent or default keychain." })}>
                     <div className="space-y-2">
                       <select
                         className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
@@ -1855,7 +1857,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
                             sshPrivateKey: e.target.value ? "" : current.sshPrivateKey,
                           }))}
                       >
-                        <option value="">No saved secret</option>
+                        <option value="">{t("settingsSecurity.noSavedSecret", { defaultValue: "No saved secret" })}</option>
                         {(secrets ?? []).map((secret) => (
                           <option key={secret.id} value={secret.id}>{secret.name}</option>
                         ))}
@@ -1868,7 +1870,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
                       />
                     </div>
                   </Field>
-                  <Field label="Known hosts" hint="Optional known_hosts block used when strict host key checking is enabled.">
+                  <Field label={t("settingsSecurity.knownHosts", { defaultValue: "Known hosts" })} hint={t("settingsSecurity.knownHostsHint", { defaultValue: "Optional known_hosts block used when strict host key checking is enabled." })}>
                     <textarea
                       className="h-32 w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-xs font-mono outline-none"
                       value={environmentForm.sshKnownHosts}
@@ -1877,7 +1879,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
                   </Field>
                   <div className="md:col-span-2">
                     <ToggleField
-                      label="Strict host key checking"
+                      label={t("settingsSecurity.strictHostKeyChecking", { defaultValue: "Strict host key checking" })}
                       hint="Keep this on unless you deliberately want probe-time host key acceptance disabled."
                       checked={environmentForm.sshStrictHostKeyChecking}
                       onChange={(checked) =>
@@ -1889,7 +1891,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
 
               {environmentForm.driver === "sandbox" ? (
                 <div className="space-y-3">
-                  <Field label="Provider" hint="Installed run-capable sandbox provider plugins appear here.">
+                  <Field label={t("settingsSecurity.provider", { defaultValue: "Provider" })} hint={t("settingsSecurity.providerHint", { defaultValue: "Installed run-capable sandbox provider plugins appear here." })}>
                     <select
                       className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                       value={environmentForm.sandboxProvider}
@@ -1934,7 +1936,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
                     </div>
                   )}
                   <ToggleField
-                    label="Stream run logs"
+                    label={t("settingsSecurity.streamRunLogs", { defaultValue: "Stream run logs" })}
                     hint="Stream the agent CLI's output live while sandbox runs execute (recommended). Turn off to deliver output only when the run finishes."
                     checked={environmentForm.sandboxConfig.streamRunLogs !== false}
                     onChange={(checked) =>
@@ -1951,7 +1953,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
               environmentForm.driver === "sandbox" &&
               selectedCompanyId ? (
                 <div className="space-y-2 rounded-md border border-border/60 bg-muted/20 px-3 py-3">
-                  <div className="text-sm font-medium">Custom image</div>
+                  <div className="text-sm font-medium">{t("settingsSecurity.customImage", { defaultValue: "Custom image" })}</div>
                   <div className="text-xs text-muted-foreground">
                     Start a setup sandbox, SSH in to customize the instance, then capture the
                     running machine as a reusable image for future runs.
@@ -1966,7 +1968,7 @@ export function CompanyEnvironments({ mode = "list" }: CompanyEnvironmentsProps)
               ) : null}
 
               <Field
-                label="Environment variables"
+                label={t("settingsSecurity.environmentVariables", { defaultValue: "Environment variables" })}
                 hint="Injected into runs that resolve through this environment. Use plain values or company secrets."
               >
                 <EnvironmentVariablesEditor

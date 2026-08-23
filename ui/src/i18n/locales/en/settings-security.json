@@ -1,0 +1,100 @@
+{
+  "settingsSecurity": {
+    "settings": "Settings",
+    "companySettings": "Company Settings",
+    "instanceSettings": "Instance settings",
+    "general": "General",
+    "export": "Export",
+    "import": "Import",
+    "members": "Members",
+    "invites": "Invites",
+    "secrets": "Secrets",
+    "profile": "Profile",
+    "environments": "Environments",
+    "access": "Access",
+    "heartbeats": "Heartbeats",
+    "experimental": "Experimental",
+    "plugins": "Plugins",
+    "adapters": "Adapters",
+    "loadingProfile": "Loading profile...",
+    "failedLoadProfile": "Failed to load profile.",
+    "failedUpdateProfile": "Failed to update profile.",
+    "selectCompanyBeforeAvatar": "Select a company before uploading a profile avatar.",
+    "failedUploadAvatar": "Failed to upload avatar.",
+    "failedRemoveAvatar": "Failed to remove avatar.",
+    "selectCompanyAvatarHint": "Select a company to upload an avatar into Paperclip storage.",
+    "profileDescription": "Control how your account appears in the sidebar and other board surfaces.",
+    "changePhoto": "Change photo",
+    "uploadPhoto": "Upload photo",
+    "remove": "Remove",
+    "avatarHint": "Click the avatar to upload a new image.",
+    "displayName": "Display name",
+    "displayNameHint": "Shown in the sidebar account footer and comment author surfaces.",
+    "email": "Email",
+    "emailHint": "Email is managed by your auth session and is read-only here.",
+    "saving": "Saving...",
+    "saveProfile": "Save profile",
+    "anyAgents": "Any of my agents",
+    "anyAgentsDescription": "Let any agent you manage archive tasks out of your inbox.",
+    "onlyChosenAgents": "Only chosen agents",
+    "onlyChosenAgentsDescription": "Restrict inbox tidying to the agents you pick below.",
+    "off": "Off",
+    "inboxPolicyOffDescription": "Agents can never archive tasks from your inbox.",
+    "failedLoadInboxPolicy": "Failed to load inbox agent policy.",
+    "loadingInboxPolicy": "Loading inbox agent policy…",
+    "tidyInbox": "Let agents tidy my inbox",
+    "tidyInboxDescription": "Choose whether the agents you manage may archive tasks out of your inbox on your behalf. You can undo any archive, and every agent archive is attributed in the task's properties.",
+    "inboxPolicy": "Inbox agent archiving policy",
+    "allowedInboxAgents": "Agents allowed to tidy my inbox",
+    "noManagedAgents": "You don't manage any agents yet.",
+    "failedSaveInboxPolicy": "Failed to save inbox agent policy.",
+    "saved": "Saved",
+    "savingEllipsis": "Saving…",
+    "save": "Save"
+    ,"companyName": "Company name"
+    ,"companyNameHint": "The display name for your company."
+    ,"description": "Description"
+    ,"companyDescriptionHint": "Optional description shown in the company profile."
+    ,"optionalCompanyDescription": "Optional company description"
+    ,"appearance": "Appearance"
+    ,"logo": "Logo"
+    ,"logoHint": "Upload a PNG, JPEG, WEBP, GIF, or SVG logo image."
+    ,"removing": "Removing..."
+    ,"removeLogo": "Remove logo"
+    ,"logoUploadFailed": "Logo upload failed"
+    ,"uploadingLogo": "Uploading logo..."
+    ,"brandColor": "Brand color"
+    ,"brandColorHint": "Sets the hue for the company icon. Leave empty for auto-generated color."
+    ,"auto": "Auto"
+    ,"clear": "Clear"
+    ,"attachmentLimit": "Attachment size limit"
+    ,"attachmentLimitHint": "Accepted range: 1-{{max}} MiB."
+    ,"saveChanges": "Save changes"
+    ,"failedSave": "Failed to save"
+    ,"hiring": "Hiring"
+    ,"requireBoardApproval": "Require board approval for new hires"
+    ,"requireBoardApprovalHint": "New agent hires stay pending until approved by board."
+    ,"companyAccessUpdated": "Company access updated"
+    ,"instanceRoleUpdated": "Instance role updated"
+    ,"loadingInstanceUsers": "Loading instance users…"
+    ,"instanceAdminRequired": "Instance admin access is required to manage users."
+    ,"failedLoadUsers": "Failed to load users."
+    ,"instanceAccess": "Instance Access"
+    ,"instanceAccessDescription": "Search users, manage instance-admin status, and control which companies they can access."
+    ,"searchUsers": "Search users"
+    ,"searchByNameOrEmail": "Search by name or email"
+    ,"activeCompanyMemberships": "{{count}} active company memberships"
+    ,"selectUserAccess": "Select a user to inspect instance access."
+    ,"loadingUserAccess": "Loading user access…"
+    ,"failedLoadUserAccess": "Failed to load user access."
+    ,"removeInstanceAdmin": "Remove instance admin"
+    ,"promoteInstanceAdmin": "Promote to instance admin"
+    ,"companyAccess": "Company access"
+    ,"companyAccessDescription": "Toggle company membership for this user. New access defaults to an active operator membership."
+    ,"currentMemberships": "Current memberships"
+    ,"selectCompanySecrets": "Select a company to manage secrets.", "searchSecrets": "Search by name, key, ref", "searchResults": "Search results", "secret": "Secret", "versionCoverage": "Version / coverage", "updated": "Updated", "secretReferences": "Secret references"
+    ,"createNewSecretTitle": "Create new secret", "pasteSecretValue": "Paste the secret value", "optionalSecretNotes": "Optional notes (no values)"
+    ,"textValue": "Text value", "textValueDescription": "Store the value inline as plain text.", "companySecret": "Company secret", "companySecretDescription": "Resolve a stored company secret at run start.", "userSecret": "User secret", "required": "Required", "optional": "Optional"
+    ,"action": "Action", "active": "Active", "adapterType": "Adapter type", "addEnvironment": "Add environment", "advancedPermissions": "Advanced Permissions", "advancedPermissionsUnavailable": "Advanced permissions unavailable", "advancedAccessDescription": "Advanced access, scoped assignment, and explicit grant controls are provided by installed company settings extensions.", "advancedPermissionsDescription": "Core Paperclip keeps enforcing company boundaries and any existing restrictive policy data, but editing advanced permissions requires an installed extension.", "agent": "Agent", "agentName": "Agent name", "agents": "Agents", "all": "All", "approvalPage": "Approval page", "approved": "Approved", "askVisitMembers": "Ask them to visit", "backToEnvironments": "Back to environments", "bootstrapComplete": "Bootstrap complete", "capabilities": "Capabilities", "checkingAccess": "Checking your access...", "checkingPermissionExtensions": "Checking for advanced permission extensions...", "chooseRole": "Choose a role", "claimSecret": "Claim secret", "company": "Company", "companyInvites": "Company Invites", "companyMembers": "Company Members", "companyRole": "Company role", "companySettingsMembers": "Company Settings → Members", "created": "Created", "customImage": "Custom image", "default": "Default", "driver": "Driver", "driverHint": "Sandbox stores plugin-backed provider config on the shared environment seam. SSH stores a remote machine target.", "edit": "Edit", "editMember": "Edit member", "enableEnvironmentsHint": "Enable Environments in instance experimental settings to manage shared execution targets.", "environmentDescriptionHint": "Optional note about what this machine is for.", "environmentNameHint": "Operator-facing name for this execution target.", "environmentNotFound": "Environment not found", "environmentNotFoundHint": "The environment may have been removed or is not available in this company.", "environmentVariables": "Environment variables", "for": "For", "host": "Host", "hostHint": "DNS name or IP address for the remote machine.", "human": "Human", "humans": "Humans", "inactive": "Inactive", "invalidInviteToken": "Invalid invite token.", "inviteContext": "Invite context", "inviteExpires": "Invite expires", "inviteHistory": "Invite history", "inviteHistoryAudit": "Invite history below keeps the audit trail.", "inviteNotAvailable": "Invite not available", "invitePerson": "Invite a person", "invitedBy": "Invited by", "joinRequest": "Join request", "joinRequestApproved": "Join request approved", "joinRequestQueue": "Join Request Queue", "joinRequestRejected": "Join request rejected", "joinedCompany": "You joined the company", "knownHosts": "Known hosts", "knownHostsHint": "Optional known_hosts block used when strict host key checking is enabled.", "latestInviteLink": "Latest invite link", "latestInviteUrl": "Latest invite URL", "leaveUnassigned": "Leave unassigned", "loadingCompanyAccess": "Loading company access…", "loadingInvite": "Loading invite...", "loadingInvites": "Loading invites…", "loadingJoinRequests": "Loading join requests…", "local": "Local", "membershipStatus": "Membership status", "messageFromInviter": "Message from inviter", "name": "Name", "noSavedSecret": "No saved secret", "noUserMemberships": "No user memberships found for this company yet.", "openBoard": "Open board", "openInvites": "Open Invites", "openMembers": "Open Members", "openingCompany": "Opening company...", "password": "Password", "pending": "Pending", "pendingApproval": "Pending approval", "pendingHumanJoins": "Pending human joins", "pluginExtensionsUnavailable": "Plugin extensions unavailable:", "port": "Port", "portHint": "Defaults to 22.", "privateKey": "Private key", "privateKeyHint": "Optional PEM private key. Leave blank to rely on the server's SSH agent or default keychain.", "provider": "Provider", "providerHint": "Installed run-capable sandbox provider plugins appear here.", "rejected": "Rejected", "remoteWorkspacePath": "Remote workspace path", "remoteWorkspacePathHint": "Absolute path that Paperclip will verify during SSH connection tests.", "removeMember": "Remove member", "requestDetails": "Request details", "requestType": "Request type", "requestedAccess": "Requested access", "role": "Role", "runsOnHost": "Runs on this Paperclip host.", "selectCompanyAccess": "Select a company to manage access.", "selectCompanyEnvironment": "Select a company context to manage environment secrets and bindings.", "selectCompanyInvites": "Select a company to manage invites.", "selectCompanyJoinRequests": "Select a company to review join requests.", "state": "State", "status": "Status", "streamRunLogs": "Stream run logs", "strictHostKeyChecking": "Strict host key checking", "submitAgentDetails": "Submit agent details", "suspended": "Suspended", "taskReassignment": "Task reassignment", "toApproveRequest": "to approve your request.", "unset": "Unset", "userAccount": "User account", "username": "Username", "usernameHint": "SSH username.", "value": "Value", "secretValue": "Secret value", "noEnvironmentVariables": "No environment variables", "unsavedChanges": "Unsaved changes", "selectSecret": "Select secret…", "createNewSecret": "Create new secret…", "cancel": "Cancel"
+  }
+}

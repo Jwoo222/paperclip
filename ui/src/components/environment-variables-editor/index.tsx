@@ -14,6 +14,7 @@ import type { CompanySecret, EnvBinding, UserSecretDefinition } from "@paperclip
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useOptionalToastActions } from "@/context/ToastContext";
+import { useTranslation } from "@/i18n";
 import { EnvironmentVariableRow } from "./Row";
 import { parseDotenv } from "./parse-dotenv";
 import {
@@ -157,6 +158,7 @@ export const EnvironmentVariablesEditor = forwardRef<EnvironmentVariablesEditorH
   footerHint,
   onDirtyChange,
 }: EnvironmentVariablesEditorProps, ref) {
+  const { t } = useTranslation();
   const toast = useOptionalToastActions();
   const editorRootRef = useRef<HTMLDivElement | null>(null);
   const [rows, setRows] = useState<EnvRow[]>(() => rowsFromValue(value));
@@ -447,8 +449,8 @@ export const EnvironmentVariablesEditor = forwardRef<EnvironmentVariablesEditorH
         <>
           {/* Header (desktop only) */}
           <div className="hidden gap-x-1.5 @[40rem]/env:grid @[40rem]/env:grid-cols-(--gtc-14)">
-            <span className="text-(length:--text-micro) font-medium uppercase tracking-wide text-muted-foreground">Name</span>
-            <span className="text-(length:--text-micro) font-medium uppercase tracking-wide text-muted-foreground">Value</span>
+            <span className="text-(length:--text-micro) font-medium uppercase tracking-wide text-muted-foreground">{t("settingsSecurity.name", { defaultValue: "Name" })}</span>
+            <span className="text-(length:--text-micro) font-medium uppercase tracking-wide text-muted-foreground">{t("settingsSecurity.value", { defaultValue: "Value" })}</span>
             <span />
           </div>
 
@@ -481,7 +483,7 @@ export const EnvironmentVariablesEditor = forwardRef<EnvironmentVariablesEditorH
           })}
         </>
       ) : (
-        <p className="text-sm text-muted-foreground">No environment variables</p>
+        <p className="text-sm text-muted-foreground">{t("settingsSecurity.noEnvironmentVariables", { defaultValue: "No environment variables" })}</p>
       )}
 
       {/* Footer bar */}
@@ -526,7 +528,7 @@ export const EnvironmentVariablesEditor = forwardRef<EnvironmentVariablesEditorH
           <div className="flex min-w-0 flex-col gap-0.5">
             <div className="flex items-center gap-2 text-sm font-medium">
               <span className="size-2 rounded-full bg-amber-500 shadow-(--shadow-extract-13)" />
-              <span>Unsaved changes</span>
+              <span>{t("settingsSecurity.unsavedChanges", { defaultValue: "Unsaved changes" })}</span>
             </div>
             {changeSummaryText ? (
               <p className="min-w-0 truncate pl-4 text-xs text-amber-950/80 dark:text-amber-100/80" title={changeSummaryText}>

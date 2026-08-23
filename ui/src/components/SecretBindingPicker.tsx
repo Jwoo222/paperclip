@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "../lib/utils";
+import { useTranslation } from "@/i18n";
 
 export interface SecretBindingValue {
   secretId: string;
@@ -94,6 +95,7 @@ export function SecretBindingPicker({
   disabled,
   statusFilter = ["active"],
 }: SecretBindingPickerProps) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompany();
   const [createOpen, setCreateOpen] = useState(false);
@@ -285,7 +287,7 @@ export function SecretBindingPicker({
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Create new secret</DialogTitle>
+            <DialogTitle>{t("settingsSecurity.createNewSecretTitle", { defaultValue: "Create new secret" })}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
@@ -299,13 +301,13 @@ export function SecretBindingPicker({
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-foreground/80" htmlFor="secret-value">Value</label>
+              <label className="text-xs font-medium text-foreground/80" htmlFor="secret-value">{t("settingsSecurity.value", { defaultValue: "Value" })}</label>
               <Textarea
                 id="secret-value"
                 value={createValue}
                 onChange={(event) => setCreateValue(event.target.value)}
                 rows={3}
-                placeholder="Paste the secret value"
+                placeholder={t("settingsSecurity.pasteSecretValue", { defaultValue: "Paste the secret value" })}
                 className="font-mono text-xs"
               />
               <p className="text-(length:--text-micro) text-muted-foreground mt-1">
@@ -313,18 +315,18 @@ export function SecretBindingPicker({
               </p>
             </div>
             <div>
-              <label className="text-xs font-medium text-foreground/80" htmlFor="secret-description">Description</label>
+              <label className="text-xs font-medium text-foreground/80" htmlFor="secret-description">{t("settingsSecurity.description", { defaultValue: "Description" })}</label>
               <Input
                 id="secret-description"
                 value={createDescription}
                 onChange={(event) => setCreateDescription(event.target.value)}
-                placeholder="Optional notes (no values)"
+                placeholder={t("settingsSecurity.optionalSecretNotes", { defaultValue: "Optional notes (no values)" })}
               />
             </div>
             {createError ? <p className="text-xs text-destructive">{createError}</p> : null}
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>{t("settingsSecurity.cancel", { defaultValue: "Cancel" })}</Button>
             <Button
               type="button"
               onClick={() => createMutation.mutate()}

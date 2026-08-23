@@ -28,6 +28,7 @@ import {
   Field,
   ToggleField,
 } from "../components/agent-config-primitives";
+import { useTranslation } from "@/i18n";
 
 const BYTES_PER_MIB = 1024 * 1024;
 const DEFAULT_COMPANY_ATTACHMENT_MAX_MIB = DEFAULT_COMPANY_ATTACHMENT_MAX_BYTES / BYTES_PER_MIB;
@@ -128,6 +129,7 @@ function GovernanceSelect({
 }
 
 export function CompanySettings() {
+  const { t } = useTranslation();
   const {
     companies,
     selectedCompany,
@@ -295,16 +297,16 @@ export function CompanySettings() {
     <div className="max-w-2xl space-y-6">
       <div className="flex items-center gap-2">
         <Settings className="h-5 w-5 text-muted-foreground" />
-        <h1 className="text-lg font-semibold">Company Settings</h1>
+          <h1 className="text-lg font-semibold">{t("settingsSecurity.companySettings", { defaultValue: "Company Settings" })}</h1>
       </div>
 
       {/* General */}
       <div className="space-y-4">
         <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          General
+          {t("settingsSecurity.general", { defaultValue: "General" })}
         </div>
         <div className="space-y-3 rounded-md border border-border px-4 py-4">
-          <Field label="Company name" hint="The display name for your company.">
+          <Field label={t("settingsSecurity.companyName", { defaultValue: "Company name" })} hint={t("settingsSecurity.companyNameHint", { defaultValue: "The display name for your company." })}>
             <input
               className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
               type="text"
@@ -313,14 +315,14 @@ export function CompanySettings() {
             />
           </Field>
           <Field
-            label="Description"
-            hint="Optional description shown in the company profile."
+            label={t("settingsSecurity.description", { defaultValue: "Description" })}
+            hint={t("settingsSecurity.companyDescriptionHint", { defaultValue: "Optional description shown in the company profile." })}
           >
             <input
               className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
               type="text"
               value={description}
-              placeholder="Optional company description"
+              placeholder={t("settingsSecurity.optionalCompanyDescription", { defaultValue: "Optional company description" })}
               onChange={(e) => setDescription(e.target.value)}
             />
           </Field>
@@ -330,7 +332,7 @@ export function CompanySettings() {
       {/* Appearance */}
       <div className="space-y-4">
         <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          Appearance
+          {t("settingsSecurity.appearance", { defaultValue: "Appearance" })}
         </div>
         <div className="space-y-3 rounded-md border border-border px-4 py-4">
           <div className="flex items-start gap-4">
@@ -344,8 +346,8 @@ export function CompanySettings() {
             </div>
             <div className="flex-1 space-y-3">
               <Field
-                label="Logo"
-                hint="Upload a PNG, JPEG, WEBP, GIF, or SVG logo image."
+                label={t("settingsSecurity.logo", { defaultValue: "Logo" })}
+                hint={t("settingsSecurity.logoHint", { defaultValue: "Upload a PNG, JPEG, WEBP, GIF, or SVG logo image." })}
               >
                 <div className="space-y-2">
                   <input
@@ -362,7 +364,7 @@ export function CompanySettings() {
                         onClick={handleClearLogo}
                         disabled={clearLogoMutation.isPending}
                       >
-                        {clearLogoMutation.isPending ? "Removing..." : "Remove logo"}
+                        {clearLogoMutation.isPending ? t("settingsSecurity.removing", { defaultValue: "Removing..." }) : t("settingsSecurity.removeLogo", { defaultValue: "Remove logo" })}
                       </Button>
                     </div>
                   )}
@@ -371,7 +373,7 @@ export function CompanySettings() {
                       {logoUploadError ??
                         (logoUploadMutation.error instanceof Error
                           ? logoUploadMutation.error.message
-                          : "Logo upload failed")}
+                          : t("settingsSecurity.logoUploadFailed", { defaultValue: "Logo upload failed" }))}
                     </span>
                   )}
                   {clearLogoMutation.isError && (
@@ -380,13 +382,13 @@ export function CompanySettings() {
                     </span>
                   )}
                   {logoUploadMutation.isPending && (
-                    <span className="text-xs text-muted-foreground">Uploading logo...</span>
+                    <span className="text-xs text-muted-foreground">{t("settingsSecurity.uploadingLogo", { defaultValue: "Uploading logo..." })}</span>
                   )}
                 </div>
               </Field>
               <Field
-                label="Brand color"
-                hint="Sets the hue for the company icon. Leave empty for auto-generated color."
+                label={t("settingsSecurity.brandColor", { defaultValue: "Brand color" })}
+                hint={t("settingsSecurity.brandColorHint", { defaultValue: "Sets the hue for the company icon. Leave empty for auto-generated color." })}
               >
                 <div className="flex items-center gap-2">
                   {/* token-extraction: allowlisted — <input type="color"> value must be a real hex string, not a var() reference. */}
@@ -405,7 +407,7 @@ export function CompanySettings() {
                         setBrandColor(v);
                       }
                     }}
-                    placeholder="Auto"
+                    placeholder={t("settingsSecurity.auto", { defaultValue: "Auto" })}
                     className="w-28 rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm font-mono outline-none"
                   />
                   {brandColor && (
@@ -415,14 +417,14 @@ export function CompanySettings() {
                       onClick={() => setBrandColor("")}
                       className="text-xs text-muted-foreground"
                     >
-                      Clear
+                      {t("settingsSecurity.clear", { defaultValue: "Clear" })}
                     </Button>
                   )}
                 </div>
               </Field>
               <Field
-                label="Attachment size limit"
-                hint={`Accepted range: 1-${MAX_COMPANY_ATTACHMENT_MAX_MIB} MiB.`}
+                label={t("settingsSecurity.attachmentLimit", { defaultValue: "Attachment size limit" })}
+                hint={t("settingsSecurity.attachmentLimitHint", { defaultValue: "Accepted range: 1-{{max}} MiB.", max: MAX_COMPANY_ATTACHMENT_MAX_MIB })}
               >
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-center gap-2">
@@ -457,16 +459,16 @@ export function CompanySettings() {
             onClick={handleSaveGeneral}
             disabled={generalMutation.isPending || !companyName.trim() || !attachmentMaxValid}
           >
-            {generalMutation.isPending ? "Saving..." : "Save changes"}
+            {generalMutation.isPending ? t("settingsSecurity.saving", { defaultValue: "Saving..." }) : t("settingsSecurity.saveChanges", { defaultValue: "Save changes" })}
           </Button>
           {generalMutation.isSuccess && (
-            <span className="text-xs text-muted-foreground">Saved</span>
+            <span className="text-xs text-muted-foreground">{t("settingsSecurity.saved", { defaultValue: "Saved" })}</span>
           )}
           {generalMutation.isError && (
             <span className="text-xs text-destructive">
               {generalMutation.error instanceof Error
                   ? generalMutation.error.message
-                  : "Failed to save"}
+                  : t("settingsSecurity.failedSave", { defaultValue: "Failed to save" })}
             </span>
           )}
         </div>
@@ -475,12 +477,12 @@ export function CompanySettings() {
       {/* Hiring */}
       <div className="space-y-4" data-testid="company-settings-team-section">
         <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          Hiring
+          {t("settingsSecurity.hiring", { defaultValue: "Hiring" })}
         </div>
         <div className="rounded-md border border-border px-4 py-3">
           <ToggleField
-            label="Require board approval for new hires"
-            hint="New agent hires stay pending until approved by board."
+            label={t("settingsSecurity.requireBoardApproval", { defaultValue: "Require board approval for new hires" })}
+            hint={t("settingsSecurity.requireBoardApprovalHint", { defaultValue: "New agent hires stay pending until approved by board." })}
             checked={!!selectedCompany.requireBoardApprovalForNewAgents}
             onChange={(v) => settingsMutation.mutate(v)}
             toggleTestId="company-settings-team-approval-toggle"
