@@ -16,7 +16,7 @@ import { useToast } from "@/context/ToastContext";
 import { queryKeys } from "@/lib/queryKeys";
 import { copyTextToClipboard } from "@/lib/clipboard";
 import { ErrorState, LoadingState, RelativeTime, ToolsPageHeader } from "./shared";
-import { useTranslation } from "@/i18n";
+import { t, useTranslation } from "@/i18n";
 
 type CreateGatewayDraft = {
   name: string;
@@ -68,12 +68,12 @@ function latestTokenActivity(gateway: ToolMcpGatewayWithTokens) {
 }
 
 function formatOwner(gateway: ToolMcpGatewayWithTokens, agentNames: Map<string, string>) {
-  if (gateway.agentId) return agentNames.get(gateway.agentId) ?? `Agent ${shortId(gateway.agentId)}`;
+  if (gateway.agentId) return agentNames.get(gateway.agentId) ?? t("toolsResidualRound2.agentShort", { id: shortId(gateway.agentId) });
   if (gateway.createdByAgentId) {
-    return agentNames.get(gateway.createdByAgentId) ?? `Agent ${shortId(gateway.createdByAgentId)}`;
+    return agentNames.get(gateway.createdByAgentId) ?? t("toolsResidualRound2.agentShort", { id: shortId(gateway.createdByAgentId) });
   }
-  if (gateway.createdByUserId) return `Board user ${shortId(gateway.createdByUserId)}`;
-  return "Board";
+  if (gateway.createdByUserId) return t("toolsResidualRound2.boardUserShort", { id: shortId(gateway.createdByUserId) });
+  return t("toolsResidualRound2.board");
 }
 
 function formatScope(
@@ -83,26 +83,29 @@ function formatScope(
 ) {
   if (gateway.contextScopeType !== "none" && gateway.contextScopeId) {
     if (gateway.contextScopeType === "project") {
-      return `Project ${projectNames.get(gateway.contextScopeId) ?? shortId(gateway.contextScopeId)}`;
+      return t("toolsResidualRound2.projectShort", { name: projectNames.get(gateway.contextScopeId) ?? shortId(gateway.contextScopeId) });
     }
     if (gateway.contextScopeType === "agent") {
-      return `Agent ${agentNames.get(gateway.contextScopeId) ?? shortId(gateway.contextScopeId)}`;
+      return t("toolsResidualRound2.agentShort", { id: agentNames.get(gateway.contextScopeId) ?? shortId(gateway.contextScopeId) });
     }
-    return `${gateway.contextScopeType} ${shortId(gateway.contextScopeId)}`;
+    return t("toolsResidualRound2.scopeShort", { type: gateway.contextScopeType, id: shortId(gateway.contextScopeId) });
   }
-  if (gateway.projectId) return `Project ${projectNames.get(gateway.projectId) ?? shortId(gateway.projectId)}`;
-  if (gateway.issueId) return `Issue ${shortId(gateway.issueId)}`;
-  if (gateway.agentId) return `Agent ${agentNames.get(gateway.agentId) ?? shortId(gateway.agentId)}`;
-  return "Company";
+  if (gateway.projectId) return t("toolsResidualRound2.projectShort", { name: projectNames.get(gateway.projectId) ?? shortId(gateway.projectId) });
+  if (gateway.issueId) return t("toolsResidualRound2.issueShort", { id: shortId(gateway.issueId) });
+  if (gateway.agentId) return t("toolsResidualRound2.agentShort", { id: agentNames.get(gateway.agentId) ?? shortId(gateway.agentId) });
+  return t("toolsResidualRound2.company");
 }
 
 function formatAllowedTools(profile: ToolProfileWithDetails | undefined) {
-  if (!profile) return "Profile unavailable";
+  if (!profile) return t("toolsResidualRound2.profileUnavailable");
   const allowed = profile.summary.allowedToolCount;
   if (profile.summary.accessMode === "all_except") {
-    return `${pluralize(Math.max(profile.summary.totalToolCount - profile.summary.excludedToolCount, 0), "tool")} allowed`;
+    const count = Math.max(profile.summary.totalToolCount - profile.summary.excludedToolCount, 0);
+    return t("toolsResidualRound2.toolsAllowed", { count, suffix: count === 1 ? "" : t("toolsResidualRound2.pluralSuffix") });
   }
-  return allowed === 0 ? "No tools allowed" : `${pluralize(allowed, "tool")} allowed`;
+  return allowed === 0
+    ? t("toolsResidualRound2.noToolsAllowed")
+    : t("toolsResidualRound2.toolsAllowed", { count: allowed, suffix: allowed === 1 ? "" : t("toolsResidualRound2.pluralSuffix") });
 }
 
 function formatSnippetConfig(config: Record<string, unknown>) {
@@ -278,7 +281,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
           disabled={profileLoading}
         >
           <Plus className="mr-1.5 h-3.5 w-3.5" />
-          Create gateway
+          {t("toolsResidualRound2.createGateway")}
         </Button>
       </div>
 
@@ -305,7 +308,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                 disabled={activeProfiles.length === 0}
               >
                 <option value="" disabled>
-                  {profileLoading ? "Loading profiles..." : "Choose a profile"}
+                  {profileLoading ? t("toolsResidualRound2.loadingProfiles") : t("toolsResidualRound2.chooseProfile")}
                 </option>
                 {activeProfiles.map((profile) => (
                   <option key={profile.id} value={profile.id}>
@@ -329,10 +332,10 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
           ) : null}
           <div className="flex flex-wrap justify-end gap-2">
             <Button type="button" variant="ghost" size="sm" onClick={() => setCreating(false)}>
-              Cancel
+              {t("toolsResidualRound2.cancel")}
             </Button>
             <Button type="submit" size="sm" disabled={createDisabled || !createDraft.name.trim() || !createDraft.profileId}>
-              {createGatewayMutation.isPending ? "Creating..." : "Create gateway"}
+              {createGatewayMutation.isPending ? t("toolsResidualRound2.creating") : t("toolsResidualRound2.createGateway")}
             </Button>
           </div>
         </form>
@@ -340,7 +343,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
 
       {gateways.length === 0 ? (
         <div className="rounded-md border border-dashed border-border p-5 text-sm text-muted-foreground">
-          No named gateways yet. Create one here, then issue a token for the client that will connect to it.
+          {t("toolsResidualRound2.noNamedGateways")}
         </div>
       ) : (
         <div className="divide-y divide-border rounded-md border border-border">
@@ -365,13 +368,13 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                     ) : null}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => void copyText(endpoint, "Gateway endpoint")}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => void copyText(endpoint, t("toolsResidualRound2.gatewayEndpoint"))}>
                       <Copy className="mr-1.5 h-3.5 w-3.5" />
-                      Copy endpoint
+                      {t("toolsResidualRound2.copyEndpoint")}
                     </Button>
                     <Button type="button" variant="outline" size="sm" onClick={() => startIssuing(gateway.id)}>
                       <KeyRound className="mr-1.5 h-3.5 w-3.5" />
-                      Issue token
+                      {t("toolsResidualRound2.issueToken")}
                     </Button>
                   </div>
                 </div>
@@ -392,13 +395,13 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                   <div>
                       <dt className="text-xs font-medium text-muted-foreground">{t("toolsAdvanced.gateways.allowedTools")}</dt>
                     <dd className="mt-0.5 text-foreground">
-                      {profile ? `${formatAllowedTools(profile)} via ${profile.name}` : `Profile ${shortId(gateway.profileId)}`}
+                      {profile ? t("toolsResidualRound2.viaProfile", { tools: formatAllowedTools(profile), profile: profile.name }) : t("toolsResidualRound2.profileId", { id: shortId(gateway.profileId) })}
                     </dd>
                   </div>
                   <div>
                       <dt className="text-xs font-medium text-muted-foreground">{t("toolsAdvanced.gateways.lastActivity")}</dt>
                     <dd className="mt-0.5 text-foreground">
-                      {lastActivity ? <RelativeTime value={lastActivity} /> : "Never used"}
+                      {lastActivity ? <RelativeTime value={lastActivity} /> : t("toolsResidualRound2.neverUsed")}
                     </dd>
                   </div>
                 </dl>
@@ -488,7 +491,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                     </div>
                     <div className="flex flex-wrap justify-end gap-2">
                       <Button type="button" variant="ghost" size="sm" onClick={() => setIssuingGatewayId(null)}>
-                        Cancel
+                        {t("toolsResidualRound2.cancel")}
                       </Button>
                       <Button
                         type="submit"
@@ -501,7 +504,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                           !tokenDraft.expiresAt
                         }
                       >
-                        {createTokenMutation.isPending ? "Issuing..." : "Issue token"}
+                        {createTokenMutation.isPending ? t("toolsResidualRound2.issuing") : t("toolsResidualRound2.issueToken")}
                       </Button>
                     </div>
                   </form>
@@ -510,10 +513,10 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                 {createdToken ? (
                   <div className="space-y-2 rounded-md border border-border bg-muted/40 p-3 text-sm">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="font-medium text-foreground">New token for {createdToken.name}</div>
-                      <Button type="button" variant="outline" size="sm" onClick={() => void copyText(createdToken.token, "Gateway bearer token")}>
+                      <div className="font-medium text-foreground">{t("toolsResidualRound2.newTokenFor", { name: createdToken.name })}</div>
+                      <Button type="button" variant="outline" size="sm" onClick={() => void copyText(createdToken.token, t("toolsResidualRound2.gatewayBearerToken"))}>
                         <Copy className="mr-1.5 h-3.5 w-3.5" />
-                        Copy token
+                        {t("toolsResidualRound2.copyToken")}
                       </Button>
                     </div>
                     <div className="break-all rounded bg-background px-3 py-2 font-mono text-xs text-muted-foreground">
@@ -526,7 +529,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                   <div>
                     <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <KeyRound className="h-3.5 w-3.5" />
-                      Tokens
+                      {t("toolsResidualRound2.tokens")}
                     </div>
                     <div className="space-y-1 text-sm">
                       {gateway.tokens.length === 0 ? (
@@ -548,14 +551,14 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                                   <span className="text-xs text-muted-foreground">
                                     {token.revokedAt ? (
                                       <>
-                                        revoked <RelativeTime value={token.revokedAt} />
+                                        {t("toolsResidualRound2.revoked")} <RelativeTime value={token.revokedAt} />
                                       </>
                                     ) : token.expiresAt ? (
                                       <>
-                                        expires <RelativeTime value={token.expiresAt} />
+                                        {t("toolsResidualRound2.expires")} <RelativeTime value={token.expiresAt} />
                                       </>
                                     ) : (
-                                      "no expiry"
+                                      t("toolsResidualRound2.noExpiry")
                                     )}
                                   </span>
                                   {!revoked ? (
@@ -565,10 +568,10 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                                       size="sm"
                                       className="h-7 px-2 text-xs text-destructive hover:text-destructive"
                                       onClick={() => setConfirmingRevokeTokenId(token.id)}
-                                      aria-label={`Revoke ${token.name}`}
+                                      aria-label={t("toolsResidualRound2.revokeToken", { name: token.name })}
                                     >
                                       <RotateCcw className="mr-1 h-3.5 w-3.5" />
-                                      Revoke
+                                      {t("toolsResidualRound2.revoke")}
                                     </Button>
                                   ) : null}
                                 </div>
@@ -584,7 +587,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                                     onClick={() => setConfirmingRevokeTokenId(null)}
                                   >
                                     <X className="mr-1 h-3.5 w-3.5" />
-                                    Cancel
+                                    {t("toolsResidualRound2.cancel")}
                                   </Button>
                                   <Button
                                     type="button"
@@ -595,7 +598,7 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                                     disabled={revokeTokenMutation.isPending}
                                   >
                                     <Check className="mr-1 h-3.5 w-3.5" />
-                                    Confirm
+                                    {t("toolsResidualRound2.confirm")}
                                   </Button>
                                 </div>
                               ) : null}
@@ -626,11 +629,11 @@ export function GatewaysTab({ companyId }: { companyId: string }) {
                                 className="h-7 px-2"
                                 onClick={(event) => {
                                   event.preventDefault();
-                                  void copyText(formatSnippetConfig(snippet.config), `${snippet.label} snippet`);
+                                  void copyText(formatSnippetConfig(snippet.config), t("toolsResidualRound2.snippetLabel", { name: snippet.label }));
                                 }}
                               >
                                 <Copy className="mr-1 h-3.5 w-3.5" />
-                                Copy
+                                {t("toolsResidualRound2.copy")}
                               </Button>
                             </summary>
                             <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-words rounded bg-background p-3 text-xs text-muted-foreground">

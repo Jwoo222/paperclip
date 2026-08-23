@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { toolsApi } from "@/api/tools";
 import { ErrorState } from "./shared";
-import { useTranslation } from "@/i18n";
+import { t, useTranslation } from "@/i18n";
 
 const SAMPLE_CONFIG = `{
   "mcpServers": {
@@ -28,15 +28,15 @@ const SAMPLE_CONFIG = `{
 /** Turn an env/header key (e.g. `GITHUB_TOKEN`) into a friendly field label. */
 function humanizeKey(raw: string): string {
   const cleaned = raw.replace(/[_-]+/g, " ").trim().toLowerCase();
-  if (!cleaned) return "Key";
+  if (!cleaned) return t("toolsResidualRound2.keyFallback");
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 }
 
 function draftSummary(draft: McpJsonImportDraft): string {
   const keyCount = draft.credentialFields.length || draft.credentialRefs.length;
-  const where = draft.transport === "local_stdio" ? "Runs in your workspace" : "Connects over the web";
-  if (keyCount === 0) return `${where}  ·  no keys needed`;
-  return `${where}  ·  needs ${keyCount} ${keyCount === 1 ? "key" : "keys"}`;
+  const where = draft.transport === "local_stdio" ? t("toolsResidualRound2.runsWorkspace") : t("toolsResidualRound2.connectsWeb");
+  if (keyCount === 0) return `${where}  ·  ${t("toolsResidualRound2.noKeysNeeded")}`;
+  return `${where}  ·  ${t("toolsResidualRound2.needsKeys", { count: keyCount, suffix: keyCount === 1 ? "" : t("toolsResidualRound2.pluralSuffix") })}`;
 }
 
 /**
@@ -142,7 +142,7 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
         access: "all_agents",
       });
     },
-    onSuccess: () => setActivatedName(connectResult?.application.name ?? "Imported app"),
+    onSuccess: () => setActivatedName(connectResult?.application.name ?? t("toolsResidualRound2.importedApp")),
   });
 
   const drafts = preview?.drafts ?? [];
@@ -155,21 +155,21 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
       JSON.parse(trimmed);
       return null;
     } catch {
-      return "That doesn't look like valid JSON yet — paste the whole snippet, including the outer braces.";
+      return t("toolsResidualRound2.invalidJson");
     }
   }, [draftText]);
 
   return (
     <div className="space-y-5">
       <p className="max-w-2xl text-sm text-muted-foreground">
-        Paste the MCP config snippet from the tool's README and we'll turn it into a friendly setup.
+        {t("toolsResidualRound2.pasteDescription")}
       </p>
       <p className="text-xs text-muted-foreground">
-        Just a URL?{" "}
+        {t("toolsResidualRound2.justUrl")} {" "}
         <Link to="/apps" className="text-primary hover:underline">
-          Browse planned app connections
+          {t("toolsResidualRound2.browsePlannedConnections")}
         </Link>{" "}
-        instead.
+        {t("toolsResidualRound2.instead")}
       </p>
 
       <div className="space-y-2">
@@ -190,7 +190,7 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
           <p className="text-xs text-amber-600">{localParseError}</p>
         ) : (
           <p className="text-xs text-muted-foreground">
-            Paste an MCP config — the snippet a README tells you to copy.
+            {t("toolsResidualRound2.pasteHint")}
           </p>
         )}
       </div>
@@ -200,10 +200,10 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
           onClick={() => importMutation.mutate(draftText)}
           disabled={!canSubmit || Boolean(localParseError)}
         >
-          {importMutation.isPending ? "Checking…" : "Check config"}
+          {importMutation.isPending ? t("toolsResidualRound2.checking") : t("toolsResidualRound2.checkConfig")}
         </Button>
         <span className="text-xs text-muted-foreground">
-          We'll read it and show what we found before anything is saved.
+          {t("toolsResidualRound2.readBeforeSaved")}
         </span>
       </div>
 
@@ -212,13 +212,13 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
       {preview ? (
         drafts.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
-            We couldn't find an app in that config. Double-check you pasted the whole snippet.
+            {t("toolsResidualRound2.noAppFound")}
           </div>
         ) : (
           <div className="space-y-3">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              We found {drafts.length} {drafts.length === 1 ? "app" : "apps"} in that config
+              {t("toolsResidualRound2.foundApps", { count: drafts.length, suffix: drafts.length === 1 ? "" : t("toolsResidualRound2.pluralSuffix") })}
             </h3>
             {drafts.map((draft, index) => {
               const url = draftConnectUrl(draft);
@@ -239,13 +239,11 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
             })}
             {drafts.some((d) => draftConnectUrl(d)) ? (
               <p className="text-xs text-muted-foreground">
-                Checking a remote app creates a draft connection, stores any header replacements as Paperclip secrets,
-                and runs health/catalog discovery before activation.
+                {t("toolsResidualRound2.remoteCheckDescription")}
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                We humanized the field names from the config. These run-in-your-workspace tools stay as drafts until an
-                admin maps them to an approved template.
+                {t("toolsResidualRound2.localDraftDescription")}
               </p>
             )}
           </div>
@@ -301,7 +299,7 @@ function DraftCard({
         {onCheck ? (
           <Button size="sm" className="shrink-0" onClick={onCheck} disabled={checking || !canCheck}>
             {checking ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-            Check actions
+            {t("toolsResidualRound2.checkActions")}
           </Button>
         ) : null}
       </div>
@@ -331,7 +329,7 @@ function DraftCard({
         </div>
       ) : draft.credentialRefs.length > 0 ? (
         <p className="mt-3 text-xs text-muted-foreground">
-          Keys from this config stay draft-only until an admin maps them to an approved template.
+          {t("toolsResidualRound2.draftKeysDescription")}
         </p>
       ) : (
         <p className="mt-3 text-xs text-muted-foreground">{t("toolsAdvanced.residual.noKeysNeeded")}</p>
@@ -377,15 +375,15 @@ function CatalogReview({
         <div>
           <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
-            Review actions for {result.application.name}
+            {t("toolsResidualRound2.reviewActionsFor", { name: result.application.name })}
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Health and catalog checks passed. Read-only actions start on; actions that can change data start off.
+            {t("toolsResidualRound2.reviewActionsDescription")}
           </p>
         </div>
         <Button size="sm" onClick={onFinish} disabled={finishing || enabledCount === 0 || Boolean(activatedName)}>
           {finishing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-          Activate {enabledCount} of {total}
+          {t("toolsResidualRound2.activateCount", { enabled: enabledCount, total })}
         </Button>
       </div>
       <ActionGroup
@@ -405,7 +403,7 @@ function CatalogReview({
         askFirstLevels={askFirstLevels}
       />
       {activatedName ? (
-        <p className="text-xs font-medium text-emerald-700">{activatedName} is active for all agents.</p>
+        <p className="text-xs font-medium text-emerald-700">{t("toolsResidualRound2.activeForAllAgents", { name: activatedName })}</p>
       ) : null}
     </div>
   );
@@ -433,10 +431,10 @@ function ActionGroup({
         <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</div>
         <div className="flex gap-2">
           <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => onBulk(true)}>
-            Turn all on
+            {t("toolsResidualRound2.turnAllOn")}
           </Button>
           <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => onBulk(false)}>
-            Turn all off
+            {t("toolsResidualRound2.turnAllOff")}
           </Button>
         </div>
       </div>
@@ -448,7 +446,7 @@ function ActionGroup({
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium text-foreground">{action.title || action.toolName}</div>
                 <div className="truncate text-xs text-muted-foreground">
-                  {askFirstLevels.includes(action.riskLevel) ? "Ask first when enabled" : action.riskLevel}
+                  {askFirstLevels.includes(action.riskLevel) ? t("toolsResidualRound2.askFirstWhenEnabled") : action.riskLevel}
                 </div>
               </div>
               <ToggleSwitch checked={on} onCheckedChange={(next) => onToggle(action.catalogEntryId, next)} />

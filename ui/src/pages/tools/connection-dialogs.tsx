@@ -284,8 +284,7 @@ export function AddConnectionDialog({
         <DialogHeader>
           <DialogTitle>{t("toolsAdvanced.connection.addApplication")}</DialogTitle>
           <DialogDescription>
-            Choose an existing application or create one as part of the same connection flow. Credentials stay as
-            vault references and the connection is probed before activation.
+            {t("toolsResidualRound2.connectionDescription")}
           </DialogDescription>
         </DialogHeader>
 
@@ -337,7 +336,7 @@ export function AddConnectionDialog({
                     placeholder={t("toolsAdvanced.residual.applicationPlaceholder")}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Application type is inferred from the transport you choose next.
+                    {t("toolsResidualRound2.applicationTypeInferred")}
                   </p>
                 </div>
               )}
@@ -348,8 +347,7 @@ export function AddConnectionDialog({
             <>
               {applicationMode === "new" ? (
                 <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">{applicationName.trim()}</span> will be created as{" "}
-                  {inferredType}.
+                  {t("toolsResidualRound2.createdAs", { name: applicationName.trim(), type: inferredType })}.
                 </div>
               ) : null}
 
@@ -408,7 +406,7 @@ export function AddConnectionDialog({
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Only board-approved command templates can run. Arbitrary commands are never accepted.
+                    {t("toolsResidualRound2.approvedTemplatesOnly")}
                   </p>
                 </div>
               )}
@@ -433,7 +431,7 @@ export function AddConnectionDialog({
                             type="button"
                             className="ml-auto text-muted-foreground hover:text-destructive"
                             onClick={() => setCreds((cs) => cs.filter((_, idx) => idx !== i))}
-                            aria-label={`Remove credential reference for ${secretName(c.secretId)}`}
+                            aria-label={t("toolsResidualRound2.removeCredentialReference", { name: secretName(c.secretId) })}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -476,10 +474,7 @@ export function AddConnectionDialog({
                         {vaultRef(secretById(pendingSecretId))}
                       </p>
                     ) : null}
-                    <p className="text-xs text-muted-foreground">
-                      Free-text secrets are not accepted — pick a vault entry; Paperclip stores only the
-                      <span className="font-mono"> vault://</span> reference and resolves it at gateway use time.
-                    </p>
+                    <p className="text-xs text-muted-foreground">{t("toolsResidualRound2.freeTextSecrets")}</p>
                   </>
                 ) : null}
               </div>
@@ -527,8 +522,7 @@ export function AddConnectionDialog({
                   <p className="mt-1 text-xs text-destructive">{probeResult.connection.lastError}</p>
                 ) : null}
                 <p className="mt-2 text-(length:--text-micro) text-muted-foreground">
-                  Probe latency is a single round-trip sample. Aggregate p95 latency across traffic is tracked on
-                  the Runtime tab once the connection is live.
+                  {t("toolsResidualRound2.probeLatencyDescription")}
                 </p>
               </div>
             ) : null
@@ -537,29 +531,29 @@ export function AddConnectionDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancel
+              {t("toolsResidualRound2.cancel")}
           </Button>
           {step === 1 && !locked ? (
             <Button disabled={!appChoiceValid} onClick={() => setStep(2)}>
-              Continue
+              {t("toolsResidualRound2.continue")}
             </Button>
           ) : !locked ? (
             <>
               <Button variant="outline" onClick={() => setStep(1)}>
-                Back
+                {t("toolsResidualRound2.back")}
               </Button>
               <Button disabled={!canCreate} onClick={() => create.mutate()}>
-                {create.isPending ? "Creating draft…" : "Create & probe"}
+                {create.isPending ? t("toolsResidualRound2.creatingDraft") : t("toolsResidualRound2.createProbe")}
               </Button>
             </>
           ) : (
             <>
               <Button variant="outline" disabled={probe.isPending} onClick={() => draft && probe.mutate(draft.id)}>
                 <Stethoscope className="mr-1 h-3.5 w-3.5" />
-                {probe.isPending ? "Probing…" : "Re-probe"}
+                {probe.isPending ? t("toolsResidualRound2.probing") : t("toolsResidualRound2.reProbe")}
               </Button>
               <Button disabled={activate.isPending || probe.isPending} onClick={() => draft && activate.mutate(draft.id)}>
-                {activate.isPending ? "Activating…" : "Activate"}
+                {activate.isPending ? t("toolsResidualRound2.activating") : t("toolsResidualRound2.activate")}
               </Button>
             </>
           )}

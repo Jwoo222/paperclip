@@ -42,12 +42,11 @@ export function ToolsAdminGate({ children }: { children: ReactNode }) {
             <h1 className="text-lg font-semibold">{t("toolsAdvanced.profiles.adminTitle")}</h1>
           </div>
           <p className="text-sm text-muted-foreground">
-            Access profiles decide which tools your agents can use. Ask an administrator to set these up, or
-            head back to{" "}
+            {t("toolsResidualRound2.profilesAdminBodyBeforeLink")} {" "}
             <Link to="/apps" className="font-medium text-primary hover:underline">
-              your apps
+              {t("toolsResidualRound2.profilesYourApps")}
             </Link>
-            .
+            {t("toolsResidualRound2.profilesAdminBodyAfterLink")}
           </p>
         </div>
       </div>

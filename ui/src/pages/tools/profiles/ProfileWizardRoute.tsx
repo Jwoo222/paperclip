@@ -30,13 +30,13 @@ export function ProfileWizardRoute({ mode }: { mode: "new" | "edit" }) {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
-      { label: "Apps", href: "/apps" },
-      { label: "Access profiles", href: advancedTabHref("profiles") },
-      { label: mode === "edit" ? "Resume draft" : "New profile" },
+      { label: selectedCompany?.name ?? t("toolsResidualRound2.company"), href: "/dashboard" },
+      { label: t("toolsResidualRound2.apps"), href: "/apps" },
+      { label: t("toolsResidualRound2.accessProfiles"), href: advancedTabHref("profiles") },
+      { label: mode === "edit" ? t("toolsResidualRound2.resumeDraft") : t("toolsResidualRound2.newProfile") },
     ]);
     return () => setBreadcrumbs([]);
-  }, [setBreadcrumbs, selectedCompany?.name, mode]);
+  }, [setBreadcrumbs, selectedCompany?.name, mode, t]);
 
   if (!selectedCompanyId) {
     return <div className="p-6 text-sm text-muted-foreground">{t("toolsAdvanced.profiles.selectCompanyCreate")}</div>;
@@ -47,10 +47,10 @@ export function ProfileWizardRoute({ mode }: { mode: "new" | "edit" }) {
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 p-4 sm:p-6">
         <header>
           <h1 className="text-xl font-bold text-foreground">
-            {mode === "edit" ? "Finish your profile" : "New access profile"}
+            {mode === "edit" ? t("toolsResidualRound2.finishProfile") : t("toolsResidualRound2.newAccessProfile")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Choose which tools this profile allows, then assign it to the agents that need them.
+            {t("toolsResidualRound2.profileDescription")}
           </p>
         </header>
         <ProfileWizard

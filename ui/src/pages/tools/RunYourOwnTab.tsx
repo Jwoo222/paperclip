@@ -270,7 +270,7 @@ function RunYourOwnRow({
         <code className="font-mono text-(length:--text-micro) text-muted-foreground">{fullCommand || "—"}</code>
       </td>
       <td className="px-4 py-3 text-muted-foreground">
-        {template.envKeys.length > 0 ? template.envKeys.join(", ") : "none"}
+        {template.envKeys.length > 0 ? template.envKeys.join(", ") : t("toolsResidualRound2.none")}
       </td>
       <td className="px-4 py-3">
         <RelativeTime value={template.createdAt} />

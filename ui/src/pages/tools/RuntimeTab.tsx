@@ -127,50 +127,32 @@ function trustTierLabel(slot: ToolRuntimeSlot, t: (key: string) => string): stri
  * the surface where the admin resolves it.
  */
 type AlertAction = "restart" | "reviewApps" | "reviewActivity";
-const ALERT_COPY: Record<string, { title: string; body: (a: ToolRuntimeAlertRecommendation) => string; action: AlertAction }> = {
+const ALERT_COPY: Record<string, { action: AlertAction }> = {
   mcp_runtime_stuck_starting_slot: {
-    title: "An app is stuck starting up",
-    body: () => "It began starting but never came online. Restarting usually clears this.",
     action: "restart",
   },
   mcp_runtime_stuck_running_slot: {
-    title: "An app stopped responding",
-    body: () => "The process is still running but isn't answering. Restarting usually clears this.",
     action: "restart",
   },
   mcp_runtime_high_timeout_rate: {
-    title: "Apps are responding slowly",
-    body: (a) => `Some actions are timing out (${a.observed.toLowerCase()}). Check the apps involved or try again shortly.`,
     action: "reviewActivity",
   },
   mcp_runtime_high_error_rate: {
-    title: "Apps are failing more than usual",
-    body: (a) => `Recent actions failed after they were allowed (${a.observed.toLowerCase()}).`,
     action: "reviewActivity",
   },
   mcp_runtime_capacity_deferrals_repeated: {
-    title: "Too many apps running at once",
-    body: (a) => `Some actions had to wait for a free slot (${a.observed.toLowerCase()}).`,
     action: "reviewActivity",
   },
   mcp_runtime_restart_storm: {
-    title: "An app keeps restarting",
-    body: (a) => `It has restarted repeatedly (${a.observed.toLowerCase()}). It may be misconfigured or offline.`,
     action: "restart",
   },
   mcp_runtime_connection_health_degraded: {
-    title: "An app needs reconnecting",
-    body: () => "A connected app isn't healthy. Open it to check the key or reconnect.",
     action: "reviewApps",
   },
   mcp_runtime_missing_secret_failures: {
-    title: "An app is missing a key",
-    body: () => "A saved key couldn't be found, so some actions failed. Reconnect the app to fix it.",
     action: "reviewApps",
   },
   mcp_runtime_audit_write_failures: {
-    title: "Activity logging hit a problem",
-    body: () => "Some actions may not have been recorded. This needs an administrator to look into it.",
     action: "reviewActivity",
   },
 };
@@ -236,15 +218,16 @@ function SummaryCard({
 }
 
 function LivePill() {
+  const { t } = useTranslation();
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <span className="inline-flex cursor-help items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-foreground">
           <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-          Live
+          {t("toolsResidualRound2.live")}
         </span>
       </TooltipTrigger>
-      <TooltipContent>Updates automatically every 15 seconds.</TooltipContent>
+      <TooltipContent>{t("toolsResidualRound2.updatesEvery15Seconds")}</TooltipContent>
     </Tooltip>
   );
 }
@@ -571,7 +554,7 @@ function RuntimeRowView({
               {t("auditRuntime.runtime.restart")}
             </Button>
           ) : (
-            <span className="text-xs text-muted-foreground">Runs on the provider's side</span>
+            <span className="text-xs text-muted-foreground">{t("toolsResidualRound2.runsProviderSide")}</span>
           )}
         </td>
       </tr>
