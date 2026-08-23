@@ -13,6 +13,7 @@ import { statusBadge, statusBadgeDefault } from "../lib/status-colors";
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { t } from "@/i18n";
 
 // -- Tree types --------------------------------------------------------------
 
@@ -217,18 +218,18 @@ export function parseFrontmatter(content: string): { data: FrontmatterData; body
 }
 
 export const FRONTMATTER_FIELD_LABELS: Record<string, string> = {
-  name: "Name",
-  title: "Title",
-  kind: "Kind",
-  reportsTo: "Reports to",
-  skills: "Skills",
-  status: "Status",
-  description: "Description",
-  priority: "Priority",
-  assignee: "Responsible",
-  project: "Project",
-  recurring: "Recurring",
-  targetDate: "Target date",
+  name: t("commonResidual.fileTree.fields.name", { defaultValue: "Name" }),
+  title: t("commonResidual.fileTree.fields.title", { defaultValue: "Title" }),
+  kind: t("commonResidual.fileTree.fields.kind", { defaultValue: "Kind" }),
+  reportsTo: t("commonResidual.fileTree.fields.reportsTo", { defaultValue: "Reports to" }),
+  skills: t("commonResidual.fileTree.fields.skills", { defaultValue: "Skills" }),
+  status: t("commonResidual.fileTree.fields.status", { defaultValue: "Status" }),
+  description: t("commonResidual.fileTree.fields.description", { defaultValue: "Description" }),
+  priority: t("commonResidual.fileTree.fields.priority", { defaultValue: "Priority" }),
+  assignee: t("commonResidual.fileTree.fields.responsible", { defaultValue: "Responsible" }),
+  project: t("commonResidual.fileTree.fields.project", { defaultValue: "Project" }),
+  recurring: t("commonResidual.fileTree.fields.recurring", { defaultValue: "Recurring" }),
+  targetDate: t("commonResidual.fileTree.fields.targetDate", { defaultValue: "Target date" }),
 };
 
 // -- File tree component -----------------------------------------------------
@@ -275,7 +276,7 @@ export function FileTree({
   loading = false,
   error,
   empty,
-  ariaLabel = "Files",
+  ariaLabel = t("commonResidual.fileTree.files", { defaultValue: "Files" }),
 }: FileTreeProps) {
   const effectiveCheckedFiles = checkedFiles ?? new Set<string>();
   const visibleNodes = useMemo(
@@ -364,13 +365,13 @@ export function FileTree({
                 statusBadge.error ?? statusBadgeDefault,
               )}
             >
-              error
+              {t("commonResidual.fileTree.error", { defaultValue: "error" })}
             </Badge>
             <span className="min-w-0 text-destructive">{error.message}</span>
           </div>
           {error.retry && (
             <Button type="button" size="xs" variant="outline" onClick={error.retry}>
-              Retry
+              {t("commonResidual.fileTree.retry", { defaultValue: "Retry" })}
             </Button>
           )}
         </div>
@@ -382,9 +383,9 @@ export function FileTree({
     return (
       <div aria-label={ariaLabel} role="tree" className="p-3">
         <div className="rounded-md border border-dashed border-border px-4 py-8 text-center">
-          <div className="text-sm font-medium">{empty?.title ?? "No files"}</div>
+          <div className="text-sm font-medium">{empty?.title ?? t("commonResidual.fileTree.noFiles", { defaultValue: "No files" })}</div>
           <div className="mt-1 text-xs text-muted-foreground">
-            {empty?.description ?? "Files will appear here when they are available."}
+            {empty?.description ?? t("commonResidual.fileTree.emptyDescription", { defaultValue: "Files will appear here when they are available." })}
           </div>
         </div>
       </div>
@@ -484,7 +485,9 @@ export function FileTree({
                   event.stopPropagation();
                   onToggleDir(node.path);
                 }}
-                aria-label={expanded ? `Collapse ${node.name}` : `Expand ${node.name}`}
+                aria-label={expanded
+                  ? t("commonResidual.fileTree.collapse", { name: node.name, defaultValue: `Collapse ${node.name}` })
+                  : t("commonResidual.fileTree.expand", { name: node.name, defaultValue: `Expand ${node.name}` })}
               >
                 {expanded ? (
                   <ChevronDown className="h-3.5 w-3.5" />

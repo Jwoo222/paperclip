@@ -437,7 +437,7 @@ export function AgentActionButtons({
               }}
             >
               <Trash2 className="h-3 w-3" />
-              Terminate
+              {t("commonResidual.agentActions.terminate", { defaultValue: "Terminate" })}
             </button>
           )}
         </PopoverContent>

@@ -1,0 +1,95 @@
+{
+  "commonResidual": {
+    "filters": {
+      "clearAll": "Clear all"
+    },
+    "gallery": {
+      "download": "Download",
+      "downloadFile": "Download {{filename}}",
+      "close": "Close",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "fileTree": {
+      "fields": {
+        "name": "Name",
+        "title": "Title",
+        "kind": "Kind",
+        "reportsTo": "Reports to",
+        "skills": "Skills",
+        "status": "Status",
+        "description": "Description",
+        "priority": "Priority",
+        "responsible": "Responsible",
+        "project": "Project",
+        "recurring": "Recurring",
+        "targetDate": "Target date"
+      },
+      "files": "Files",
+      "error": "error",
+      "retry": "Retry",
+      "noFiles": "No files",
+      "emptyDescription": "Files will appear here when they are available.",
+      "collapse": "Collapse {{name}}",
+      "expand": "Expand {{name}}"
+    },
+    "participants": {
+      "user": "User",
+      "reviewers": "Reviewers",
+      "approvers": "Approvers",
+      "searchReviewers": "Search reviewers...",
+      "searchApprovers": "Search approvers...",
+      "noReviewers": "No reviewers",
+      "noApprovers": "No approvers",
+      "assignToMe": "Assign to me",
+      "requester": "Requester"
+    },
+    "attention": {
+      "loadingDecision": "Loading decision…",
+      "unavailableDecision": "This decision is no longer available — it may have been resolved elsewhere."
+    },
+    "agentActions": {
+      "terminate": "Terminate"
+    },
+    "costs": {
+      "input": "in",
+      "output": "out",
+      "providerCountOne": "{{count}} provider",
+      "providerCountMany": "{{count}} providers",
+      "modelCountOne": "{{count}} model",
+      "modelCountMany": "{{count}} models",
+      "periodSpend": "Period spend",
+      "allocationPercent": "{{percent}}% of allocation",
+      "meteredRunOne": "{{count}} metered run",
+      "meteredRunMany": "{{count}} metered runs",
+      "subscriptionRunOne": "{{count}} subscription run",
+      "subscriptionRunMany": "{{count}} subscription runs",
+      "thisWeek": "{{amount}} this week",
+      "billingTypes": "Billing types",
+      "upstreamProviders": "Upstream providers",
+      "tokens": "{{count}} tok"
+    },
+    "subscriptions": {
+      "resets": "Resets {{date}}",
+      "anthropicTitle": "Anthropic subscription",
+      "claudeDescription": "Live Claude quota windows.",
+      "codexTitle": "Codex subscription",
+      "codexDescription": "Live Codex quota windows.",
+      "accountWindows": "Account windows",
+      "modelWindows": "Model windows",
+      "percentUsed": "{{percent}}% used"
+    },
+    "output": {
+      "browseFile": "Browse {{filename}} in gallery",
+      "openFile": "Open {{filename}}",
+      "metadataUnavailable": "Output metadata is unavailable — this file can’t be played or downloaded here.",
+      "primary": "Primary",
+      "browse": "Browse",
+      "open": "Open",
+      "downloadFile": "Download {{filename}}",
+      "download": "Download",
+      "fileDetailsUnavailable": "File details unavailable",
+      "openInNewTab": "Open in new tab"
+    }
+  }
+}

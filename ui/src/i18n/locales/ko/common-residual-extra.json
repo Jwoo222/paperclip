@@ -1,0 +1,95 @@
+{
+  "commonResidual": {
+    "filters": {
+      "clearAll": "모두 지우기"
+    },
+    "gallery": {
+      "download": "다운로드",
+      "downloadFile": "{{filename}} 다운로드",
+      "close": "닫기",
+      "previous": "이전",
+      "next": "다음"
+    },
+    "fileTree": {
+      "fields": {
+        "name": "이름",
+        "title": "제목",
+        "kind": "종류",
+        "reportsTo": "보고 대상",
+        "skills": "스킬",
+        "status": "상태",
+        "description": "설명",
+        "priority": "우선순위",
+        "responsible": "담당자",
+        "project": "프로젝트",
+        "recurring": "반복",
+        "targetDate": "목표일"
+      },
+      "files": "파일",
+      "error": "오류",
+      "retry": "다시 시도",
+      "noFiles": "파일 없음",
+      "emptyDescription": "사용할 수 있는 파일이 생기면 여기에 표시됩니다.",
+      "collapse": "{{name}} 접기",
+      "expand": "{{name}} 펼치기"
+    },
+    "participants": {
+      "user": "사용자",
+      "reviewers": "검토자",
+      "approvers": "승인자",
+      "searchReviewers": "검토자 검색...",
+      "searchApprovers": "승인자 검색...",
+      "noReviewers": "검토자 없음",
+      "noApprovers": "승인자 없음",
+      "assignToMe": "나에게 할당",
+      "requester": "요청자"
+    },
+    "attention": {
+      "loadingDecision": "결정 내용을 불러오는 중…",
+      "unavailableDecision": "이 결정은 더 이상 처리할 수 없습니다. 다른 곳에서 이미 해결되었을 수 있습니다."
+    },
+    "agentActions": {
+      "terminate": "종료"
+    },
+    "costs": {
+      "input": "입력",
+      "output": "출력",
+      "providerCountOne": "제공자 {{count}}개",
+      "providerCountMany": "제공자 {{count}}개",
+      "modelCountOne": "모델 {{count}}개",
+      "modelCountMany": "모델 {{count}}개",
+      "periodSpend": "기간 지출",
+      "allocationPercent": "할당액의 {{percent}}%",
+      "meteredRunOne": "종량제 실행 {{count}}회",
+      "meteredRunMany": "종량제 실행 {{count}}회",
+      "subscriptionRunOne": "구독 실행 {{count}}회",
+      "subscriptionRunMany": "구독 실행 {{count}}회",
+      "thisWeek": "이번 주 {{amount}}",
+      "billingTypes": "결제 유형",
+      "upstreamProviders": "외부 제공자",
+      "tokens": "{{count}} 토큰"
+    },
+    "subscriptions": {
+      "resets": "{{date}}에 초기화",
+      "anthropicTitle": "Anthropic 구독",
+      "claudeDescription": "Claude 할당량 기간을 실시간으로 표시합니다.",
+      "codexTitle": "Codex 구독",
+      "codexDescription": "Codex 할당량 기간을 실시간으로 표시합니다.",
+      "accountWindows": "계정 할당량",
+      "modelWindows": "모델 할당량",
+      "percentUsed": "{{percent}}% 사용"
+    },
+    "output": {
+      "browseFile": "갤러리에서 {{filename}} 보기",
+      "openFile": "{{filename}} 열기",
+      "metadataUnavailable": "출력 메타데이터를 사용할 수 없어 이 파일을 여기서 재생하거나 다운로드할 수 없습니다.",
+      "primary": "대표",
+      "browse": "둘러보기",
+      "open": "열기",
+      "downloadFile": "{{filename}} 다운로드",
+      "download": "다운로드",
+      "fileDetailsUnavailable": "파일 세부 정보를 사용할 수 없음",
+      "openInNewTab": "새 탭에서 열기"
+    }
+  }
+}
