@@ -23,14 +23,14 @@ import { DraftInput } from "./agent-config-primitives";
 import { InlineEditor } from "./InlineEditor";
 import { EnvironmentVariablesEditor } from "./environment-variables-editor";
 import { Badge } from "@/components/ui/badge";
-import { useTranslation } from "../i18n";
+import { t as translate, useTranslation } from "../i18n";
 
 const PROJECT_STATUSES = [
-  { value: "backlog", label: "Backlog" },
-  { value: "planned", label: "Planned" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
+  { value: "backlog", labelKey: "projectPropertiesResidual.statuses.backlog", defaultLabel: "Backlog" },
+  { value: "planned", labelKey: "projectPropertiesResidual.statuses.planned", defaultLabel: "Planned" },
+  { value: "in_progress", labelKey: "projectPropertiesResidual.statuses.inProgress", defaultLabel: "In Progress" },
+  { value: "completed", labelKey: "projectPropertiesResidual.statuses.completed", defaultLabel: "Completed" },
+  { value: "cancelled", labelKey: "projectPropertiesResidual.statuses.cancelled", defaultLabel: "Cancelled" },
 ];
 
 interface ProjectPropertiesProps {
@@ -62,23 +62,31 @@ export type ProjectConfigFieldKey =
 
 const SHARED_WORKSPACE_CONCURRENCY_OPTIONS: {
   value: SharedWorkspaceConcurrency;
-  label: string;
-  help: string;
+  labelKey: string;
+  defaultLabel: string;
+  helpKey: string;
+  defaultHelp: string;
 }[] = [
   {
     value: "auto",
-    label: "Auto",
-    help: "Concurrent runs on local/SSH runners; runs take turns in cloud sandboxes.",
+    labelKey: "projectPropertiesResidual.concurrency.auto",
+    defaultLabel: "Auto",
+    helpKey: "projectPropertiesResidual.concurrency.autoHelp",
+    defaultHelp: "Concurrent runs on local/SSH runners; runs take turns in cloud sandboxes.",
   },
   {
     value: "serialize",
-    label: "Serialize",
-    help: "Runs always take turns in the shared project workspace.",
+    labelKey: "projectPropertiesResidual.concurrency.serialize",
+    defaultLabel: "Serialize",
+    helpKey: "projectPropertiesResidual.concurrency.serializeHelp",
+    defaultHelp: "Runs always take turns in the shared project workspace.",
   },
   {
     value: "allow",
-    label: "Allow",
-    help: "Runs never wait for the workspace; concurrent edits are possible.",
+    labelKey: "projectPropertiesResidual.concurrency.allow",
+    defaultLabel: "Allow",
+    helpKey: "projectPropertiesResidual.concurrency.allowHelp",
+    defaultHelp: "Runs never wait for the workspace; concurrent edits are possible.",
   },
 ];
 
@@ -87,7 +95,7 @@ function SaveIndicator({ state }: { state: ProjectFieldSaveState }) {
     return (
       <span className="inline-flex items-center gap-1 text-(length:--text-micro) text-muted-foreground">
         <Loader2 className="h-3 w-3 animate-spin" />
-        Saving
+        {translate("projectPropertiesResidual.saveState.saving", { defaultValue: "Saving" })}
       </span>
     );
   }
@@ -95,7 +103,7 @@ function SaveIndicator({ state }: { state: ProjectFieldSaveState }) {
     return (
       <span className="inline-flex items-center gap-1 text-(length:--text-micro) text-green-600 dark:text-green-400">
         <Check className="h-3 w-3" />
-        Saved
+        {translate("projectPropertiesResidual.saveState.saved", { defaultValue: "Saved" })}
       </span>
     );
   }
@@ -103,7 +111,7 @@ function SaveIndicator({ state }: { state: ProjectFieldSaveState }) {
     return (
       <span className="inline-flex items-center gap-1 text-(length:--text-micro) text-destructive">
         <AlertCircle className="h-3 w-3" />
-        Failed
+        {translate("projectPropertiesResidual.saveState.failed", { defaultValue: "Failed" })}
       </span>
     );
   }
@@ -149,6 +157,7 @@ function PropertyRow({
 function ProjectStatusPicker({ status, onChange }: { status: string; onChange: (status: string) => void }) {
   const [open, setOpen] = useState(false);
   const colorClass = statusBadge[status] ?? statusBadgeDefault;
+  const selectedStatus = PROJECT_STATUSES.find((item) => item.value === status);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -159,7 +168,9 @@ function ProjectStatusPicker({ status, onChange }: { status: string; onChange: (
             colorClass,
           )}
         >
-          {status.replace("_", " ")}
+          {selectedStatus
+            ? translate(selectedStatus.labelKey, { defaultValue: selectedStatus.defaultLabel })
+            : status.replace("_", " ")}
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-40 p-1" align="start">
@@ -174,7 +185,7 @@ function ProjectStatusPicker({ status, onChange }: { status: string; onChange: (
               setOpen(false);
             }}
           >
-            {s.label}
+            {translate(s.labelKey, { defaultValue: s.defaultLabel })}
           </Button>
         ))}
       </PopoverContent>
@@ -193,24 +204,27 @@ function ArchiveDangerZone({
 }) {
   const [confirming, setConfirming] = useState(false);
   const isArchive = !project.archivedAt;
-  const action = isArchive ? "Archive" : "Unarchive";
 
   return (
     <div className="space-y-3 rounded-md border border-destructive/40 bg-destructive/5 px-4 py-4">
       <p className="text-sm text-muted-foreground">
         {isArchive
-          ? "Archive this project to hide it from the sidebar and project selectors."
-          : "Unarchive this project to restore it in the sidebar and project selectors."}
+          ? translate("projectPropertiesResidual.archive.archiveDescription", { defaultValue: "Archive this project to hide it from the sidebar and project selectors." })
+          : translate("projectPropertiesResidual.archive.unarchiveDescription", { defaultValue: "Unarchive this project to restore it in the sidebar and project selectors." })}
       </p>
       {archivePending ? (
         <Button size="sm" variant="destructive" disabled>
           <Loader2 className="h-3 w-3 animate-spin mr-1" />
-          {isArchive ? "Archiving..." : "Unarchiving..."}
+          {isArchive
+            ? translate("projectPropertiesResidual.archive.archiving", { defaultValue: "Archiving..." })
+            : translate("projectPropertiesResidual.archive.unarchiving", { defaultValue: "Unarchiving..." })}
         </Button>
       ) : confirming ? (
         <div className="flex items-center gap-2">
           <span className="text-sm text-destructive font-medium">
-            {action} &ldquo;{project.name}&rdquo;?
+            {isArchive
+              ? translate("projectPropertiesResidual.archive.archiveQuestion", { name: project.name, defaultValue: `Archive “${project.name}”?` })
+              : translate("projectPropertiesResidual.archive.unarchiveQuestion", { name: project.name, defaultValue: `Unarchive “${project.name}”?` })}
           </span>
           <Button
             size="sm"
@@ -220,14 +234,14 @@ function ArchiveDangerZone({
               onArchive(isArchive);
             }}
           >
-            Confirm
+            {translate("projectPropertiesResidual.archive.confirm", { defaultValue: "Confirm" })}
           </Button>
           <Button
             size="sm"
             variant="outline"
             onClick={() => setConfirming(false)}
           >
-            Cancel
+            {translate("projectPropertiesResidual.archive.cancel", { defaultValue: "Cancel" })}
           </Button>
         </div>
       ) : (
@@ -237,9 +251,9 @@ function ArchiveDangerZone({
           onClick={() => setConfirming(true)}
         >
           {isArchive ? (
-            <><Archive className="h-3 w-3 mr-1" />{action} project</>
+            <><Archive className="h-3 w-3 mr-1" />{translate("projectPropertiesResidual.archive.archiveProject", { defaultValue: "Archive project" })}</>
           ) : (
-            <><ArchiveRestore className="h-3 w-3 mr-1" />{action} project</>
+            <><ArchiveRestore className="h-3 w-3 mr-1" />{translate("projectPropertiesResidual.archive.unarchiveProject", { defaultValue: "Unarchive project" })}</>
           )}
         </Button>
       )}
@@ -293,7 +307,9 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
   });
   const createSecret = useMutation({
     mutationFn: (input: { name: string; value: string }) => {
-      if (!selectedCompanyId) throw new Error("Select a company to create secrets");
+      if (!selectedCompanyId) {
+        throw new Error(t("projectPropertiesResidual.errors.selectCompanyForSecrets", { defaultValue: "Select a company to create secrets" }));
+      }
       return secretsApi.create(selectedCompanyId, input);
     },
     onSuccess: () => {
@@ -333,6 +349,9 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
   // Absent/unset round-trips as "auto" — we only write a value once the user picks one.
   const executionWorkspaceSharedConcurrency: SharedWorkspaceConcurrency =
     executionWorkspacePolicy?.sharedWorkspaceConcurrency ?? "auto";
+  const selectedConcurrencyOption = SHARED_WORKSPACE_CONCURRENCY_OPTIONS.find(
+    (option) => option.value === executionWorkspaceSharedConcurrency,
+  );
   const executionWorkspaceEnvironmentId = executionWorkspacePolicy?.environmentId ?? "";
   const executionWorkspaceStrategy = executionWorkspacePolicy?.workspaceStrategy ?? {
     type: "git_worktree",
@@ -491,7 +510,7 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
       return;
     }
     if (!isAbsolutePath(cwd)) {
-      setWorkspaceError("Local folder must be a full absolute path.");
+      setWorkspaceError(t("projectPropertiesResidual.errors.absoluteLocalPath", { defaultValue: "Local folder must be a full absolute path." }));
       return;
     }
     setWorkspaceError(null);
@@ -506,7 +525,7 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
       return;
     }
     if (!looksLikeRepoUrl(repoUrl)) {
-      setWorkspaceError("Repo must use a valid GitHub or GitHub Enterprise repo URL.");
+      setWorkspaceError(t("projectPropertiesResidual.errors.validRepoUrl", { defaultValue: "Repo must use a valid GitHub or GitHub Enterprise repo URL." }));
       return;
     }
     setWorkspaceError(null);
@@ -516,8 +535,8 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
   const clearLocalWorkspace = () => {
     const confirmed = window.confirm(
       codebase.repoUrl
-        ? "Clear local folder from this workspace?"
-        : "Delete this workspace local folder?",
+        ? t("projectPropertiesResidual.confirm.clearLocalFolder", { defaultValue: "Clear local folder from this workspace?" })
+        : t("projectPropertiesResidual.confirm.deleteLocalFolder", { defaultValue: "Delete this workspace local folder?" }),
     );
     if (!confirmed) return;
     persistCodebase({ cwd: null });
@@ -527,8 +546,8 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
     const hasLocalFolder = Boolean(codebase.localFolder);
     const confirmed = window.confirm(
       hasLocalFolder
-        ? "Clear repo from this workspace?"
-        : "Delete this workspace repo?",
+        ? t("projectPropertiesResidual.confirm.clearRepo", { defaultValue: "Clear repo from this workspace?" })
+        : t("projectPropertiesResidual.confirm.deleteRepo", { defaultValue: "Delete this workspace repo?" }),
     );
     if (!confirmed) return;
     if (primaryCodebaseWorkspace && hasLocalFolder) {
@@ -544,21 +563,21 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
   return (
     <div>
       <div className="space-y-1 pb-4">
-        <PropertyRow label={<FieldLabel label="Name" state={fieldState("name")} />}>
+        <PropertyRow label={<FieldLabel label={t("projectPropertiesResidual.fields.name", { defaultValue: "Name" })} state={fieldState("name")} />}>
           {onUpdate || onFieldUpdate ? (
             <DraftInput
               value={project.name}
               onCommit={(name) => commitField("name", { name })}
               immediate
               className="w-full rounded border border-border bg-transparent px-2 py-1 text-sm outline-none"
-              placeholder="Project name"
+              placeholder={t("projectPropertiesResidual.fields.projectName", { defaultValue: "Project name" })}
             />
           ) : (
             <span className="text-sm">{project.name}</span>
           )}
         </PropertyRow>
         <PropertyRow
-          label={<FieldLabel label="Description" state={fieldState("description")} />}
+          label={<FieldLabel label={t("projectPropertiesResidual.fields.description", { defaultValue: "Description" })} state={fieldState("description")} />}
           alignStart
           valueClassName="space-y-0.5"
         >
@@ -569,16 +588,16 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
               nullable
               as="p"
               className="text-sm text-muted-foreground"
-              placeholder="Add a description..."
+              placeholder={t("projectPropertiesResidual.fields.addDescription", { defaultValue: "Add a description..." })}
               multiline
             />
           ) : (
             <p className="text-sm text-muted-foreground">
-              {project.description?.trim() || "No description"}
+              {project.description?.trim() || t("projectPropertiesResidual.fields.noDescription", { defaultValue: "No description" })}
             </p>
           )}
         </PropertyRow>
-        <PropertyRow label={<FieldLabel label="Status" state={fieldState("status")} />}>
+        <PropertyRow label={<FieldLabel label={t("projectPropertiesResidual.fields.status", { defaultValue: "Status" })} state={fieldState("status")} />}>
           {onUpdate || onFieldUpdate ? (
             <ProjectStatusPicker
               status={project.status}
@@ -589,12 +608,12 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
           )}
         </PropertyRow>
         {project.leadAgentId && (
-          <PropertyRow label="Lead">
+          <PropertyRow label={t("projectPropertiesResidual.fields.lead", { defaultValue: "Lead" })}>
             <span className="text-sm font-mono">{project.leadAgentId.slice(0, 8)}</span>
           </PropertyRow>
         )}
         <PropertyRow
-          label={<FieldLabel label="Goals" state={fieldState("goals")} />}
+          label={<FieldLabel label={t("projectPropertiesResidual.fields.goals", { defaultValue: "Goals" })} state={fieldState("goals")} />}
           alignStart
           valueClassName="space-y-2"
         >
@@ -613,7 +632,7 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
                       className="text-muted-foreground hover:text-foreground"
                       type="button"
                       onClick={() => removeGoal(goal.id)}
-                      aria-label={`Remove goal ${goal.title}`}
+                      aria-label={t("projectPropertiesResidual.fields.removeGoal", { name: goal.title, defaultValue: `Remove goal ${goal.title}` })}
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -632,13 +651,13 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
                   disabled={availableGoals.length === 0}
                 >
                   <Plus className="h-3 w-3 mr-1" />
-                  Goal
+                  {t("projectPropertiesResidual.fields.goal", { defaultValue: "Goal" })}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-56 p-1" align="start">
                 {availableGoals.length === 0 ? (
                   <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                    All goals linked.
+                    {t("projectPropertiesResidual.fields.allGoalsLinked", { defaultValue: "All goals linked." })}
                   </div>
                 ) : (
                   availableGoals.map((goal) => (
@@ -656,7 +675,7 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
           )}
         </PropertyRow>
         <PropertyRow
-          label={<FieldLabel label="Env" state={fieldState("env")} />}
+          label={<FieldLabel label={t("projectPropertiesResidual.fields.env", { defaultValue: "Env" })} state={fieldState("env")} />}
           alignStart
           valueClassName="space-y-2"
         >
@@ -672,18 +691,18 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
               onChange={(env) => commitField("env", { env: env ?? null })}
             />
             <p className="text-(length:--text-micro) text-muted-foreground">
-              Applied to all runs for tasks in this project. Project values override agent env on key conflicts.
+              {t("projectPropertiesResidual.fields.envHelp", { defaultValue: "Applied to all runs for tasks in this project. Project values override agent env on key conflicts." })}
             </p>
           </div>
         </PropertyRow>
-        <PropertyRow label={<FieldLabel label="Created" state="idle" />}>
+        <PropertyRow label={<FieldLabel label={t("projectPropertiesResidual.fields.created", { defaultValue: "Created" })} state="idle" />}>
           <span className="text-sm">{formatDate(project.createdAt)}</span>
         </PropertyRow>
-        <PropertyRow label={<FieldLabel label="Updated" state="idle" />}>
+        <PropertyRow label={<FieldLabel label={t("projectPropertiesResidual.fields.updated", { defaultValue: "Updated" })} state="idle" />}>
           <span className="text-sm">{formatDate(project.updatedAt)}</span>
         </PropertyRow>
         {project.targetDate && (
-          <PropertyRow label={<FieldLabel label="Target Date" state="idle" />}>
+          <PropertyRow label={<FieldLabel label={t("projectPropertiesResidual.fields.targetDate", { defaultValue: "Target Date" })} state="idle" />}>
             <span className="text-sm">{formatDate(project.targetDate)}</span>
           </PropertyRow>
         )}
@@ -1045,21 +1064,21 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
                         >
                           {SHARED_WORKSPACE_CONCURRENCY_OPTIONS.map((option) => (
                             <option key={option.value} value={option.value}>
-                              {option.label}
+                              {t(option.labelKey, { defaultValue: option.defaultLabel })}
                             </option>
                           ))}
                         </select>
                       ) : (
                         <div className="text-xs">
-                          {SHARED_WORKSPACE_CONCURRENCY_OPTIONS.find(
-                            (option) => option.value === executionWorkspaceSharedConcurrency,
-                          )?.label}
+                          {selectedConcurrencyOption
+                            ? t(selectedConcurrencyOption.labelKey, { defaultValue: selectedConcurrencyOption.defaultLabel })
+                            : null}
                         </div>
                       )}
                       <p className="text-(length:--text-micro) text-muted-foreground">
-                        {SHARED_WORKSPACE_CONCURRENCY_OPTIONS.find(
-                          (option) => option.value === executionWorkspaceSharedConcurrency,
-                        )?.help}
+                        {selectedConcurrencyOption
+                          ? t(selectedConcurrencyOption.helpKey, { defaultValue: selectedConcurrencyOption.defaultHelp })
+                          : null}
                       </p>
                     </div>
 
@@ -1274,7 +1293,7 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
           <Separator className="my-4" />
           <div className="space-y-4 py-4">
             <div className="text-xs font-medium text-destructive uppercase tracking-wide">
-              Danger Zone
+              {t("projectPropertiesResidual.dangerZone", { defaultValue: "Danger Zone" })}
             </div>
             <ArchiveDangerZone
               project={project}

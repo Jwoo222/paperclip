@@ -1,0 +1,66 @@
+{
+  "projectPropertiesResidual": {
+    "statuses": {
+      "backlog": "Backlog",
+      "planned": "Planned",
+      "inProgress": "In Progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "concurrency": {
+      "auto": "Auto",
+      "autoHelp": "Concurrent runs on local/SSH runners; runs take turns in cloud sandboxes.",
+      "serialize": "Serialize",
+      "serializeHelp": "Runs always take turns in the shared project workspace.",
+      "allow": "Allow",
+      "allowHelp": "Runs never wait for the workspace; concurrent edits are possible."
+    },
+    "saveState": {
+      "saving": "Saving",
+      "saved": "Saved",
+      "failed": "Failed"
+    },
+    "archive": {
+      "archiveDescription": "Archive this project to hide it from the sidebar and project selectors.",
+      "unarchiveDescription": "Unarchive this project to restore it in the sidebar and project selectors.",
+      "archiving": "Archiving...",
+      "unarchiving": "Unarchiving...",
+      "archiveQuestion": "Archive “{{name}}”?",
+      "unarchiveQuestion": "Unarchive “{{name}}”?",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "archiveProject": "Archive project",
+      "unarchiveProject": "Unarchive project"
+    },
+    "errors": {
+      "selectCompanyForSecrets": "Select a company to create secrets",
+      "absoluteLocalPath": "Local folder must be a full absolute path.",
+      "validRepoUrl": "Repo must use a valid GitHub or GitHub Enterprise repo URL."
+    },
+    "confirm": {
+      "clearLocalFolder": "Clear local folder from this workspace?",
+      "deleteLocalFolder": "Delete this workspace local folder?",
+      "clearRepo": "Clear repo from this workspace?",
+      "deleteRepo": "Delete this workspace repo?"
+    },
+    "fields": {
+      "name": "Name",
+      "projectName": "Project name",
+      "description": "Description",
+      "addDescription": "Add a description...",
+      "noDescription": "No description",
+      "status": "Status",
+      "lead": "Lead",
+      "goals": "Goals",
+      "removeGoal": "Remove goal {{name}}",
+      "goal": "Goal",
+      "allGoalsLinked": "All goals linked.",
+      "env": "Env",
+      "envHelp": "Applied to all runs for tasks in this project. Project values override agent env on key conflicts.",
+      "created": "Created",
+      "updated": "Updated",
+      "targetDate": "Target Date"
+    },
+    "dangerZone": "Danger Zone"
+  }
+}
