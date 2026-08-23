@@ -294,9 +294,9 @@ function SetupTab({
       <div className="space-y-6">
         <section className="space-y-3">
           <div>
-            <h2 className="text-sm font-bold text-foreground">Already connected to {applicationName}</h2>
+            <h2 className="text-sm font-bold text-foreground">{t("appsResidualRound3.alreadyConnected", { name: applicationName })}</h2>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              Open a connection to edit it, or add another account.
+              {t("appsResidualRound3.openConnection")}
             </p>
           </div>
           <div className="overflow-hidden rounded-lg border border-border">

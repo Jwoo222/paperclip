@@ -107,9 +107,9 @@ function summaryCount(label: string, n: number): string {
 
 function accessSummaryLine(summary: ToolConnectionAccessSummary): string {
   return [
-    summaryCount("Allowed for", summary.allowedCount),
-    summaryCount("Ask first for", summary.askFirstCount),
-    summaryCount("Off for", summary.offCount),
+    summaryCount(t("appsResidualRound3.allowedFor"), summary.allowedCount),
+    summaryCount(t("appsResidualRound3.askFirstFor"), summary.askFirstCount),
+    summaryCount(t("appsResidualRound3.offForCount"), summary.offCount),
   ].join(" · ");
 }
 
@@ -815,7 +815,7 @@ function ActionTester({
         <Button onClick={onRun} disabled={running} size="sm">
           {running ? (
             <>
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Running…
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("appsResidualRound3.running")}
             </>
           ) : (
             <>
@@ -824,7 +824,7 @@ function ActionTester({
           )}
         </Button>
         <Button onClick={onReset} disabled={running} size="sm" variant="ghost">
-          Reset
+          {t("appsResidualRound3.reset")}
         </Button>
       </div>
 
@@ -875,7 +875,7 @@ function RunningCard({
       <div className="mt-3 flex items-center justify-between">
         <span className="text-xs text-muted-foreground">{t("appDetail.test.startedAgo", { time: seconds(elapsedMs) })}</span>
         <Button onClick={onCancel} size="sm" variant="outline">
-          Cancel
+          {t("appsResidualRound3.cancel")}
         </Button>
       </div>
     </div>
@@ -1000,7 +1000,7 @@ function AllowedResult({
       </div>
       <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
         <Clock className="h-3 w-3" />
-        Ran as {outcome.agentName} · {seconds(outcome.durationMs)} · {relTime(outcome.ranAt)}
+        {t("appsResidualRound3.runningAs", { agent: outcome.agentName, duration: seconds(outcome.durationMs), time: relTime(outcome.ranAt) })}
       </p>
 
       {!isEmptyResult(value) && (
@@ -1015,9 +1015,9 @@ function AllowedResult({
       <RawResponseDisclosure value={value} />
 
       <p className="mt-3 text-xs text-muted-foreground">
-        This call is in the{" "}
+        {t("appsResidualRound3.callInActivity")} {" "}
         <Link className="text-primary hover:underline" to={appTabHref(connectionId, "activity")}>
-          Activity tab
+          {t("appsResidualRound3.activityTab")}
         </Link>
         .
       </p>
@@ -1129,12 +1129,12 @@ function ErrorResult({
       </div>
       <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
         <Clock className="h-3 w-3" />
-        Tried as {outcome.agentName} · {seconds(outcome.durationMs)} · {relTime(outcome.ranAt)}
+        {t("appsResidualRound3.triedAs", { agent: outcome.agentName, duration: seconds(outcome.durationMs), time: relTime(outcome.ranAt) })}
       </p>
       <div className="mt-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("appDetail.test.whatAppSaid", { app: appName })}</p>
         <p className="mt-1 break-words text-sm text-foreground">{error.message}</p>
-        {error.reasonCode && <p className="mt-0.5 text-xs text-muted-foreground">code: {error.reasonCode}</p>}
+        {error.reasonCode && <p className="mt-0.5 text-xs text-muted-foreground">{t("appsResidualRound3.code")} {error.reasonCode}</p>}
       </div>
       <div className="mt-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("appDetail.test.whatToTry")}</p>
@@ -1146,9 +1146,9 @@ function ErrorResult({
       </div>
       <p className="mt-3 text-xs text-muted-foreground">{t("appDetail.test.adjustAndRetry")}</p>
       <p className="mt-1 text-xs text-muted-foreground">
-        Also visible in the{" "}
+        {t("appsResidualRound3.alsoVisibleIn")} {" "}
         <Link className="text-primary hover:underline" to={appTabHref(connectionId, "activity")}>
-          Activity tab
+          {t("appsResidualRound3.activityTab")}
         </Link>
         .
       </p>
@@ -1286,11 +1286,11 @@ function AskFirstResult({
 
       {!settled && (
         <p className="mt-3 text-sm text-foreground">
-          Approve it in the{" "}
+          {t("appsResidualRound3.approveInReview")} {" "}
           <Link className="font-medium text-primary hover:underline" to={appTabHref(connectionId, "review")}>
-            Review tab
+            {t("appsResidualRound3.reviewTab")}
           </Link>{" "}
-          to finish the test. You can also cancel the request.
+          {t("appsResidualRound3.finishTest")}
         </p>
       )}
 
@@ -1342,7 +1342,7 @@ function OffExplanation({
     ? t("appDetail.test.newActionOff")
     : allOff
       ? t("appDetail.test.adminTurnedOff")
-      : `${agent.name}'s access profile sets this action to Off.`;
+      : t("appsResidualRound3.offProfile", { agent: agent.name });
 
   // "Last changed by {Actor} · {relativeTime}" — only the access config carries
   // this; a quarantined action has never been configured, so there's nothing to
@@ -1350,7 +1350,7 @@ function OffExplanation({
   const { lastChangedAt, lastChangedByName } = agent.effectiveAccess;
   const auditHint =
     entry.status !== "quarantined" && lastChangedAt
-      ? `Last changed${lastChangedByName ? ` by ${lastChangedByName}` : ""} · ${relTime(new Date(lastChangedAt))}`
+      ? `${t("appsResidualRound3.lastChanged")}${lastChangedByName ? t("appsResidualRound3.lastChangedBy", { name: lastChangedByName }) : ""} · ${relTime(new Date(lastChangedAt))}`
       : null;
 
   const otherSettings = others.map((a) => ({ name: a.name, decision: decisionOf(a) }));
@@ -1362,14 +1362,14 @@ function OffExplanation({
         <div className="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-3">
           <Ban className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
           <div className="text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">{title} is off for {agent.name}.</p>
+            <p className="font-medium text-foreground">{t("appsResidualRound3.offFor", { title, agent: agent.name })}</p>
             <p className="mt-0.5">{t("appDetail.test.wontRun")}</p>
             <p className="mt-2">
-              Want to test it? Turn it on for {agent.name} in{" "}
+              {t("appsResidualRound3.wantToTest", { agent: agent.name })}{" "}
               <Link className="font-medium text-primary hover:underline" to={appTabHref(connectionId, "permissions")}>
-                Permissions
+                {t("appsResidualRound3.permissions")}
               </Link>{" "}
-              — set it to Allowed or Ask first.
+              {t("appsResidualRound3.setAllowedAskFirst")}
             </p>
           </div>
         </div>

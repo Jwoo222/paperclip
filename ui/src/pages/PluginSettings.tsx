@@ -468,7 +468,7 @@ export function PluginSettings() {
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-1.5">
                     <ActivitySquare className="h-4 w-4" />
-                    Health Status
+                    {t("appsResidualRound3.healthStatus")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>

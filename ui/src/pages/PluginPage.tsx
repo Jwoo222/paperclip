@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { NotFoundPage } from "./NotFound";
+import { useTranslation } from "@/i18n";
 
 /**
  * Company-context plugin page. Renders a plugin's `page` slot at
@@ -23,6 +24,7 @@ import { NotFoundPage } from "./NotFound";
  * @see doc/plugins/PLUGIN_SPEC.md §24.4 — Company-Context Plugin Page
  */
 export function PluginPage() {
+  const { t } = useTranslation();
   const params = useParams<{
     companyPrefix?: string;
     pluginId?: string;
@@ -119,10 +121,10 @@ export function PluginPage() {
       return;
     }
     setBreadcrumbs([
-      { label: "Plugins", href: "/company/settings/instance/plugins" },
+      { label: t("appsResidualRound3.pluginBreadcrumb"), href: "/company/settings/instance/plugins" },
       { label: pageSlot.pluginDisplayName },
     ]);
-  }, [pageSlot, pluginRouteSplat, setBreadcrumbs, routeSidebarActive]);
+  }, [pageSlot, pluginRouteSplat, setBreadcrumbs, routeSidebarActive, t]);
 
   if (!resolvedCompanyId) {
     if (hasInvalidCompanyPrefix) {
@@ -130,13 +132,13 @@ export function PluginPage() {
     }
     return (
       <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">Select a company to view this page.</p>
+        <p className="text-sm text-muted-foreground">{t("appsResidualRound3.selectCompany")}</p>
       </div>
     );
   }
 
   if (!contributions) {
-    return <div className="text-sm text-muted-foreground">Loading…</div>;
+    return <div className="text-sm text-muted-foreground">{t("appsResidualRound3.loading")}</div>;
   }
 
   if (!pluginId && pluginRoutePath) {
@@ -170,7 +172,7 @@ export function PluginPage() {
           <Button variant="ghost" size="sm" asChild>
             <Link to={companyPrefix ? `/${companyPrefix}/dashboard` : "/dashboard"}>
               <ArrowLeft className="h-4 w-4 mr-1" />
-              Back
+              {t("appsResidualRound3.pluginBack")}
             </Link>
           </Button>
         </div>

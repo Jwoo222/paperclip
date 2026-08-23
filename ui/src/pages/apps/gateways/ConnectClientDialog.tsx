@@ -124,7 +124,7 @@ export function ConnectClientDialog({
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {t("appsBrowserGateway.gateway.authenticate")} <code>Authorization: Bearer &lt;token&gt;</code> over streamable HTTP.
+                  {t("appsBrowserGateway.gateway.authenticate")} <code>Authorization: Bearer &lt;token&gt;</code> {t("appsResidualRound3.authenticateOverHttp")}
                 </p>
               </div>
             ) : activeSnippet ? (
@@ -137,7 +137,7 @@ export function ConnectClientDialog({
                     onClick={() => void copyText(configText, `${activeSnippet.label} config`)}
                   >
                     <Copy className="mr-1 h-3.5 w-3.5" />
-                    Copy
+                    {t("appsResidualRound3.copy")}
                   </Button>
                 </div>
                 <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md bg-muted p-3 font-mono text-xs text-muted-foreground">
@@ -166,7 +166,7 @@ export function ConnectClientDialog({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => void copyText(createdToken.token, "Access token")}
+                      onClick={() => void copyText(createdToken.token, t("appsResidualRound3.accessToken"))}
                     >
                       <Copy className="mr-1 h-3.5 w-3.5" />
                       {t("appsBrowserGateway.gateway.copy")}

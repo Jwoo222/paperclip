@@ -525,7 +525,7 @@ export function AppsConnect() {
           subtitle={
             step === "gallery"
               ? t("appsConnect.gallery.subtitle")
-              : `Step ${stepIndex + 1} of ${stepLabels.length}`
+              : t("appsResidualRound3.stepOf", { step: stepIndex + 1, total: stepLabels.length })
           }
           step={step}
           activeIndex={stepIndex}
@@ -1442,7 +1442,7 @@ function KeyStep({
 
         <div className="mt-8 flex items-center justify-between">
           <Button variant="ghost" onClick={onBack} disabled={submitting}>
-            Back
+            {t("appsResidualRound3.back")}
           </Button>
           <Button onClick={onConnect} disabled={submitting || !canConnect}>
             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -1655,7 +1655,7 @@ function ActionsStep({
 
       <div className="flex items-center justify-between pt-1">
         <Button variant="ghost" onClick={onBack}>
-          Back
+          {t("appsResidualRound3.back")}
         </Button>
         <div className="flex items-center gap-3">
           <span className="hidden text-xs text-muted-foreground sm:inline">
@@ -1808,8 +1808,8 @@ export function InstallStep({
       : [...installAgentIds].filter((id) => !accessAgentIds.has(id));
   const canFinish = installMode !== "specific" || installAgentIds.size > 0;
   const extendingLabel = extendingAgentIds.length === 1
-    ? agents.find((agent) => agent.id === extendingAgentIds[0])?.name ?? "1 agent"
-    : `${extendingAgentIds.length} agents`;
+    ? agents.find((agent) => agent.id === extendingAgentIds[0])?.name ?? t("appsResidualRound3.oneAgent")
+    : t("appsResidualRound3.agentsCount", { count: extendingAgentIds.length });
 
   return (
     <div className="mx-auto max-w-xl">

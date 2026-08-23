@@ -559,7 +559,7 @@ export function AuditFeed({
           />
           {hasActiveFilters ? (
             <Button variant="ghost" size="sm" onClick={clearFilters}>
-              Clear filters
+              {t("appsResidualRound3.clearFilters")}
             </Button>
           ) : null}
           <Button
