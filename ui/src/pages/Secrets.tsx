@@ -105,7 +105,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "../lib/utils";
-import { useTranslation } from "@/i18n";
+import { t, useTranslation } from "@/i18n";
 import { copyTextToClipboard } from "../lib/clipboard";
 import { PageTabBar } from "../components/PageTabBar";
 import { AgentSelect } from "../components/AgentMultiSelect";
@@ -150,9 +150,9 @@ function readStoredViewMode(): SecretsViewMode | null {
 
 /** "12 secrets · 3 folders" — folder part omitted when there are no subfolders. */
 function formatSecretPathCounts(secretCount: number, folderCount: number): string {
-  const parts = [`${secretCount} ${secretCount === 1 ? "secret" : "secrets"}`];
+  const parts = [t("secretsMain.counts.secrets", { defaultValue: "{{count}} {{label}}", count: secretCount, label: secretCount === 1 ? "secret" : "secrets" })];
   if (folderCount > 0) {
-    parts.push(`${folderCount} ${folderCount === 1 ? "folder" : "folders"}`);
+    parts.push(t("secretsMain.counts.folders", { defaultValue: "{{count}} {{label}}", count: folderCount, label: folderCount === 1 ? "folder" : "folders" }));
   }
   return parts.join(" · ");
 }
@@ -343,20 +343,22 @@ function normalizeUserSecretKeyForPreview(input: string) {
 
 
 function modeLabel(managedMode: SecretManagedMode) {
-  return managedMode === "paperclip_managed" ? "Paperclip-managed" : "Linked external";
+  return managedMode === "paperclip_managed"
+    ? t("secretsMain.mode.paperclipManaged", { defaultValue: "Paperclip-managed" })
+    : t("secretsMain.mode.linkedExternal", { defaultValue: "Linked external" });
 }
 
 function modeDescription(managedMode: SecretManagedMode, canWriteExternalValue = false) {
   if (managedMode === "paperclip_managed") {
-    return "Paperclip owns create and rotation writes for this provider secret.";
+    return t("secretsMain.mode.paperclipManagedDescription", { defaultValue: "Paperclip owns create and rotation writes for this provider secret." });
   }
   return canWriteExternalValue
-    ? "Paperclip resolves this provider reference and can write new values to it via Update value."
-    : "Paperclip resolves this provider reference but does not rotate the provider value.";
+    ? t("secretsMain.mode.externalWritableDescription", { defaultValue: "Paperclip resolves this provider reference and can write new values to it via Update value." })
+    : t("secretsMain.mode.externalReadOnlyDescription", { defaultValue: "Paperclip resolves this provider reference but does not rotate the provider value." });
 }
 
 function statusLabel(status: SecretStatus) {
-  return status.charAt(0).toUpperCase() + status.slice(1);
+  return t(`secretsMain.status.${status}`, { defaultValue: status.charAt(0).toUpperCase() + status.slice(1) });
 }
 
 function statusDotTone(status: SecretStatus) {
@@ -469,12 +471,12 @@ export function getCreateProviderBlockReason(
   health: SecretProviderHealthResponse | null,
   providerConfig?: CompanySecretProviderConfig | null,
 ) {
-  if (!provider) return "Select a provider.";
+  if (!provider) return t("secretsMain.errors.selectProvider", { defaultValue: "Select a provider." });
   if (mode === "managed" && provider.supportsManagedValues === false) {
-    return `${provider.label} does not support Paperclip-managed secret values.`;
+    return t("secretsMain.errors.providerNoManaged", { defaultValue: "{{provider}} does not support Paperclip-managed secret values.", provider: provider.label });
   }
   if (mode === "external" && provider.supportsExternalReferences === false) {
-    return `${provider.label} does not support linked external references.`;
+    return t("secretsMain.errors.providerNoExternal", { defaultValue: "{{provider}} does not support linked external references.", provider: provider.label });
   }
   const selectedProviderConfigBlockReason = providerConfig?.provider === provider.id
     ? getProviderConfigBlockReason(providerConfig)
@@ -485,15 +487,15 @@ export function getCreateProviderBlockReason(
     if (selectedProviderConfigReady) return null;
     if (selectedProviderConfigBlockReason) return selectedProviderConfigBlockReason;
     const healthEntry = healthEntryForProvider(health, provider.id);
-    const deploymentMessage = `Deployment default ${provider.label} is not configured.`;
-    const nextStep = " Select a ready provider vault or configure the deployment default.";
+    const deploymentMessage = t("secretsMain.errors.deploymentDefaultMissing", { defaultValue: "Deployment default {{provider}} is not configured.", provider: provider.label });
+    const nextStep = ` ${t("secretsMain.errors.selectReadyVault", { defaultValue: "Select a ready provider vault or configure the deployment default." })}`;
     return healthEntry?.message
       ? `${deploymentMessage}${nextStep} ${healthEntry.message}`
       : `${deploymentMessage}${nextStep}`;
   }
   const healthEntry = healthEntryForProvider(health, provider.id);
   if (healthEntry?.status === "error") {
-    return `${provider.label} health check failed: ${healthEntry.message}`;
+    return t("secretsMain.errors.providerHealthFailed", { defaultValue: "{{provider}} health check failed: {{message}}", provider: provider.label, message: healthEntry.message });
   }
   return null;
 }
@@ -509,7 +511,7 @@ function providerHealthText(
     providerConfig?.provider === provider.id &&
     !getProviderConfigBlockReason(providerConfig)
   ) {
-    return `Using selected provider vault. Deployment default ${provider.label} is not configured.`;
+    return t("secretsMain.providerHealth.selectedVault", { defaultValue: "Using selected provider vault. Deployment default {{provider}} is not configured.", provider: provider.label });
   }
   const entry = healthEntryForProvider(health, provider.id);
   if (!entry) return null;
@@ -526,10 +528,10 @@ export function getProviderConfigBlockReason(
   config: CompanySecretProviderConfig | null | undefined,
 ) {
   if (!config) return null;
-  if (config.status === "disabled") return "This provider vault is disabled.";
-  if (config.status === "coming_soon") return "This provider vault is saved as draft metadata only.";
+  if (config.status === "disabled") return t("secretsMain.errors.vaultDisabled", { defaultValue: "This provider vault is disabled." });
+  if (config.status === "coming_soon") return t("secretsMain.errors.vaultDraftOnly", { defaultValue: "This provider vault is saved as draft metadata only." });
   if (config.healthStatus === "error") {
-    return config.healthMessage ?? "This provider vault health check failed.";
+    return config.healthMessage ?? t("secretsMain.errors.vaultHealthFailed", { defaultValue: "This provider vault health check failed." });
   }
   return null;
 }
@@ -586,8 +588,8 @@ export function findCreateProviderReplacement({
 }
 
 function providerVaultLabel(configs: CompanySecretProviderConfig[], id: string | null | undefined) {
-  if (!id) return "Deployment default";
-  return configs.find((config) => config.id === id)?.displayName ?? "Unknown vault";
+  if (!id) return t("secretsMain.vault.deploymentDefault", { defaultValue: "Deployment default" });
+  return configs.find((config) => config.id === id)?.displayName ?? t("secretsMain.vault.unknown", { defaultValue: "Unknown vault" });
 }
 
 function buildProviderVaultConfig(form: ProviderVaultForm): Record<string, unknown> {
@@ -1512,7 +1514,7 @@ export function Secrets() {
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={`Actions for ${name}`}
+            aria-label={t("secretsMain.tooltips.actionsFor", { defaultValue: "Actions for {{name}}", name })}
             onClick={(event) => event.stopPropagation()}
           >
             <MoreHorizontal className="h-4 w-4" />
@@ -1525,12 +1527,12 @@ export function Secrets() {
               else openUserDefinition(row.definition);
             }}
           >
-            <KeyRound className="h-4 w-4" /> View details
+            <KeyRound className="h-4 w-4" /> {t("secretsMain.actions.viewDetails", { defaultValue: "View details" })}
           </DropdownMenuItem>
           {row.kind === "company" ? (
             <>
               <DropdownMenuItem onSelect={() => setUsageDialogSecretId(row.secret.id)}>
-                <Link2 className="h-4 w-4" /> View references ({row.secret.referenceCount ?? 0})
+                <Link2 className="h-4 w-4" /> {t("secretsMain.actions.viewReferences", { defaultValue: "View references ({{count}})", count: row.secret.referenceCount ?? 0 })}
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => openRotateSecret(row.secret)}>
                 <RefreshCw className="h-4 w-4" />
@@ -1547,7 +1549,7 @@ export function Secrets() {
                 }
               >
                 {row.secret.status === "active" ? <Ban className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
-                {row.secret.status === "active" ? "Disable" : "Activate"}
+                {row.secret.status === "active" ? t("secretsMain.actions.disable", { defaultValue: "Disable" }) : t("secretsMain.actions.activate", { defaultValue: "Activate" })}
               </DropdownMenuItem>
               <DropdownMenuItem
                 disabled={statusMutation.isPending}
@@ -1563,11 +1565,11 @@ export function Secrets() {
                 ) : (
                   <Archive className="h-4 w-4" />
                 )}
-                {row.secret.status === "archived" ? "Unarchive" : "Archive"}
+                {row.secret.status === "archived" ? t("secretsMain.actions.unarchive", { defaultValue: "Unarchive" }) : t("secretsMain.actions.archive", { defaultValue: "Archive" })}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive" onSelect={() => setDeleteConfirm(row.secret)}>
-                <Trash2 className="h-4 w-4" /> Delete secret
+                <Trash2 className="h-4 w-4" /> {t("secretsMain.actions.deleteSecret", { defaultValue: "Delete secret" })}
               </DropdownMenuItem>
             </>
           ) : (
@@ -1585,11 +1587,11 @@ export function Secrets() {
               >
                 <KeyRound className="h-4 w-4" />
                 {myUserSecrets.find((entry) => entry.definition.id === row.definition.id)?.secret
-                  ? "Update my value"
-                  : "Set my value"}
+                  ? t("secretsMain.actions.updateMyValue", { defaultValue: "Update my value" })
+                  : t("secretsMain.actions.setMyValue", { defaultValue: "Set my value" })}
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => openEditDefinition(row.definition)}>
-                <Pencil className="h-4 w-4" /> Edit definition
+                <Pencil className="h-4 w-4" /> {t("secretsMain.actions.editDefinition", { defaultValue: "Edit definition" })}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -1606,7 +1608,7 @@ export function Secrets() {
                 ) : (
                   <CheckCircle2 className="h-4 w-4" />
                 )}
-                {row.definition.status === "active" ? "Disable" : "Activate"}
+                {row.definition.status === "active" ? t("secretsMain.actions.disable", { defaultValue: "Disable" }) : t("secretsMain.actions.activate", { defaultValue: "Activate" })}
               </DropdownMenuItem>
               <DropdownMenuItem
                 disabled={definitionStatusMutation.isPending}
@@ -1622,11 +1624,11 @@ export function Secrets() {
                 ) : (
                   <Archive className="h-4 w-4" />
                 )}
-                {row.definition.status === "archived" ? "Unarchive" : "Archive"}
+                {row.definition.status === "archived" ? t("secretsMain.actions.unarchive", { defaultValue: "Unarchive" }) : t("secretsMain.actions.archive", { defaultValue: "Archive" })}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive" onSelect={() => setDefinitionDeleteConfirm(row.definition)}>
-                <Trash2 className="h-4 w-4" /> Delete definition
+                <Trash2 className="h-4 w-4" /> {t("secretsMain.actions.deleteDefinition", { defaultValue: "Delete definition" })}
               </DropdownMenuItem>
             </>
           )}
@@ -1700,7 +1702,7 @@ export function Secrets() {
   }
 
   function renderUpRow(variant: "table" | "card") {
-    const parentLabel = parentFolderPath ? parentFolderPath.split("/").pop()! : "All secrets";
+    const parentLabel = parentFolderPath ? parentFolderPath.split("/").pop()! : t("secretsMain.folder.all", { defaultValue: "All secrets" });
     return (
       <Link
         to={folderLinkTo(parentFolderPath)}
@@ -1713,16 +1715,16 @@ export function Secrets() {
         )}
       >
         <CornerLeftUp className="h-4 w-4 shrink-0" />
-        <span className="truncate">Up to {parentLabel}</span>
+        <span className="truncate">{t("secretsMain.folder.upTo", { defaultValue: "Up to {{name}}", name: parentLabel })}</span>
       </Link>
     );
   }
 
   function renderSecretsBreadcrumb() {
-    const currentName = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : "All secrets";
-    const parentLabel = parentFolderPath ? parentFolderPath.split("/").pop()! : "All secrets";
+    const currentName = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : t("secretsMain.folder.all", { defaultValue: "All secrets" });
+    const parentLabel = parentFolderPath ? parentFolderPath.split("/").pop()! : t("secretsMain.folder.all", { defaultValue: "All secrets" });
     const fullTrail: { name: string; path: string }[] = [
-      { name: "All secrets", path: "" },
+      { name: t("secretsMain.folder.all", { defaultValue: "All secrets" }), path: "" },
       ...breadcrumbs,
     ];
     // Middle-truncate deep paths: root · … · last two.
@@ -1732,7 +1734,7 @@ export function Secrets() {
         : fullTrail;
 
     return (
-      <nav aria-label="Breadcrumb" className="min-w-0">
+      <nav aria-label={t("secretsMain.tooltips.breadcrumb", { defaultValue: "Breadcrumb" })} className="min-w-0">
         {/* Wide: full trail */}
         <ol className="hidden min-w-0 items-center gap-1 text-sm @min-[40rem]:flex">
           {collapsed.map((crumb, index) => {
@@ -1765,7 +1767,7 @@ export function Secrets() {
             <>
               <Link
                 to={folderLinkTo(parentFolderPath)}
-                aria-label="Up one folder"
+                aria-label={t("secretsMain.folder.upOne", { defaultValue: "Up one folder" })}
                 className="shrink-0 text-muted-foreground hover:text-foreground"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -1808,14 +1810,14 @@ export function Secrets() {
       >
         <PageTabBar
           items={[
-            { value: "secrets", label: "Secrets" },
-            { value: "my-secrets", label: "My secrets" },
-            { value: "vaults", label: "Provider vaults" },
+            { value: "secrets", label: t("secretsMain.tabs.secrets", { defaultValue: "Secrets" }) },
+            { value: "my-secrets", label: t("secretsMain.tabs.mySecrets", { defaultValue: "My secrets" }) },
+            { value: "vaults", label: t("secretsMain.tabs.providerVaults", { defaultValue: "Provider vaults" }) },
             {
               value: "proposals",
               label: (
                 <span className="inline-flex items-center gap-1.5">
-                  Proposals
+                  {t("secretsMain.tabs.proposals", { defaultValue: "Proposals" })}
                   {pendingProposalCount > 0 ? (
                     <Badge
                       variant="outline"
@@ -1843,7 +1845,7 @@ export function Secrets() {
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder={t("settingsSecurity.searchSecrets", { defaultValue: "Search by name, key, ref" })}
                 className="pl-7 text-xs sm:text-sm"
-                aria-label={t("settingsSecurity.searchSecrets", { defaultValue: "Search secrets" })}
+                aria-label={t("secretsMain.search.aria", { defaultValue: "Search secrets" })}
                 data-page-search-target="true"
               />
             </div>
@@ -1859,7 +1861,7 @@ export function Secrets() {
             />
             <div
               role="group"
-              aria-label="View mode"
+              aria-label={t("secretsMain.viewMode.label", { defaultValue: "View mode" })}
               className={cn(
                 "inline-flex items-center rounded-md border border-border p-0.5",
                 searching && "opacity-50",
@@ -1899,11 +1901,11 @@ export function Secrets() {
                   setNewFolderError(null);
                 }}
               >
-                <Folder className="mr-1 h-3.5 w-3.5" /> New folder
+                <Folder className="mr-1 h-3.5 w-3.5" /> {t("secretsMain.actions.newFolder", { defaultValue: "New folder" })}
               </Button>
             ) : null}
             <Button onClick={openCreateSecret} size="sm">
-              <Plus className="h-3.5 w-3.5 mr-1" /> New secret
+              <Plus className="h-3.5 w-3.5 mr-1" /> {t("secretsMain.actions.newSecret", { defaultValue: "New secret" })}
             </Button>
           </div>
           {newFolderOpen && showFolderView ? (
@@ -1919,8 +1921,8 @@ export function Secrets() {
                     if (event.key === "Enter") stageNewFolder();
                     if (event.key === "Escape") closeNewFolder();
                   }}
-                  placeholder="Folder name"
-                  aria-label="Folder name"
+                  placeholder={t("secretsMain.folder.name", { defaultValue: "Folder name" })}
+                  aria-label={t("secretsMain.folder.name", { defaultValue: "Folder name" })}
                   aria-invalid={Boolean(newFolderError)}
                   autoFocus
                 />
@@ -1931,17 +1933,17 @@ export function Secrets() {
                 ) : null}
               </div>
               <Button type="button" size="sm" onClick={stageNewFolder}>
-                Create folder
+                {t("secretsMain.actions.createFolder", { defaultValue: "Create folder" })}
               </Button>
               <Button type="button" variant="ghost" size="sm" onClick={closeNewFolder}>
-                Cancel
+                {t("secretsMain.actions.cancel", { defaultValue: "Cancel" })}
               </Button>
             </div>
           ) : null}
           <div className="min-h-0 flex-1 overflow-y-auto">
             {secretsQuery.isError || userDefinitionsQuery.isError ? (
               <div className="text-sm text-destructive flex items-center gap-2 py-4">
-                <AlertCircle className="h-4 w-4" /> Failed to load secrets:{" "}
+                <AlertCircle className="h-4 w-4" /> {t("secretsMain.errors.loadFailed", { defaultValue: "Failed to load secrets:" })}{" "}
                 {((secretsQuery.error ?? userDefinitionsQuery.error) as Error).message}
                 <Button
                   variant="ghost"
@@ -1951,7 +1953,7 @@ export function Secrets() {
                     void userDefinitionsQuery.refetch();
                   }}
                 >
-                  Retry
+                  {t("secretsMain.actions.retry", { defaultValue: "Retry" })}
                 </Button>
               </div>
             ) : unifiedRows.length === 0 &&
@@ -1960,8 +1962,8 @@ export function Secrets() {
               !(showFolderView && folderPath) ? (
               <EmptyState
                 icon={KeyRound}
-                message="No secrets yet. Create a shared company secret or one that each user supplies."
-                action="New secret"
+                message={t("secretsMain.empty.noSecrets", { defaultValue: "No secrets yet. Create a shared company secret or one that each user supplies." })}
+                action={t("secretsMain.actions.newSecret", { defaultValue: "New secret" })}
                 onAction={openCreateSecret}
               />
             ) : (
@@ -1993,21 +1995,21 @@ export function Secrets() {
                   ) : showFolderView && folderPath && activeSecretFilterCount === 0 ? (
                     <EmptyState
                       icon={FolderOpen}
-                      message="No secrets in this folder yet."
-                      action="New secret here"
+                      message={t("secretsMain.empty.noFolderSecrets", { defaultValue: "No secrets in this folder yet." })}
+                      action={t("secretsMain.actions.newSecretHere", { defaultValue: "New secret here" })}
                       onAction={openCreateSecret}
                     />
                   ) : (
                     <EmptyState
                       icon={Search}
-                      message={searching ? "No secrets match your search." : "No secrets match your filters."}
+                      message={searching ? t("secretsMain.empty.noSearchMatch", { defaultValue: "No secrets match your search." }) : t("secretsMain.empty.noFilterMatch", { defaultValue: "No secrets match your filters." })}
                     />
                   )
                 ) : (
                   <>
                 <div
                   role="table"
-                  aria-label="Secrets"
+                  aria-label={t("secretsMain.tabs.secrets", { defaultValue: "Secrets" })}
                   className="hidden min-w-0 @min-[40rem]:block"
                   data-testid="secrets-table-view"
                 >
@@ -2019,7 +2021,7 @@ export function Secrets() {
                     <div role="columnheader" className="font-medium">{t("settingsSecurity.status", { defaultValue: "Status" })}</div>
                     <div role="columnheader" className="font-medium">{t("settingsSecurity.versionCoverage", { defaultValue: "Version / coverage" })}</div>
                     <div role="columnheader" className="font-medium">{t("settingsSecurity.updated", { defaultValue: "Updated" })}</div>
-                    <div role="columnheader" className="sr-only">Actions</div>
+                    <div role="columnheader" className="sr-only">{t("secretsMain.actions.label", { defaultValue: "Actions" })}</div>
                   </div>
                   <div role="rowgroup">
                     {showUpRow ? renderUpRow("table") : null}
@@ -2271,12 +2273,12 @@ export function Secrets() {
                   {rotateActionLabel(selectedSecret)}
                 </Button>
                 <Button variant="outline" size="sm" onClick={copyDetailLink}>
-                  <Link2 className="h-3.5 w-3.5 mr-1" /> Copy link
+                  <Link2 className="h-3.5 w-3.5 mr-1" /> {t("secretsMain.actions.copyLink", { defaultValue: "Copy link" })}
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" aria-label={`More actions for ${selectedSecret.name}`}>
-                      <MoreHorizontal className="mr-1 h-3.5 w-3.5" /> More
+                    <Button variant="outline" size="sm" aria-label={t("secretsMain.tooltips.moreActionsFor", { defaultValue: "More actions for {{name}}", name: selectedSecret.name })}>
+                      <MoreHorizontal className="mr-1 h-3.5 w-3.5" /> {t("secretsMain.actions.more", { defaultValue: "More" })}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-52">
@@ -2294,7 +2296,7 @@ export function Secrets() {
                       ) : (
                         <CheckCircle2 className="h-4 w-4" />
                       )}
-                      {selectedSecret.status === "active" ? "Disable" : "Activate"}
+                      {selectedSecret.status === "active" ? t("secretsMain.actions.disable", { defaultValue: "Disable" }) : t("secretsMain.actions.activate", { defaultValue: "Activate" })}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       disabled={statusMutation.isPending}
@@ -2310,11 +2312,11 @@ export function Secrets() {
                       ) : (
                         <Archive className="h-4 w-4" />
                       )}
-                      {selectedSecret.status === "archived" ? "Unarchive" : "Archive"}
+                      {selectedSecret.status === "archived" ? t("secretsMain.actions.unarchive", { defaultValue: "Unarchive" }) : t("secretsMain.actions.archive", { defaultValue: "Archive" })}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem variant="destructive" onSelect={() => setDeleteConfirm(selectedSecret)}>
-                      <Trash2 className="h-4 w-4" /> Delete secret
+                      <Trash2 className="h-4 w-4" /> {t("secretsMain.actions.deleteSecret", { defaultValue: "Delete secret" })}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -2323,9 +2325,9 @@ export function Secrets() {
                 <div className="border-b border-border px-4">
                   <PageTabBar
                     items={[
-                      { value: "details", label: "Details" },
-                      { value: "usage", label: usageQuery.data ? `Usage (${usageQuery.data.bindings.length})` : "Usage" },
-                      { value: "events", label: "Access events" },
+                      { value: "details", label: t("secretsMain.tabs.details", { defaultValue: "Details" }) },
+                      { value: "usage", label: usageQuery.data ? t("secretsMain.tabs.usageCount", { defaultValue: "Usage ({{count}})", count: usageQuery.data.bindings.length }) : t("secretsMain.tabs.usage", { defaultValue: "Usage" }) },
+                      { value: "events", label: t("secretsMain.tabs.events", { defaultValue: "Access events" }) },
                     ]}
                     align="start"
                     value={secretDetailTab}
@@ -2409,8 +2411,8 @@ export function Secrets() {
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" aria-label={`More actions for ${selectedDefinition.name}`}>
-                      <MoreHorizontal className="mr-1 h-3.5 w-3.5" /> More
+                    <Button variant="outline" size="sm" aria-label={t("secretsMain.tooltips.moreActionsFor", { defaultValue: "More actions for {{name}}", name: selectedDefinition.name })}>
+                      <MoreHorizontal className="mr-1 h-3.5 w-3.5" /> {t("secretsMain.actions.more", { defaultValue: "More" })}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-52">
@@ -2432,7 +2434,7 @@ export function Secrets() {
                       ) : (
                         <CheckCircle2 className="h-4 w-4" />
                       )}
-                      {selectedDefinition.status === "active" ? "Disable" : "Activate"}
+                      {selectedDefinition.status === "active" ? t("secretsMain.actions.disable", { defaultValue: "Disable" }) : t("secretsMain.actions.activate", { defaultValue: "Activate" })}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       disabled={definitionStatusMutation.isPending}
@@ -2448,11 +2450,11 @@ export function Secrets() {
                       ) : (
                         <Archive className="h-4 w-4" />
                       )}
-                      {selectedDefinition.status === "archived" ? "Unarchive" : "Archive"}
+                      {selectedDefinition.status === "archived" ? t("secretsMain.actions.unarchive", { defaultValue: "Unarchive" }) : t("secretsMain.actions.archive", { defaultValue: "Archive" })}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem variant="destructive" onSelect={() => setDefinitionDeleteConfirm(selectedDefinition)}>
-                      <Trash2 className="h-4 w-4" /> Delete definition
+                      <Trash2 className="h-4 w-4" /> {t("secretsMain.actions.deleteDefinition", { defaultValue: "Delete definition" })}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -2461,10 +2463,10 @@ export function Secrets() {
                 <div className="border-b border-border px-4">
                   <PageTabBar
                     items={[
-                      { value: "details", label: "Details" },
-                      { value: "coverage", label: "Coverage" },
-                      { value: "usage", label: "Usage" },
-                      { value: "events", label: "Access events" },
+                      { value: "details", label: t("secretsMain.tabs.details", { defaultValue: "Details" }) },
+                      { value: "coverage", label: t("secretsMain.tabs.coverage", { defaultValue: "Coverage" }) },
+                      { value: "usage", label: t("secretsMain.tabs.usage", { defaultValue: "Usage" }) },
+                      { value: "events", label: t("secretsMain.tabs.events", { defaultValue: "Access events" }) },
                     ]}
                     align="start"
                     value={secretDetailTab}
@@ -2557,7 +2559,7 @@ export function Secrets() {
       >
         <DialogContent className="max-h-(--sz-calc-18) overflow-y-auto p-4 sm:max-w-lg sm:p-6">
           <DialogHeader>
-            <DialogTitle>{editingDefinition ? "Edit user-provided secret" : "Create secret"}</DialogTitle>
+            <DialogTitle>{editingDefinition ? t("secretsMain.dialog.editUserSecret", { defaultValue: "Edit user-provided secret" }) : t("secretsMain.dialog.createSecret", { defaultValue: "Create secret" })}</DialogTitle>
             <DialogDescription>
               Choose who provides the value. Shared fields keep their values when you switch modes.
             </DialogDescription>
@@ -2565,7 +2567,7 @@ export function Secrets() {
           <div className="space-y-4">
             {!editingDefinition ? (
               <div className="space-y-1.5">
-                <p className="text-xs font-medium text-foreground">Who provides the value?</p>
+                <p className="text-xs font-medium text-foreground">{t("secretsMain.dialog.whoProvides", { defaultValue: "Who provides the value?" })}</p>
                 <Tabs
                   value={secretValueProvider}
                   onValueChange={(value) => {
@@ -2583,8 +2585,8 @@ export function Secrets() {
                   }}
                 >
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="company">Company</TabsTrigger>
-                    <TabsTrigger value="user">Each user</TabsTrigger>
+                    <TabsTrigger value="company">{t("secretsMain.labels.company", { defaultValue: "Company" })}</TabsTrigger>
+                    <TabsTrigger value="user">{t("secretsMain.labels.eachUser", { defaultValue: "Each user" })}</TabsTrigger>
                   </TabsList>
                 </Tabs>
                 <p className="text-(length:--text-micro) text-muted-foreground">
@@ -2596,14 +2598,14 @@ export function Secrets() {
             {secretValueProvider === "company" && !editingDefinition ? (
               <Tabs value={createMode} onValueChange={(value) => setCreateMode(value as CreateMode)}>
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="managed">Managed value</TabsTrigger>
-                  <TabsTrigger value="external">External reference</TabsTrigger>
+                  <TabsTrigger value="managed">{t("secretsMain.dialog.managedValue", { defaultValue: "Managed value" })}</TabsTrigger>
+                  <TabsTrigger value="external">{t("secretsMain.labels.externalReference", { defaultValue: "External reference" })}</TabsTrigger>
                 </TabsList>
               </Tabs>
             ) : null}
 
             <div>
-              <label className="text-xs font-medium" htmlFor="new-secret-name">Name</label>
+              <label className="text-xs font-medium" htmlFor="new-secret-name">{t("secretsMain.labels.name", { defaultValue: "Name" })}</label>
               {createNamePrefix && !editingDefinition ? (
                 <div className="flex h-9 w-full min-w-0 items-center gap-1.5 rounded-md border border-input bg-transparent px-2 shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-3">
                   <span
@@ -2669,7 +2671,7 @@ export function Secrets() {
 
             {secretValueProvider === "company" && createMode === "managed" ? (
               <div>
-                <label className="text-xs font-medium" htmlFor="new-secret-value">Value</label>
+                <label className="text-xs font-medium" htmlFor="new-secret-value">{t("secretsMain.labels.value", { defaultValue: "Value" })}</label>
                 <Textarea
                   id="new-secret-value"
                   value={createForm.value}
@@ -2684,7 +2686,7 @@ export function Secrets() {
             ) : null}
             {secretValueProvider === "company" && createMode === "external" ? (
               <div>
-                <label className="text-xs font-medium" htmlFor="new-secret-ref">External reference</label>
+                <label className="text-xs font-medium" htmlFor="new-secret-ref">{t("secretsMain.labels.externalReference", { defaultValue: "External reference" })}</label>
                 <Input
                   id="new-secret-ref"
                   value={createForm.externalRef}
@@ -2708,7 +2710,7 @@ export function Secrets() {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-foreground" htmlFor="new-secret-usage-guidance">
-                    Usage guidance <span className="text-muted-foreground/70">(optional)</span>
+                    {t("secretsMain.labels.usageGuidance", { defaultValue: "Usage guidance" })} <span className="text-muted-foreground/70">({t("secretsMain.optional", { defaultValue: "optional" })})</span>
                   </label>
                   <Textarea
                     id="new-secret-usage-guidance"
@@ -2725,7 +2727,7 @@ export function Secrets() {
 
             <div>
               <div className="flex items-center justify-between">
-                <label className="text-xs font-medium" htmlFor="new-secret-key">Key</label>
+                <label className="text-xs font-medium" htmlFor="new-secret-key">{t("secretsMain.labels.key", { defaultValue: "Key" })}</label>
                 {!createKeyEditable && !editingDefinition ? (
                   <Button
                     type="button"
@@ -2734,7 +2736,7 @@ export function Secrets() {
                     className="h-5 px-1.5 text-(length:--text-micro) text-muted-foreground"
                     onClick={() => setCreateKeyEditable(true)}
                   >
-                    <Pencil className="mr-1 h-3 w-3" /> Edit
+                    <Pencil className="mr-1 h-3 w-3" /> {t("secretsMain.actions.edit", { defaultValue: "Edit" })}
                   </Button>
                 ) : null}
               </div>
@@ -2768,7 +2770,7 @@ export function Secrets() {
 
             <div>
               <label className="text-xs font-medium" htmlFor="new-secret-description">
-                Description <span className="text-muted-foreground/70">(optional)</span>
+                {t("secretsMain.labels.description", { defaultValue: "Description" })} <span className="text-muted-foreground/70">({t("secretsMain.optional", { defaultValue: "optional" })})</span>
               </label>
               <Input
                 id="new-secret-description"
@@ -2784,7 +2786,7 @@ export function Secrets() {
               <>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="text-xs font-medium" htmlFor="new-secret-provider">Provider</label>
+                  <label className="text-xs font-medium" htmlFor="new-secret-provider">{t("secretsMain.labels.provider", { defaultValue: "Provider" })}</label>
                   <select
                     id="new-secret-provider"
                     className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
@@ -2833,7 +2835,7 @@ export function Secrets() {
                   ) : null}
                 </div>
                 <div>
-                  <label className="text-xs font-medium" htmlFor="new-secret-vault">Provider vault</label>
+                  <label className="text-xs font-medium" htmlFor="new-secret-vault">{t("secretsMain.labels.providerVault", { defaultValue: "Provider vault" })}</label>
                   <select
                     id="new-secret-vault"
                     className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
@@ -2842,7 +2844,7 @@ export function Secrets() {
                       setCreateForm((current) => ({ ...current, providerConfigId: event.target.value }))
                     }
                   >
-                    <option value="">Deployment default</option>
+                    <option value="">{t("secretsMain.vault.deploymentDefault", { defaultValue: "Deployment default" })}</option>
                     {createProviderConfigs.map((config) => {
                       const blockReason = getProviderConfigBlockReason(config);
                       return (
@@ -2903,12 +2905,12 @@ export function Secrets() {
             >
               {createMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
               {editingDefinition
-                ? "Save changes"
+                ? t("secretsMain.actions.saveChanges", { defaultValue: "Save changes" })
                 : secretValueProvider === "user"
-                  ? "Create user-provided secret"
+                  ? t("secretsMain.dialog.createUserSecret", { defaultValue: "Create user-provided secret" })
                   : createMode === "managed"
-                    ? "Create secret"
-                    : "Link reference"}
+                    ? t("secretsMain.dialog.createSecret", { defaultValue: "Create secret" })
+                    : t("secretsMain.dialog.linkReference", { defaultValue: "Link reference" })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2917,7 +2919,7 @@ export function Secrets() {
       <Dialog open={vaultDialogOpen} onOpenChange={setVaultDialogOpen}>
         <DialogContent className="max-h-(--sz-85vh) overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editingVault ? "Edit provider vault" : "Create provider vault"}</DialogTitle>
+            <DialogTitle>{editingVault ? t("secretsMain.dialog.editVault", { defaultValue: "Edit provider vault" }) : t("secretsMain.dialog.createVault", { defaultValue: "Create provider vault" })}</DialogTitle>
             <DialogDescription>
               Save only non-sensitive routing metadata. Credentials stay in the runtime environment or provider identity.
             </DialogDescription>
@@ -2925,7 +2927,7 @@ export function Secrets() {
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="text-xs font-medium" htmlFor="vault-provider">Provider</label>
+                <label className="text-xs font-medium" htmlFor="vault-provider">{t("secretsMain.labels.provider", { defaultValue: "Provider" })}</label>
                 <select
                   id="vault-provider"
                   className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none disabled:opacity-60"
@@ -2946,7 +2948,7 @@ export function Secrets() {
                 </select>
               </div>
               <div>
-                <label className="text-xs font-medium" htmlFor="vault-name">Display name</label>
+                <label className="text-xs font-medium" htmlFor="vault-name">{t("secretsMain.labels.displayName", { defaultValue: "Display name" })}</label>
                 <Input
                   id="vault-name"
                   value={vaultForm.displayName}
@@ -2957,7 +2959,7 @@ export function Secrets() {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium" htmlFor="vault-status">Status</label>
+                <label className="text-xs font-medium" htmlFor="vault-status">{t("secretsMain.labels.status", { defaultValue: "Status" })}</label>
                 <select
                   id="vault-status"
                   className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
@@ -2978,8 +2980,8 @@ export function Secrets() {
                   <option value="warning" disabled={vaultForm.provider === "gcp_secret_manager" || vaultForm.provider === "vault"}>
                     Warning
                   </option>
-                  <option value="coming_soon">Coming soon</option>
-                  <option value="disabled">Disabled</option>
+                  <option value="coming_soon">{t("secretsMain.vault.comingSoon", { defaultValue: "Coming soon" })}</option>
+                  <option value="disabled">{t("secretsMain.status.disabled", { defaultValue: "Disabled" })}</option>
                 </select>
               </div>
               <label className="flex items-center gap-2 pt-6 text-sm">
@@ -3037,7 +3039,7 @@ export function Secrets() {
               }
             >
               {saveVaultMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-              {editingVault ? "Save vault" : "Create vault"}
+              {editingVault ? t("secretsMain.dialog.saveVault", { defaultValue: "Save vault" }) : t("secretsMain.dialog.createVaultShort", { defaultValue: "Create vault" })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -3048,8 +3050,8 @@ export function Secrets() {
           <DialogHeader>
             <DialogTitle>
               {selectedSecret?.managedMode === "external_reference" && rotateMode === "reference"
-                ? "Update external reference"
-                : "Update secret value"}
+                ? t("secretsMain.actions.updateReference", { defaultValue: "Update external reference" })
+                : t("secretsMain.dialog.updateSecretValue", { defaultValue: "Update secret value" })}
             </DialogTitle>
             <DialogDescription>
               {selectedSecret?.managedMode !== "external_reference"
@@ -3062,20 +3064,20 @@ export function Secrets() {
           {selectedSecret && secretSupportsExternalValueWrite(selectedSecret) ? (
             <Tabs value={rotateMode} onValueChange={(value) => setRotateMode(value as RotateMode)}>
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="value">Write new value</TabsTrigger>
-                <TabsTrigger value="reference">Change reference</TabsTrigger>
+                <TabsTrigger value="value">{t("secretsMain.dialog.writeNewValue", { defaultValue: "Write new value" })}</TabsTrigger>
+                <TabsTrigger value="reference">{t("secretsMain.dialog.changeReference", { defaultValue: "Change reference" })}</TabsTrigger>
               </TabsList>
             </Tabs>
           ) : null}
           <div>
-            <label className="text-xs font-medium" htmlFor="rotate-secret-vault">Provider vault</label>
+            <label className="text-xs font-medium" htmlFor="rotate-secret-vault">{t("secretsMain.labels.providerVault", { defaultValue: "Provider vault" })}</label>
             <select
               id="rotate-secret-vault"
               className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
               value={rotateProviderConfigId}
               onChange={(event) => setRotateProviderConfigId(event.target.value)}
             >
-              <option value="">Deployment default</option>
+              <option value="">{t("secretsMain.vault.deploymentDefault", { defaultValue: "Deployment default" })}</option>
               {selectedRotateProviderConfigs.map((config) => {
                 const blockReason = getProviderConfigBlockReason(config);
                 return (
@@ -3097,7 +3099,7 @@ export function Secrets() {
           </div>
           {selectedSecret?.managedMode === "external_reference" && rotateMode === "reference" ? (
             <div>
-              <label className="text-xs font-medium" htmlFor="rotate-ref">External reference</label>
+              <label className="text-xs font-medium" htmlFor="rotate-ref">{t("secretsMain.labels.externalReference", { defaultValue: "External reference" })}</label>
               <Input
                 id="rotate-ref"
                 value={rotateExternalRef}
@@ -3111,7 +3113,7 @@ export function Secrets() {
             </div>
           ) : (
             <div>
-              <label className="text-xs font-medium" htmlFor="rotate-value">New value</label>
+              <label className="text-xs font-medium" htmlFor="rotate-value">{t("secretsMain.dialog.newValue", { defaultValue: "New value" })}</label>
               <Textarea
                 id="rotate-value"
                 value={rotateValue}
@@ -3157,20 +3159,20 @@ export function Secrets() {
       <Dialog open={Boolean(deleteConfirm)} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete secret</DialogTitle>
+            <DialogTitle>{t("secretsMain.confirm.deleteSecret", { defaultValue: "Delete secret" })}</DialogTitle>
             <DialogDescription>
               Permanently removes <strong>{deleteConfirm?.name}</strong>. Active bindings will fail until you remap them.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>{t("secretsMain.actions.cancel", { defaultValue: "Cancel" })}</Button>
             <Button
               variant="destructive"
               onClick={() => deleteConfirm && deleteMutation.mutate(deleteConfirm.id)}
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-              Delete
+              {t("secretsMain.actions.delete", { defaultValue: "Delete" })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -3182,14 +3184,14 @@ export function Secrets() {
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete user-provided secret</DialogTitle>
+            <DialogTitle>{t("secretsMain.confirm.deleteUserSecret", { defaultValue: "Delete user-provided secret" })}</DialogTitle>
             <DialogDescription>
               Permanently removes <strong>{definitionDeleteConfirm?.name}</strong> for the whole company.
               Existing member values become unreferenced and active bindings must be remapped.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDefinitionDeleteConfirm(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDefinitionDeleteConfirm(null)}>{t("secretsMain.actions.cancel", { defaultValue: "Cancel" })}</Button>
             <Button
               variant="destructive"
               onClick={() =>
@@ -3198,7 +3200,7 @@ export function Secrets() {
               disabled={deleteDefinitionMutation.isPending}
             >
               {deleteDefinitionMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-              Delete
+              {t("secretsMain.actions.delete", { defaultValue: "Delete" })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -3217,7 +3219,7 @@ export function Secrets() {
       <Dialog open={Boolean(removeVaultConfirm)} onOpenChange={(open) => !open && setRemoveVaultConfirm(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Remove provider vault</DialogTitle>
+            <DialogTitle>{t("secretsMain.confirm.removeVault", { defaultValue: "Remove provider vault" })}</DialogTitle>
             <DialogDescription>
               Removes <strong>{removeVaultConfirm?.displayName}</strong> from Paperclip only.{" "}
               {removeVaultConfirm?.provider === "aws_secrets_manager"
@@ -3227,14 +3229,14 @@ export function Secrets() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRemoveVaultConfirm(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setRemoveVaultConfirm(null)}>{t("secretsMain.actions.cancel", { defaultValue: "Cancel" })}</Button>
             <Button
               variant="destructive"
               onClick={() => removeVaultConfirm && removeVaultMutation.mutate(removeVaultConfirm.id)}
               disabled={removeVaultMutation.isPending}
             >
               {removeVaultMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-              Remove from Paperclip
+              {t("secretsMain.actions.removeFromPaperclip", { defaultValue: "Remove from Paperclip" })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -3249,15 +3251,14 @@ function SecretsHowToUse() {
     <div className="flex items-start gap-2 rounded-md border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
       <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
       <div className="space-y-1">
-        <p className="font-medium text-foreground">Use secrets by binding them to runtime environment variables.</p>
+        <p className="font-medium text-foreground">{t("secretsMain.help.title", { defaultValue: "Use secrets by binding them to runtime environment variables." })}</p>
         <p>
           Create or link a secret here, then open an agent&apos;s Environment variables or a project&apos;s Env field.
-          Add the env key the process expects, for example <code className="font-mono">GH_TOKEN</code>, choose{" "}
-          <span className="font-medium text-foreground">Secret</span>, and select the stored secret version.
+          {t("secretsMain.help.body1", { defaultValue: "Create or link a secret here, then open an agent's Environment variables or a project's Env field. Add the env key the process expects, for example" })} <code className="font-mono">GH_TOKEN</code>, {t("secretsMain.help.choose", { defaultValue: "choose" })}{" "}
+          <span className="font-medium text-foreground">{t("secretsMain.labels.secret", { defaultValue: "Secret" })}</span>{t("secretsMain.help.selectVersion", { defaultValue: ", and select the stored secret version." })}
         </p>
         <p>
-          Paperclip resolves the value server-side when the run starts and injects it as that env var. Project env
-          applies to every task in the project and overrides agent env on matching keys.
+          {t("secretsMain.help.body2", { defaultValue: "Paperclip resolves the value server-side when the run starts and injects it as that env var. Project env applies to every task in the project and overrides agent env on matching keys." })}
         </p>
       </div>
     </div>
@@ -3290,10 +3291,10 @@ function SecretsFiltersPopover({
   };
 
   const statusOptions: Array<{ value: SecretStatus | "all"; label: string }> = [
-    { value: "active", label: "Active" },
-    { value: "all", label: "All statuses" },
-    { value: "disabled", label: "Disabled" },
-    { value: "archived", label: "Archived" },
+    { value: "active", label: t("secretsMain.filters.active", { defaultValue: "Active" }) },
+    { value: "all", label: t("secretsMain.filters.allStatuses", { defaultValue: "All statuses" }) },
+    { value: "disabled", label: t("secretsMain.filters.disabled", { defaultValue: "Disabled" }) },
+    { value: "archived", label: t("secretsMain.filters.archived", { defaultValue: "Archived" }) },
   ];
 
   return (
@@ -3303,7 +3304,7 @@ function SecretsFiltersPopover({
           variant="outline"
           size="icon"
           className={cn("relative h-8 w-8 shrink-0", activeFilterCount > 0 && "text-blue-600 dark:text-blue-400")}
-          title={activeFilterCount > 0 ? `Filters: ${activeFilterCount}` : "Filter"}
+          title={activeFilterCount > 0 ? t("secretsMain.filters.count", { defaultValue: "Filters: {{count}}", count: activeFilterCount }) : t("secretsMain.filters.filter", { defaultValue: "Filter" })}
         >
           <Filter className="h-3.5 w-3.5" />
           {activeFilterCount > 0 ? (
@@ -3319,7 +3320,7 @@ function SecretsFiltersPopover({
       >
         <div className="space-y-3 p-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Filters</span>
+            <span className="text-sm font-medium">{t("secretsMain.filters.filters", { defaultValue: "Filters" })}</span>
             {activeFilterCount > 0 ? (
               <button
                 type="button"
@@ -3327,14 +3328,14 @@ function SecretsFiltersPopover({
                 onClick={resetFilters}
               >
                 <X className="h-3 w-3" />
-                Clear
+                {t("secretsMain.filters.clear", { defaultValue: "Clear" })}
               </button>
             ) : null}
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="space-y-1">
-              <span className="text-xs text-muted-foreground">Status</span>
+              <span className="text-xs text-muted-foreground">{t("secretsMain.labels.status", { defaultValue: "Status" })}</span>
               <div className="space-y-0.5">
                 {statusOptions.map((option) => (
                   <label key={option.value} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
@@ -3349,12 +3350,12 @@ function SecretsFiltersPopover({
             </div>
 
             <div className="space-y-1">
-              <span className="text-xs text-muted-foreground">Provided by</span>
+              <span className="text-xs text-muted-foreground">{t("secretsMain.filters.providedBy", { defaultValue: "Provided by" })}</span>
               <div className="space-y-0.5">
                 {[
-                  { value: "all" as const, label: "All sources" },
-                  { value: "company" as const, label: "Company" },
-                  { value: "user" as const, label: "Each user" },
+                  { value: "all" as const, label: t("secretsMain.filters.allSources", { defaultValue: "All sources" }) },
+                  { value: "company" as const, label: t("secretsMain.labels.company", { defaultValue: "Company" }) },
+                  { value: "user" as const, label: t("secretsMain.labels.eachUser", { defaultValue: "Each user" }) },
                 ].map((option) => (
                   <label key={option.value} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                     <Checkbox
@@ -3368,14 +3369,14 @@ function SecretsFiltersPopover({
             </div>
 
             <div className="space-y-1">
-              <span className="text-xs text-muted-foreground">Provider</span>
+              <span className="text-xs text-muted-foreground">{t("secretsMain.labels.provider", { defaultValue: "Provider" })}</span>
               <div className="max-h-48 space-y-0.5 overflow-y-auto pr-1">
                 <label className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                   <Checkbox
                     checked={providerFilter === "all"}
                     onCheckedChange={() => onProviderChange("all")}
                   />
-                  <span className="text-sm">All providers</span>
+                  <span className="text-sm">{t("secretsMain.filters.allProviders", { defaultValue: "All providers" })}</span>
                 </label>
                 {providers.map((provider) => (
                   <label key={provider.id} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
@@ -4173,8 +4174,8 @@ function CoverageInline({
     staleTime: 30_000,
   });
   const summary = coverageQuery.data;
-  if (coverageQuery.isPending) return <span className="text-muted-foreground">Loading…</span>;
-  if (coverageQuery.isError) return <span className="text-destructive">Coverage unavailable</span>;
+  if (coverageQuery.isPending) return <span className="text-muted-foreground">{t("secretsMain.loading.loading", { defaultValue: "Loading…" })}</span>;
+  if (coverageQuery.isError) return <span className="text-destructive">{t("secretsMain.loading.coverageUnavailable", { defaultValue: "Coverage unavailable" })}</span>;
   return (
     <span className="inline-flex min-w-0 items-center gap-1 text-muted-foreground">
       <Users className="h-3 w-3" />
@@ -4203,15 +4204,15 @@ function UserSecretDetailsTab({
 }) {
   return (
     <dl className="divide-y divide-border/60 text-xs">
-      <DetailRow label="Description">
+      <DetailRow label={t("secretsMain.labels.description", { defaultValue: "Description" })}>
         <span>{definition.description ?? <span className="text-muted-foreground">—</span>}</span>
       </DetailRow>
-      <DetailRow label="Provided by">Each user</DetailRow>
-      <DetailRow label="Key">
+      <DetailRow label={t("secretsMain.labels.providedBy", { defaultValue: "Provided by" })}>{t("secretsMain.labels.eachUser", { defaultValue: "Each user" })}</DetailRow>
+      <DetailRow label={t("secretsMain.labels.key", { defaultValue: "Key" })}>
         <code>{definition.key}</code>
       </DetailRow>
-      <DetailRow label="Status"><StatusBadge status={definition.status} /></DetailRow>
-      <DetailRow label="Coverage">
+      <DetailRow label={t("secretsMain.labels.status", { defaultValue: "Status" })}><StatusBadge status={definition.status} /></DetailRow>
+      <DetailRow label={t("secretsMain.labels.coverage", { defaultValue: "Coverage" })}>
         <button
           type="button"
           className="inline-flex min-w-0 items-center gap-1 text-left text-primary hover:underline"
@@ -4221,9 +4222,9 @@ function UserSecretDetailsTab({
           <span className="shrink-0 text-muted-foreground">· View in Coverage</span>
         </button>
       </DetailRow>
-      <DetailRow label="Created">{formatRelative(definition.createdAt)}</DetailRow>
-      <DetailRow label="Updated">{formatRelative(definition.updatedAt)}</DetailRow>
-      <DetailRow label="Usage guidance">
+      <DetailRow label={t("secretsMain.labels.created", { defaultValue: "Created" })}>{formatRelative(definition.createdAt)}</DetailRow>
+      <DetailRow label={t("secretsMain.labels.updated", { defaultValue: "Updated" })}>{formatRelative(definition.updatedAt)}</DetailRow>
+      <DetailRow label={t("secretsMain.labels.usageGuidance", { defaultValue: "Usage guidance" })}>
         {definition.usageGuidance ?? <span className="text-muted-foreground">—</span>}
       </DetailRow>
       <div className="mt-3 rounded-md border border-violet-500/30 bg-violet-500/5 p-2 text-(length:--text-micro) text-violet-800 dark:text-violet-200">
@@ -4246,10 +4247,10 @@ function UserSecretCoverageTab({
     staleTime: 30_000,
   });
   if (coverageQuery.isPending) {
-    return <div className="py-6 text-center text-xs text-muted-foreground">Loading…</div>;
+    return <div className="py-6 text-center text-xs text-muted-foreground">{t("secretsMain.loading.loading", { defaultValue: "Loading…" })}</div>;
   }
   if (coverageQuery.isError) {
-    return <div className="py-6 text-center text-xs text-destructive">Coverage unavailable.</div>;
+    return <div className="py-6 text-center text-xs text-destructive">{t("secretsMain.loading.coverageUnavailable", { defaultValue: "Coverage unavailable." })}</div>;
   }
   const summary: UserSecretCoverageSummary = coverageQuery.data;
   const total = summary.configuredCount + summary.missingCount + summary.inactiveCount;
@@ -4264,19 +4265,19 @@ function UserSecretCoverageTab({
           <div className="text-lg font-semibold text-emerald-700 dark:text-emerald-300">
             {summary.configuredCount}
           </div>
-          <div className="text-muted-foreground">Set</div>
+          <div className="text-muted-foreground">{t("secretsMain.coverage.set", { defaultValue: "Set" })}</div>
         </div>
         <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
           <div className="text-lg font-semibold text-amber-700 dark:text-amber-300">
             {summary.missingCount}
           </div>
-          <div className="text-muted-foreground">Missing</div>
+          <div className="text-muted-foreground">{t("secretsMain.coverage.missing", { defaultValue: "Missing" })}</div>
         </div>
         <div className="rounded-md border border-border bg-muted/30 p-3">
           <div className="text-lg font-semibold text-muted-foreground">
             {summary.inactiveCount}
           </div>
-          <div className="text-muted-foreground">Inactive</div>
+          <div className="text-muted-foreground">{t("secretsMain.coverage.inactive", { defaultValue: "Inactive" })}</div>
         </div>
       </div>
       <p className="text-xs text-muted-foreground">
@@ -4296,7 +4297,7 @@ function UserSecretUsageTab({ definition }: { definition: UserSecretDefinition }
       </div>
       {definition.usageGuidance ? (
         <div>
-          <p className="mb-1 text-(length:--text-micro) uppercase tracking-wide text-muted-foreground">Member guidance</p>
+          <p className="mb-1 text-(length:--text-micro) uppercase tracking-wide text-muted-foreground">{t("secretsMain.coverage.memberGuidance", { defaultValue: "Member guidance" })}</p>
           <p className="text-foreground">{definition.usageGuidance}</p>
         </div>
       ) : null}
@@ -4479,7 +4480,7 @@ function AgentAccessSection({
     <section className="rounded-md border border-border bg-muted/20 p-3">
       <div className="flex items-center gap-1.5">
         <Users className="h-3.5 w-3.5 text-muted-foreground" />
-        <h3 className="text-xs font-medium text-foreground">Agent access</h3>
+        <h3 className="text-xs font-medium text-foreground">{t("secretsMain.access.title", { defaultValue: "Agent access" })}</h3>
       </div>
       <p className="mt-0.5 text-(length:--text-micro) text-muted-foreground">
         {reference.kind === "company"
@@ -4487,7 +4488,7 @@ function AgentAccessSection({
           : "These agents resolve the responsible user's value as an environment variable at run start."}
       </p>
       {agentsQuery.isPending ? (
-        <p className="mt-2 text-(length:--text-micro) text-muted-foreground">Loading agents…</p>
+        <p className="mt-2 text-(length:--text-micro) text-muted-foreground">{t("secretsMain.loading.agents", { defaultValue: "Loading agents…" })}</p>
       ) : agentsQuery.isError ? (
         <p className="mt-2 text-(length:--text-micro) text-muted-foreground">
           Agent list unavailable. Manage access from each agent&apos;s configuration instead.
@@ -4535,7 +4536,7 @@ function AgentAccessSection({
               ))}
             </ul>
           ) : (
-            <p className="mt-2 text-(length:--text-micro) text-muted-foreground">No agents have access yet.</p>
+            <p className="mt-2 text-(length:--text-micro) text-muted-foreground">{t("secretsMain.loading.noAgentAccess", { defaultValue: "No agents have access yet." })}</p>
           )}
           <div className="mt-2 flex items-end gap-2">
             <div className="min-w-0 flex-1">
@@ -4618,22 +4619,22 @@ function SecretDetailsTab({
 
   return (
     <dl className="divide-y divide-border/60 text-xs">
-      <DetailRow label="Description">
+      <DetailRow label={t("secretsMain.labels.description", { defaultValue: "Description" })}>
         <span>{secret.description ?? <span className="text-muted-foreground">—</span>}</span>
       </DetailRow>
-      <DetailRow label="Provided by">Company</DetailRow>
-      <DetailRow label="Custody">{modeLabel(secret.managedMode)}</DetailRow>
-      <DetailRow label="Provider">{providerLabel(providers, secret.provider)}</DetailRow>
-      <DetailRow label="Provider vault">{providerVaultLabel(providerConfigs, secret.providerConfigId)}</DetailRow>
-      <DetailRow label="External ARN">
+      <DetailRow label={t("secretsMain.labels.providedBy", { defaultValue: "Provided by" })}>{t("secretsMain.labels.company", { defaultValue: "Company" })}</DetailRow>
+      <DetailRow label={t("secretsMain.labels.custody", { defaultValue: "Custody" })}>{modeLabel(secret.managedMode)}</DetailRow>
+      <DetailRow label={t("secretsMain.labels.provider", { defaultValue: "Provider" })}>{providerLabel(providers, secret.provider)}</DetailRow>
+      <DetailRow label={t("secretsMain.labels.providerVault", { defaultValue: "Provider vault" })}>{providerVaultLabel(providerConfigs, secret.providerConfigId)}</DetailRow>
+      <DetailRow label={t("secretsMain.labels.externalArn", { defaultValue: "External ARN" })}>
         {secret.externalRef ? (
           <span className="break-all font-mono">{secret.externalRef}</span>
         ) : (
           <span className="text-muted-foreground">—</span>
         )}
       </DetailRow>
-      <DetailRow label="Latest version">v{secret.latestVersion}</DetailRow>
-      <DetailRow label="References">
+      <DetailRow label={t("secretsMain.labels.latestVersion", { defaultValue: "Latest version" })}>v{secret.latestVersion}</DetailRow>
+      <DetailRow label={t("secretsMain.labels.references", { defaultValue: "References" })}>
         <button
           type="button"
           className="inline-flex items-center gap-1 text-left text-primary hover:underline"
@@ -4643,10 +4644,10 @@ function SecretDetailsTab({
           <span className="text-muted-foreground">· View in Usage</span>
         </button>
       </DetailRow>
-      <DetailRow label="Created">{formatRelative(secret.createdAt)}</DetailRow>
-      <DetailRow label="Updated">{formatRelative(secret.updatedAt)}</DetailRow>
-      <DetailRow label="Last rotated">{formatRelative(secret.lastRotatedAt)}</DetailRow>
-      <DetailRow label="Last resolved">{formatRelative(secret.lastResolvedAt)}</DetailRow>
+      <DetailRow label={t("secretsMain.labels.created", { defaultValue: "Created" })}>{formatRelative(secret.createdAt)}</DetailRow>
+      <DetailRow label={t("secretsMain.labels.updated", { defaultValue: "Updated" })}>{formatRelative(secret.updatedAt)}</DetailRow>
+      <DetailRow label={t("secretsMain.labels.lastRotated", { defaultValue: "Last rotated" })}>{formatRelative(secret.lastRotatedAt)}</DetailRow>
+      <DetailRow label={t("secretsMain.labels.lastResolved", { defaultValue: "Last resolved" })}>{formatRelative(secret.lastResolvedAt)}</DetailRow>
       <div className="mt-3 rounded-md border border-amber-500/30 bg-amber-500/5 p-2 text-(length:--text-micro) text-amber-700 dark:text-amber-300">
         {modeDescription(
           secret.managedMode,
@@ -4672,7 +4673,7 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 
 export function SecretUsageTab({ loading, bindings }: { loading: boolean; bindings: CompanySecretUsageBinding[] }) {
   if (loading) {
-    return <div className="py-6 text-center text-xs text-muted-foreground">Loading…</div>;
+    return <div className="py-6 text-center text-xs text-muted-foreground">{t("secretsMain.loading.loading", { defaultValue: "Loading…" })}</div>;
   }
   if (bindings.length === 0) {
     return (
