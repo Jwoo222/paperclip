@@ -255,7 +255,7 @@ export function SecretPicker({
       deriveGroups={deriveGroups}
       disabled={disabled}
       disablePortal={disablePortal}
-      placeholder={t("settingsSecurity.selectSecret", { defaultValue: "Select secret…" })}
+          placeholder={t("environmentsExtra.selectSecret", { defaultValue: "Select secret…" })}
       searchPlaceholder="Search secrets…"
       emptyMessage="No matching secrets"
       triggerClassName={cn(
@@ -266,7 +266,7 @@ export function SecretPicker({
       )}
       renderValue={(option) => {
         if (!option) {
-          return <span className="text-muted-foreground">{t("settingsSecurity.selectSecret", { defaultValue: "Select secret…" })}</span>;
+          return <span className="text-muted-foreground">{t("environmentsExtra.selectSecret", { defaultValue: "Select secret…" })}</span>;
         }
         if (option.missing) {
           return (
@@ -328,7 +328,7 @@ export function SecretPicker({
                 Create secret <span className="font-mono">&ldquo;{query.trim()}&rdquo;</span>…
               </span>
             ) : (
-              <span>{t("settingsSecurity.createNewSecret", { defaultValue: "Create new secret…" })}</span>
+              <span>{t("environmentsExtra.createNewSecret", { defaultValue: "Create new secret…" })}</span>
             )}
           </span>
         ),

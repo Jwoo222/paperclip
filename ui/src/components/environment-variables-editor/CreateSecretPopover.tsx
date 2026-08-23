@@ -64,13 +64,17 @@ export function SecretPopoverForm({
     try {
       await onSubmit(trimmedName, value);
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Failed to create secret");
+      setError(submitError instanceof Error ? submitError.message : t("environmentsExtra.failedToCreateSecret", { defaultValue: "Failed to create secret" }));
       setSubmitting(false);
     }
   }
 
-  const ctaLabel = mode === "create" ? "Create & bind" : "Store & bind";
-  const heading = mode === "create" ? "Create secret" : "Store value as secret";
+  const ctaLabel = mode === "create"
+    ? t("environmentsExtra.createAndBind", { defaultValue: "Create & bind" })
+    : t("environmentsExtra.storeAndBind", { defaultValue: "Store & bind" });
+  const heading = mode === "create"
+    ? t("environmentsExtra.createSecret", { defaultValue: "Create secret" })
+    : t("environmentsExtra.storeValueAsSecret", { defaultValue: "Store value as secret" });
 
   return (
     <div className="w-72 space-y-3">
@@ -78,21 +82,20 @@ export function SecretPopoverForm({
         <PopoverTitle className="text-sm font-medium">{heading}</PopoverTitle>
         {mode === "store" ? (
           <PopoverDescription className="text-(length:--text-micro) text-muted-foreground">
-            Moves the typed value into an encrypted company secret and binds{" "}
-            <span className="font-mono">{initialName || "this variable"}</span> to it.
+            {t("environmentsExtra.storeValueDescription", { defaultValue: "Moves the typed value into an encrypted company secret and binds {{name}} to it.", name: initialName || t("environmentsExtra.thisVariable", { defaultValue: "this variable" }) })}
           </PopoverDescription>
         ) : null}
       </div>
 
       <label className="block space-y-1">
-        <span className="text-(length:--text-micro) font-medium text-muted-foreground">{t("settingsSecurity.name", { defaultValue: "Name" })}</span>
+        <span className="text-(length:--text-micro) font-medium text-muted-foreground">{t("environmentsExtra.name", { defaultValue: "Name" })}</span>
         <input
           className={cn(fieldClass, nameError && "border-destructive focus-visible:ring-destructive/40")}
           value={name}
           autoFocus
           spellCheck={false}
-          placeholder="secret_name"
-          aria-label="Secret name"
+          placeholder={t("environmentsExtra.secretNamePlaceholder", { defaultValue: "secret_name" })}
+          aria-label={t("environmentsExtra.secretName", { defaultValue: "Secret name" })}
           aria-invalid={nameError ? true : undefined}
           onChange={(event) => setName(event.target.value)}
           onBlur={() => setTouched(true)}
@@ -107,7 +110,7 @@ export function SecretPopoverForm({
       </label>
 
       <label className="block space-y-1">
-        <span className="text-(length:--text-micro) font-medium text-muted-foreground">{t("settingsSecurity.value", { defaultValue: "Value" })}</span>
+        <span className="text-(length:--text-micro) font-medium text-muted-foreground">{t("environmentsExtra.value", { defaultValue: "Value" })}</span>
         <div className="relative">
           <input
             className={cn(fieldClass, "pr-8", valueError && "border-destructive focus-visible:ring-destructive/40")}
@@ -116,14 +119,14 @@ export function SecretPopoverForm({
             readOnly={mode === "store"}
             spellCheck={false}
             placeholder={mode === "create" ? "value" : undefined}
-            aria-label="Secret value"
+            aria-label={t("environmentsExtra.secretValue", { defaultValue: "Secret value" })}
             aria-invalid={valueError ? true : undefined}
             onChange={mode === "create" ? (event) => setValue(event.target.value) : undefined}
           />
           <button
             type="button"
             className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
-            aria-label={reveal ? "Hide value" : "Show value"}
+            aria-label={reveal ? t("environmentsExtra.hideValue", { defaultValue: "Hide value" }) : t("environmentsExtra.showValue", { defaultValue: "Show value" })}
             onClick={() => setReveal((prev) => !prev)}
           >
             {reveal ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -136,7 +139,7 @@ export function SecretPopoverForm({
 
       <div className="flex items-center justify-end gap-2 pt-0.5">
         <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={submitting}>
-          Cancel
+          {t("environmentsExtra.cancelButton", { defaultValue: "Cancel" })}
         </Button>
         <Button type="button" size="sm" onClick={() => void handleSubmit()} disabled={!canSubmit}>
           {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
