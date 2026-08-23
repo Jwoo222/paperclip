@@ -1,0 +1,66 @@
+{
+  "decisionControls": {
+    "visibleCount_one": "의사결정 {{count}}건",
+    "visibleCount_other": "의사결정 {{count}}건",
+    "actions": {
+      "filter": "필터",
+      "group": "그룹",
+      "training": "학습 사례",
+      "sort": "정렬",
+      "clear": "초기화"
+    },
+    "group": {
+      "none": "그룹 없음",
+      "date": "날짜",
+      "type": "유형",
+      "project": "프로젝트",
+      "severity": "심각도"
+    },
+    "sort": {
+      "newest": "최신순",
+      "oldest": "오래된순"
+    },
+    "filters": {
+      "type": "유형",
+      "severity": "심각도",
+      "project": "프로젝트",
+      "noProject": "프로젝트 없음",
+      "workspace": "작업공간",
+      "noWorkspace": "작업공간 없음"
+    },
+    "severity": {
+      "critical": "치명적",
+      "high": "높음",
+      "medium": "보통",
+      "low": "낮음"
+    },
+    "sourceKinds": {
+      "approval": "승인",
+      "decision": "의사결정",
+      "issue_thread_interaction": "의사결정 요청",
+      "join_request": "참여 요청",
+      "recovery_action": "복구",
+      "productivity_review": "생산성 검토",
+      "blocker_attention": "막힌 종속 작업",
+      "review": "검토",
+      "failed_run": "실행 실패",
+      "budget_alert": "예산",
+      "agent_error_alert": "에이전트 오류"
+    },
+    "queues": {
+      "label": "의사결정 대기열",
+      "all": "전체",
+      "recentActivity": "최근 활동"
+    },
+    "dateRange": {
+      "all": "전체",
+      "today": "오늘",
+      "yesterday": "어제",
+      "last_7_days": "최근 7일",
+      "this_month": "이번 달",
+      "custom": "직접 지정",
+      "from": "시작일",
+      "to": "종료일"
+    }
+  }
+}

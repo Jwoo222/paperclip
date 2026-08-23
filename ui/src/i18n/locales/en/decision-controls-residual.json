@@ -1,0 +1,66 @@
+{
+  "decisionControls": {
+    "visibleCount_one": "{{count}} decision",
+    "visibleCount_other": "{{count}} decisions",
+    "actions": {
+      "filter": "Filter",
+      "group": "Group",
+      "training": "Training",
+      "sort": "Sort",
+      "clear": "Clear"
+    },
+    "group": {
+      "none": "None",
+      "date": "Date",
+      "type": "Type",
+      "project": "Project",
+      "severity": "Severity"
+    },
+    "sort": {
+      "newest": "Newest first",
+      "oldest": "Oldest first"
+    },
+    "filters": {
+      "type": "Type",
+      "severity": "Severity",
+      "project": "Project",
+      "noProject": "No project",
+      "workspace": "Workspace",
+      "noWorkspace": "No workspace"
+    },
+    "severity": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "sourceKinds": {
+      "approval": "Approval",
+      "decision": "Decision",
+      "issue_thread_interaction": "Decision requested",
+      "join_request": "Join request",
+      "recovery_action": "Recovery",
+      "productivity_review": "Productivity review",
+      "blocker_attention": "Blocked dependency",
+      "review": "Review",
+      "failed_run": "Failed run",
+      "budget_alert": "Budget",
+      "agent_error_alert": "Agent error"
+    },
+    "queues": {
+      "label": "Decision queues",
+      "all": "All",
+      "recentActivity": "Recent activity"
+    },
+    "dateRange": {
+      "all": "All",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last_7_days": "Last 7 days",
+      "this_month": "This month",
+      "custom": "Custom",
+      "from": "From",
+      "to": "To"
+    }
+  }
+}
