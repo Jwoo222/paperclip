@@ -71,7 +71,7 @@ export function ExecutionWorkspaceCloseDialog({
     onError: (error) => {
       pushToast({
         title: t("projectsWorkspaces.close.closeFailed"),
-        body: error instanceof Error ? error.message : t("projectsWorkspaces.close.unknown"),
+        body: error instanceof Error ? error.message : t("projectsWorkspaces.workspace.unknown"),
         tone: "error",
       });
     },
@@ -95,15 +95,15 @@ export function ExecutionWorkspaceCloseDialog({
         <DialogHeader>
           <DialogTitle>{actionLabel}</DialogTitle>
           <DialogDescription className="break-words">
-            {t("projectsWorkspaces.close.archiveDescriptionBefore")} <span className="font-medium text-foreground">{workspaceName}</span>{" "}
-            {t("projectsWorkspaces.close.archiveDescriptionAfter")}
+            {t("projectsWorkspaces.workspace.archiveDescriptionBefore")} <span className="font-medium text-foreground">{workspaceName}</span>{" "}
+            {t("projectsWorkspaces.workspace.archiveDescriptionAfter")}
           </DialogDescription>
         </DialogHeader>
 
         {readinessQuery.isLoading ? (
           <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
-            {t("projectsWorkspaces.close.checking")}
+            {t("projectsWorkspaces.workspace.checking")}
           </div>
         ) : readinessQuery.error ? (
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
@@ -121,12 +121,12 @@ export function ExecutionWorkspaceCloseDialog({
               </div>
               <div className="mt-1 text-xs opacity-80">
                 {readiness.isSharedWorkspace
-                  ? t("projectsWorkspaces.close.sharedDescription")
+                  ? t("projectsWorkspaces.workspace.sharedDescription")
                   : readiness.git?.workspacePath && readiness.git.repoRoot && readiness.git.workspacePath !== readiness.git.repoRoot
-                    ? t("projectsWorkspaces.close.ownCheckoutDescription")
+                    ? t("projectsWorkspaces.workspace.ownCheckoutDescription")
                     : readiness.isProjectPrimaryWorkspace
-                      ? t("projectsWorkspaces.close.primaryDescription")
-                      : t("projectsWorkspaces.close.disposableDescription")}
+                      ? t("projectsWorkspaces.workspace.primaryDescription")
+                      : t("projectsWorkspaces.workspace.disposableDescription")}
               </div>
             </div>
 
@@ -181,7 +181,7 @@ export function ExecutionWorkspaceCloseDialog({
                   <div className="grid gap-2 sm:grid-cols-2">
                     <div>
                       <div className="text-xs uppercase tracking-(--tracking-eyebrow) text-muted-foreground">{t("projectsWorkspaces.close.branch")}</div>
-                      <div className="font-mono text-xs">{readiness.git.branchName ?? t("projectsWorkspaces.close.unknown")}</div>
+                      <div className="font-mono text-xs">{readiness.git.branchName ?? t("projectsWorkspaces.workspace.unknown")}</div>
                     </div>
                     <div>
                       <div className="text-xs uppercase tracking-(--tracking-eyebrow) text-muted-foreground">{t("projectsWorkspaces.close.baseRef")}</div>
@@ -189,7 +189,7 @@ export function ExecutionWorkspaceCloseDialog({
                     </div>
                     <div>
                       <div className="text-xs uppercase tracking-(--tracking-eyebrow) text-muted-foreground">{t("projectsWorkspaces.close.mergedIntoBase")}</div>
-                      <div>{readiness.git.isMergedIntoBase == null ? t("projectsWorkspaces.close.unknown") : readiness.git.isMergedIntoBase ? t("projectsWorkspaces.close.yes") : t("projectsWorkspaces.close.no")}</div>
+                      <div>{readiness.git.isMergedIntoBase == null ? t("projectsWorkspaces.workspace.unknown") : readiness.git.isMergedIntoBase ? t("projectsWorkspaces.workspace.yes") : t("projectsWorkspaces.workspace.no")}</div>
                     </div>
                     <div>
                       <div className="text-xs uppercase tracking-(--tracking-eyebrow) text-muted-foreground">{t("projectsWorkspaces.close.aheadBehind")}</div>

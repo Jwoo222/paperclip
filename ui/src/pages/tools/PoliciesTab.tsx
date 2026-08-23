@@ -26,6 +26,7 @@ import { agentsApi } from "@/api/agents";
 import { projectsApi } from "@/api/projects";
 import { ApiError } from "@/api/client";
 import { t as translate, useTranslation } from "@/i18n";
+import { t } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";

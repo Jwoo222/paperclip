@@ -59,6 +59,7 @@
       "catchUpPolicy": "Catch-up policy",
       "advancedRunPolicy": "Advanced run policy",
       "activityGateScope": "Activity gate scope",
+      "nextFires": "Next 5 fires",
       "previewAssumption": "Preview assumes the previous run is still in flight when the next fires. Times shown in {{timeZone}}.",
       "noSchedulePreview": "No enabled schedule trigger to preview. Add a schedule in Triggers to see how this policy treats upcoming fires."
     },

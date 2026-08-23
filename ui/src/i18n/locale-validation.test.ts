@@ -19,14 +19,20 @@ function sourceFilesUnder(directory: string): string[] {
 }
 
 function hasMessageKey(messages: Record<string, unknown>, key: string) {
+  const segments = key.split(".");
+  const leaf = segments.pop();
+  if (!leaf) return false;
   let cursor: unknown = messages;
-  for (const segment of key.split(".")) {
+  for (const segment of segments) {
     if (!cursor || typeof cursor !== "object" || Array.isArray(cursor) || !(segment in cursor)) {
       return false;
     }
     cursor = (cursor as Record<string, unknown>)[segment];
   }
-  return typeof cursor === "string";
+  if (!cursor || typeof cursor !== "object" || Array.isArray(cursor)) return false;
+  const parent = cursor as Record<string, unknown>;
+  if (typeof parent[leaf] === "string") return true;
+  return typeof parent[`${leaf}_one`] === "string" && typeof parent[`${leaf}_other`] === "string";
 }
 
 describe("locale validation", () => {

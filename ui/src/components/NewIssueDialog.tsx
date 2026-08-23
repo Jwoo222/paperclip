@@ -1594,7 +1594,7 @@ export function NewIssueDialog() {
                       }}
                     >
                       <ScanEye className="h-3 w-3" />
-                      {t("issuePropertiesExtra.watchdog")}
+                      {t("issueProperties.watchdog")}
                     </button>
                   )}
                 </PopoverContent>

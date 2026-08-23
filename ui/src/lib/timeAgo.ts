@@ -1,3 +1,5 @@
+import { i18n } from "@/i18n";
+
 const MINUTE = 60;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
@@ -31,4 +33,3 @@ export function timeAgo(date: Date | string, locale?: string): string {
   const mo = Math.floor(seconds / MONTH);
   return translate("commonControls.time.monthsAgo", { count: mo });
 }
-import i18n from "@/i18n";

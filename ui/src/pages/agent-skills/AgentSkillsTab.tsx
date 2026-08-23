@@ -528,7 +528,7 @@ export function AgentSkillsTab({ agent, companyId }: { agent: Agent; companyId?:
           ) : null}
 
           <div className="text-xs text-muted-foreground">
-            {t("agents.properties.adapter")}: {adapterLabels[agent.adapterType] ?? agent.adapterType}
+            {t("agentManagement.properties.adapter")}: {adapterLabels[agent.adapterType] ?? agent.adapterType}
           </div>
         </div>
       )}

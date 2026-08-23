@@ -44,7 +44,9 @@
       "builtinDescription": "These are filled in automatically — no setup needed and they will not appear in the Variables list.",
       "placeholder": "Placeholder",
       "example": "Example",
-      "description": "Description"
+      "description": "Description",
+      "autoDetected": "Variables are detected automatically from {{placeholder}} placeholders.",
+      "editInstructions": "Edit instructions"
     },
     "run": {
       "title": "Run routine",

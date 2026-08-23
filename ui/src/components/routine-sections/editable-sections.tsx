@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { RadioCardGroup } from "@/components/ui/radio-card";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "@/i18n";
+import { t, useTranslation } from "@/i18n";
 import { nextCronFires, previewFirePolicies } from "../../lib/cron-fires";
 import { timeAgo } from "../../lib/timeAgo";
 import { EmptyState } from "../EmptyState";
@@ -341,11 +341,19 @@ export function OverviewSection({
         <SummaryCard
           icon={Play}
           label={t("routineDetailExtra.overview.lastRun")}
-          value={lastRun ? lastRun.status.replaceAll("_", " ") : t("routineDetailExtra.overview.noRuns")}
+          value={lastRun
+            ? t(`statusResidualRound3.status.${lastRun.status}`, {
+                defaultValue: lastRun.status.replaceAll("_", " "),
+              })
+            : t("routineDetailExtra.overview.noRuns")}
           hint={lastRun ? timeAgo(lastRun.triggeredAt) : t("routineDetailExtra.overview.triggerRun")}
           to={() => navigateToSection("runs")}
           ariaLabel={lastRun
-            ? t("routinesRound2.editor.openLastRun", { status: lastRun.status })
+            ? t("routinesRound2.editor.openLastRun", {
+                status: t(`statusResidualRound3.status.${lastRun.status}`, {
+                  defaultValue: lastRun.status.replaceAll("_", " "),
+                }),
+              })
             : t("routinesRound2.editor.openNoRuns")}
         />
       </div>
@@ -825,7 +833,7 @@ function NextFiresPreview({
   return (
     <div className="space-y-3">
       <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-        Next 5 fires
+        {t("routinesRound2.editor.nextFires")}
       </p>
       {preview ? (
         <>

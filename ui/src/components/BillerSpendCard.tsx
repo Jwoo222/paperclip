@@ -141,7 +141,7 @@ export function BillerSpendCard({
                     <div className="text-right tabular-nums">
                       <div className="font-medium">{formatCents(entry.costCents)}</div>
                       <div className="text-muted-foreground">
-                        {t("commonResidual.costs.tokens", { count: formatTokens(entry.inputTokens + entry.outputTokens), defaultValue: "{{count}} tok" })}
+                        {t("commonResidual.costs.tokens", { value: formatTokens(entry.inputTokens + entry.outputTokens), defaultValue: "{{value}} tok" })}
                       </div>
                     </div>
                   </div>

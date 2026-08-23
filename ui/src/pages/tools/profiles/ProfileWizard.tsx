@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import type { ToolProfileWithDetails } from "@paperclipai/shared";
 import { useNavigate } from "@/lib/router";
-import { useTranslation } from "@/i18n";
+import { t, useTranslation } from "@/i18n";
 import { toolsApi, type ToolProfileBindingInput } from "@/api/tools";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";

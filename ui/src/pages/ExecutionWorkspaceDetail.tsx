@@ -613,7 +613,11 @@ function WorkspaceRoutineRow({
             {routine.title}
           </Link>
           {routine.status !== "active" ? (
-            <span className="text-xs text-muted-foreground">{routine.status}</span>
+            <span className="text-xs text-muted-foreground">
+              {translate(`statusResidualRound3.status.${routine.status}`, {
+                defaultValue: routine.status.replaceAll("_", " "),
+              })}
+            </span>
           ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">

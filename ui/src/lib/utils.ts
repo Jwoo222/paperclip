@@ -2,7 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { deriveAgentUrlKey, deriveProjectUrlKey, normalizeProjectUrlKey, hasNonAsciiContent } from "@paperclipai/shared";
 import type { BillingType, FinanceDirection, FinanceEventKind } from "@paperclipai/shared";
-import i18n from "@/i18n";
+import { i18n } from "@/i18n";
 
 function displayLocale(locale?: string): string {
   return locale ?? i18n.resolvedLanguage ?? i18n.language ?? "en";

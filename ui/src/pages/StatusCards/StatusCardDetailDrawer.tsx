@@ -397,7 +397,7 @@ export function StatusCardDetailDrawer({
                     })} ·{" "}
                     {formatTokens(todayRollup.totalTokens)} · {formatCents(todayRollup.totalCostCents)}
                     {card.refreshPolicy.dailyTokenCap ? t("statusCardsResidual.dailyCap", {
-                      count: formatTokens(card.refreshPolicy.dailyTokenCap),
+                      value: formatTokens(card.refreshPolicy.dailyTokenCap) ?? "0",
                       defaultValue: ` · daily cap ${formatTokens(card.refreshPolicy.dailyTokenCap)}`,
                     }) : ""}
                   </div>

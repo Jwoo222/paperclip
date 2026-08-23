@@ -67,7 +67,7 @@
       "thisWeek": "{{amount}} this week",
       "billingTypes": "Billing types",
       "upstreamProviders": "Upstream providers",
-      "tokens": "{{count}} tok"
+      "tokens": "{{value}} tok"
     },
     "subscriptions": {
       "resets": "Resets {{date}}",

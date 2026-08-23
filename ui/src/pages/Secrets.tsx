@@ -4702,7 +4702,11 @@ export function SecretUsageTab({ loading, bindings }: { loading: boolean; bindin
           >
             <div className="flex items-center justify-between gap-2">
               <span className="flex items-center gap-1.5">
-                <span className="font-medium capitalize">{binding.target.type}</span>
+                <span className="font-medium">
+                  {t(`statusResidualRound3.targetType.${binding.target.type}`, {
+                    defaultValue: binding.target.type.replaceAll("_", " "),
+                  })}
+                </span>
                 <Badge
                   variant="outline"
                   className={cn(
@@ -4729,7 +4733,9 @@ export function SecretUsageTab({ loading, bindings }: { loading: boolean; bindin
               )}
               {binding.target.status ? (
                 <Badge variant="outline" className="h-5 px-1.5 text-(length:--text-nano) font-normal">
-                  {binding.target.status.replaceAll("_", " ")}
+                  {t(`statusResidualRound3.status.${binding.target.status}`, {
+                    defaultValue: binding.target.status.replaceAll("_", " "),
+                  })}
                 </Badge>
               ) : null}
             </div>

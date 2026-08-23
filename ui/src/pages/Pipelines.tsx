@@ -4514,7 +4514,7 @@ export function buildReviewQueueRows({
       title: entry.case.title,
       prompt:
         entry.suggestion.rationale?.trim() ||
-        t ? t("pipelinesResidualExtra.reviewSuggestionPrompt", { pipeline: entry.case.pipeline.name, title: entry.case.title }) : `${entry.case.pipeline.name} thinks ${entry.case.title} is ready to move forward.`,
+        (t ? t("pipelinesResidualExtra.reviewSuggestionPrompt", { pipeline: entry.case.pipeline.name, title: entry.case.title }) : `${entry.case.pipeline.name} thinks ${entry.case.title} is ready to move forward.`),
       kind: "suggestion",
       createdAt: entry.suggestion.createdAt ?? entry.case.updatedAt ?? null,
       expectedVersion: entry.case.version ?? null,
@@ -4535,7 +4535,7 @@ export function buildReviewQueueRows({
       title: entry.case.title,
       prompt:
         entry.case.summary?.trim() ||
-        t ? t("pipelinesResidualExtra.reviewDecisionPrompt", { title: entry.case.title }) : `Decide whether ${entry.case.title} is ready to move forward.`,
+        (t ? t("pipelinesResidualExtra.reviewDecisionPrompt", { title: entry.case.title }) : `Decide whether ${entry.case.title} is ready to move forward.`),
       kind: "review",
       createdAt: entry.case.updatedAt ?? entry.case.createdAt ?? null,
       expectedVersion: entry.review.expectedVersion ?? entry.case.version ?? null,
@@ -4588,7 +4588,7 @@ export function buildReviewQueueRows({
       prompt:
         pendingSuggestion?.rationale?.trim() ||
         entry.case.summary?.trim() ||
-        t ? t("pipelinesResidualExtra.reviewDecisionPrompt", { title: entry.case.title }) : `Decide whether ${entry.case.title} is ready to move forward.`,
+        (t ? t("pipelinesResidualExtra.reviewDecisionPrompt", { title: entry.case.title }) : `Decide whether ${entry.case.title} is ready to move forward.`),
       kind: "review",
       createdAt: entry.case.updatedAt ?? entry.case.createdAt ?? null,
       expectedVersion: typeof entry.case.version === "number" ? entry.case.version : null,

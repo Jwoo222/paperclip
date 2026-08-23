@@ -92,7 +92,7 @@ import { Input } from "@/components/ui/input";
 import { AgentIcon, AgentIconPicker } from "../components/AgentIconPicker";
 import { RunTranscriptView, type TranscriptMode } from "../components/transcript/RunTranscriptView";
 import { AgentToolsTab } from "./AgentToolsTab";
-import { useTranslation } from "@/i18n";
+import { t, useTranslation } from "@/i18n";
 import { Trans } from "react-i18next";
 import {
   appendCapped,

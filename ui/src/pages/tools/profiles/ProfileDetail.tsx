@@ -12,6 +12,7 @@ import type {
 } from "@paperclipai/shared";
 import { useNavigate, useSearchParams } from "@/lib/router";
 import { t as translate, useTranslation } from "@/i18n";
+import { t } from "@/i18n";
 import { toolsApi } from "@/api/tools";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn, formatShortDate } from "@/lib/utils";

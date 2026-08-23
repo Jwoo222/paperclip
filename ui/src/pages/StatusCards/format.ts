@@ -5,7 +5,7 @@ import { t } from "@/i18n";
 export function formatTokens(tokens: number | null | undefined): string | null {
   if (tokens === null || tokens === undefined) return null;
   const count = tokens < 1000 ? String(tokens) : `${(tokens / 1000).toFixed(1)}k`;
-  return t("statusCardsResidual.tokensCompact", { count, defaultValue: `${count} tok` });
+  return t("statusCardsResidual.tokensCompact", { value: count, defaultValue: `${count} tok` });
 }
 
 /**
@@ -140,7 +140,7 @@ export function estimateStatusCardCost(policy: StatusCardRefreshPolicy): StatusC
     }),
     note: cappedByTokenCap
       ? t("statusCardsResidual.tokenCapNote", {
-        count: formatTokens(cap!),
+        value: formatTokens(cap!) ?? "0",
         defaultValue: `Capped by your ${formatTokens(cap!)} daily token cap — the card pauses when it's hit.`,
       })
       : t("statusCardsResidual.noOpNote", { defaultValue: "Only runs when something changed; a cheap no-op check otherwise." }),

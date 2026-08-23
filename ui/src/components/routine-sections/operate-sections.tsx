@@ -19,11 +19,11 @@ import { RoutineActivityRow } from "../RoutineActivityRow";
 import { useRoutineDetail } from "./context";
 import { useTranslation } from "@/i18n";
 
-const DATE_WINDOW_OPTIONS: { value: string; label: string; ms: number | null }[] = [
-  { value: "any", label: "Any time", ms: null },
-  { value: "24h", label: "Last 24h", ms: 24 * 60 * 60 * 1000 },
-  { value: "7d", label: "Last 7d", ms: 7 * 24 * 60 * 60 * 1000 },
-  { value: "30d", label: "Last 30d", ms: 30 * 24 * 60 * 60 * 1000 },
+const DATE_WINDOW_OPTIONS: { value: string; ms: number | null }[] = [
+  { value: "any", ms: null },
+  { value: "24h", ms: 24 * 60 * 60 * 1000 },
+  { value: "7d", ms: 7 * 24 * 60 * 60 * 1000 },
+  { value: "30d", ms: 30 * 24 * 60 * 60 * 1000 },
 ];
 
 export function RunsSection() {
@@ -35,6 +35,20 @@ export function RunsSection() {
   const [sourceFilter, setSourceFilter] = useState("any");
   const [statusFilter, setStatusFilter] = useState("any");
   const [dateFilter, setDateFilter] = useState("any");
+  const statusLabel = (status: string) =>
+    t(`statusResidualRound3.status.${status}`, { defaultValue: status.replaceAll("_", " ") });
+  const sourceLabel = (source: string) =>
+    t(`statusResidualRound3.source.${source}`, { defaultValue: source.replaceAll("_", " ") });
+  const dateWindowOptions = DATE_WINDOW_OPTIONS.map((option) => ({
+    ...option,
+    label: option.value === "any"
+      ? t("operations.routines.anyTime")
+      : option.value === "24h"
+        ? t("operations.routines.last24h")
+        : option.value === "7d"
+          ? t("operations.routines.last7d")
+          : t("operations.routines.last30d"),
+  }));
 
   const sourceOptions = useMemo(
     () => [...new Set(runs.map((run) => run.source))].sort(),
@@ -46,7 +60,7 @@ export function RunsSection() {
   );
 
   const filtered = useMemo(() => {
-    const windowMs = DATE_WINDOW_OPTIONS.find((option) => option.value === dateFilter)?.ms ?? null;
+    const windowMs = dateWindowOptions.find((option) => option.value === dateFilter)?.ms ?? null;
     const cutoff = windowMs == null ? null : Date.now() - windowMs;
     return runs.filter((run) => {
       if (sourceFilter !== "any" && run.source !== sourceFilter) return false;
@@ -54,20 +68,19 @@ export function RunsSection() {
       if (cutoff != null && new Date(run.triggeredAt).getTime() < cutoff) return false;
       return true;
     });
-  }, [runs, sourceFilter, statusFilter, dateFilter]);
+  }, [runs, sourceFilter, statusFilter, dateFilter, dateWindowOptions]);
 
-  const activeFilters = useMemo<FilterValue[]>(() => {
-    const list: FilterValue[] = [];
-    if (sourceFilter !== "any") list.push({ key: "source", label: "Source", value: sourceFilter });
-    if (statusFilter !== "any") {
-      list.push({ key: "status", label: "Status", value: statusFilter.replaceAll("_", " ") });
-    }
-    if (dateFilter !== "any") {
-      const label = DATE_WINDOW_OPTIONS.find((option) => option.value === dateFilter)?.label ?? dateFilter;
-      list.push({ key: "date", label: "Date", value: label });
-    }
-    return list;
-  }, [sourceFilter, statusFilter, dateFilter]);
+  const activeFilters: FilterValue[] = [];
+  if (sourceFilter !== "any") {
+    activeFilters.push({ key: "source", label: t("operations.routines.source"), value: sourceLabel(sourceFilter) });
+  }
+  if (statusFilter !== "any") {
+    activeFilters.push({ key: "status", label: t("operations.common.status"), value: statusLabel(statusFilter) });
+  }
+  if (dateFilter !== "any") {
+    const label = dateWindowOptions.find((option) => option.value === dateFilter)?.label ?? dateFilter;
+    activeFilters.push({ key: "date", label: t("routineDetailExtra.runs.date"), value: label });
+  }
 
   function clearFilters() {
     setSourceFilter("any");
@@ -105,10 +118,10 @@ export function RunsSection() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="any">any</SelectItem>
+                  <SelectItem value="any">{t("statusResidualRound3.common.all")}</SelectItem>
                   {sourceOptions.map((source) => (
                     <SelectItem key={source} value={source}>
-                      {source}
+                      {sourceLabel(source)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -119,10 +132,10 @@ export function RunsSection() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="any">any</SelectItem>
+                  <SelectItem value="any">{t("statusResidualRound3.common.all")}</SelectItem>
                   {statusOptions.map((status) => (
                     <SelectItem key={status} value={status}>
-                      {status.replaceAll("_", " ")}
+                      {statusLabel(status)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -133,7 +146,7 @@ export function RunsSection() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {DATE_WINDOW_OPTIONS.map((option) => (
+                  {dateWindowOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -155,20 +168,20 @@ export function RunsSection() {
             <div className="rounded-lg border border-border">
               {filtered.map((run) => {
                 const label = dedupedTriggerLabel(run.trigger);
-                const title = run.linkedIssue?.title ?? label ?? "Run";
+                const title = run.linkedIssue?.title ?? label ?? t("statusResidualRound3.common.run");
                 return (
                   <EntityRow
                     key={run.id}
                     leading={
                       <>
                         <Badge variant="outline" className="shrink-0">
-                          {run.source}
+                          {sourceLabel(run.source)}
                         </Badge>
                         <Badge
                           variant={run.status === "failed" ? "destructive" : "secondary"}
                           className="shrink-0"
                         >
-                          {run.status.replaceAll("_", " ")}
+                          {statusLabel(run.status)}
                         </Badge>
                       </>
                     }
@@ -200,17 +213,18 @@ export function RunsSection() {
 }
 
 export function ActivitySection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const ctx = useRoutineDetail();
   const { activity } = ctx;
   const events = activity ?? [];
+  const locale = i18n.resolvedLanguage ?? i18n.language;
 
   const groups = useMemo(() => {
     const byDay = new Map<string, typeof events>();
     for (const event of events) {
-      let label = "Earlier";
+      let label = t("statusResidualRound3.common.earlier");
       try {
-        label = new Date(event.createdAt).toLocaleDateString(undefined, {
+        label = new Date(event.createdAt).toLocaleDateString(locale, {
           weekday: "short",
           month: "short",
           day: "numeric",
@@ -223,7 +237,7 @@ export function ActivitySection() {
       byDay.set(label, bucket);
     }
     return Array.from(byDay.entries());
-  }, [events]);
+  }, [events, locale, t]);
 
   if (events.length === 0) {
     return <EmptyState icon={ActivityIcon} message={t("routineDetailExtra.activity.empty")} />;

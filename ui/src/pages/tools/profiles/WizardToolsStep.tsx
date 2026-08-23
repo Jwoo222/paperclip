@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Plug, Plus, Search, X } from "lucide-react";
 import { Link } from "@/lib/router";
 import { t as translate, useTranslation } from "@/i18n";
+import { t } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -386,8 +387,8 @@ function AdvancedRules({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-                <SelectItem value="include">{t("toolsAdvanced.profiles.allow")}</SelectItem>
-                <SelectItem value="exclude">{t("toolsAdvanced.profiles.block")}</SelectItem>
+                <SelectItem value="include">{t("toolsAdvanced.profileExtra.allow")}</SelectItem>
+                <SelectItem value="exclude">{t("toolsAdvanced.profileExtra.block")}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={kind} onValueChange={(v) => setKind(v as AdvancedRuleKind)}>
@@ -408,8 +409,8 @@ function AdvancedRules({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="read">{t("toolsAdvanced.profiles.readOnly")}</SelectItem>
-                <SelectItem value="write">{t("toolsAdvanced.profiles.makesChanges")}</SelectItem>
+                <SelectItem value="read">{t("toolsAdvanced.profileExtra.readOnly")}</SelectItem>
+                <SelectItem value="write">{t("toolsAdvanced.profileExtra.makesChanges")}</SelectItem>
                 <SelectItem value="destructive">{t("integrations.tools.destructive")}</SelectItem>
               </SelectContent>
             </Select>

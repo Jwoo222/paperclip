@@ -27,6 +27,7 @@ import { ApiError } from "@/api/client";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
 import { t as translate, useTranslation } from "@/i18n";
+import { t } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -399,8 +400,8 @@ function EntryFields({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-              <SelectItem value="include">{t("toolsAdvanced.profiles.include")}</SelectItem>
-              <SelectItem value="exclude">{t("toolsAdvanced.profiles.exclude")}</SelectItem>
+              <SelectItem value="include">{t("toolsAdvanced.profileExtra.include")}</SelectItem>
+              <SelectItem value="exclude">{t("toolsAdvanced.profileExtra.exclude")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -447,7 +448,7 @@ function EntryFields({
       {selectorType === "tool_name" ? (
         <div className="space-y-1.5 sm:col-span-2">
           <Label htmlFor="tool-name">{t("toolsAdvanced.profiles.toolName")}</Label>
-          <Input id="tool-name" value={toolName} onChange={(event) => setToolName(event.target.value)} placeholder={t("toolsAdvanced.profiles.toolNamePlaceholder")} />
+          <Input id="tool-name" value={toolName} onChange={(event) => setToolName(event.target.value)} placeholder={t("toolsAdvanced.profileExtra.toolNamePlaceholder")} />
         </div>
       ) : null}
       {selectorType === "risk_level" ? (
@@ -1379,8 +1380,8 @@ function ProfileDetail({
               <span key={entry.id} className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs">
                 <Badge variant={entry.effect === "include" ? "secondary" : "destructive"}>
                   {entry.effect === "include"
-                    ? t("toolsAdvanced.profiles.include")
-                    : t("toolsAdvanced.profiles.exclude")}
+                    ? t("toolsAdvanced.profileExtra.include")
+                    : t("toolsAdvanced.profileExtra.exclude")}
                 </Badge>
                 <span>{SELECTOR_TYPES.find((type) => type.value === entry.selectorType)?.label ?? entry.selectorType}</span>
                 {entry.selectorType === "risk_level" ? <RiskBadge risk={entry.riskLevel} /> : (
