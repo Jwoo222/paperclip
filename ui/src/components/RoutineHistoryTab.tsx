@@ -36,6 +36,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "./EmptyState";
 import { MarkdownBody } from "./MarkdownBody";
 import { Badge } from "@/components/ui/badge";
+import { t } from "../i18n";
 
 type AgentLookup = Map<string, { id: string; name: string }>;
 type ProjectLookup = Map<string, { id: string; name: string }>;
@@ -124,10 +125,10 @@ export function RoutineHistoryTab({
       const restoredFromNumber = data.restoredFromRevisionNumber;
       const newNumber = data.revision.revisionNumber;
       pushToast({
-        title: `Restored revision ${restoredFromNumber} as revision ${newNumber}`,
+        title: t("routinesExtra.history.restoredTitle", { defaultValue: "Restored revision {{from}} as revision {{to}}", from: restoredFromNumber, to: newNumber }),
         body: data.secretMaterials.length > 0
-          ? "Trigger enabled state was restored from the snapshot. New webhook secrets are available in the banner above."
-          : "Trigger enabled state was restored from the snapshot.",
+          ? t("routinesExtra.history.restoredWithSecrets", { defaultValue: "Trigger enabled state was restored from the snapshot. New webhook secrets are available in the banner above." })
+          : t("routinesExtra.history.restored", { defaultValue: "Trigger enabled state was restored from the snapshot." }),
         tone: "success",
       });
       onRestoreSecretMaterials(data);
@@ -153,8 +154,8 @@ export function RoutineHistoryTab({
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to restore revision",
-        body: error instanceof Error ? error.message : "Paperclip could not restore the revision.",
+        title: t("routinesExtra.history.restoreFailed", { defaultValue: "Failed to restore revision" }),
+        body: error instanceof Error ? error.message : t("routinesExtra.history.restoreFailedBody", { defaultValue: "Paperclip could not restore the revision." }),
         tone: "error",
       });
     },
@@ -200,15 +201,15 @@ export function RoutineHistoryTab({
     return (
       <div className="rounded-md border border-l-2 border-l-destructive border-border p-4 space-y-3">
         <div>
-          <p className="text-sm font-medium">Could not load revisions</p>
+          <p className="text-sm font-medium">{t("routinesExtra.history.loadFailed", { defaultValue: "Could not load revisions" })}</p>
           <p className="text-xs text-muted-foreground">
             {revisionsQuery.error instanceof Error
               ? revisionsQuery.error.message
-              : "Unknown error loading revisions."}
+              : t("routinesExtra.history.unknownLoadError", { defaultValue: "Unknown error loading revisions." })}
           </p>
         </div>
         <Button size="sm" variant="outline" onClick={() => revisionsQuery.refetch()}>
-          Retry
+          {t("routinesExtra.general.retry", { defaultValue: "Retry" })}
         </Button>
       </div>
     );
@@ -241,11 +242,10 @@ export function RoutineHistoryTab({
           <div className="space-y-2">
             <EmptyState
               icon={HistoryIcon}
-              message="No edits yet"
+              message={t("routinesExtra.general.noEdits", { defaultValue: "No edits yet" })}
             />
             <p className="text-center text-xs text-muted-foreground">
-              Revision 1 is the only history this routine has. Saving an edit creates the first
-              additional revision.
+              {t("routinesExtra.history.firstRevision", { defaultValue: "Revision 1 is the only history this routine has. Saving an edit creates the first additional revision." })}
             </p>
           </div>
         ) : (
@@ -340,17 +340,16 @@ function HistoricalPreviewBanner({
             Viewing revision {revisionNumber} (read-only)
           </p>
           <p className="text-xs text-muted-foreground">
-            Restoring this revision creates a new revision {nextRevisionNumber} with the same content.
-            History stays append-only.
+            {t("routinesExtra.history.previewDescription", { defaultValue: "Restoring this revision creates a new revision {{number}} with the same content. History stays append-only.", number: nextRevisionNumber })}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" onClick={onReturn} disabled={pending}>
-            Return to current
+            {t("routinesExtra.history.returnCurrent", { defaultValue: "Return to current" })}
           </Button>
           <Button size="sm" onClick={onRestore} disabled={pending}>
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-            Restore as new revision
+            {t("routinesExtra.history.restoreNew", { defaultValue: "Restore as new revision" })}
           </Button>
         </div>
       </div>
@@ -375,18 +374,17 @@ function ConflictBanner({
     <div className="rounded-md border border-amber-500/30 bg-amber-500/5 px-4 py-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Unsaved routine edits</p>
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-200">{t("routinesExtra.history.unsaved", { defaultValue: "Unsaved routine edits" })}</p>
           <p className="text-xs text-muted-foreground">
-            You changed {fieldsText} but haven&apos;t saved yet. Save or discard before previewing or
-            restoring an older revision.
+            {t("routinesExtra.history.unsavedDescription", { defaultValue: "You changed {{fields}} but haven't saved yet. Save or discard before previewing or restoring an older revision.", fields: fieldsText })}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" onClick={onDiscard}>
-            Discard changes
+            {t("routinesExtra.general.discard", { defaultValue: "Discard changes" })}
           </Button>
           <Button size="sm" onClick={onSave}>
-            Save and continue
+            {t("routinesExtra.history.saveContinue", { defaultValue: "Save and continue" })}
           </Button>
         </div>
       </div>
@@ -429,9 +427,9 @@ function RevisionList({
     <aside className="space-y-1">
       <header className="flex items-center justify-between pb-2">
         <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-          Revisions
+          {t("routinesExtra.history.revisions", { defaultValue: "Revisions" })}
         </p>
-        <span className="text-(length:--text-micro) text-muted-foreground">{totalRevisions} total</span>
+        <span className="text-(length:--text-micro) text-muted-foreground">{t("routinesExtra.history.total", { defaultValue: "{{count}} total", count: totalRevisions })}</span>
       </header>
       {revisions.map((revision) => {
         const isSelected = revision.id === selectedRevisionId;
@@ -459,15 +457,15 @@ function RevisionList({
             data-testid={`revision-row-${revision.revisionNumber}`}
           >
             <div className="flex items-center gap-2 text-sm font-medium">
-              <span>rev {revision.revisionNumber}</span>
+              <span>{t("routinesExtra.history.revision", { defaultValue: "rev {{number}}", number: revision.revisionNumber })}</span>
               {isCurrent && (
                 <Badge variant="outline" className="border-border px-1.5 text-(length:--text-nano) uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
-                  Current
+                  {t("routinesExtra.history.current", { defaultValue: "Current" })}
                 </Badge>
               )}
               {revision.restoredFromRevisionId && (
                 <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 px-1.5 text-(length:--text-nano) uppercase tracking-(--tracking-eyebrow) text-amber-800 dark:text-amber-200">
-                  Restored
+                  {t("routinesExtra.history.restoredLabel", { defaultValue: "Restored" })}
                 </Badge>
               )}
             </div>
@@ -480,7 +478,7 @@ function RevisionList({
       })}
       {totalRevisions > revisions.length && !showOlder && (
         <Button variant="ghost" size="sm" className="w-full" onClick={onShowOlder}>
-          Show {totalRevisions - revisions.length} older…
+          {t("routinesExtra.history.showOlder", { defaultValue: "Show {{count}} older…", count: totalRevisions - revisions.length })}
         </Button>
       )}
     </aside>
@@ -511,7 +509,7 @@ function RevisionPreview({
   const snapshot = revision.snapshot.routine;
   const triggers = revision.snapshot.triggers;
   const currentSnapshot = currentRevision?.snapshot.routine ?? null;
-  const restoreLabel = isHistorical ? "Restore this revision" : "Restore this revision";
+  const restoreLabel = t("routinesExtra.history.restoreThis", { defaultValue: "Restore this revision" });
   const cardWrapper = `rounded-md border transition-colors duration-1000 ${
     highlighted ? "border-emerald-500/40 bg-emerald-500/10" : "border-border"
   }`;
@@ -523,49 +521,49 @@ function RevisionPreview({
   const fieldRows: Array<{ key: string; label: string; value: string; differs: boolean }> = [
     {
       key: "title",
-      label: "Title",
+      label: t("routinesExtra.fields.title", { defaultValue: "Title" }),
       value: snapshot.title,
       differs: !!currentSnapshot && currentSnapshot.title !== snapshot.title,
     },
     {
       key: "priority",
-      label: "Priority",
+      label: t("routinesExtra.fields.priority", { defaultValue: "Priority" }),
       value: snapshot.priority,
       differs: !!currentSnapshot && currentSnapshot.priority !== snapshot.priority,
     },
     {
       key: "status",
-      label: "Status",
+      label: t("routinesExtra.fields.status", { defaultValue: "Status" }),
       value: snapshot.status,
       differs: !!currentSnapshot && currentSnapshot.status !== snapshot.status,
     },
     {
       key: "assigneeAgentId",
-      label: "Default agent",
+      label: t("routinesExtra.fields.defaultAgent", { defaultValue: "Default agent" }),
       value: resolveAgentName(snapshot.assigneeAgentId, agents),
       differs: !!currentSnapshot && currentSnapshot.assigneeAgentId !== snapshot.assigneeAgentId,
     },
     {
       key: "projectId",
-      label: "Project",
+      label: t("routinesExtra.fields.project", { defaultValue: "Project" }),
       value: resolveProjectName(snapshot.projectId, projects),
       differs: !!currentSnapshot && currentSnapshot.projectId !== snapshot.projectId,
     },
     {
       key: "concurrencyPolicy",
-      label: "Concurrency",
+      label: t("routinesExtra.fields.concurrency", { defaultValue: "Concurrency" }),
       value: snapshot.concurrencyPolicy.replaceAll("_", " "),
       differs: !!currentSnapshot && currentSnapshot.concurrencyPolicy !== snapshot.concurrencyPolicy,
     },
     {
       key: "catchUpPolicy",
-      label: "Catch-up",
+      label: t("routinesExtra.fields.catchUp", { defaultValue: "Catch-up" }),
       value: snapshot.catchUpPolicy.replaceAll("_", " "),
       differs: !!currentSnapshot && currentSnapshot.catchUpPolicy !== snapshot.catchUpPolicy,
     },
     {
       key: "env",
-      label: "Env",
+      label: t("routinesExtra.fields.env", { defaultValue: "Env" }),
       value: envSummary,
       differs: envDiffers,
     },
@@ -578,14 +576,14 @@ function RevisionPreview({
           <div className="space-y-1 min-w-0">
             <p className="text-sm font-medium">rev {revision.revisionNumber}</p>
             <p className="text-xs text-muted-foreground truncate">
-              Saved {relativeTime(revision.createdAt)} by {getActorLabel(revision)}
+              {t("routinesExtra.history.savedBy", { defaultValue: "Saved {{time}} by {{actor}}", time: relativeTime(revision.createdAt), actor: getActorLabel(revision) })}
               {revision.changeSummary ? ` · ${revision.changeSummary}` : ""}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" onClick={onCompare}>
               <Search className="mr-1.5 h-3.5 w-3.5" />
-              Compare with current
+              {t("routinesExtra.history.compareCurrent", { defaultValue: "Compare with current" })}
             </Button>
             <Button
               size="sm"
@@ -603,7 +601,7 @@ function RevisionPreview({
 
       <div className={`${cardWrapper} p-3`}>
         <p className="pb-2 text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-          Structured fields
+          {t("routinesExtra.history.structuredFields", { defaultValue: "Structured fields" })}
         </p>
         <div className="grid gap-3 md:grid-cols-2 divide-y md:divide-y-0 divide-border">
           {fieldRows.map((row) => (
@@ -613,7 +611,7 @@ function RevisionPreview({
                 {row.value || <span className="text-muted-foreground">—</span>}
                 {row.differs && (
                   <Badge variant="outline" className="ml-2 border-amber-500/40 bg-amber-500/10 px-1.5 text-(length:--text-nano) uppercase tracking-(--tracking-eyebrow) text-amber-800 dark:text-amber-200">
-                    differs from current
+                    {t("routinesExtra.history.differs", { defaultValue: "differs from current" })}
                   </Badge>
                 )}
               </p>
@@ -624,23 +622,23 @@ function RevisionPreview({
 
       <div className={`${cardWrapper} p-3 space-y-2`}>
         <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-          Description
+          {t("routinesExtra.fields.description", { defaultValue: "Description" })}
         </p>
         <div className="rounded-md bg-background/40 p-3 text-sm leading-7">
           {snapshot.description ? (
             <MarkdownBody>{snapshot.description}</MarkdownBody>
           ) : (
-            <span className="text-muted-foreground">No description</span>
+            <span className="text-muted-foreground">{t("routinesExtra.history.noDescription", { defaultValue: "No description" })}</span>
           )}
         </div>
       </div>
 
       <div className={`${cardWrapper} p-3 space-y-2`}>
         <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-          Triggers ({triggers.length})
+          {t("routinesExtra.history.triggers", { defaultValue: "Triggers ({{count}})", count: triggers.length })}
         </p>
         {triggers.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No triggers in this revision.</p>
+          <p className="text-sm text-muted-foreground">{t("routinesExtra.history.noTriggers", { defaultValue: "No triggers in this revision." })}</p>
         ) : (
           <ul className="divide-y divide-border">
             {triggers.map((trigger) => (
@@ -655,15 +653,14 @@ function RevisionPreview({
                 <span
                   className={`ml-auto text-xs ${trigger.enabled ? "text-emerald-400" : "text-muted-foreground"}`}
                 >
-                  {trigger.enabled ? "enabled" : "disabled"}
+                  {trigger.enabled ? t("routinesExtra.history.enabled", { defaultValue: "enabled" }) : t("routinesExtra.history.disabled", { defaultValue: "disabled" })}
                 </span>
               </li>
             ))}
           </ul>
         )}
         <p className="text-xs text-muted-foreground">
-          Webhook secrets are not stored in revisions. If a restored webhook trigger needs re-creation,
-          Paperclip mints fresh secret material at restore time.
+          {t("routinesExtra.history.webhookSecrets", { defaultValue: "Webhook secrets are not stored in revisions. If a restored webhook trigger needs re-creation, Paperclip mints fresh secret material at restore time." })}
         </p>
       </div>
 
@@ -753,7 +750,7 @@ function RestoreConfirmDialog({
           <Input
             id="restore-change-summary"
             value={changeSummary}
-            placeholder="Why are you restoring? Visible in history."
+            placeholder={t("routinesExtra.history.restoreReason", { defaultValue: "Why are you restoring? Visible in history." })}
             onChange={(event) => onChangeSummaryChange(event.target.value)}
           />
         </div>
@@ -763,7 +760,7 @@ function RestoreConfirmDialog({
           </Button>
           <Button onClick={onConfirm} disabled={pending}>
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-            {pending ? "Restoring…" : `Restore as revision ${newRevisionNumber}`}
+            {pending ? t("routinesExtra.history.restoring", { defaultValue: "Restoring…" }) : t("routinesExtra.history.restoreAsRevision", { defaultValue: "Restore as revision {{number}}", number: newRevisionNumber })}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -821,18 +818,18 @@ function RoutineRevisionDiffModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!max-w-(--pct-90) w-full max-h-(--sz-85vh) overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Compare routine revisions</DialogTitle>
+          <DialogTitle>{t("routinesExtra.history.compareTitle", { defaultValue: "Compare routine revisions" })}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-wrap items-center gap-3">
           <RevisionPicker
-            label="Old"
+            label={t("routinesExtra.history.old", { defaultValue: "Old" })}
             value={leftId}
             onChange={setLeftId}
             revisions={revisions}
             tone="red"
           />
           <RevisionPicker
-            label="New"
+            label={t("routinesExtra.history.new", { defaultValue: "New" })}
             value={rightId}
             onChange={setRightId}
             revisions={revisions}
@@ -842,17 +839,17 @@ function RoutineRevisionDiffModal({
         <div className="overflow-auto flex-1 space-y-4">
           <section className="space-y-2">
             <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-              Field changes
+              {t("routinesExtra.history.fieldChanges", { defaultValue: "Field changes" })}
             </p>
             {fieldChanges.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No structural field changes.</p>
+              <p className="text-sm text-muted-foreground">{t("routinesExtra.history.noFieldChanges", { defaultValue: "No structural field changes." })}</p>
             ) : (
               <table className="w-full text-sm border border-border rounded-md overflow-hidden">
                 <thead>
                   <tr className="text-xs uppercase tracking-wide bg-muted/30 text-muted-foreground">
-                    <th className="px-3 py-2 text-left">Field</th>
-                    <th className="px-3 py-2 text-left">Old value</th>
-                    <th className="px-3 py-2 text-left">New value</th>
+                    <th className="px-3 py-2 text-left">{t("routinesExtra.history.field", { defaultValue: "Field" })}</th>
+                    <th className="px-3 py-2 text-left">{t("routinesExtra.history.oldValue", { defaultValue: "Old value" })}</th>
+                    <th className="px-3 py-2 text-left">{t("routinesExtra.history.newValue", { defaultValue: "New value" })}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -873,19 +870,19 @@ function RoutineRevisionDiffModal({
           </section>
           <section className="space-y-2">
             <p className="text-xs font-medium uppercase tracking-(--tracking-caps) text-muted-foreground">
-              Description diff
+              {t("routinesExtra.history.descriptionDiff", { defaultValue: "Description diff" })}
             </p>
             <DiffTable rows={descriptionDiff} />
           </section>
         </div>
         <DialogFooter className="justify-between sm:justify-between">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
+            {t("routinesExtra.general.close", { defaultValue: "Close" })}
           </Button>
           {leftIsHistorical && left && (
             <Button onClick={() => onRestore(left)}>
               <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-              Restore rev {left.revisionNumber} as new revision
+              {t("routinesExtra.history.restoreRevAsNew", { defaultValue: "Restore rev {{number}} as new revision", number: left.revisionNumber })}
             </Button>
           )}
         </DialogFooter>
@@ -935,10 +932,10 @@ function RevisionPicker({
 
 function DiffTable({ rows }: { rows: DiffRow[] }) {
   if (rows.length === 0) {
-    return <p className="text-sm text-muted-foreground">No description on either revision.</p>;
+    return <p className="text-sm text-muted-foreground">{t("routinesExtra.history.noDescriptionEither", { defaultValue: "No description on either revision." })}</p>;
   }
   if (rows.every((row) => row.kind === "context")) {
-    return <p className="text-sm text-muted-foreground">Descriptions are identical.</p>;
+    return <p className="text-sm text-muted-foreground">{t("routinesExtra.history.descriptionsIdentical", { defaultValue: "Descriptions are identical." })}</p>;
   }
   const lineClassesByKind: Record<DiffRow["kind"], string> = {
     context: "bg-transparent",
@@ -953,10 +950,10 @@ function DiffTable({ rows }: { rows: DiffRow[] }) {
   return (
     <div className="rounded-md border border-border text-xs font-mono leading-6 overflow-hidden">
       <div className="grid grid-cols-(--gtc-1) border-b border-border/60 bg-muted/30 px-3 py-2 text-(length:--text-micro) uppercase tracking-wide text-muted-foreground">
-        <span>Old</span>
-        <span>New</span>
+        <span>{t("routinesExtra.history.old", { defaultValue: "Old" })}</span>
+        <span>{t("routinesExtra.history.new", { defaultValue: "New" })}</span>
         <span />
-        <span>Content</span>
+        <span>{t("routinesExtra.history.content", { defaultValue: "Content" })}</span>
       </div>
       {rows.map((row, index) => (
         <div
@@ -982,18 +979,18 @@ function DiffTable({ rows }: { rows: DiffRow[] }) {
 }
 
 function getActorLabel(revision: RoutineRevision): string {
-  if (revision.createdByUserId) return "board";
-  if (revision.createdByAgentId) return "agent";
-  return "system";
+  if (revision.createdByUserId) return t("routinesExtra.history.board", { defaultValue: "board" });
+  if (revision.createdByAgentId) return t("routinesExtra.history.agent", { defaultValue: "agent" });
+  return t("routinesExtra.history.system", { defaultValue: "system" });
 }
 
 function resolveAgentName(agentId: string | null, lookup: AgentLookup) {
-  if (!agentId) return "Unassigned";
+  if (!agentId) return t("operations.common.unassigned", { defaultValue: "Unassigned" });
   return lookup.get(agentId)?.name ?? agentId;
 }
 
 function resolveProjectName(projectId: string | null, lookup: ProjectLookup) {
-  if (!projectId) return "No project";
+  if (!projectId) return t("operations.common.noProject", { defaultValue: "No project" });
   return lookup.get(projectId)?.name ?? projectId;
 }
 
@@ -1002,7 +999,7 @@ function summarizeTriggerSnapshot(trigger: RoutineRevisionSnapshotTriggerV1): st
     return [trigger.cronExpression, trigger.timezone].filter(Boolean).join(" · ");
   }
   if (trigger.kind === "webhook") {
-    const replay = trigger.replayWindowSec != null ? `replay ${trigger.replayWindowSec}s` : "";
+    const replay = trigger.replayWindowSec != null ? t("routinesExtra.history.replay", { defaultValue: "replay {{seconds}}s", seconds: trigger.replayWindowSec }) : "";
     return [trigger.signingMode, replay].filter(Boolean).join(" · ");
   }
   return "API";
@@ -1057,26 +1054,26 @@ function computeFieldChanges(
       changes.push({ field: label, oldValue: transform(oldVal), newValue: transform(newVal) });
     }
   };
-  compareScalar("title", "Title", oldRoutine.title, newRoutine.title);
-  compareScalar("priority", "Priority", oldRoutine.priority, newRoutine.priority);
+  compareScalar("title", t("routinesExtra.fields.title", { defaultValue: "Title" }), oldRoutine.title, newRoutine.title);
+  compareScalar("priority", t("routinesExtra.fields.priority", { defaultValue: "Priority" }), oldRoutine.priority, newRoutine.priority);
   compareScalar(
     "assigneeAgentId",
-    "Default agent",
+    t("routinesExtra.fields.defaultAgent", { defaultValue: "Default agent" }),
     resolveAgentName(oldRoutine.assigneeAgentId, agents),
     resolveAgentName(newRoutine.assigneeAgentId, agents),
   );
   compareScalar(
     "projectId",
-    "Project",
+    t("routinesExtra.fields.project", { defaultValue: "Project" }),
     resolveProjectName(oldRoutine.projectId, projects),
     resolveProjectName(newRoutine.projectId, projects),
   );
-  compareScalar("concurrencyPolicy", "Concurrency", oldRoutine.concurrencyPolicy, newRoutine.concurrencyPolicy);
-  compareScalar("catchUpPolicy", "Catch-up", oldRoutine.catchUpPolicy, newRoutine.catchUpPolicy);
-  compareScalar("status", "Status", oldRoutine.status, newRoutine.status);
+  compareScalar("concurrencyPolicy", t("routinesExtra.fields.concurrency", { defaultValue: "Concurrency" }), oldRoutine.concurrencyPolicy, newRoutine.concurrencyPolicy);
+  compareScalar("catchUpPolicy", t("routinesExtra.fields.catchUp", { defaultValue: "Catch-up" }), oldRoutine.catchUpPolicy, newRoutine.catchUpPolicy);
+  compareScalar("status", t("routinesExtra.fields.status", { defaultValue: "Status" }), oldRoutine.status, newRoutine.status);
   if (JSON.stringify(oldRoutine.variables) !== JSON.stringify(newRoutine.variables)) {
     changes.push({
-      field: "Variables",
+      field: t("routinesExtra.fields.variables", { defaultValue: "Variables" }),
       oldValue: summarizeVariables(oldRoutine.variables),
       newValue: summarizeVariables(newRoutine.variables),
     });
@@ -1129,9 +1126,10 @@ function summarizeEnv(env: RoutineEnvConfig | null): string {
   const entries = Object.entries(normalizeEnv(env));
   if (entries.length === 0) return "";
   const secretCount = entries.filter(([, binding]) => envBindingKind(binding) === "secret_ref").length;
-  const keyLabel = entries.length === 1 ? "key" : "keys";
+  const keyLabel = entries.length === 1 ? t("routinesExtra.history.key", { defaultValue: "key" }) : t("routinesExtra.history.keys", { defaultValue: "keys" });
   if (secretCount === 0) return `${entries.length} ${keyLabel}`;
-  return `${entries.length} ${keyLabel} (${secretCount} secret ${secretCount === 1 ? "ref" : "refs"})`;
+  const refLabel = secretCount === 1 ? t("routinesExtra.history.secretRef", { defaultValue: "ref" }) : t("routinesExtra.history.secretRefs", { defaultValue: "refs" });
+  return `${entries.length} ${keyLabel} (${secretCount} ${t("routinesExtra.history.secret", { defaultValue: "secret" })} ${refLabel})`;
 }
 
 type EnvDiffCounts = {
@@ -1171,9 +1169,9 @@ function summarizeEnvDiffCounts(
 
 function formatEnvDiffCounts(counts: EnvDiffCounts): string {
   const parts: string[] = [];
-  if (counts.added > 0) parts.push(`${counts.added} ${counts.added === 1 ? "key" : "keys"} added`);
-  if (counts.removed > 0) parts.push(`${counts.removed} ${counts.removed === 1 ? "key" : "keys"} removed`);
-  if (counts.changed > 0) parts.push(`${counts.changed} ${counts.changed === 1 ? "key" : "keys"} changed`);
+  if (counts.added > 0) parts.push(t("routinesExtra.history.keysAdded", { defaultValue: "{{count}} keys added", count: counts.added }));
+  if (counts.removed > 0) parts.push(t("routinesExtra.history.keysRemoved", { defaultValue: "{{count}} keys removed", count: counts.removed }));
+  if (counts.changed > 0) parts.push(t("routinesExtra.history.keysChanged", { defaultValue: "{{count}} keys changed", count: counts.changed }));
   return parts.join(", ");
 }
 
@@ -1282,8 +1280,8 @@ function compareTriggers(
       if (oldSummary !== newSummary || pair.old.enabled !== pair.next.enabled) {
         changes.push({
           field: `Trigger ${pair.next.label ?? pair.next.kind}`,
-          oldValue: `${oldSummary} (${pair.old.enabled ? "enabled" : "disabled"})`,
-          newValue: `${newSummary} (${pair.next.enabled ? "enabled" : "disabled"})`,
+        oldValue: `${oldSummary} (${pair.old.enabled ? t("routinesExtra.history.enabled", { defaultValue: "enabled" }) : t("routinesExtra.history.disabled", { defaultValue: "disabled" })})`,
+        newValue: `${newSummary} (${pair.next.enabled ? t("routinesExtra.history.enabled", { defaultValue: "enabled" }) : t("routinesExtra.history.disabled", { defaultValue: "disabled" })})`,
         });
       }
     }
