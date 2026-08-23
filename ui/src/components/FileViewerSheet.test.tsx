@@ -2,17 +2,14 @@ import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { WorkspaceFileContent } from "@paperclipai/shared";
 import type { FileViewerUrlState } from "@/context/FileViewerContext";
+import { i18n } from "@/i18n";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { describeDenial, FileContentViewer, FileViewerMetadataRow } from "./FileViewerSheet";
 
 describe("describeDenial", () => {
   it("returns the curated body for too_large regardless of fallback", () => {
-    expect(describeDenial("too_large", "").body).toBe(
-      "This file exceeds the supported preview size.",
-    );
-    expect(describeDenial("too_large", "ignored fallback").body).toBe(
-      "This file exceeds the supported preview size.",
-    );
+    expect(describeDenial("too_large", "").body).toBe(i18n.t("coreWorkflow.fileViewer.tooLargeBody"));
+    expect(describeDenial("too_large", "ignored fallback").body).toBe(i18n.t("coreWorkflow.fileViewer.tooLargeBody"));
   });
 
   it("does not leak the raw denial code as body when fallback is empty", () => {
@@ -30,15 +27,13 @@ describe("describeDenial", () => {
   });
 
   it("describes unsupported previews in terms of text, image, and video", () => {
-    expect(describeDenial("unsupported_content", "").body).toBe(
-      "This file does not have a text, image, or video preview available.",
-    );
+    expect(describeDenial("unsupported_content", "").body).toBe(i18n.t("coreWorkflow.fileViewer.unsupportedBody"));
   });
 
   it("falls back to the generic message for unknown codes with empty fallback", () => {
     const { body, title } = describeDenial("", "");
-    expect(title).toBe("Can't preview this file");
-    expect(body).toBe("The viewer was unable to load this file.");
+    expect(title).toBe(i18n.t("coreWorkflow.fileViewer.cantPreview"));
+    expect(body).toBe(i18n.t("coreWorkflow.fileViewer.unableToLoad"));
   });
 
   it("prefers a human-readable server message for unknown codes", () => {
@@ -137,18 +132,18 @@ describe("FileContentViewer", () => {
       </ThemeProvider>,
     );
 
-    expect(markup).toContain("Markdown preview mode");
-    expect(markup).toContain("Show rendered Markdown");
-    expect(markup).toContain("Show raw Markdown");
-    expect(markup).toContain("README.md rendered Markdown");
-    expect(markup).not.toContain("README.md source");
+    expect(markup).toContain(i18n.t("coreWorkflow.fileViewer.markdownPreviewMode"));
+    expect(markup).toContain(i18n.t("coreWorkflow.fileViewer.showRenderedMarkdown"));
+    expect(markup).toContain(i18n.t("coreWorkflow.fileViewer.showRawMarkdown"));
+    expect(markup).toContain(i18n.t("coreWorkflow.fileViewer.renderedResource", { title: "README.md" }));
+    expect(markup).not.toContain(i18n.t("coreWorkflow.fileViewer.source", { title: "README.md" }));
   });
 
   it("does not show the Markdown toggle for non-Markdown text files", () => {
     const markup = renderToStaticMarkup(<FileContentViewer content={content()} highlightedLine={null} />);
 
     expect(markup).not.toContain("Markdown preview mode");
-    expect(markup).toContain("notes.txt source");
+    expect(markup).toContain(i18n.t("coreWorkflow.fileViewer.source", { title: "notes.txt" }));
   });
 });
 
@@ -165,6 +160,6 @@ describe("FileViewerMetadataRow", () => {
   it("reserves metadata row height while file details load", () => {
     const markup = renderToStaticMarkup(<FileViewerMetadataRow state={state} />);
     expect(markup).toContain("min-h-(--sz-18px)");
-    expect(markup).toContain("Loading file details");
+    expect(markup).toContain(i18n.t("coreWorkflow.fileViewer.loadingDetails"));
   });
 });

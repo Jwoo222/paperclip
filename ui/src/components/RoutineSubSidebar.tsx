@@ -13,6 +13,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { Link } from "@/lib/router";
 import { cn } from "@/lib/utils";
+import { i18n } from "../i18n";
 import {
   ROUTINE_SECTION_KEYS,
   type RoutineSectionKey,
@@ -29,32 +30,34 @@ import {
 
 type NavItem = {
   key: RoutineSectionKey;
-  label: string;
+  labelKey: string;
   icon: LucideIcon;
 };
 
 type NavGroup = {
-  label: string;
+  labelKey: string;
   items: NavItem[];
 };
 
+const cwt = (key: string, options?: Record<string, unknown>) => i18n.t(`coreWorkflow.${key}`, options);
+
 const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Routine",
+    labelKey: "routine",
     items: [
-      { key: "overview", label: "Overview", icon: Circle },
-      { key: "triggers", label: "Triggers", icon: Clock3 },
-      { key: "variables", label: "Variables", icon: LayoutGrid },
-      { key: "secrets", label: "Secrets", icon: KeyRound },
-      { key: "delivery", label: "Delivery", icon: Send },
+      { key: "overview", labelKey: "overview", icon: Circle },
+      { key: "triggers", labelKey: "triggers", icon: Clock3 },
+      { key: "variables", labelKey: "variables", icon: LayoutGrid },
+      { key: "secrets", labelKey: "secrets", icon: KeyRound },
+      { key: "delivery", labelKey: "delivery", icon: Send },
     ],
   },
   {
-    label: "Operate",
+    labelKey: "operate",
     items: [
-      { key: "runs", label: "Runs", icon: Play },
-      { key: "activity", label: "Activity", icon: ActivityIcon },
-      { key: "history", label: "History", icon: HistoryIcon },
+      { key: "runs", labelKey: "runs", icon: Play },
+      { key: "activity", labelKey: "activitySection", icon: ActivityIcon },
+      { key: "history", labelKey: "history", icon: HistoryIcon },
     ],
   },
 ];
@@ -108,14 +111,14 @@ export function RoutineSubSidebar({
   let flatIndex = -1;
 
   return (
-    <nav
-      aria-label="Routine sections"
+      <nav
+      aria-label={cwt("routineSections")}
       className="hidden h-full w-52 shrink-0 flex-col gap-4 overflow-y-auto border-r border-border bg-background px-3 py-4 md:flex"
     >
       {NAV_GROUPS.map((group) => (
-        <div key={group.label} className="flex flex-col gap-0.5">
+        <div key={group.labelKey} className="flex flex-col gap-0.5">
           <p className="mx-2 px-2 pb-1 text-(length:--text-nano) font-medium uppercase tracking-widest font-mono text-muted-foreground/60">
-            {group.label}
+            {cwt(group.labelKey)}
           </p>
           {group.items.map((item) => {
             flatIndex += 1;
@@ -147,12 +150,12 @@ export function RoutineSubSidebar({
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
-                <span className="truncate">{item.label}</span>
+                <span className="truncate">{cwt(item.labelKey)}</span>
                 {showLiveDot ? (
                   <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500 motion-safe:animate-pulse" />
                 ) : dirty ? (
                   <span
-                    aria-label="Unsaved changes"
+                    aria-label={cwt("unsavedChanges")}
                     className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500 ring-2 ring-background"
                   />
                 ) : null}
@@ -185,20 +188,20 @@ export function RoutineSectionPicker({
           }
         }}
       >
-        <SelectTrigger className="h-11 w-full" aria-label="Routine section">
+        <SelectTrigger className="h-11 w-full" aria-label={cwt("routineSection")}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           {NAV_GROUPS.map((group) => (
-            <SelectGroup key={group.label}>
+            <SelectGroup key={group.labelKey}>
               <SelectLabel className="uppercase tracking-(--tracking-eyebrow) text-(length:--text-micro)">
-                {group.label}
+                {cwt(group.labelKey)}
               </SelectLabel>
               {group.items.map((item) => (
                 <SelectItem key={item.key} value={item.key} className="h-11">
                   <span className="flex items-center gap-2">
                     <item.icon className="h-3.5 w-3.5" />
-                    {item.label}
+                    {cwt(item.labelKey)}
                     {isSectionDirty(item.key) ? (
                       <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                     ) : null}

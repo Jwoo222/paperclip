@@ -14,6 +14,12 @@ import {
   skillDetailBreadcrumbs,
 } from "./CompanySkills";
 import { skillStudioNewRoute } from "../lib/company-skill-routes";
+import { i18n } from "../i18n";
+
+vi.mock("@/i18n", async () => {
+  const actual = await vi.importActual<typeof import("../i18n")>("@/i18n");
+  return { ...actual, default: actual.i18n };
+});
 
 vi.mock("@/lib/router", () => ({
   Link: ({ children, to, ...props }: { children: ReactNode; to: string }) => (
@@ -325,7 +331,7 @@ describe("DiscoveryGrid Studio entry points", () => {
   it("links the header Studio button to Skill Studio", async () => {
     const node = await renderDiscoveryGrid();
     const studioLink = Array.from(node.querySelectorAll("a")).find((link) =>
-      link.textContent?.includes("Studio"),
+      link.textContent?.includes(i18n.t("companySkills.studio")),
     );
 
     expect(studioLink?.getAttribute("href")).toBe("/skills/studio");
@@ -335,8 +341,8 @@ describe("DiscoveryGrid Studio entry points", () => {
     const onCreate = vi.fn();
     const node = await renderDiscoveryGrid({ onCreate });
 
-    await click(buttonsNamed(node, "Create new skill")[0] as HTMLButtonElement);
-    await click(buttonsNamed(node, "Create a skill")[0] as HTMLButtonElement);
+    await click(buttonsNamed(node, i18n.t("companySkills.createNewSkill"))[0] as HTMLButtonElement);
+    await click(buttonsNamed(node, i18n.t("companySkills.createSkill"))[0] as HTMLButtonElement);
 
     expect(onCreate).toHaveBeenCalledTimes(2);
   });
@@ -518,7 +524,7 @@ describe("SkillDetailPage versions tab", () => {
     const v1 = makeVersion(1, "# Demo Skill\n\nFirst line");
     const v2 = makeVersion(2, "# Demo Skill\n\nSecond line");
     const node = await renderSkillDetail([v2, v1]);
-    const viewDiffButtons = buttonsNamed(node, "View diff") as HTMLButtonElement[];
+    const viewDiffButtons = buttonsNamed(node, i18n.t("companySkills.viewDiff")) as HTMLButtonElement[];
 
     expect(viewDiffButtons).toHaveLength(2);
 
@@ -526,7 +532,7 @@ describe("SkillDetailPage versions tab", () => {
     let dialog = node.querySelector('[role="dialog"]') as HTMLElement;
     let selects = Array.from(dialog.querySelectorAll("select"));
 
-    expect(dialog.textContent).toContain("Diff");
+    expect(dialog.textContent).toContain(i18n.t("companySkills.diffTitle"));
     expect(selects[0]?.value).toBe(v1.id);
     expect(selects[1]?.value).toBe(v2.id);
     expect(dialog.textContent).toContain("Second line");
@@ -537,9 +543,9 @@ describe("SkillDetailPage versions tab", () => {
 
     expect(selects[0]?.value).toBe("");
     expect(selects[1]?.value).toBe(v1.id);
-    expect(dialog.textContent).toContain("Initial");
+    expect(dialog.textContent).toContain(i18n.t("companySkills.initial"));
     expect(dialog.textContent).toContain("First line");
-    expect(dialog.textContent).not.toContain("Both sides are the same version");
+    expect(dialog.textContent).not.toContain(i18n.t("companySkills.sameVersion"));
   });
 });
 

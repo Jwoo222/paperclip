@@ -5,6 +5,9 @@ import { useCompany } from "../../context/CompanyContext";
 import { useBreadcrumbs } from "../../context/BreadcrumbContext";
 import { EmptyState } from "../../components/EmptyState";
 import { AuditFeed, type AuditFeedMode } from "./AuditFeed";
+import { i18n } from "../../i18n";
+
+const cwt = (key: string, options?: Record<string, unknown>) => i18n.t(`coreWorkflow.${key}`, options);
 
 /**
  * Company activity page — the single merged surface for `/:company/activity`
@@ -21,7 +24,7 @@ export function CompanyActivity() {
   const mode: AuditFeedMode = searchParams.get("mode") === "agents" ? "agents" : "all";
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Activity" }]);
+    setBreadcrumbs([{ label: cwt("activity") }]);
   }, [setBreadcrumbs]);
 
   const handleModeChange = useCallback(
@@ -42,7 +45,7 @@ export function CompanyActivity() {
   );
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={History} message="Select a company to view activity." />;
+    return <EmptyState icon={History} message={cwt("selectCompanyActivity")} />;
   }
 
   return <AuditFeed companyId={selectedCompanyId} mode={mode} onModeChange={handleModeChange} />;
