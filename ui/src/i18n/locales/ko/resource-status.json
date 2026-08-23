@@ -1,0 +1,24 @@
+{
+  "resourceStatus": {
+    "ready": "준비됨",
+    "readyHelp": "생성되었으며 배포된 기본값과 일치합니다",
+    "needsSetup": "설정 필요",
+    "needsSetupHelp": "존재하지만 아직 사용할 수 없습니다",
+    "missing": "누락됨",
+    "missingHelp": "필요한 리소스가 없습니다. 재조정하면 다시 생성됩니다",
+    "error": "오류",
+    "errorHelp": "불러오기 또는 재조정에 실패했습니다",
+    "updateAvailable": "업데이트 가능",
+    "updateAvailableHelp": "수정하지 않은 항목입니다. 새 기본 버전을 적용할 수 있습니다",
+    "drifted": "사용자 수정됨",
+    "driftedHelp": "사용자가 수정한 항목이므로 변경 내용을 덮어쓰지 않고 유지합니다",
+    "scheduleOff": "일정 꺼짐",
+    "scheduleOffHelp": "활성화할 때까지 백그라운드 작업이 실행되지 않아 토큰을 사용하지 않습니다",
+    "weekly": "매주",
+    "weeklyHelp": "주간 일정에 따라 실행됩니다",
+    "pendingApproval": "승인 대기",
+    "pendingApprovalHelp": "실행하기 전에 보드의 채용 승인을 기다리고 있습니다",
+    "proposalPending": "제안 검토 대기",
+    "proposalPendingHelp": "제안된 업데이트가 검토를 기다리고 있습니다"
+  }
+}

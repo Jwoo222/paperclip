@@ -5,6 +5,7 @@ import type {
   DocumentAnnotationThreadStatus,
 } from "@paperclipai/shared";
 import { Button } from "@/components/ui/button";
+import { t } from "@/i18n";
 import { cn } from "@/lib/utils";
 import {
   buildAnchorFromContainerSelection,
@@ -532,7 +533,7 @@ export function DocumentAnnotationLayer({
                 data-status={rect.status}
                 data-focused={isFocused || undefined}
                 data-hovered={isHovered || undefined}
-                aria-label="Open annotation thread"
+                aria-label={t("annotationsExtra.openThread")}
                 className={cn(
                   "paperclip-doc-annotation-hit-target pointer-events-auto absolute cursor-pointer rounded-none bg-transparent transition-colors",
                   // Tint the run on hover so it's obvious which highlight you're over.
@@ -569,7 +570,7 @@ export function DocumentAnnotationLayer({
                   width: 16,
                   height: 16,
                 }}
-                title="Anchor moved — needs review"
+                title={t("annotationsExtra.anchorMoved")}
               >
                 <AlertTriangle className="h-3 w-3" />
               </span>
@@ -579,7 +580,7 @@ export function DocumentAnnotationLayer({
             <div
               data-testid="document-annotation-selection-toolbar"
               role="toolbar"
-              aria-label="Selection actions"
+              aria-label={t("annotationsExtra.selectionActions")}
               className="paperclip-doc-annotation-selection-toolbar pointer-events-auto absolute z-10 flex items-center gap-1 rounded-md border border-border bg-popover px-1 py-1 shadow-md"
               style={{ top: toolbarPosition.top, left: toolbarPosition.left }}
               onMouseDown={(event) => event.preventDefault()}
@@ -593,10 +594,10 @@ export function DocumentAnnotationLayer({
                 disabled={newCommentDisabled}
                 title={newCommentDisabled
                   ? newCommentDisabledReason ?? undefined
-                  : "Add comment on selection (⌘⇧M)"}
+                  : t("annotationsExtra.addCommentOnSelection")}
               >
                 <MessageSquarePlus className="h-3.5 w-3.5" aria-hidden="true" />
-                Comment
+                {t("annotationsExtra.comment")}
               </Button>
             </div>
           ) : null}

@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { t } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { brandChipBadge, type BrandChipColor } from "@/lib/status-colors";
 
@@ -28,45 +29,45 @@ export type ResourceStatusVariant =
 interface VariantSpec {
   color: BrandChipColor;
   glyph: string;
-  label: string;
-  title: string;
+  labelKey: string;
+  titleKey: string;
 }
 
 const VARIANTS: Record<ResourceStatusVariant, VariantSpec> = {
-  ready: { color: "green", glyph: "●", label: "Ready", title: "Materialized and matches the shipped default" },
-  needs_setup: { color: "amber", glyph: "⚠", label: "Needs setup", title: "Present but not usable yet" },
-  missing: { color: "amber", glyph: "⚠", label: "Missing", title: "Expected resource absent; reconcile will recreate it" },
-  error: { color: "red", glyph: "✕", label: "Error", title: "Failed to load or reconcile" },
+  ready: { color: "green", glyph: "●", labelKey: "ready", titleKey: "readyHelp" },
+  needs_setup: { color: "amber", glyph: "⚠", labelKey: "needsSetup", titleKey: "needsSetupHelp" },
+  missing: { color: "amber", glyph: "⚠", labelKey: "missing", titleKey: "missingHelp" },
+  error: { color: "red", glyph: "✕", labelKey: "error", titleKey: "errorHelp" },
   update_available: {
     color: "blue",
     glyph: "↑",
-    label: "Update available",
-    title: "Unedited — a newer shipped default can be applied",
+    labelKey: "updateAvailable",
+    titleKey: "updateAvailableHelp",
   },
   drifted: {
     color: "gray",
     glyph: "✎",
-    label: "Drifted",
-    title: "You've edited this; your changes are kept, not overwritten",
+    labelKey: "drifted",
+    titleKey: "driftedHelp",
   },
   schedule_off: {
     color: "gray",
     glyph: "◌",
-    label: "Schedule off",
-    title: "No background work runs until you enable it — costs zero tokens",
+    labelKey: "scheduleOff",
+    titleKey: "scheduleOffHelp",
   },
-  schedule_on: { color: "green", glyph: "●", label: "Weekly", title: "Runs on the weekly schedule" },
+  schedule_on: { color: "green", glyph: "●", labelKey: "weekly", titleKey: "weeklyHelp" },
   pending_approval: {
     color: "amber",
     glyph: "⚠",
-    label: "Pending approval",
-    title: "Waiting on board hire approval before it can run",
+    labelKey: "pendingApproval",
+    titleKey: "pendingApprovalHelp",
   },
   proposal_pending: {
     color: "blue",
     glyph: "↑",
-    label: "Proposal pending",
-    title: "A proposed update is waiting for your review",
+    labelKey: "proposalPending",
+    titleKey: "proposalPendingHelp",
   },
 };
 
@@ -92,10 +93,10 @@ export function ResourceStatusChip({
         compact && "px-1.5 py-0 text-(length:--text-nano)",
         className,
       )}
-      title={spec.title}
+      title={t(`resourceStatus.${spec.titleKey}`)}
     >
       <span aria-hidden="true">{spec.glyph}</span>
-      {label ?? spec.label}
+      {label ?? t(`resourceStatus.${spec.labelKey}`)}
     </Badge>
   );
 }

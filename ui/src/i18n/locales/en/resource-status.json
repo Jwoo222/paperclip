@@ -1,0 +1,24 @@
+{
+  "resourceStatus": {
+    "ready": "Ready",
+    "readyHelp": "Materialized and matches the shipped default",
+    "needsSetup": "Needs setup",
+    "needsSetupHelp": "Present but not usable yet",
+    "missing": "Missing",
+    "missingHelp": "Expected resource absent; reconcile will recreate it",
+    "error": "Error",
+    "errorHelp": "Failed to load or reconcile",
+    "updateAvailable": "Update available",
+    "updateAvailableHelp": "Unedited — a newer shipped default can be applied",
+    "drifted": "Drifted",
+    "driftedHelp": "You've edited this; your changes are kept, not overwritten",
+    "scheduleOff": "Schedule off",
+    "scheduleOffHelp": "No background work runs until you enable it — costs zero tokens",
+    "weekly": "Weekly",
+    "weeklyHelp": "Runs on the weekly schedule",
+    "pendingApproval": "Pending approval",
+    "pendingApprovalHelp": "Waiting on board hire approval before it can run",
+    "proposalPending": "Proposal pending",
+    "proposalPendingHelp": "A proposed update is waiting for your review"
+  }
+}

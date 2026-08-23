@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { t } from "@/i18n";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -77,7 +78,10 @@ export function DocumentAnnotationPanel(props: AnnotationPanelProps) {
           className="paperclip-doc-annotation-sheet z-(--z-60) flex max-h-(--sz-88vh) flex-col rounded-none border-t border-border bg-popover p-0 text-popover-foreground shadow-2xl"
         >
           <SheetTitle className="sr-only">
-            Comments on {props.documentKey} revision {props.documentRevisionNumber}
+            {t("annotationsExtra.commentsOnRevision", {
+              document: props.documentKey,
+              revision: props.documentRevisionNumber,
+            })}
           </SheetTitle>
           <div className="mx-auto mt-2 h-1.5 w-12 shrink-0 rounded-full bg-muted-foreground/30" aria-hidden="true" />
           <AnnotationPanelBody {...props} />
@@ -91,7 +95,10 @@ export function DocumentAnnotationPanel(props: AnnotationPanelProps) {
   return (
     <aside
       role="complementary"
-      aria-label={`Annotations for ${props.documentKey.toUpperCase()}, revision ${props.documentRevisionNumber}`}
+      aria-label={t("annotationsExtra.annotationsForRevision", {
+        document: props.documentKey.toUpperCase(),
+        revision: props.documentRevisionNumber,
+      })}
       data-testid="document-annotation-panel"
       className={cn(
         "isolate flex h-full max-h-(--sz-80vh) shrink-0 flex-col overflow-hidden rounded-none border border-border bg-popover text-popover-foreground shadow-xl",
@@ -114,7 +121,7 @@ function AnnotationPanelBody(props: AnnotationPanelProps) {
   const bodyTestId = props.isMobile ? "document-annotation-panel" : undefined;
   const annotationTarget = useMemo<DocumentAnnotationTarget>(() => {
     if (props.target) return props.target;
-    if (!props.issueId) throw new Error("Document annotation panel requires an annotation target.");
+    if (!props.issueId) throw new Error(t("annotationsExtra.targetRequired"));
     return { kind: "issue", issueId: props.issueId, documentKey: props.documentKey };
   }, [props.documentKey, props.issueId, props.target]);
 
@@ -127,7 +134,7 @@ function AnnotationPanelBody(props: AnnotationPanelProps) {
     const user = session?.user;
     return {
       id: user?.id ?? null,
-      name: user?.name?.trim() || user?.email?.trim() || "You",
+      name: user?.name?.trim() || user?.email?.trim() || t("annotationsExtra.you"),
       image: user?.image ?? null,
     };
   }, [session]);
@@ -182,8 +189,8 @@ function AnnotationPanelBody(props: AnnotationPanelProps) {
 
   const createThread = useMutation({
     mutationFn: async (body: string) => {
-      if (!props.pendingAnchor) throw new Error("No selection to anchor to.");
-      if (!props.baseRevisionId) throw new Error("Document has no revision yet.");
+      if (!props.pendingAnchor) throw new Error(t("annotationsExtra.noSelection"));
+      if (!props.baseRevisionId) throw new Error(t("annotationsExtra.noRevision"));
       return documentAnnotationsApi.createForTarget(annotationTarget, {
         baseRevisionId: props.baseRevisionId,
         baseRevisionNumber: props.baseRevisionNumber,
@@ -222,7 +229,7 @@ function AnnotationPanelBody(props: AnnotationPanelProps) {
       }
       setMutationError(error instanceof Error && error.message
         ? error.message
-        : "Failed to create comment.");
+        : t("annotationsExtra.createFailed"));
     },
     onSuccess: (thread, _body, context) => {
       // Swap the optimistic placeholder for the real thread before refetch settles.
@@ -270,7 +277,7 @@ function AnnotationPanelBody(props: AnnotationPanelProps) {
       }
       setMutationError(error instanceof Error && error.message
         ? error.message
-        : "Failed to add reply.");
+        : t("annotationsExtra.replyFailed"));
     },
     onSuccess: (_comment, variables) => {
       setReplyDrafts((current) => ({ ...current, [variables.threadId]: "" }));
@@ -300,7 +307,7 @@ function AnnotationPanelBody(props: AnnotationPanelProps) {
       }
       setMutationError(error instanceof Error && error.message
         ? error.message
-        : "Failed to update comment status.");
+        : t("annotationsExtra.statusUpdateFailed"));
     },
     onSuccess: () => setMutationError(null),
     onSettled: () => invalidateAll(),
@@ -341,7 +348,7 @@ function AnnotationPanelBody(props: AnnotationPanelProps) {
         className="flex items-center justify-end gap-1 border-b border-border bg-popover px-2 py-1.5"
       >
         <span className="text-(length:--text-micro) tabular-nums text-muted-foreground">
-          rev {props.documentRevisionNumber}
+          {t("annotationsExtra.revisionShort", { revision: props.documentRevisionNumber })}
         </span>
         <Button
           type="button"
@@ -352,7 +359,7 @@ function AnnotationPanelBody(props: AnnotationPanelProps) {
             props.onFocusThread(null);
             props.onOpenChange(false);
           }}
-          aria-label="Close annotation panel"
+          aria-label={t("annotationsExtra.closePanel")}
         >
           <X className="h-4 w-4" />
         </Button>
@@ -442,7 +449,7 @@ function AnnotationPanelBody(props: AnnotationPanelProps) {
                 }
               }
             }}
-            placeholder="Write a comment…"
+            placeholder={t("annotationsExtra.writeComment")}
             disabled={props.newCommentDisabled}
             className="resize-y rounded-none text-sm"
           />
@@ -456,7 +463,7 @@ function AnnotationPanelBody(props: AnnotationPanelProps) {
                 setComposerValue("");
               }}
             >
-              Cancel
+              {t("annotationsExtra.cancel")}
             </Button>
             <Button
               type="button"
@@ -469,7 +476,7 @@ function AnnotationPanelBody(props: AnnotationPanelProps) {
               }
               onClick={() => createThread.mutate(composerValue.trim())}
             >
-              {createThread.isPending ? "Posting…" : "Comment"}
+              {createThread.isPending ? t("annotationsExtra.posting") : t("annotationsExtra.comment")}
             </Button>
           </div>
         </div>
@@ -546,7 +553,7 @@ function ThreadCard(props: {
                   }
                 }
               }}
-              placeholder="Reply…"
+              placeholder={t("annotationsExtra.replyPlaceholder")}
               className="resize-y rounded-none text-sm"
               disabled={props.pendingReply}
             />
@@ -561,11 +568,11 @@ function ThreadCard(props: {
               >
                 {thread.status === "resolved" ? (
                   <>
-                    <RotateCcw className="h-3 w-3" /> Reopen
+                    <RotateCcw className="h-3 w-3" /> {t("annotationsExtra.reopen")}
                   </>
                 ) : (
                   <>
-                    <Check className="h-3 w-3" /> Resolve
+                    <Check className="h-3 w-3" /> {t("annotationsExtra.resolve")}
                   </>
                 )}
               </Button>
@@ -575,7 +582,7 @@ function ThreadCard(props: {
                 disabled={!props.replyDraft.trim() || props.pendingReply}
                 onClick={props.onSubmitReply}
               >
-                {props.pendingReply ? "Sending…" : "Reply"}
+                {props.pendingReply ? t("annotationsExtra.sending") : t("annotationsExtra.reply")}
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -584,8 +591,8 @@ function ThreadCard(props: {
                     variant="ghost"
                     size="icon-xs"
                     className="text-muted-foreground"
-                    title="More actions"
-                    aria-label="More thread actions"
+                    title={t("annotationsExtra.moreActions")}
+                    aria-label={t("annotationsExtra.moreThreadActions")}
                   >
                     <MoreHorizontal className="h-3.5 w-3.5" />
                   </Button>
@@ -598,7 +605,7 @@ function ThreadCard(props: {
                     }}
                   >
                     <Copy className="h-3.5 w-3.5" />
-                    Copy link
+                    {t("annotationsExtra.copyLink")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -607,7 +614,9 @@ function ThreadCard(props: {
         ) : (
           <p className="px-3 py-2 text-xs text-muted-foreground">
             <span className="font-medium text-foreground">
-              {thread.comments.length} comment{thread.comments.length === 1 ? "" : "s"}
+              {thread.comments.length === 1
+                ? t("annotationsExtra.oneComment")
+                : t("annotationsExtra.commentCount", { count: thread.comments.length })}
             </span>
             {latestComment ? <span className="ml-1">· {truncate(latestComment.body, 120)}</span> : null}
           </p>
@@ -654,7 +663,7 @@ function CommentRow({
           </Avatar>
           <span className="truncate font-medium text-foreground">{author.name}</span>
           {author.role === "agent" ? (
-            <span className="text-muted-foreground">· agent</span>
+            <span className="text-muted-foreground">· {t("annotationsExtra.agent")}</span>
           ) : null}
         </span>
         <span className="shrink-0 text-muted-foreground">{relativeTime(comment.createdAt)}</span>
@@ -692,7 +701,10 @@ function resolveAuthor(
       imageUrl: profile?.image ?? null,
     };
   }
-  return { name: comment.authorType === "agent" ? "Agent" : "Board", role: comment.authorType === "agent" ? "agent" : "board" };
+  return {
+    name: comment.authorType === "agent" ? t("annotationsExtra.agent") : t("annotationsExtra.board"),
+    role: comment.authorType === "agent" ? "agent" : "board",
+  };
 }
 
 interface OptimisticAuthor {
