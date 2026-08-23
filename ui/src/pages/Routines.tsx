@@ -486,7 +486,7 @@ export function Routines() {
         } catch (moveError) {
           pushToast({
             title: t("routinesExtra.folder.createdMoveFailed", { defaultValue: "Folder created, move failed" }),
-            body: moveError instanceof Error ? moveError.message : "Paperclip could not move the selected routines.",
+            body: moveError instanceof Error ? moveError.message : t("routinesRound2.errors.moveSelected"),
             tone: "error",
           });
           return;
@@ -499,7 +499,7 @@ export function Routines() {
     onError: (mutationError) => {
       pushToast({
         title: t("routinesExtra.folder.saveFailed", { defaultValue: "Failed to save folder" }),
-        body: mutationError instanceof Error ? mutationError.message : "Paperclip could not save the folder.",
+        body: mutationError instanceof Error ? mutationError.message : t("routinesRound2.errors.saveFolder"),
         tone: "error",
       });
     },
@@ -515,7 +515,7 @@ export function Routines() {
     onError: (mutationError) => {
       pushToast({
         title: t("routinesExtra.folder.updateFailed", { defaultValue: "Folder save failed" }),
-        body: mutationError instanceof Error ? mutationError.message : "Paperclip could not update the folder.",
+        body: mutationError instanceof Error ? mutationError.message : t("routinesRound2.errors.updateFolder"),
         tone: "error",
       });
     },
@@ -534,7 +534,7 @@ export function Routines() {
     onError: (mutationError) => {
       pushToast({
         title: t("routinesExtra.folder.deleteFailed", { defaultValue: "Folder delete failed" }),
-        body: mutationError instanceof Error ? mutationError.message : "Paperclip could not delete the folder.",
+        body: mutationError instanceof Error ? mutationError.message : t("routinesRound2.errors.deleteFolder"),
         tone: "error",
       });
     },
@@ -551,7 +551,7 @@ export function Routines() {
     onError: (mutationError) => {
       pushToast({
         title: t("routinesExtra.folder.moveFailed", { defaultValue: "Move failed" }),
-        body: mutationError instanceof Error ? mutationError.message : "Paperclip could not move the routine.",
+        body: mutationError instanceof Error ? mutationError.message : t("routinesRound2.errors.moveRoutine"),
         tone: "error",
       });
     },
@@ -581,7 +581,7 @@ export function Routines() {
     onError: (mutationError) => {
       pushToast({
         title: t("routinesExtra.general.updateFailed", { defaultValue: "Failed to update routine" }),
-        body: mutationError instanceof Error ? mutationError.message : "Paperclip could not update the routine.",
+        body: mutationError instanceof Error ? mutationError.message : t("routinesRound2.errors.updateRoutine"),
         tone: "error",
       });
     },
@@ -616,7 +616,7 @@ export function Routines() {
     onError: (mutationError) => {
       pushToast({
         title: t("routinesExtra.general.runFailed", { defaultValue: "Routine run failed" }),
-        body: mutationError instanceof Error ? mutationError.message : "Paperclip could not start the routine run.",
+        body: mutationError instanceof Error ? mutationError.message : t("routinesRound2.errors.startRun"),
         tone: "error",
       });
     },
@@ -765,7 +765,7 @@ export function Routines() {
     } catch (moveError) {
       pushToast({
         title: t("routinesExtra.folder.moveRoutinesFailed", { defaultValue: "Failed to move routines" }),
-        body: moveError instanceof Error ? moveError.message : "Paperclip could not move the selected routines.",
+        body: moveError instanceof Error ? moveError.message : t("routinesRound2.errors.moveSelected"),
         tone: "error",
       });
     }
@@ -813,12 +813,12 @@ export function Routines() {
             {t("operations.common.routines")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Recurring work definitions that materialize into auditable execution tasks.
+            {t("routinesRound2.page.description")}
           </p>
         </div>
         <Button onClick={openCreateRoutine}>
           <Plus className="mr-2 h-4 w-4" />
-          Create routine
+          {t("routinesRound2.page.createRoutine")}
         </Button>
       </div>
 
@@ -913,7 +913,7 @@ export function Routines() {
               {routineViewState.groupBy === "folder" && !hasRoutineFolders ? (
                 <Button variant="outline" size="sm" onClick={() => openCreateFolder()}>
                   <Plus className="mr-2 h-3.5 w-3.5" />
-                  New folder
+                  {t("routinesRound2.page.newFolder")}
                 </Button>
               ) : null}
               {showFolderRail ? (
@@ -1201,7 +1201,7 @@ export function Routines() {
 
           <div className="shrink-0 flex flex-col gap-3 border-t border-border/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-muted-foreground">
-              After creation, Paperclip takes you straight to trigger setup. Draft routines stay paused until you add a default agent.
+              {t("routinesRound2.page.createHint")}
             </div>
             <div className="flex flex-col gap-2 sm:items-end">
               <Button
@@ -1362,8 +1362,11 @@ export function Routines() {
                                 pushToast({
                                   title: t("routinesExtra.folder.routineMoved", { defaultValue: "Routine moved" }),
                                   body: folderId
-                                    ? `Moved "${routine.title}" to ${routineFolders?.folders.find((folder) => folder.id === folderId)?.name ?? "folder"}.`
-                                    : `Moved "${routine.title}" to Unfiled.`,
+                                    ? t("routinesRound2.page.movedToFolder", {
+                                        title: routine.title,
+                                        folder: routineFolders?.folders.find((folder) => folder.id === folderId)?.name ?? t("routinesRound2.page.folderFallback"),
+                                      })
+                                    : t("routinesRound2.page.movedToUnfiled", { title: routine.title }),
                                   tone: "success",
                                   action: {
                                     label: t("routinesExtra.general.undo", { defaultValue: "Undo" }),

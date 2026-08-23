@@ -246,8 +246,7 @@ export function OverviewSection({
 
       {!routine.assigneeAgentId ? (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-900 dark:text-amber-200">
-          Default agent required. This routine can stay as a draft and still run manually, but
-          automation stays paused until you assign a default agent.
+          {t("routinesRound2.editor.defaultAgentRequired")}
         </div>
       ) : null}
 
@@ -329,7 +328,7 @@ export function OverviewSection({
           value={activeTriggers === 0 ? t("routineDetailExtra.overview.none") : t("routineDetailExtra.overview.active", { count: activeTriggers })}
           hint={nextFire ? t("routineDetailExtra.overview.nextFire", { time: nextFire }) : t("routineDetailExtra.overview.noSchedule")}
           to={() => navigateToSection("triggers")}
-          ariaLabel={`${activeTriggers} triggers. Open triggers.`}
+          ariaLabel={t("routinesRound2.editor.openTriggers", { count: activeTriggers })}
         />
         <SummaryCard
           icon={KeyRound}
@@ -337,7 +336,7 @@ export function OverviewSection({
           value={boundSecrets === 0 ? t("routineDetailExtra.overview.none") : t("routineDetailExtra.overview.bound", { count: boundSecrets })}
           hint={t("routineDetailExtra.overview.manageSecrets")}
           to={() => navigateToSection("secrets")}
-          ariaLabel={`${boundSecrets} secrets bound. Open secrets.`}
+          ariaLabel={t("routinesRound2.editor.openSecrets", { count: boundSecrets })}
         />
         <SummaryCard
           icon={Play}
@@ -345,14 +344,16 @@ export function OverviewSection({
           value={lastRun ? lastRun.status.replaceAll("_", " ") : t("routineDetailExtra.overview.noRuns")}
           hint={lastRun ? timeAgo(lastRun.triggeredAt) : t("routineDetailExtra.overview.triggerRun")}
           to={() => navigateToSection("runs")}
-          ariaLabel={lastRun ? `Last run ${lastRun.status}. Open runs.` : "No runs. Open runs."}
+          ariaLabel={lastRun
+            ? t("routinesRound2.editor.openLastRun", { status: lastRun.status })
+            : t("routinesRound2.editor.openNoRuns")}
         />
       </div>
 
       {/* Recent activity */}
       <div className="space-y-2">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Recent activity
+          {t("routinesRound2.editor.recentActivity")}
         </p>
         {recentActivity.length === 0 ? (
               <p className="text-xs text-muted-foreground">{t("routineDetailExtra.overview.noActivity")}</p>
@@ -453,12 +454,12 @@ export function TriggersSection() {
           {addOpen ? (
             <>
               <X className="mr-1.5 h-3.5 w-3.5" />
-              Cancel
+              {t("routinesRound2.common.cancel")}
             </>
           ) : (
             <>
               <Plus className="mr-1.5 h-3.5 w-3.5" />
-              New trigger
+              {t("routinesRound2.editor.newTrigger")}
             </>
           )}
         </Button>
@@ -541,7 +542,7 @@ export function TriggersSection() {
         </div>
         <div className="flex items-center justify-end gap-2">
           <Button size="sm" variant="ghost" onClick={() => setAddOpen(false)}>
-            Cancel
+            {t("routinesRound2.common.cancel")}
           </Button>
           <Button
             size="sm"
@@ -662,14 +663,14 @@ export function SecretsSection() {
               <div key={`${entry.webhookUrl}-${index}`} className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Input value={entry.webhookUrl} readOnly className="flex-1" />
-                  <Button variant="outline" size="sm" onClick={() => copySecretValue("Webhook URL", entry.webhookUrl)}>
+                  <Button variant="outline" size="sm" onClick={() => copySecretValue(t("routinesRound2.editor.webhookUrl"), entry.webhookUrl)}>
                     URL
                   </Button>
                 </div>
                 <div className="flex items-center gap-2">
                   <Input value={entry.webhookSecret} readOnly className="flex-1" />
-                  <Button variant="outline" size="sm" onClick={() => copySecretValue("Webhook secret", entry.webhookSecret)}>
-                    Secret
+                  <Button variant="outline" size="sm" onClick={() => copySecretValue(t("routinesRound2.editor.webhookSecret"), entry.webhookSecret)}>
+                    {t("routinesRound2.editor.secret")}
                   </Button>
                 </div>
               </div>
@@ -708,12 +709,16 @@ export function DeliverySection() {
           {t("routineDetailExtra.delivery.concurrency")}
         </p>
         <RadioCardGroup
-          ariaLabel="Concurrency policy"
+          ariaLabel={t("routinesRound2.editor.concurrencyPolicy")}
           value={editDraft.concurrencyPolicy}
           onValueChange={(concurrencyPolicy) =>
             setEditDraft((current) => ({ ...current, concurrencyPolicy }))
           }
-          options={concurrencyPolicyOptions}
+          options={concurrencyPolicyOptions.map((option) => ({
+            ...option,
+            title: t(`routinesRound2.policies.${option.value}.title`),
+            description: t(`routinesRound2.policies.${option.value}.description`),
+          }))}
         />
       </div>
       <div className="space-y-3">
@@ -721,12 +726,16 @@ export function DeliverySection() {
           {t("routineDetailExtra.delivery.catchUp")}
         </p>
         <RadioCardGroup
-          ariaLabel="Catch-up policy"
+          ariaLabel={t("routinesRound2.editor.catchUpPolicy")}
           value={editDraft.catchUpPolicy}
           onValueChange={(catchUpPolicy) =>
             setEditDraft((current) => ({ ...current, catchUpPolicy }))
           }
-          options={catchUpPolicyOptions}
+          options={catchUpPolicyOptions.map((option) => ({
+            ...option,
+            title: t(`routinesRound2.policies.${option.value}.title`),
+            description: t(`routinesRound2.policies.${option.value}.description`),
+          }))}
         />
       </div>
       <div className="space-y-3">
@@ -734,12 +743,16 @@ export function DeliverySection() {
           {t("routineDetailExtra.delivery.advanced")}
         </p>
         <RadioCardGroup
-          ariaLabel="Advanced run policy"
+          ariaLabel={t("routinesRound2.editor.advancedRunPolicy")}
           value={editDraft.activityGatePolicy}
           onValueChange={(activityGatePolicy) =>
             setEditDraft((current) => ({ ...current, activityGatePolicy }))
           }
-          options={activityGatePolicyOptions}
+          options={activityGatePolicyOptions.map((option) => ({
+            ...option,
+            title: t(`routinesRound2.policies.${option.value}.title`),
+            description: t(`routinesRound2.policies.${option.value}.description`),
+          }))}
           disabled={!hasScheduleTrigger}
         />
         {!hasScheduleTrigger ? (
@@ -750,12 +763,16 @@ export function DeliverySection() {
           <div className="space-y-2 rounded-lg border border-border p-3">
             <Label className="text-xs font-medium">{t("operations.routines.activityScope")}</Label>
             <RadioCardGroup
-              ariaLabel="Activity gate scope"
+              ariaLabel={t("routinesRound2.editor.activityGateScope")}
               value={editDraft.activityGateScope}
               onValueChange={(activityGateScope) =>
                 setEditDraft((current) => ({ ...current, activityGateScope }))
               }
-              options={activityGateScopeOptions}
+              options={activityGateScopeOptions.map((option) => ({
+                ...option,
+                title: t(`routinesRound2.policies.${option.value}.title`),
+                description: t(`routinesRound2.policies.${option.value}.description`),
+              }))}
             />
           </div>
         ) : null}
@@ -828,14 +845,12 @@ function NextFiresPreview({
             ))}
           </div>
           <p className="text-(length:--text-micro) text-muted-foreground/60">
-            Preview assumes the previous run is still in flight when the next fires. Times shown in{" "}
-            {preview.timeZone}.
+            {t("routinesRound2.editor.previewAssumption", { timeZone: preview.timeZone })}
           </p>
         </>
       ) : (
         <p className="rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">
-          No enabled schedule trigger to preview. Add a schedule in Triggers to see how this policy
-          treats upcoming fires.
+          {t("routinesRound2.editor.noSchedulePreview")}
         </p>
       )}
     </div>

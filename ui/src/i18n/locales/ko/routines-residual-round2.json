@@ -1,0 +1,104 @@
+{
+  "routinesRound2": {
+    "common": {
+      "cancel": "취소"
+    },
+    "errors": {
+      "moveSelected": "선택한 루틴을 이동하지 못했습니다.",
+      "saveFolder": "폴더를 저장하지 못했습니다.",
+      "updateFolder": "폴더를 업데이트하지 못했습니다.",
+      "deleteFolder": "폴더를 삭제하지 못했습니다.",
+      "moveRoutine": "루틴을 이동하지 못했습니다.",
+      "updateRoutine": "루틴을 업데이트하지 못했습니다.",
+      "startRun": "루틴 실행을 시작하지 못했습니다."
+    },
+    "page": {
+      "description": "반복 업무를 정의하면 감사 가능한 실행 업무로 만들어집니다.",
+      "createRoutine": "루틴 만들기",
+      "newFolder": "새 폴더",
+      "createHint": "만들기를 마치면 트리거 설정으로 바로 이동합니다. 기본 에이전트를 지정하기 전까지 초안 루틴은 일시 중지 상태로 유지됩니다.",
+      "movedToFolder": "“{{title}}”을(를) {{folder}}(으)로 이동했습니다.",
+      "movedToUnfiled": "“{{title}}”을(를) 미분류로 이동했습니다.",
+      "folderFallback": "폴더"
+    },
+    "history": {
+      "restoreTitle": "{{number}}번 리비전을 복원할까요?",
+      "restoreDescription": "{{sourceNumber}}번 리비전과 같은 내용으로 {{newNumber}}번 리비전을 새로 만듭니다. {{sourceNumber}}–{{currentNumber}}번 리비전은 변경하지 않고 기록에 보존합니다.",
+      "fieldsRevert": "루틴 필드 값, 변수, 일정 cron을 이전 상태로 되돌립니다.",
+      "secretsRevert": "루틴 보안 값도 되돌립니다: {{summary}}.",
+      "runHistoryPreserved": "기존 실행 기록은 그대로 보존합니다.",
+      "webhookRecreated": "웹훅 트리거 {{label}}을(를) 새 URL과 보안 값으로 다시 만듭니다. 복원 후 보안 값은 한 번만 표시되므로 닫기 전에 복사하세요.",
+      "changeSummary": "변경 요약 (선택 사항)"
+    },
+    "diff": {
+      "envAdded": "환경 변수 추가 ({{key}})",
+      "envRemoved": "환경 변수 제거 ({{key}})",
+      "envBindingKind": "환경 변수 {{key}} 연결 유형",
+      "envSecret": "환경 변수 {{key}} 보안 값",
+      "envVersion": "환경 변수 {{key}} 버전",
+      "envValue": "환경 변수 {{key}} 값",
+      "plainSet": "일반 값 (설정됨)",
+      "plainChanged": "일반 값 (변경됨)",
+      "none": "(없음)",
+      "triggerRemoved": "트리거 제거 ({{name}})",
+      "triggerAdded": "트리거 추가 ({{name}})",
+      "trigger": "트리거 {{name}}"
+    },
+    "editor": {
+      "defaultAgentRequired": "기본 에이전트가 필요합니다. 이 루틴은 초안으로 두고 수동 실행할 수 있지만, 기본 에이전트를 지정할 때까지 자동화는 일시 중지됩니다.",
+      "openTriggers": "트리거 {{count}}개. 트리거 열기.",
+      "openSecrets": "연결된 보안 값 {{count}}개. 보안 값 열기.",
+      "openLastRun": "최근 실행 상태 {{status}}. 실행 목록 열기.",
+      "openNoRuns": "실행 기록 없음. 실행 목록 열기.",
+      "recentActivity": "최근 활동",
+      "newTrigger": "새 트리거",
+      "webhookUrl": "웹훅 URL",
+      "webhookSecret": "웹훅 보안 값",
+      "secret": "보안 값",
+      "concurrencyPolicy": "동시 실행 정책",
+      "catchUpPolicy": "놓친 실행 보충 정책",
+      "advancedRunPolicy": "고급 실행 정책",
+      "activityGateScope": "활동 확인 범위",
+      "previewAssumption": "다음 실행 시점에도 이전 실행이 진행 중이라고 가정한 미리보기입니다. 시간대: {{timeZone}}.",
+      "noSchedulePreview": "미리 볼 활성 일정 트리거가 없습니다. 이 정책이 향후 실행을 처리하는 방식을 보려면 트리거에서 일정을 추가하세요."
+    },
+    "policies": {
+      "coalesce_if_active": {
+        "title": "실행 중이면 하나로 합치기",
+        "description": "실행이 진행 중일 때 후속 실행 하나만 대기열에 둡니다."
+      },
+      "always_enqueue": {
+        "title": "항상 대기열에 추가",
+        "description": "여러 실행이 쌓이더라도 모든 트리거 발생을 대기열에 추가합니다."
+      },
+      "skip_if_active": {
+        "title": "실행 중이면 건너뛰기",
+        "description": "루틴 실행 중에 겹쳐 발생한 트리거는 버립니다."
+      },
+      "skip_missed": {
+        "title": "놓친 일정 건너뛰기",
+        "description": "일시 중지 중 놓친 일정 구간은 실행하지 않습니다."
+      },
+      "enqueue_missed_with_cap": {
+        "title": "놓친 일정을 한도 내 추가",
+        "description": "복구 후 놓친 일정을 보충합니다. 한 시간보다 짧은 일정은 한 번의 보충 실행으로 합치고, 느린 일정은 한도 내에서 놓친 구간마다 다시 실행합니다."
+      },
+      "always": {
+        "title": "예약 시점마다 실행",
+        "description": "다른 조건과 관계없이 일정에 맞춰 실행하는 기본 동작입니다."
+      },
+      "require_external_activity": {
+        "title": "최근 실행 후 활동이 없으면 건너뛰기",
+        "description": "예약 시점에 최근 완료 실행 이후 활동이 있었을 때만 실행합니다. 시스템이 안정된 동안 감시형 루틴이 불필요한 토큰을 쓰지 않고 대기할 수 있습니다."
+      },
+      "company": {
+        "title": "회사 전체",
+        "description": "회사 어디에서든 발생한 활동을 실행 근거로 봅니다."
+      },
+      "project": {
+        "title": "이 프로젝트",
+        "description": "루틴의 프로젝트에서 발생한 활동만 실행 근거로 봅니다."
+      }
+    }
+  }
+}

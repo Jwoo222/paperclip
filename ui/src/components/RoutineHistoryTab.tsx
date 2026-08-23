@@ -713,39 +713,42 @@ function RestoreConfirmDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Restore revision {target.revisionNumber}?</DialogTitle>
+          <DialogTitle>{t("routinesRound2.history.restoreTitle", { number: target.revisionNumber })}</DialogTitle>
           <DialogDescription>
-            This creates a new revision {newRevisionNumber} with the same content as revision{" "}
-            {target.revisionNumber}. Revisions {target.revisionNumber}–{currentRevisionNumber} stay
-            in history and are not modified.
+            {t("routinesRound2.history.restoreDescription", {
+              newNumber: newRevisionNumber,
+              sourceNumber: target.revisionNumber,
+              currentNumber: currentRevisionNumber,
+            })}
           </DialogDescription>
         </DialogHeader>
         <ul className="space-y-2 text-sm">
           <li className="flex items-start gap-2">
             <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            Routine field values, variables, and schedule cron will revert.
+            {t("routinesRound2.history.fieldsRevert")}
           </li>
           {envDiffCounts.total > 0 && (
             <li className="flex items-start gap-2">
               <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              Routine secrets will revert: {formatEnvDiffCounts(envDiffCounts)}.
+              {t("routinesRound2.history.secretsRevert", {
+                summary: formatEnvDiffCounts(envDiffCounts),
+              })}
             </li>
           )}
           <li className="flex items-start gap-2">
             <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            Previous run history is preserved.
+            {t("routinesRound2.history.runHistoryPreserved")}
           </li>
           {recreatedWebhookLabels.map((label) => (
             <li key={label} className="flex items-start gap-2 text-amber-800 dark:text-amber-200">
               <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
-              The webhook trigger {label} will be recreated with a new URL and secret. Paperclip will
-              show the secret once after restore — copy it before closing.
+              {t("routinesRound2.history.webhookRecreated", { label })}
             </li>
           ))}
         </ul>
         <div className="space-y-1.5">
           <Label htmlFor="restore-change-summary" className="text-xs">
-            Change summary (optional)
+            {t("routinesRound2.history.changeSummary")}
           </Label>
           <Input
             id="restore-change-summary"
@@ -756,7 +759,7 @@ function RestoreConfirmDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
-            Cancel
+            {t("routinesRound2.common.cancel")}
           </Button>
           <Button onClick={onConfirm} disabled={pending}>
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
@@ -1192,7 +1195,7 @@ function compareEnv(
     const inNew = key in newRec;
     if (inNew && !inOld) {
       changes.push({
-        field: `Env added (${key})`,
+        field: t("routinesRound2.diff.envAdded", { key }),
         oldValue: "—",
         newValue: describeEnvBinding(newBinding, secrets),
       });
@@ -1200,7 +1203,7 @@ function compareEnv(
     }
     if (!inNew && inOld) {
       changes.push({
-        field: `Env removed (${key})`,
+        field: t("routinesRound2.diff.envRemoved", { key }),
         oldValue: describeEnvBinding(oldBinding, secrets),
         newValue: "—",
       });
@@ -1211,7 +1214,7 @@ function compareEnv(
     const newKind = envBindingKind(newBinding);
     if (oldKind !== newKind) {
       changes.push({
-        field: `Env ${key} binding kind`,
+        field: t("routinesRound2.diff.envBindingKind", { key }),
         oldValue: describeEnvBinding(oldBinding, secrets),
         newValue: describeEnvBinding(newBinding, secrets),
       });
@@ -1222,29 +1225,29 @@ function compareEnv(
       const newRef = asSecretRef(newBinding)!;
       if (oldRef.secretId !== newRef.secretId) {
         changes.push({
-          field: `Env ${key} secret`,
+          field: t("routinesRound2.diff.envSecret", { key }),
           oldValue: describeEnvBinding(oldBinding, secrets),
           newValue: describeEnvBinding(newBinding, secrets),
         });
         continue;
       }
       changes.push({
-        field: `Env ${key} version`,
+        field: t("routinesRound2.diff.envVersion", { key }),
         oldValue: describeSecretRef(oldRef, secrets),
         newValue: describeSecretRef(newRef, secrets),
       });
       continue;
     }
     changes.push({
-      field: `Env ${key} value`,
-      oldValue: "plain (set)",
-      newValue: "plain (changed)",
+      field: t("routinesRound2.diff.envValue", { key }),
+      oldValue: t("routinesRound2.diff.plainSet"),
+      newValue: t("routinesRound2.diff.plainChanged"),
     });
   }
 }
 
 function summarizeVariables(variables: RoutineVariable[]): string {
-  if (variables.length === 0) return "(none)";
+  if (variables.length === 0) return t("routinesRound2.diff.none");
   return variables
     .map((variable) => `${variable.name}=${formatVariableDefault(variable)}`)
     .join(", ");
@@ -1264,13 +1267,13 @@ function compareTriggers(
   for (const [, pair] of byId) {
     if (pair.old && !pair.next) {
       changes.push({
-        field: `Trigger removed (${pair.old.label ?? pair.old.kind})`,
+        field: t("routinesRound2.diff.triggerRemoved", { name: pair.old.label ?? pair.old.kind }),
         oldValue: summarizeTriggerSnapshot(pair.old),
         newValue: null,
       });
     } else if (!pair.old && pair.next) {
       changes.push({
-        field: `Trigger added (${pair.next.label ?? pair.next.kind})`,
+        field: t("routinesRound2.diff.triggerAdded", { name: pair.next.label ?? pair.next.kind }),
         oldValue: null,
         newValue: summarizeTriggerSnapshot(pair.next),
       });
@@ -1279,7 +1282,7 @@ function compareTriggers(
       const newSummary = summarizeTriggerSnapshot(pair.next);
       if (oldSummary !== newSummary || pair.old.enabled !== pair.next.enabled) {
         changes.push({
-          field: `Trigger ${pair.next.label ?? pair.next.kind}`,
+          field: t("routinesRound2.diff.trigger", { name: pair.next.label ?? pair.next.kind }),
         oldValue: `${oldSummary} (${pair.old.enabled ? t("routinesExtra.history.enabled", { defaultValue: "enabled" }) : t("routinesExtra.history.disabled", { defaultValue: "disabled" })})`,
         newValue: `${newSummary} (${pair.next.enabled ? t("routinesExtra.history.enabled", { defaultValue: "enabled" }) : t("routinesExtra.history.disabled", { defaultValue: "disabled" })})`,
         });
