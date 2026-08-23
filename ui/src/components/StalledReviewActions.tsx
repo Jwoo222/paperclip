@@ -6,6 +6,7 @@ import { issuesApi } from "../api/issues";
 import { useToastActions } from "../context/ToastContext";
 import { queryKeys } from "../lib/queryKeys";
 import { cn } from "../lib/utils";
+import { t } from "@/i18n";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 
@@ -19,10 +20,10 @@ interface StalledReviewActionsProps {
   className?: string;
 }
 
-const ACTION_PAST_TENSE: Record<StalledReviewDecisionAction, string> = {
-  approve: "Review approved — issue marked done.",
-  request_changes: "Changes requested — issue returned to the assignee.",
-  send_back: "Sent back to work — issue returned to the assignee.",
+const ACTION_PAST_TENSE_KEY: Record<StalledReviewDecisionAction, string> = {
+  approve: "decisionCardResidual.reviewApproved",
+  request_changes: "decisionCardResidual.changesRequested",
+  send_back: "decisionCardResidual.sentBack",
 };
 
 /**
@@ -57,13 +58,13 @@ export function StalledReviewActions({
       queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issueId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.issues.activity(issueId) });
       setNote("");
-      pushToast({ title: ACTION_PAST_TENSE[action], tone: "success" });
+      pushToast({ title: t(ACTION_PAST_TENSE_KEY[action]), tone: "success" });
       onResolved?.(action);
     },
     onError: (error) => {
       pushToast({
-        title: "Could not record the review decision",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: t("decisionCardResidual.reviewRecordFailed"),
+        body: error instanceof Error ? error.message : t("decisionCardResidual.tryAgain"),
         tone: "error",
       });
     },
@@ -79,7 +80,7 @@ export function StalledReviewActions({
       <Textarea
         value={note}
         onChange={(event) => setNote(event.target.value)}
-        placeholder="Add a note — required to request changes, optional otherwise…"
+        placeholder={t("decisionCardResidual.notePlaceholder")}
         className="min-h-16 text-sm"
         data-testid="stalled-review-note"
         disabled={pending}
@@ -101,7 +102,7 @@ export function StalledReviewActions({
             ) : (
               <Undo2 className="h-3.5 w-3.5" aria-hidden />
             )}
-            Send back to work
+            {t("decisionCardResidual.sendBack")}
           </Button>
           <Button
             type="button"
@@ -109,7 +110,7 @@ export function StalledReviewActions({
             size="sm"
             className="w-full border-amber-400/70 text-amber-900 hover:bg-amber-100 dark:border-amber-500/50 dark:text-amber-100 dark:hover:bg-amber-500/15 sm:w-auto sm:flex-1 @xl:flex-none"
             disabled={pending || noteEmpty}
-            title={noteEmpty ? "Add a note to request changes" : undefined}
+            title={noteEmpty ? t("decisionCardResidual.requestChangesTitle") : undefined}
             onClick={() => decide.mutate("request_changes")}
             data-testid="stalled-review-request-changes"
           >
@@ -118,7 +119,7 @@ export function StalledReviewActions({
             ) : (
               <RotateCcw className="h-3.5 w-3.5" aria-hidden />
             )}
-            Request changes
+            {t("decisionCardResidual.requestChanges")}
           </Button>
           <Button
             type="button"
@@ -133,7 +134,7 @@ export function StalledReviewActions({
             ) : (
               <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
             )}
-            Approve
+            {t("decisionCardResidual.approve")}
           </Button>
         </div>
       </div>

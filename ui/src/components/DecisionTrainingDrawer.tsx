@@ -98,7 +98,7 @@ export function DecisionTrainingDrawer({
 
         {!item || !target ? (
           <div className="p-4 text-sm text-muted-foreground">
-            This decision can't be trained — it isn't anchored to an issue.
+            {t("decisionCardResidual.trainingUnavailable")}
           </div>
         ) : savedExampleId ? (
           <SavedState
@@ -171,7 +171,7 @@ function CreateState({
 
         <section className="space-y-2">
           <label htmlFor="training-notes" className="text-sm font-medium text-foreground">
-            Your notes
+            {t("decisionCardResidual.yourNotes")}
           </label>
           <Textarea
             id="training-notes"
@@ -193,11 +193,11 @@ function CreateState({
 
       <div className="flex items-center justify-end gap-2 border-t border-border p-4">
         <Button variant="ghost" onClick={onCancel} disabled={create.isPending}>
-          Cancel
+          {t("decisionCardResidual.cancel")}
         </Button>
         <Button onClick={() => create.mutate()} disabled={create.isPending || preview.isError}>
           {create.isPending && <Loader2 className="size-4 animate-spin" />}
-          Save example
+          {t("decisionCardResidual.saveExample")}
         </Button>
       </div>
     </div>
@@ -262,7 +262,7 @@ function SavedState({
   if (example.isLoading) {
     return (
       <div className="flex flex-1 items-center justify-center p-4 text-sm text-muted-foreground">
-        <Loader2 className="mr-2 size-4 animate-spin" /> Loading example…
+        <Loader2 className="mr-2 size-4 animate-spin" /> {t("decisionCardResidual.loadingExample")}
       </div>
     );
   }
@@ -328,7 +328,7 @@ function SavedState({
               />
               <div className="flex justify-end gap-2">
                 <Button variant="ghost" size="sm" onClick={() => setEditing(false)} disabled={saveNotes.isPending}>
-                  Cancel
+                  {t("decisionCardResidual.cancel")}
                 </Button>
                 <Button size="sm" onClick={() => saveNotes.mutate()} disabled={saveNotes.isPending}>
                   {saveNotes.isPending && <Loader2 className="size-4 animate-spin" />}
@@ -522,7 +522,7 @@ function SnapshotRow({
           to={href}
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
         >
-          <FileText className="size-3.5" /> View
+          <FileText className="size-3.5" /> {t("decisionCardResidual.view")}
         </Link>
       )}
     </div>
