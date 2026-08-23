@@ -1,4 +1,5 @@
 import type { PipelineCaseLiveness } from "@paperclipai/shared";
+import { t } from "@/i18n";
 
 /**
  * Visual tone for a pipeline item liveness banner. Each tone maps to a palette
@@ -39,8 +40,7 @@ export interface LivenessBannerView {
   helperNote: string | null;
 }
 
-const AUTO_RETRY_NOTE =
-  "Paperclip retries automatically once the blocker clears — you don't need to move the item by hand.";
+const AUTO_RETRY_NOTE = "pipelinesExtra.liveness.autoRetryNote";
 
 /**
  * Prosumer-voice body for the `no_action_path` "stuck" banner. The server's
@@ -48,9 +48,7 @@ const AUTO_RETRY_NOTE =
  * review, or breakdown action path is visible.") leaks implementation vocabulary
  * the PAP-11245 voice rule forbids, so we translate it here. See PAP-11259.
  */
-const NO_ACTION_PATH_BODY =
-  "Paperclip can't see anything to work on next here — no automation, retry, blocker, or review. " +
-  "Re-run the stage to nudge it, or use the ⋯ menu to move it by hand.";
+const NO_ACTION_PATH_BODY = "pipelinesExtra.liveness.noActionPathBody";
 
 /**
  * The `pipelines:write` permission key is the only permission the Phase 2
@@ -106,7 +104,7 @@ export function derivePipelineLivenessBanner(
       return {
         reason: liveness.reason,
         tone: "blocked",
-        title: "Automation paused — waiting on a blocker",
+        title: t("pipelinesExtra.liveness.automationPaused"),
         body: liveness.message,
         blockerLink: blockerLinkFromLiveness(liveness),
         automationLink: automationLinkFromLiveness(liveness),
@@ -114,14 +112,14 @@ export function derivePipelineLivenessBanner(
         showRetry: false,
         retryKind: null,
         retryLabel: "",
-        helperNote: AUTO_RETRY_NOTE,
+        helperNote: t(AUTO_RETRY_NOTE),
       };
 
     case "linked_issue_blocked":
       return {
         reason: liveness.reason,
         tone: "blocked",
-        title: "Automation paused — waiting on a blocker",
+        title: t("pipelinesExtra.liveness.automationPaused"),
         body: liveness.message,
         blockerLink: blockerLinkFromLiveness(liveness),
         automationLink: automationLinkFromLiveness(liveness),
@@ -129,14 +127,14 @@ export function derivePipelineLivenessBanner(
         showRetry: false,
         retryKind: null,
         retryLabel: "",
-        helperNote: AUTO_RETRY_NOTE,
+        helperNote: t(AUTO_RETRY_NOTE),
       };
 
     case "permission_preflight_failed":
       return {
         reason: liveness.reason,
         tone: "permission",
-        title: "Permission needed before this can run",
+        title: t("pipelinesExtra.liveness.permissionNeeded"),
         body: liveness.message,
         blockerLink: null,
         automationLink: automationLinkFromLiveness(liveness),
@@ -145,7 +143,7 @@ export function derivePipelineLivenessBanner(
         retryKind: null,
         retryLabel: "",
         helperNote:
-          "Grant the access above to the configured responsible, then Paperclip retries automatically.",
+          t("pipelinesExtra.liveness.grantAccess"),
       };
 
     case "automation_failed": {
@@ -157,15 +155,15 @@ export function derivePipelineLivenessBanner(
       return {
         reason: liveness.reason,
         tone: recovered ? "retry" : "attention",
-        title: recovered ? "Blocker resolved — ready to retry" : "Automation failed",
+        title: recovered ? t("pipelinesExtra.liveness.blockerResolved") : t("pipelinesExtra.liveness.automationFailed"),
         body: liveness.message,
         blockerLink: null,
         automationLink: automationLinkFromLiveness(liveness),
         permissionKey: null,
         showRetry: true,
         retryKind: automationId ? "automation" : "stage",
-        retryLabel: "Retry now",
-        helperNote: recovered ? AUTO_RETRY_NOTE : null,
+        retryLabel: t("pipelinesExtra.liveness.retryNow"),
+        helperNote: recovered ? t(AUTO_RETRY_NOTE) : null,
       };
     }
 
@@ -173,14 +171,14 @@ export function derivePipelineLivenessBanner(
       return {
         reason: liveness.reason,
         tone: "attention",
-        title: "Waiting on breakdown evidence",
+        title: t("pipelinesExtra.liveness.waitingBreakdown"),
         body: liveness.message,
         blockerLink: null,
         automationLink: null,
         permissionKey: null,
         showRetry: true,
         retryKind: "stage",
-        retryLabel: "Re-run stage automation",
+        retryLabel: t("pipelinesExtra.liveness.rerunStage"),
         helperNote: null,
       };
 
@@ -188,14 +186,14 @@ export function derivePipelineLivenessBanner(
       return {
         reason: liveness.reason,
         tone: "blocked",
-        title: "Breakdown is incomplete",
+        title: t("pipelinesExtra.liveness.breakdownIncomplete"),
         body: missingPiecesBody(liveness),
         blockerLink: null,
         automationLink: null,
         permissionKey: null,
         showRetry: true,
         retryKind: "stage",
-        retryLabel: "Re-run stage automation",
+        retryLabel: t("pipelinesExtra.liveness.rerunStage"),
         helperNote: null,
       };
 
@@ -203,14 +201,14 @@ export function derivePipelineLivenessBanner(
       return {
         reason: liveness.reason,
         tone: "attention",
-        title: "This item is stuck",
-        body: NO_ACTION_PATH_BODY,
+        title: t("pipelinesExtra.liveness.itemStuck"),
+        body: t(NO_ACTION_PATH_BODY),
         blockerLink: null,
         automationLink: null,
         permissionKey: null,
         showRetry: true,
         retryKind: "stage",
-        retryLabel: "Re-run stage automation",
+        retryLabel: t("pipelinesExtra.liveness.rerunStage"),
         helperNote: null,
       };
 
@@ -222,7 +220,7 @@ export function derivePipelineLivenessBanner(
 function missingPiecesBody(liveness: PipelineCaseLiveness): string {
   const missing = liveness.breakdown?.missingRequestKeys?.length ?? 0;
   if (missing > 0) {
-    return `${liveness.message} ${missing} expected ${missing === 1 ? "piece is" : "pieces are"} still missing.`;
+    return `${liveness.message} ${t(missing === 1 ? "pipelinesExtra.liveness.missingPieceOne" : "pipelinesExtra.liveness.missingPieceMany", { count: missing })}`;
   }
   return liveness.message;
 }

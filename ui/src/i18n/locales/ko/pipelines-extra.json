@@ -1,0 +1,109 @@
+{
+  "pipelinesExtra": {
+    "references": { "noLinkedWork": "연결된 작업이 아직 없습니다.", "folder": "폴더" },
+    "settings": {
+      "allowedNextSteps": "허용된 다음 단계", "alwaysAvailable": "항상 사용 가능", "breakIntoPieces": "작은 항목으로 나누기",
+      "createPieceIn": "각 항목을 만들 위치", "choosePipeline": "파이프라인 선택", "pipelineInWorkspace": "이 작업 공간의 파이프라인",
+      "startingStage": "각 항목의 시작 단계", "chooseStage": "단계 선택", "newPieceStartsHere": "새 항목이 시작되는 단계",
+      "callPiece": "각 항목을 부를 이름", "piecePlaceholder": "항목", "carryOver": "이어받기", "destinationValidation": "대상 검증",
+      "thenMoveCaseTo": "그다음 이 케이스를 이동할 곳", "stayOnStep": "이 단계에 유지", "asSoonAsCreated": "항목이 생성되는 즉시",
+      "wait": "대기", "pipelineActions": "파이프라인 작업", "pipelineName": "파이프라인 이름", "pipelineDescription": "파이프라인 설명",
+      "addDescription": "설명을 입력하세요", "saving": "저장 중…", "saveDetails": "세부 정보 저장", "addFirstStage": "첫 단계 추가",
+      "stepNumber": "{{number}}단계", "name": "이름", "stepType": "단계 유형", "approver": "승인자", "anyHuman": "모든 사람", "reviewOutcomes": "검토 결과",
+      "askNoteChanges": "변경 요청 시 메모 요청", "askNoteDeclining": "거절 시 메모 요청", "whenItemEnters": "항목이 이 단계에 들어올 때", "pickAgent": "에이전트 선택", "noAutomation": "자동화 없음",
+      "projectContext": "프로젝트 컨텍스트", "project": "프로젝트", "noProject": "프로젝트 없음", "projectWorkspace": "프로젝트 작업 공간", "projectFallback": "프로젝트 기본값",
+      "executionWorkspace": "실행 작업 공간", "executionWorkspaceMode": "실행 작업 공간 모드", "existingExecutionWorkspace": "기존 실행 작업 공간", "chooseExistingWorkspace": "기존 작업 공간 선택",
+      "issueTitle": "이슈 제목", "issueTitleTemplate": "이슈 제목 템플릿", "issueTitleVariables": "이슈 제목 변수", "agentDecision": "에이전트가 결정할 내용",
+      "transitions": "전환", "strictMode": "엄격 모드", "strictTransitions": "전환을 엄격하게 적용", "children": "하위 항목", "blockChildren": "하위 항목 차단", "advanceChildren": "하위 항목 진행",
+      "moveTo": "이동 위치", "moveToStageChildrenFinish": "하위 항목이 끝나면 이동할 단계", "deleteStage": "단계 삭제", "moveExistingItems": "기존 항목을 이동할 곳",
+      "archivePipeline": "파이프라인 보관", "typeToConfirm": "확인을 위해 {{name}} 입력", "archiveConfirmation": "보관 확인"
+    },
+    "board": {
+      "nestedView": "중첩 보기", "flatList": "목록 보기", "sort": "정렬", "noSearchMatch": "검색 결과와 일치하는 파이프라인이 없습니다.",
+      "name": "이름", "attention": "확인 필요", "openItems": "진행 중인 항목", "status": "상태", "lastActivity": "최근 활동",
+      "collapse": "{{name}} 접기", "expand": "{{name}} 펼치기", "under": "{{name}} 아래", "toReview": "검토할 항목 {{count}}개",
+      "inMotion": "진행 중 {{count}}개", "showing": "{{total}}개 중 {{shown}}개 표시.", "newPipeline": "새 파이프라인",
+      "newPipelineDescription": "파이프라인 이름과 간단한 설명을 입력하세요.", "description": "설명"
+    },
+    "itemDetail": {
+      "stage": "단계", "builtFor": "상위 항목", "openConversation": "대화 열기", "starting": "시작 중…", "startConversation": "대화 시작",
+      "startConversationFailed": "대화를 시작하지 못했습니다"
+    },
+    "health": {
+      "open": "열기",
+      "someSteps": "아직 실행되지 않는 단계가 있습니다 — 수정할 항목 {{count}}개",
+      "openStageSettings": "{{stage}} 설정 열기",
+      "moreInSettings": "단계 설정에 {{count}}개 더 있음",
+      "thisStep": "이 단계는 아직 실행되지 않습니다",
+      "thisStepCount": "이 단계는 아직 실행되지 않습니다 — 수정할 항목 {{count}}개"
+    },
+    "history": {
+      "restoredRevision": "리비전 {{revision}}을 복원했습니다",
+      "savedAsRevision": "리비전 {{revision}}으로 저장했습니다.",
+      "restoreFailed": "리비전을 복원하지 못했습니다",
+      "restoreFailedBody": "Paperclip에서 리비전을 복원하지 못했습니다.",
+      "title": "기록",
+      "description": "이 지침의 이전 버전입니다.",
+      "noHistory": "아직 기록이 없습니다. 지침을 저장하면 첫 리비전이 생성됩니다.",
+      "loading": "리비전을 불러오는 중…",
+      "loadFailed": "리비전을 불러오지 못했습니다.",
+      "noRevisions": "기록된 리비전이 없습니다.",
+      "revision": "리비전 {{revision}}",
+      "current": "현재 버전",
+      "restore": "복원"
+    },
+    "gate": { "loading": "파이프라인을 불러오는 중" },
+    "itemBody": {
+      "revisionRestored": "리비전을 복원했습니다",
+      "restoreFailed": "리비전을 복원하지 못했습니다",
+      "bodyChanged": "다른 곳에서 본문이 변경되었습니다",
+      "bodyChangedBody": "다른 사용자가 이 항목의 본문을 수정했습니다. 최신 내용을 다시 불러왔으니 편집 내용을 다시 적용하세요.",
+      "saveFailed": "본문을 저장하지 못했습니다",
+      "writeMarkdown": "항목 본문을 Markdown으로 작성하세요…",
+      "savingHint": "리비전 {{revision}}으로 저장 · ⌘↵ 저장 · Esc 취소",
+      "cancel": "취소",
+      "saving": "저장 중…",
+      "save": "저장",
+      "viewingRevision": "리비전 {{revision}} 보는 중",
+      "historicalPreview": "이전 버전 미리보기입니다. 이전 버전을 보는 동안 새 댓글을 작성할 수 없습니다. 복원하면 최신 리비전이 새로 생성되고 기록은 계속 보존됩니다.",
+      "returnLatest": "최신 버전으로 돌아가기",
+      "restoring": "복원 중…",
+      "restoreThis": "이 리비전 복원",
+      "noBody": "아직 본문이 없습니다. 여기에 항목 세부 정보를 기록하세요.",
+      "addBody": "항목 본문 추가",
+      "itemBody": "항목 본문",
+      "documentLabel": "항목 본문 문서",
+      "editingUnsaved": "● 편집 중 · 저장되지 않음",
+      "edit": "편집"
+    },
+    "liveness": {
+      "requiredPermission": "필요한 권한:",
+      "onTargetPipeline": "대상 파이프라인에 필요합니다.",
+      "openIdentifier": "{{identifier}} 열기",
+      "openBlocker": "차단 항목 열기",
+      "openAutomation": "자동화 작업 열기",
+      "retrying": "재시도 중…"
+      ,"autoRetryNote": "차단이 해소되면 Paperclip이 자동으로 재시도하므로 항목을 직접 이동할 필요가 없습니다.",
+      "noActionPathBody": "Paperclip이 다음에 처리할 자동화, 재시도, 차단 항목 또는 검토를 찾지 못했습니다. 단계를 다시 실행하거나 ⋯ 메뉴에서 직접 이동하세요.",
+      "automationPaused": "자동화 일시 중지 — 차단 항목 대기 중",
+      "permissionNeeded": "실행 전에 권한이 필요합니다",
+      "grantAccess": "위 권한을 지정된 담당자에게 부여하면 Paperclip이 자동으로 재시도합니다.",
+      "blockerResolved": "차단 해소 — 재시도할 수 있습니다",
+      "automationFailed": "자동화 실패",
+      "retryNow": "지금 재시도",
+      "waitingBreakdown": "세부 분류 결과를 기다리는 중",
+      "rerunStage": "단계 자동화 다시 실행",
+      "breakdownIncomplete": "세부 분류가 완료되지 않았습니다",
+      "itemStuck": "이 항목이 진행되지 않습니다",
+      "missingPieceOne": "예상한 항목 {{count}}개가 아직 누락되었습니다.",
+      "missingPieceMany": "예상한 항목 {{count}}개가 아직 누락되었습니다."
+    },
+    "cleanup": { "retireDirectChildren": "직접 하위 항목 보관", "retireDirectChildrenDescription": "일반 파이프라인 보드와 상위 집계에서 하위 출력을 숨깁니다.", "retireDescendants": "하위 항목 전체 보관", "retireDescendantsDescription": "해당 하위 항목 아래의 후속 출력을 숨깁니다.", "cancelLinkedAutomationIssues": "연결된 자동화 작업 취소", "cancelLinkedAutomationIssuesDescription": "새 재시도로 대체된 미완료 자동화 작업을 취소합니다.", "keepAuditHistory": "항목 기록에 감사 추적 표시", "keepAuditHistoryDescription": "기록을 삭제하지 않고 재시도 및 보관된 출력을 이력으로 남깁니다." },
+    "identity": { "me": "나" },
+    "outputRoles": { "origin": "원본", "conversation": "대화", "work": "작업", "automation": "자동화" },
+    "errors": { "requiredField": "{{label}}은(는) 필수입니다.", "invalidChoice": "{{label}}은(는) 제공된 선택지 중 하나여야 합니다.", "duplicateRow": "이 항목은 다른 행과 중복됩니다.", "blockerCycle": "이 항목이 기다리는 다른 항목도 이 항목을 기다리고 있습니다.", "needsAttention": "제출하기 전에 이 항목을 확인하세요.", "createPipeline": "파이프라인을 만들지 못했습니다. 다른 이름을 시도하세요.", "rerunStep": "이 단계를 다시 실행하지 못했습니다.", "retryAutomation": "이 자동화를 재시도하지 못했습니다.", "retryGeneric": "재시도하지 못했습니다. 다시 시도하세요.", "removedReason": "항목 상세 화면에서 제거했습니다.", "untitled": "제목 없는 항목", "sourceTask": "원본 작업" },
+    "page": {
+      "open": "열기", "download": "다운로드", "cancel": "취소", "create": "파이프라인 만들기", "creating": "만드는 중…", "pipeline": "파이프라인", "pipelineNotFound": "파이프라인을 찾을 수 없습니다.", "item": "항목", "itemNotFound": "항목을 찾을 수 없습니다.", "items": "항목", "itemSingular": "항목", "openItems": "진행 중", "active": "활성", "paused": "일시 중지", "noActivity": "활동 없음", "justNow": "방금 전", "minAgo": "{{count}}분 전", "hourAgo": "{{count}}시간 전", "hourAgoOne": "1시간 전", "yesterday": "어제", "daysAgo": "{{count}}일 전", "lastWeek": "지난주", "weeksAgo": "{{count}}주 전", "sortName": "이름", "sortActivity": "최근 활동", "sortReview": "검토할 항목이 많은 순", "sortInMotion": "진행 중인 항목이 많은 순", "sortOpenItems": "진행 중인 항목이 많은 순", "noBuiltForItem": "상위 항목 없음", "untitledItem": "제목 없는 항목", "thisChanged": "변경됨", "builtFrom": "{{count}}개 {{unit}}에서 생성", "empty": "비어 있음", "warnings": "{{count}}개 {{unit}}", "warning": "경고", "warningPlural": "경고", "breaksInto": "{{name}}으로 나뉨", "moveSkipsFlow": "이 이동은 일반 흐름을 건너뜁니다", "dropItemsHere": "여기에 항목을 놓으세요", "unassignedItems": "미지정 항목", "fedBy": "{{name}}에서 공급됨", "groupBy": "그룹 기준", "none": "없음", "builtFor": "상위 항목 기준", "pipelineSettings": "파이프라인 설정", "openSettings": "설정 열기", "noStages": "이 파이프라인에는 아직 설정된 단계가 없습니다.", "addStages": "파이프라인 설정에서 단계를 추가하면 보드를 사용할 수 있습니다.", "totalItems": "총 {{count}}개 {{unit}}", "liveDownstream": "실시간 하위 파이프라인 {{count}}개", "moveQuestion": "{{title}}을(를) 이동할까요?", "moveToQuestion": "{{title}}을(를) 직접 {{stage}}(으)로 이동할까요? 보통 에이전트가 준비되면 이 작업을 제안합니다.", "reviewMove": "계속하기 전에 이 이동을 검토하세요.", "reason": "이유", "moveReasonPlaceholder": "이 항목이 일반 흐름을 건너뛰어야 하는 이유를 설명하세요.", "chooseStage": "단계 선택", "moving": "이동 중…", "moveTo": "{{stage}}(으)로 이동", "keepItem": "항목 유지", "removeItem": "항목 제거", "removing": "제거 중…", "conversationStarted": "대화를 시작했습니다", "conversationStartFailed": "대화를 시작하지 못했습니다", "noActiveConversation": "아직 활성 대화가 없습니다.", "startConversation": "대화 시작", "starting": "시작 중…", "noAddedDetails": "추가된 세부 정보가 없습니다.", "noActivityYet": "아직 활동이 없습니다.", "itemActions": "항목 작업", "permissionMissing": "권한이 아직 없습니다 — 먼저 액세스를 요청하세요", "moveToStage": "단계로 이동", "retryPrevious": "이전 단계 재시도", "rerunStep": "이 단계 다시 실행", "retryCheckFailed": "이 자동화를 재시도할 수 있는지 확인하지 못했습니다.", "from": "현재 단계", "runsAt": "실행 위치", "chooseStep": "단계 선택", "noRetryableStep": "재시도할 수 있는 단계 없음", "automation": "자동화", "assignedTo": "담당자", "noResponsible": "담당자 없음", "noRoutine": "설정된 루틴 없음", "children": "하위 항목", "descendants": "하위 항목 전체", "linkedTasks": "연결된 작업", "activeWork": "활성 작업", "startingAction": "시작 중…", "retry": "재시도", "moveApproved": "이동을 승인했습니다", "suggestionDismissed": "제안을 닫았습니다", "changeAcknowledged": "변경 사항을 확인했습니다", "suggestionResolveFailed": "제안을 처리하지 못했습니다", "changeAcknowledgeFailed": "변경 사항을 확인하지 못했습니다", "rerunStarted": "단계 자동화를 다시 시작했습니다", "rerunFailed": "이 단계를 다시 실행하지 못했습니다", "retryStarted": "재시도를 시작했습니다", "retryFailed": "이 자동화를 재시도하지 못했습니다", "retryGenericFailed": "재시도하지 못했습니다. 다시 시도하세요.", "itemMoved": "항목을 이동했습니다", "itemMoveFailed": "항목을 이동하지 못했습니다", "itemRemoved": "항목을 제거했습니다", "itemRemoveFailed": "항목을 제거하지 못했습니다", "reviewUpdateFailed": "검토를 업데이트하지 못했습니다", "moveBlocked": "이동이 차단되었습니다", "itemChangedRefresh": "보는 동안 항목이 변경되어 보드를 새로 고쳤습니다.", "itemMoveFailedBody": "항목을 이동하지 못했습니다.", "automationRunning": "자동화 실행 중", "linkedWorkRunning": "연결된 작업 실행 중", "started": "{{time}} 시작", "openWork": "연결된 작업 열기", "review": "검토", "inReview": "검토 중", "decideNext": "이 항목의 다음 이동을 결정하세요.", "requiredReason": "변경 요청 또는 거절 시 필요합니다.", "optionalNote": "선택 입력 메모입니다.", "nextReview": "이 검토 대기열의 다음 항목: {{title}}", "noOtherReview": "이 파이프라인 검토 대기열에 기다리는 다른 항목이 없습니다.", "automationCompleted": "자동화 완료 — {{name}} 실행", "automationFailed": "자동화 실패", "outputDocuments": "문서", "outputWorkProducts": "작업 결과물", "outputAttachments": "첨부 파일", "itemOutputs": "항목 출력", "loadOutputsFailed": "항목 출력을 불러오지 못했습니다.", "noBuiltFrom": "생성된 하위 항목이 없습니다.", "nestedHidden": "숨겨진 중첩 {{unit}} {{count}}개", "sourceTask": "원본 작업", "openDocument": "문서 열기", "openWorkProduct": "작업 결과물 열기", "attachment": "첨부 파일", "addItems": "항목 추가", "buildList": "목록을 만든 뒤 한 번에 제출하세요", "addItemsDescription": "항목은 첫 단계({{stage}})에 추가됩니다.", "fieldsFromSettings": "이 필드는 파이프라인 설정 → {{stage}} 단계에서 가져옵니다.", "addAnotherItem": "항목 더 추가", "addAtLeastOne": "항목을 하나 이상 추가하세요.", "countUpdatesLive": "개수가 실시간으로 업데이트됩니다.", "submitting": "제출 중…", "submitItems": "{{count}}개 {{unit}} 제출", "itemNumber": "항목 {{number}}", "collapseItem": "항목 접기", "expandItem": "항목 펼치기", "removeItemAria": "항목 제거", "preview": "미리보기", "firstStageOnSubmit": "제출 시 첫 단계:", "firstStage": "첫 단계", "required": "필수", "choose": "선택하세요…", "reviewQueue": "검토 대기열", "reviewItem": "검토 항목", "reviewWaiting": "{{pipeline}}에서 결정을 기다리고 있습니다.", "reviewPrompt": "항목을 검토하고 다음 작업을 결정하세요.", "whatDecided": "결정할 내용", "itemPreview": "항목 미리보기", "noPreview": "미리보기 세부 정보가 없습니다.", "openFullItem": "전체 항목 열기", "note": "메모", "requiredChangesNote": "변경 요청 시 필요합니다.", "notYet": "아직 아님", "requestChanges": "변경 요청", "approve": "승인", "reject": "거절", "selectItem": "{{title}} 선택", "recently": "최근", "needsAttention": "확인이 필요한 항목 ({{count}})", "approveItems": "{{count}}개 {{unit}} 승인", "attentionRetry": "확인이 필요한 항목이 있습니다. 잠시 후 다시 시도하세요.", "nothingNeedsYou": "지금은 처리할 항목이 없습니다.", "shortcuts": "단축키: j/k 또는 화살표 키로 이동, Enter로 항목 열기, a로 승인.", "selectCompanyReview": "회사를 선택하면 검토 대기열을 볼 수 있습니다.", "notReadyDecision": "이 항목은 아직 결정할 수 없습니다.", "bulkApproveFailed": "일부 항목을 승인하지 못했습니다.", "selectCompanyFirst": "먼저 회사를 선택하세요.", "learnings": "학습 내용", "selectCompanyLearnings": "회사를 선택하면 학습 내용을 볼 수 있습니다.", "learningsDescription": "검토 결정과 수동 이동에서 발견한 패턴을 쉬운 말로 보여줍니다.", "refreshing": "새로 고치는 중…", "noRows": "행 없음", "loadLearningsFailed": "학습 내용을 불러오지 못했습니다.", "noLearnings": "아직 학습 내용이 없습니다.", "previous": "이전", "next": "다음"
+    }
+  }
+}
