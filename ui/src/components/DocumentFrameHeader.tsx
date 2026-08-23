@@ -149,7 +149,7 @@ export function DocumentFrameHeader({
                               <span className="font-medium">{t("document.revision", { number: revision.revisionNumber })}</span>
                               {isCurrentRevision ? (
                                 <Badge variant="outline" className="border-border px-1.5 text-(length:--text-nano) uppercase tracking-(--tracking-eyebrow) text-muted-foreground">
-                                  Current
+                                  {t("miscResidualRound3.current")}
                                 </Badge>
                               ) : null}
                             </div>

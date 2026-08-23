@@ -803,7 +803,7 @@ function StudioLanding({
           />
           <Button variant="ghost" size="sm" className="ml-auto" onClick={onCreateNew}>
             <Plus className="mr-1.5 h-3.5 w-3.5" />
-            New skill
+            {i18n.t("miscResidualRound3.newSkill")}
           </Button>
         </header>
         <div className="min-h-0 flex-1 overflow-auto">
@@ -1346,7 +1346,7 @@ function SkillPane({
         queryKey: queryKeys.companySkills.versions(companyId, skillId),
       });
     },
-    onError: onError("Couldn't save file"),
+    onError: onError(i18n.t("miscResidualRound3.couldntSaveFile")),
   });
 
   const createMutation = useMutation({
@@ -1367,7 +1367,7 @@ function SkillPane({
         queryKey: queryKeys.companySkills.versions(companyId, skillId),
       });
     },
-    onError: onError("Couldn't create file"),
+    onError: onError(i18n.t("miscResidualRound3.couldntCreateFile")),
   });
 
   const deleteMutation = useMutation({
@@ -1388,7 +1388,7 @@ function SkillPane({
         queryKey: queryKeys.companySkills.versions(companyId, skillId),
       });
     },
-    onError: onError("Couldn't delete file"),
+    onError: onError(i18n.t("miscResidualRound3.couldntDeleteFile")),
   });
 
   // Read-only skills (bundled Paperclip, remote GitHub, URL, skills.sh) reject
@@ -1682,7 +1682,7 @@ function SkillFileActions({
               size="icon-sm"
               disabled={deleteDisabled}
               onClick={() => {
-                if (typeof window === "undefined" || window.confirm(`Delete ${selectedFile}?`)) {
+                if (typeof window === "undefined" || window.confirm(i18n.t("miscResidualRound3.deleteFileConfirm", { path: selectedFile }))) {
                   onDeleteFile();
                 }
               }}
@@ -1743,7 +1743,7 @@ function SkillPathDialog({
     if (!mode) return;
     const normalized = normalizeStudioPath(pathValue);
     if (!normalized) {
-      setError(`${label} is required.`);
+      setError(i18n.t("miscResidualRound3.fieldRequired", { label }));
       return;
     }
     if (mode === "file") {
@@ -1989,7 +1989,7 @@ function InputPane({
         queryKey: queryKeys.companySkills.testInputs(companyId, skillId),
       });
     },
-    onError: onError("Couldn't save input"),
+    onError: onError(i18n.t("miscResidualRound3.couldntSaveInput")),
   });
   const deleteMutation = useMutation({
     mutationFn: (inputId: string) => companySkillsApi.deleteTestInput(companyId, skillId, inputId),
@@ -2001,7 +2001,7 @@ function InputPane({
         queryKey: queryKeys.companySkills.testInputs(companyId, skillId),
       });
     },
-    onError: onError("Couldn't delete input"),
+    onError: onError(i18n.t("miscResidualRound3.couldntDeleteInput")),
   });
 
   return (
@@ -2237,7 +2237,7 @@ function SaveInputDialog({
         <DialogHeader>
           <DialogTitle>{i18n.t("skillStudio.saveTestInput")}</DialogTitle>
           <DialogDescription>
-            Runs snapshot input at run time — editing later won't change past runs.
+            {i18n.t("miscResidualRound3.snapshotInputDescription")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -2410,7 +2410,7 @@ function RunsPane({
       body: i18n.t("skillStudio.templateReady", { name: template.name }),
       });
     },
-    onError: onError("Couldn't save template"),
+    onError: onError(i18n.t("miscResidualRound3.couldntSaveTemplate")),
   });
 
   const updateTemplateMutation = useMutation({
@@ -2430,7 +2430,7 @@ function RunsPane({
       body: i18n.t("skillStudio.templateReady", { name: template.name }),
       });
     },
-    onError: onError("Couldn't update template"),
+    onError: onError(i18n.t("miscResidualRound3.couldntUpdateTemplate")),
   });
 
   const deleteTemplateMutation = useMutation({
@@ -2449,7 +2449,7 @@ function RunsPane({
       body: i18n.t("skillStudio.templateRemoved", { name: template.name }),
       });
     },
-    onError: onError("Couldn't delete template"),
+    onError: onError(i18n.t("miscResidualRound3.couldntDeleteTemplate")),
   });
 
   const selectedTemplate = selectedTemplateId === null
@@ -2468,7 +2468,7 @@ function RunsPane({
       const resolution = resolveRunTemplateSelection(selectedTemplateId, templates);
       if (resolution.recovered) {
         updateTemplateSelection(resolution.selection);
-        throw new Error("Selected run template is no longer available. The selection was reset.");
+        throw new Error(i18n.t("miscResidualRound3.selectedTemplateUnavailable"));
       }
       return companySkillsApi.createTestRun(companyId, skillId, buildCreateRunRequest({
         agentId: selectedAgentId!,
@@ -2483,7 +2483,7 @@ function RunsPane({
       });
       onSelectRun(run.id);
     },
-    onError: onError("Couldn't start run"),
+    onError: onError(i18n.t("miscResidualRound3.couldntStartRun")),
   });
 
   if (selectedRunId) {
@@ -3045,7 +3045,7 @@ function RunDetailView({
       queryClient.invalidateQueries({
         queryKey: queryKeys.companySkills.testRunDetail(companyId, skillId, runId),
       }),
-    onError: onError("Couldn't cancel run"),
+    onError: onError(i18n.t("miscResidualRound3.couldntCancelRun")),
   });
 
   // Re-run reproduces the VIEWED run's snapshots — pinned skill version, saved
@@ -3064,7 +3064,7 @@ function RunDetailView({
       });
       onSelectRun(run.id);
     },
-    onError: onError("Couldn't re-run"),
+    onError: onError(i18n.t("miscResidualRound3.couldntRerun")),
   });
 
   const deleteMutation = useMutation({
@@ -3075,7 +3075,7 @@ function RunDetailView({
       });
       onSelectRun(null);
     },
-    onError: onError("Couldn't delete run"),
+    onError: onError(i18n.t("miscResidualRound3.couldntDeleteRun")),
   });
 
   const detail = detailQuery.data ?? null;

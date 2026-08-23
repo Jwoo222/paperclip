@@ -434,7 +434,7 @@ export function StatusCardDetailDrawer({
             <TabsContent value="watched" className="mt-0 space-y-3">
               {card.queries.length === 0 && (card.mentionedIssueIds?.length ?? 0) === 0 ? (
                 <div className="rounded-md border border-dashed border-border px-3 py-4 text-sm text-muted-foreground">
-                  This card is still setting up — the issues it watches appear here once it's ready.
+                  {t("miscResidualRound3.statusCardSetupDescription")}
                 </div>
               ) : dryRunQuery.isLoading ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">

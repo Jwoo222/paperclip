@@ -9,6 +9,7 @@ import { MarkdownBody } from "./MarkdownBody";
 import { cn } from "../lib/utils";
 import { Loader2, Send, CheckCircle2, ArrowRight } from "lucide-react";
 import { useTranslation } from "@/i18n";
+import { t as translate } from "@/i18n";
 
 interface OnboardingChatProps {
   taskId: string;
@@ -35,30 +36,30 @@ function detectHiringPlan(body: string): boolean {
 }
 
 const QUEUED_MESSAGES = [
-  "Heartbeat triggered, waking up...",
-  "Initializing...",
-  "Getting ready...",
+  "statusHeartbeatTriggered",
+  "statusInitializing",
+  "statusGettingReady",
 ];
 
 const RUNNING_MESSAGES = [
-  "Working on a response...",
-  "Reading the conversation...",
-  "Thinking through the plan...",
-  "Drafting a response...",
-  "Still working...",
-  "Almost there...",
+  "statusWorking",
+  "statusReading",
+  "statusThinking",
+  "statusDrafting",
+  "statusStillWorking",
+  "statusAlmostThere",
 ];
 
 const WAITING_MESSAGES = [
-  "Waiting to wake up...",
-  "Heartbeat pending...",
-  "Should wake up soon...",
+  "statusWaiting",
+  "statusHeartbeatPending",
+  "statusShouldWake",
 ];
 
 function getCyclingMessage(messages: string[], elapsed: number, agentName: string): string {
   // Cycle through messages every 5 seconds
   const idx = Math.floor(elapsed / 5) % messages.length;
-  return `${agentName} · ${messages[idx]}`;
+  return `${agentName} · ${translate(`miscResidualRound3.${messages[idx]}`)}`;
 }
 
 function getRunStatusMessage(status: string, agentName: string, elapsed: number): string {
@@ -68,15 +69,15 @@ function getRunStatusMessage(status: string, agentName: string, elapsed: number)
     case "running":
       return getCyclingMessage(RUNNING_MESSAGES, elapsed, agentName);
     case "succeeded":
-      return `${agentName} finished`;
+      return translate("miscResidualRound3.agentFinished", { agentName });
     case "failed":
-      return `${agentName} encountered an error`;
+      return translate("miscResidualRound3.agentError", { agentName });
     case "cancelled":
-      return `${agentName}'s run was cancelled`;
+      return translate("miscResidualRound3.agentCancelled", { agentName });
     case "timed_out":
-      return `${agentName}'s run timed out`;
+      return translate("miscResidualRound3.agentTimedOut", { agentName });
     default:
-      return `${agentName} is thinking...`;
+      return translate("miscResidualRound3.agentThinking", { agentName });
   }
 }
 
@@ -270,10 +271,10 @@ export function OnboardingChat({
           companyGoal={companyGoal}
           hasComments={Boolean(comments?.length)}
           onDiscuss={() => {
-            setInput("I want to discuss the plan before you get started.");
+            setInput(translate("miscResidualRound3.discussPlanMessage"));
             inputRef.current?.focus();
           }}
-          onStart={() => sendMessage("Yes, get started on the hiring plan!")}
+          onStart={() => sendMessage(translate("miscResidualRound3.startHiringPlanMessage"))}
         />
         {comments?.map((comment) => {
           const isAgent = Boolean(comment.authorAgentId);
@@ -434,13 +435,13 @@ function WelcomeMessage({
             </span>
           </div>
           <p>
-            Hi! Thanks for bringing me on to lead <strong>{companyName}</strong>.
+            {translate("miscResidualRound3.welcomeGreeting", { name: companyName })}
           </p>
           <p className="mt-1">
-            Our mission is: <em>{companyGoal}</em>
+            {translate("miscResidualRound3.welcomeMission", { goal: companyGoal })}
           </p>
           <p className="mt-1">
-            I'm ready to put together a plan for who we should bring on. Want me to get started?
+            {translate("miscResidualRound3.welcomePlanPrompt")}
           </p>
         </div>
       )}
@@ -452,13 +453,13 @@ function WelcomeMessage({
             className="rounded-full border border-border px-3 py-1 text-xs hover:bg-accent/50 transition-colors text-muted-foreground hover:text-foreground"
             onClick={onDiscuss}
           >
-            Let's discuss first
+            {translate("miscResidualRound3.discussFirst")}
           </button>
           <button
             className="rounded-full border border-foreground bg-foreground text-background px-3 py-1 text-xs hover:opacity-90 transition-opacity"
             onClick={onStart}
           >
-            Yes, get started!
+            {translate("miscResidualRound3.getStarted")}
           </button>
         </div>
       )}
@@ -474,8 +475,8 @@ function WelcomeMessage({
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500" />
           </span>
           {phase === "waking"
-            ? `${agentName} is waking up...`
-            : `${agentName} is composing a message...`}
+            ? translate("miscResidualRound3.motionWaking", { name: agentName })
+            : translate("miscResidualRound3.motionComposing", { name: agentName })}
         </div>
       )}
     </>

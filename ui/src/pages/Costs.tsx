@@ -664,7 +664,7 @@ export function Costs() {
                   <CardHeader className="px-5 pt-5 pb-2">
                      <CardTitle className="text-base">{t("overview.costs.inferenceLedger")}</CardTitle>
                     <CardDescription>
-                      Request-scoped inference spend for the selected period.
+                      {t("miscResidualRound3.inferenceSpendDescription")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4 px-5 pb-5 pt-2">
@@ -675,7 +675,7 @@ export function Costs() {
                         </div>
                         <div className="mt-1 text-sm text-muted-foreground">
                           {spendData?.summary.budgetCents && spendData.summary.budgetCents > 0
-                            ? `Budget ${formatCents(spendData.summary.budgetCents)}`
+                            ? t("miscResidualRound3.budgetAmount", { amount: formatCents(spendData.summary.budgetCents) })
                                   : t("overview.costs.unlimitedBudget")}
                         </div>
                       </div>
@@ -883,7 +883,7 @@ export function Costs() {
                   <div>
                      <h2 className="text-lg font-semibold">{t("overview.costs.activeIncidents")}</h2>
                     <p className="text-sm text-muted-foreground">
-                      Resolve hard stops here by raising the budget or explicitly keeping the scope paused.
+                      {t("miscResidualRound3.resolveHardStops")}
                     </p>
                   </div>
                   <div className="grid gap-4 xl:grid-cols-2">

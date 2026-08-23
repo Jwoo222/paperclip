@@ -1798,7 +1798,7 @@ export function PipelineSettings() {
         stageExecutionWorkspacePreference === "reuse_existing" &&
         !stageExecutionWorkspaceId
       ) {
-        throw new Error("Choose an existing workspace before saving this stage.");
+        throw new Error(t("miscResidualRound3.workspaceRequired"));
       }
       const parsedApproval = parseApprovalValue(selectedApproval);
       const nextRequiresApproval = stageKind === "review";
@@ -2599,7 +2599,7 @@ export function PipelineSettings() {
       >
         <div className="mb-3 flex items-start justify-between gap-3">
           <Link to={`/pipelines/${pipeline.id}`} className="text-sm text-muted-foreground hover:text-foreground">
-            Back to board
+            {t("miscResidualRound3.backToBoard")}
           </Link>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

@@ -323,8 +323,7 @@ export function PauseAffectsSummaryView({
       </div>
       {summary.nothingLive ? (
         <p role="status" className="text-xs text-muted-foreground" data-testid="pause-nothing-live">
-          Nothing live to pause — no agent run is in flight or queued. This records a hold so new work
-          won't start until you resume.
+          {t("miscResidualRound3.nothingLiveToPause")}
         </p>
       ) : null}
       {visibleBuckets.length > 0 ? (

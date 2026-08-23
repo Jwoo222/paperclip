@@ -136,7 +136,11 @@ export function CompanySettings() {
     t(`pluginsSettings.${key}`, { defaultValue, ...options });
   const governanceOptions = GOVERNANCE_POLICY_OPTIONS.map((option) => ({
     ...option,
-    label: tr(`policy.${option.value}`, option.label),
+    label: t({
+      default: "miscResidualRound3.companyDefault",
+      board_only: "miscResidualRound3.boardOnly",
+      board_or_agents: "miscResidualRound3.boardOrAgents",
+    }[option.value]),
   }));
   const {
     companies,
@@ -287,7 +291,7 @@ export function CompanySettings() {
   if (!selectedCompany) {
     return (
       <div className="text-sm text-muted-foreground">
-        No company selected. Select a company from the switcher above.
+        {t("miscResidualRound3.companyNotSelected")}
       </div>
     );
   }
@@ -449,7 +453,7 @@ export function CompanySettings() {
                   </div>
                   {!attachmentMaxValid && (
                     <span className="text-xs text-destructive">
-                      Enter a whole number from 1 to {MAX_COMPANY_ATTACHMENT_MAX_MIB}.
+                      {t("miscResidualRound3.attachmentWholeNumber", { max: MAX_COMPANY_ATTACHMENT_MAX_MIB })}
                     </span>
                   )}
                 </div>
@@ -526,7 +530,13 @@ export function CompanySettings() {
             </div>
             {ISSUE_THREAD_INTERACTION_KINDS.map((kind) => {
               const entry = governance[kind] ?? {};
-              const kindLabel = tr(`kind.${kind}`, INTERACTION_KIND_LABELS[kind]);
+              const kindLabel = t({
+                suggest_tasks: "miscResidualRound3.suggestedTasks",
+                ask_user_questions: "miscResidualRound3.askUserQuestions",
+                request_confirmation: "miscResidualRound3.confirmations",
+                request_checkbox_confirmation: "miscResidualRound3.checkboxConfirmations",
+                request_item_verdicts: "miscResidualRound3.itemVerdicts",
+              }[kind]);
               return (
                 <Fragment key={kind}>
                   <div className="text-sm font-medium sm:font-normal">{kindLabel}</div>
@@ -565,20 +575,20 @@ export function CompanySettings() {
       {/* Import / Export */}
       <div className="space-y-4">
         <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          {tr("companyPackages", "Company Packages")}
+          {t("miscResidualRound3.companyPackages")}
         </div>
         <div className="rounded-md border border-border px-4 py-4">
           <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" variant="outline" asChild>
               <Link to="/company/export">
                 <Download className="mr-1.5 h-3.5 w-3.5" />
-                {tr("export", "Export")}
+                {t("miscResidualRound3.export")}
               </Link>
             </Button>
             <Button size="sm" variant="outline" asChild>
               <Link to="/company/import">
                 <Upload className="mr-1.5 h-3.5 w-3.5" />
-                {tr("import", "Import")}
+                {t("miscResidualRound3.import")}
               </Link>
             </Button>
           </div>
@@ -588,11 +598,11 @@ export function CompanySettings() {
       {/* Danger Zone */}
       <div className="space-y-4">
         <div className="text-xs font-medium text-destructive uppercase tracking-wide">
-          {tr("dangerZone", "Danger Zone")}
+          {t("miscResidualRound3.dangerZone")}
         </div>
         <div className="space-y-3 rounded-md border border-destructive/40 bg-destructive/5 px-4 py-4">
           <p className="text-sm text-muted-foreground">
-            {tr("archiveDescription", "Archive this company to hide it from the sidebar. This persists in the database.")}
+            {t("miscResidualRound3.archiveDescription")}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -605,7 +615,7 @@ export function CompanySettings() {
               onClick={() => {
                 if (!selectedCompanyId) return;
                 const confirmed = window.confirm(
-                  tr("archiveConfirm", `Archive company "${selectedCompany.name}"? It will be hidden from the sidebar.`, { name: selectedCompany.name })
+                  t("miscResidualRound3.archiveConfirm", { name: selectedCompany.name })
                 );
                 if (!confirmed) return;
                 const nextCompanyId =

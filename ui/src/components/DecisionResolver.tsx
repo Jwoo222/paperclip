@@ -7,6 +7,7 @@ import { issuesApi } from "../api/issues";
 import { queryKeys } from "../lib/queryKeys";
 import { useCompany } from "../context/CompanyContext";
 import { DecisionCard, type DecisionIssueRef } from "./DecisionCard";
+import { t } from "@/i18n";
 
 interface DecisionResolverProps {
   companyId: string;
@@ -166,7 +167,7 @@ export function DecisionResolver({ companyId, decisionId, originIssue, agentMap,
   if (detail.isLoading) {
     return (
       <div className="flex items-center gap-2 py-3 text-xs text-muted-foreground">
-        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading decision…
+        <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("miscResidualRound3.loadingDecision")}
       </div>
     );
   }
@@ -174,7 +175,7 @@ export function DecisionResolver({ companyId, decisionId, originIssue, agentMap,
   if (detail.error || !decision) {
     return (
       <p className="py-3 text-xs text-muted-foreground">
-        This decision is no longer available — it may have been resolved elsewhere.
+        {t("miscResidualRound3.decisionUnavailable")}
       </p>
     );
   }

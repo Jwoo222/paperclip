@@ -221,7 +221,7 @@ export function ProfileSettings() {
               <div className="min-w-0 flex-1 space-y-2 pb-1">
                 <div>
                   <h2 className="truncate text-2xl font-semibold text-foreground">{currentName}</h2>
-                  <p className="truncate text-sm text-muted-foreground">{sessionQuery.data.user.email ?? "No email"}</p>
+                  <p className="truncate text-sm text-muted-foreground">{sessionQuery.data.user.email ?? t("miscResidualRound3.noEmail")}</p>
                 </div>
                 <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
                   {t("settingsSecurity.avatarHint", { defaultValue: "Click the avatar to upload a new image." })} {uploadHint}
@@ -245,7 +245,7 @@ export function ProfileSettings() {
               value={name}
               onChange={(event) => setName(event.target.value)}
               maxLength={120}
-              placeholder="Board"
+              placeholder={t("miscResidualRound3.board")}
             />
             <p className="text-xs text-muted-foreground">
               {t("settingsSecurity.displayNameHint", { defaultValue: "Shown in the sidebar account footer and comment author surfaces." })}

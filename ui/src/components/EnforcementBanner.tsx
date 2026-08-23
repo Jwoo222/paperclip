@@ -6,6 +6,7 @@ import { Link } from "@/lib/router";
 import { cn } from "@/lib/utils";
 import { queryKeys } from "@/lib/queryKeys";
 import { toolsApi } from "@/api/tools";
+import { t } from "@/i18n";
 
 /**
  * Persistent enforcement-state banner for the Tools & Access surface (PAP-10389).
@@ -152,15 +153,11 @@ export function EnforcementBanner(props: EnforcementBannerProps) {
       <div className="min-w-0 flex-1">
         {variant === "denied-detected" ? (
           <p>
-            <span className="font-medium">{computedCount}</span> governed tool call
-            {computedCount === 1 ? " was" : "s were"} denied or failed in the last hour. Access is enforced
-            server-side by the tool gateway — review what was blocked and why in the audit log.
+            {t(computedCount === 1 ? "miscResidualRound3.enforcementDeniedOne" : "miscResidualRound3.enforcementDeniedMany", { count: computedCount })}
           </p>
         ) : (
           <p>
-            Tool access is enforced server-side by the tool gateway. These screens configure and observe that
-            enforcement — they do not replace it. Agents see and call only the tools their profiles and policies
-            allow; everything else is denied by default.
+            {t("miscResidualRound3.enforcementInfo")}
           </p>
         )}
       </div>
@@ -168,7 +165,7 @@ export function EnforcementBanner(props: EnforcementBannerProps) {
         to="/apps/advanced/audit"
         className="shrink-0 text-xs font-medium text-primary hover:underline"
       >
-        View audit →
+        {t("miscResidualRound3.viewAudit")}
       </Link>
     </div>
   );

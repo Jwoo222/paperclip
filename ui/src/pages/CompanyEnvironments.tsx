@@ -949,7 +949,7 @@ function EnvironmentImageTemplatePanel({
   if (overviewQuery.isLoading) {
     return (
       <div className="mt-3 border-t border-border/60 pt-3 text-xs text-muted-foreground">
-        Loading template setup...
+        {t("miscResidualRound3.loadingTemplateSetup")}
       </div>
     );
   }

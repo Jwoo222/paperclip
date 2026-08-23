@@ -1,0 +1,108 @@
+{
+  "miscResidualRound3": {
+    "loadingDecision": "결정 불러오는 중…",
+    "decisionUnavailable": "이 결정은 더 이상 사용할 수 없습니다. 다른 곳에서 이미 처리되었을 수 있습니다.",
+    "noEmail": "이메일 없음",
+    "board": "보드",
+    "motionTweakPanel": "모션 조정 패널",
+    "resetAll": "모두 초기화",
+    "expand": "펼치기",
+    "minimize": "축소",
+    "noWorkspaceActivity": "아직 기본 작업 공간 외 활동이 없습니다.",
+    "current": "현재",
+    "sourceResolved": "소스 해결",
+    "sourceResolvedTitle": "시스템이 이 실행을 소스가 해결된 오탐으로 접었습니다.",
+    "sourceResolvedAria": "소스 해결 감시 접기",
+    "inferenceSpendDescription": "선택한 기간의 요청별 추론 비용입니다.",
+    "budgetAmount": "예산 {{amount}}",
+    "resolveHardStops": "예산을 늘리거나 해당 범위를 일시 중지 상태로 유지하여 여기서 실행 중단을 해결하세요.",
+    "summarySetupDescription": "요약은 Paperclip 기본 Summarizer 에이전트가 생성합니다. 이 요약을 요청하기 전에 어댑터와 모델을 설정하세요.",
+    "statusCardSetupDescription": "이 카드는 아직 설정 중입니다. 감시 대상 이슈는 준비가 완료되면 여기에 표시됩니다.",
+    "dragLeftResize": "왼쪽 가장자리를 끌어 표시 범위 조정",
+    "dragRightResize": "오른쪽 가장자리를 끌어 표시 범위 조정",
+    "loadingTemplateSetup": "템플릿 설정 불러오는 중…",
+    "enforcementDeniedOne": "지난 1시간 동안 관리 대상 도구 호출 {{count}}건이 거부되었거나 실패했습니다. 접근은 도구 게이트웨이에서 서버 측으로 적용됩니다. 차단된 항목과 이유는 감사 로그에서 확인하세요.",
+    "enforcementDeniedMany": "지난 1시간 동안 관리 대상 도구 호출 {{count}}건이 거부되었거나 실패했습니다. 접근은 도구 게이트웨이에서 서버 측으로 적용됩니다. 차단된 항목과 이유는 감사 로그에서 확인하세요.",
+    "enforcementInfo": "도구 접근은 도구 게이트웨이에서 서버 측으로 적용됩니다. 이 화면은 그 적용을 설정하고 관찰할 뿐 대체하지 않습니다. 에이전트는 프로필과 정책에서 허용한 도구만 보고 호출하며 나머지는 기본적으로 거부됩니다.",
+    "viewAudit": "감사 로그 보기 →",
+    "monitorAgentResumes": "에이전트가 {{eta}} 재개",
+    "monitorWaitingResumes": "모니터 대기 중 — {{eta}} 재개",
+    "monitorResumes": "{{eta}} 재개",
+    "monitorAgentRetryDue": "에이전트 재시도 시점",
+    "monitorWaitingDue": "모니터 대기 중 — 지금 실행할 차례",
+    "monitorDueNow": "지금 실행할 차례",
+    "monitorChecking": "곧 확인합니다…",
+    "monitorAgentRetry": "에이전트 재시도 {{eta}}",
+    "monitorWaiting": "모니터 대기 중 — {{eta}}",
+    "monitorFiresNext": "다음 주기에 실행",
+    "monitorAttempt": "시도 {{count}}회",
+    "monitorWatching": "감시 중: {{name}}",
+    "checkNow": "지금 확인",
+    "checking": "확인 중…",
+    "monitorYourTime": "{{time}} (내 시간대)",
+    "monitorReplyHint": "답장을 보내면 예약된 확인보다 먼저 에이전트를 지금 깨웁니다.",
+    "nothingLiveToPause": "일시 중지할 실행이 없습니다. 진행 중이거나 대기 중인 에이전트 실행이 없어 보류 상태만 기록됩니다. 재개하기 전까지 새 작업은 시작되지 않습니다.",
+    "companyNotSelected": "선택된 회사가 없습니다. 위의 전환기에서 회사를 선택하세요.",
+    "companyPackages": "회사 패키지",
+    "export": "내보내기",
+    "import": "가져오기",
+    "dangerZone": "위험 영역",
+    "archiveDescription": "이 회사를 보관하여 사이드바에서 숨깁니다. 이 작업은 데이터베이스에 저장됩니다.",
+    "archiveConfirm": "회사 \"{{name}}\"을(를) 보관할까요? 사이드바에서 숨겨집니다.",
+    "motionWaking": "{{name}} 깨우는 중…",
+    "motionComposing": "{{name}} 메시지 작성 중…",
+    "welcomeGreeting": "안녕하세요! 저를 {{name}}의 리더로 맞아주셔서 감사합니다.",
+    "welcomeMission": "우리의 사명은 다음과 같습니다: {{goal}}",
+    "welcomePlanPrompt": "함께할 사람을 정하는 계획을 세울 준비가 되었습니다. 시작할까요?",
+    "discussFirst": "먼저 논의하기",
+    "getStarted": "네, 시작하세요!",
+    "statusHeartbeatTriggered": "하트비트가 실행되어 깨우는 중…",
+    "statusInitializing": "초기화 중…",
+    "statusGettingReady": "준비 중…",
+    "statusWorking": "응답 작성 중…",
+    "statusReading": "대화 읽는 중…",
+    "statusThinking": "계획을 검토하는 중…",
+    "statusDrafting": "응답 초안 작성 중…",
+    "statusStillWorking": "계속 작업 중…",
+    "statusAlmostThere": "거의 완료되었습니다…",
+    "statusWaiting": "깨우기를 기다리는 중…",
+    "statusHeartbeatPending": "하트비트 대기 중…",
+    "statusShouldWake": "곧 깨어날 예정입니다…",
+    "suggestedTasks": "제안된 작업",
+    "askUserQuestions": "사용자 질문",
+    "confirmations": "확인 요청",
+    "checkboxConfirmations": "체크박스 확인 요청",
+    "itemVerdicts": "항목 판정",
+    "companyDefault": "회사 기본값",
+    "boardOnly": "보드만",
+    "boardOrAgents": "보드 또는 에이전트",
+    "agentFinished": "{{agentName}} 작업 완료",
+    "agentError": "{{agentName}}에서 오류가 발생했습니다",
+    "agentCancelled": "{{agentName}}의 실행이 취소되었습니다",
+    "agentTimedOut": "{{agentName}}의 실행 시간이 초과되었습니다",
+    "agentThinking": "{{agentName}} 생각 중…",
+    "discussPlanMessage": "시작하기 전에 계획을 논의하고 싶습니다.",
+    "startHiringPlanMessage": "네, 채용 계획을 시작하세요!"
+    ,"couldntSaveFile": "파일을 저장하지 못했습니다"
+    ,"couldntCreateFile": "파일을 만들지 못했습니다"
+    ,"couldntDeleteFile": "파일을 삭제하지 못했습니다"
+    ,"couldntSaveInput": "입력을 저장하지 못했습니다"
+    ,"couldntDeleteInput": "입력을 삭제하지 못했습니다"
+    ,"couldntSaveTemplate": "템플릿을 저장하지 못했습니다"
+    ,"couldntUpdateTemplate": "템플릿을 업데이트하지 못했습니다"
+    ,"couldntDeleteTemplate": "템플릿을 삭제하지 못했습니다"
+    ,"couldntStartRun": "실행을 시작하지 못했습니다"
+    ,"couldntCancelRun": "실행을 취소하지 못했습니다"
+    ,"couldntRerun": "다시 실행하지 못했습니다"
+    ,"couldntDeleteRun": "실행을 삭제하지 못했습니다"
+    ,"deleteFileConfirm": "{{path}}을(를) 삭제할까요?"
+    ,"fieldRequired": "{{label}}은(는) 필수입니다."
+    ,"selectedTemplateUnavailable": "선택한 실행 템플릿을 더 이상 사용할 수 없습니다. 선택을 초기화했습니다."
+    ,"workspaceRequired": "이 단계를 저장하기 전에 기존 작업공간을 선택하세요."
+    ,"attachmentWholeNumber": "1에서 {{max}} 사이의 정수를 입력하세요."
+    ,"newSkill": "새 스킬"
+    ,"snapshotInputDescription": "실행 시점의 입력을 스냅샷으로 저장하므로 나중에 수정해도 과거 실행에는 영향을 주지 않습니다."
+    ,"cleanupAttention": "정리가 필요한 작업공간"
+    ,"backToBoard": "보드로 돌아가기"
+  }
+}

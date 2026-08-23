@@ -13,6 +13,7 @@ import { useLocation } from "@/lib/router";
 import type { WorkTimelineActor, WorkTimelineResult } from "@paperclipai/shared";
 import { applyCompanyPrefix, extractCompanyPrefixFromPath } from "@/lib/company-routes";
 import { getAgentIcon } from "@/lib/agent-icons";
+import { t } from "@/i18n";
 import {
   AXIS_H,
   actorType,
@@ -954,7 +955,7 @@ function MiniMap({
           height={H - 2}
           width={handleW}
           testId="timeline-minimap-left-handle"
-          label="Drag left edge to resize visible range"
+                        label={t("miscResidualRound3.dragLeftResize")}
           onMouseDown={(e) => startRangeDrag("left", e)}
         />
         <MiniMapHandle
@@ -963,7 +964,7 @@ function MiniMap({
           height={H - 2}
           width={handleW}
           testId="timeline-minimap-right-handle"
-          label="Drag right edge to resize visible range"
+                        label={t("miscResidualRound3.dragRightResize")}
           onMouseDown={(e) => startRangeDrag("right", e)}
         />
       </svg>

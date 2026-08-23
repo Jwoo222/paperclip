@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { t } from "@/i18n";
 import { copyTextToClipboard } from "@/lib/clipboard";
 import { Copy, GripHorizontal, Minus, Plus, RotateCcw } from "lucide-react";
 import {
@@ -138,14 +139,14 @@ export function TweakPanel() {
         onPointerUp={onHeaderPointerUp}
       >
         <GripHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
-        <span>Motion tweak panel</span>
+        <span>{t("miscResidualRound3.motionTweakPanel")}</span>
         <div className="ml-auto flex items-center gap-1">
-          <button type="button" title="Reset all" onClick={resetAll} className="rounded p-0.5 hover:bg-accent">
+          <button type="button" title={t("miscResidualRound3.resetAll")} onClick={resetAll} className="rounded p-0.5 hover:bg-accent">
             <RotateCcw className="h-3.5 w-3.5" />
           </button>
           <button
             type="button"
-            title={minimized ? "Expand" : "Minimize"}
+            title={minimized ? t("miscResidualRound3.expand") : t("miscResidualRound3.minimize")}
             onClick={() => setMinimized((m) => !m)}
             className="rounded p-0.5 hover:bg-accent"
           >

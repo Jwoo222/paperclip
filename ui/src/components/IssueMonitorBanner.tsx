@@ -5,6 +5,7 @@ import type { Issue } from "@paperclipai/shared";
 import { Button } from "@/components/ui/button";
 import { InlineBanner } from "@/components/InlineBanner";
 import { cn } from "@/lib/utils";
+import { t } from "@/i18n";
 import {
   deriveMonitorState,
   formatMonitorAbsolute,
@@ -76,26 +77,26 @@ export function buildMonitorSurfaceCopy(
   switch (derived.state) {
     case "scheduled":
     case "retrying":
-      bannerTitle = isScheduledRetryOnly ? `Agent resumes ${eta}` : `Waiting on monitor — resumes ${eta}`;
-      stripTitle = `Resumes ${eta}`;
+      bannerTitle = isScheduledRetryOnly ? t("miscResidualRound3.monitorAgentResumes", { eta }) : t("miscResidualRound3.monitorWaitingResumes", { eta });
+      stripTitle = t("miscResidualRound3.monitorResumes", { eta });
       break;
     case "due-now":
-      bannerTitle = isScheduledRetryOnly ? "Agent retry due now" : "Waiting on monitor — due now";
-      stripTitle = "Due now";
-      statusHint = "Checking momentarily…";
+      bannerTitle = isScheduledRetryOnly ? t("miscResidualRound3.monitorAgentRetryDue") : t("miscResidualRound3.monitorWaitingDue");
+      stripTitle = t("miscResidualRound3.monitorDueNow");
+      statusHint = t("miscResidualRound3.monitorChecking");
       break;
     case "overdue":
     default:
-      bannerTitle = isScheduledRetryOnly ? `Agent retry ${eta}` : `Waiting on monitor — ${eta}`;
+      bannerTitle = isScheduledRetryOnly ? t("miscResidualRound3.monitorAgentRetry", { eta }) : t("miscResidualRound3.monitorWaiting", { eta });
       stripTitle = capitalize(eta);
-      statusHint = "Fires on next tick";
+      statusHint = t("miscResidualRound3.monitorFiresNext");
       break;
   }
 
-  const attemptLabel = derived.attemptCount >= 1 ? `Attempt ${derived.attemptCount}` : null;
-  const serviceLabel = derived.serviceName ? `Watching: ${derived.serviceName}` : null;
+  const attemptLabel = derived.attemptCount >= 1 ? t("miscResidualRound3.monitorAttempt", { count: derived.attemptCount }) : null;
+  const serviceLabel = derived.serviceName ? t("miscResidualRound3.monitorWatching", { name: derived.serviceName }) : null;
 
-  const bannerMeta = [statusHint, `${absolute} (your time)`, attemptLabel, serviceLabel].filter(
+  const bannerMeta = [statusHint, t("miscResidualRound3.monitorYourTime", { time: absolute }), attemptLabel, serviceLabel].filter(
     (piece): piece is string => Boolean(piece),
   );
   const stripMeta = [statusHint, absolute, attemptLabel, serviceLabel].filter(
@@ -136,7 +137,7 @@ function CheckNowButton({
       onClick={onCheckNow}
       disabled={checkingNow}
     >
-      {checkingNow ? "Checking…" : "Check now"}
+      {checkingNow ? t("miscResidualRound3.checking") : t("miscResidualRound3.checkNow")}
     </Button>
   );
 }
@@ -204,7 +205,7 @@ export function IssueMonitorComposerStrip({
         {onCheckNow ? <CheckNowButton onCheckNow={onCheckNow} checkingNow={checkingNow} /> : null}
       </div>
       <p className="mt-1.5 text-xs text-muted-foreground">
-        Sending a reply wakes the agent now — before the scheduled check.
+        {t("miscResidualRound3.monitorReplyHint")}
       </p>
     </div>
   );
