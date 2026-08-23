@@ -1,0 +1,24 @@
+{
+  "skillsResidualRound2": {
+    "newFolderFor": "{{label}} 폴더 만들기",
+    "folderActions": "{{label}} 폴더 작업",
+    "tags": "태그",
+    "everyLibrarySkillEnabled": "이 에이전트에서는 라이브러리의 모든 스킬이 활성화되어 있습니다.",
+    "disableSkill": "{{name}} 비활성화",
+    "enableSkill": "{{name}} 활성화",
+    "released": "출시일 {{date}}",
+    "copyCreatedAndSwitchedOne": "{{name}}의 복사본을 만들고 에이전트 1명을 전환했습니다.",
+    "copyCreatedAndSwitchedMany": "{{name}}의 복사본을 만들고 에이전트 {{count}}명을 전환했습니다.",
+    "copyCreatedEditable": "{{name}}의 복사본을 만들었습니다. 이제 편집할 수 있습니다.",
+    "couldntCreateCopy": "복사본을 만들지 못했습니다",
+    "createCopySwitchOne": "복사본 만들기 및 에이전트 1명 전환",
+    "createCopySwitchMany": "복사본 만들기 및 에이전트 {{count}}명 전환",
+    "editCopyOf": "{{name}}의 복사본 편집",
+    "externalReadOnlyDescription": "{{name}}은(는) 외부 소스에서 제공되므로 읽기 전용입니다. 작업 공간에 완전히 편집 가능한 복사본을 만들면 원본은 그대로 두면서 계속 업데이트할 수 있습니다.",
+    "existingCopyDescription": "이 스킬의 편집되지 않은 복사본이 이미 있습니다. 새로 만들지 말고 기존 복사본을 여세요.",
+    "switchAgentsToCopy": "이 에이전트들을 복사본으로 전환",
+    "switchAgentsDescription": "이 에이전트들은 원본 대신 복사본을 실행합니다.",
+    "keepOriginalDescription": "이 에이전트들은 원본을 계속 실행합니다. 복사본은 동작에 영향을 주지 않습니다.",
+    "nothingAssignedDescription": "할당된 에이전트가 없으므로 복사본을 만들어도 에이전트의 동작은 바뀌지 않습니다."
+  }
+}

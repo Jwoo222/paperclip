@@ -1,0 +1,24 @@
+{
+  "skillsResidualRound2": {
+    "newFolderFor": "New {{label}} folder",
+    "folderActions": "Folder actions for {{label}}",
+    "tags": "Tags",
+    "everyLibrarySkillEnabled": "Every library skill is enabled on this agent.",
+    "disableSkill": "Disable {{name}}",
+    "enableSkill": "Enable {{name}}",
+    "released": "released {{date}}",
+    "copyCreatedAndSwitchedOne": "Created a copy of {{name}} and switched 1 agent to it.",
+    "copyCreatedAndSwitchedMany": "Created a copy of {{name}} and switched {{count}} agents to it.",
+    "copyCreatedEditable": "Created a copy of {{name}}. It's now editable.",
+    "couldntCreateCopy": "Couldn't create a copy",
+    "createCopySwitchOne": "Create copy & switch 1 agent",
+    "createCopySwitchMany": "Create copy & switch {{count}} agents",
+    "editCopyOf": "Edit a copy of {{name}}",
+    "externalReadOnlyDescription": "{{name}} is read-only because it comes from an external source. Creating a fully editable copy in your workspace leaves the original untouched and still updatable.",
+    "existingCopyDescription": "An unedited copy of this skill already exists. Open it instead of making another.",
+    "switchAgentsToCopy": "Switch these agents to the copy",
+    "switchAgentsDescription": "These agents will run your copy instead of the original.",
+    "keepOriginalDescription": "These agents keep running the original — your copy won't change what they do.",
+    "nothingAssignedDescription": "Nothing is assigned to it, so your copy won't change any agent's behaviour."
+  }
+}

@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { skillText } from "../skills/skill-i18n";
+import { t } from "@/i18n";
 
 /** Sentinel value for the "no pin / live default" option (Radix forbids ""). */
 export const RELEASE_DEFAULT_VALUE = "default";
@@ -40,7 +41,7 @@ export function releaseName(release: CompanySkillVersion): string {
 export function releaseOptionLabel(release: CompanySkillVersion): string {
   const name = releaseName(release);
   const date = formatReleaseDate(release.releasedAt);
-  return date ? `${name} · released ${date}` : name;
+  return date ? `${name} · ${t("skillsResidualRound2.released", { date })}` : name;
 }
 
 /** Compact badge label for a pinned release, e.g. `V7`. */

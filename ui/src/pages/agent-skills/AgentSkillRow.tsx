@@ -2,9 +2,11 @@ import type { ReactNode } from "react";
 import { Lock, type LucideIcon } from "lucide-react";
 import { Link } from "@/lib/router";
 import { cn } from "@/lib/utils";
+import { t } from "@/i18n";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SkillCardIcon, type SkillIconCard } from "../../components/SkillCardIcon";
+import { skillText } from "../skills/skill-i18n";
 import type { AgentSkillSearchFields } from "./agent-skill-filter";
 
 export type AgentSkillRowVariant = "enabled" | "available" | "readonly";
@@ -120,7 +122,7 @@ export function AgentSkillRow({
   );
 
   const trailing = readOnly ? (
-    <Lock className="h-4 w-4 shrink-0 text-muted-foreground/60" aria-label="Read-only" />
+    <Lock className="h-4 w-4 shrink-0 text-muted-foreground/60" aria-label={skillText("Read-only")} />
   ) : (
     (() => {
       const toggle = (
@@ -128,7 +130,7 @@ export function AgentSkillRow({
           checked={checked}
           disabled={disabled}
           onCheckedChange={(next) => onCheckedChange?.(next)}
-          aria-label={`${checked ? "Disable" : "Enable"} ${data.name}`}
+          aria-label={t(checked ? "skillsResidualRound2.disableSkill" : "skillsResidualRound2.enableSkill", { name: data.name })}
         />
       );
       if (disabled && disabledReason) {

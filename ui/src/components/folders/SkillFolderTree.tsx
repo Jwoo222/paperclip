@@ -44,6 +44,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "../../i18n";
+import { skillText } from "../../pages/skills/skill-i18n";
 import { FolderSwatch, type FolderSelection } from "./FolderControls";
 import {
   buildSkillFolderTree,
@@ -82,6 +83,19 @@ const MIN_FOLDER_RAIL_WIDTH = 224;
 const MAX_FOLDER_RAIL_WIDTH = 400;
 const FOLDER_RAIL_WIDTH_STEP = 16;
 const FOLDER_RAIL_STORAGE_KEY = "paperclip.skills.folderRail.width";
+
+function localizedReservedRootLabel(folder: Pick<FolderListItem, "systemKey" | "name">): string {
+  switch (folder.systemKey) {
+    case "my":
+      return skillText("My Skills");
+    case "projects":
+      return skillText("Projects");
+    case "bundled":
+      return skillText("Bundled");
+    default:
+      return folder.name;
+  }
+}
 
 function clampFolderRailWidth(width: number) {
   return Math.min(MAX_FOLDER_RAIL_WIDTH, Math.max(MIN_FOLDER_RAIL_WIDTH, width));
@@ -256,7 +270,7 @@ export function SkillFolderRail({
       >
       <div className="mb-2 flex items-center justify-between gap-2 pt-0.5">
         <div className="text-(length:--text-micro) font-medium uppercase tracking-wide text-muted-foreground">
-          Folders
+          {t("projectsWorkspaces.folders.folders")}
         </div>
         <Button variant="ghost" size="icon-sm" title={t("projectsWorkspaces.folders.newFolder")} onClick={() => onCreateFolder(null)}>
           <Plus className="h-3.5 w-3.5" />
@@ -288,7 +302,7 @@ export function SkillFolderRail({
               expanded={expanded}
               renamingId={renamingId}
               renameDraft={renameDraft}
-              rootLabel="My Skills"
+              rootLabel={skillText("My Skills")}
               rootIcon={<User className="h-3.5 w-3.5" />}
               onToggle={toggle}
               onSelect={onSelect}
@@ -304,7 +318,7 @@ export function SkillFolderRail({
           ) : onEnsureMyFolder ? (
             <VirtualRow
               active={false}
-              label="My Skills"
+              label={skillText("My Skills")}
               count={0}
               icon={<User className="h-3.5 w-3.5" />}
               muted
@@ -349,7 +363,7 @@ export function SkillFolderRail({
               expanded={expanded}
               renamingId={renamingId}
               renameDraft={renameDraft}
-              rootLabel="Projects"
+              rootLabel={skillText("Projects")}
               rootIcon={<Boxes className="h-3.5 w-3.5" />}
               onToggle={toggle}
               onSelect={onSelect}
@@ -365,7 +379,7 @@ export function SkillFolderRail({
           ) : (
             <VirtualRow
               active={false}
-              label="Projects"
+              label={skillText("Projects")}
               count={0}
               icon={<Boxes className="h-3.5 w-3.5" />}
               muted
@@ -383,7 +397,7 @@ export function SkillFolderRail({
               expanded={expanded}
               renamingId={renamingId}
               renameDraft={renameDraft}
-              rootLabel="Bundled"
+              rootLabel={skillText("Bundled")}
               rootIcon={<Boxes className="h-3.5 w-3.5" />}
               onToggle={toggle}
               onSelect={onSelect}
@@ -399,7 +413,7 @@ export function SkillFolderRail({
           ) : null}
 
           <div className="px-2 pb-1 pt-3 text-(length:--text-micro) font-medium uppercase tracking-wide text-muted-foreground">
-            System
+            {t("projectsWorkspaces.folders.system")}
           </div>
           <VirtualRow
             active={selection === "unfiled"}
@@ -416,7 +430,7 @@ export function SkillFolderRail({
         <div className="mt-4 border-t border-border pt-3">
           <div className="mb-1.5 flex items-center gap-1.5 px-2 text-(length:--text-micro) font-medium uppercase tracking-wide text-muted-foreground">
             <Hash className="h-3 w-3" />
-            Tags
+            {t("skillsResidualRound2.tags")}
           </div>
           <div className="flex flex-wrap gap-1.5 px-1">
             {activeTag ? (
@@ -472,6 +486,7 @@ export function SkillFolderRail({
 }
 
 function RailHeading({ label, onCreate }: { label: string; onCreate: () => void }) {
+  const { t } = useTranslation();
   return (
     <div className="group/heading flex items-center justify-between px-2 pb-0.5 pt-3">
       <span className="text-(length:--text-micro) font-medium uppercase tracking-wide text-muted-foreground">
@@ -480,7 +495,7 @@ function RailHeading({ label, onCreate }: { label: string; onCreate: () => void 
       <button
         type="button"
         onClick={onCreate}
-        title={`New ${label.toLowerCase()} folder`}
+        title={t("skillsResidualRound2.newFolderFor", { label })}
         className="opacity-0 transition-opacity group-hover/heading:opacity-100"
       >
         <Plus className="h-3 w-3 text-muted-foreground" />
@@ -634,7 +649,7 @@ function TreeBranch({
                 variant="ghost"
                 size="icon-sm"
                 className="h-6 w-6 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100"
-                aria-label={`Folder actions for ${label}`}
+                aria-label={t("skillsResidualRound2.folderActions", { label })}
               >
                 <MoreHorizontal className="h-3.5 w-3.5" />
               </Button>
@@ -657,7 +672,7 @@ function TreeBranch({
                   <DropdownMenuSeparator />
                   <DropdownMenuItem variant="destructive" onSelect={() => onDeleteFolder(folder)}>
                     <Trash2 className="h-3.5 w-3.5" />
-                    Delete
+                    {t("operations.common.delete")}
                   </DropdownMenuItem>
                 </>
               ) : null}
@@ -736,7 +751,7 @@ export function FolderBreadcrumb({
       ) : null}
       {trail.map((folder, index) => {
         const isLast = index === trail.length - 1;
-        const label = index === 0 ? reservedRootLabel(folder) : folder.name;
+        const label = index === 0 ? localizedReservedRootLabel(folder) : folder.name;
         return (
           <span key={folder.id} className="inline-flex items-center gap-1">
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
@@ -784,7 +799,7 @@ export function FolderTiles({
   return (
     <div className="mb-4">
       <div className="mb-2 text-(length:--text-micro) font-medium uppercase tracking-wide text-muted-foreground">
-        Folders
+        {t("projectsWorkspaces.folders.folders")}
       </div>
       <div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(11rem,1fr))]">
         {children.map((node) => (
@@ -800,7 +815,7 @@ export function FolderTiles({
               <FolderSwatch color={node.folder.color} className="h-3.5 w-3.5" />
             )}
             <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
-              {reservedRootLabel(node.folder)}
+              {localizedReservedRootLabel(node.folder)}
             </span>
             <span className="text-xs text-muted-foreground">{node.folder.itemCount}</span>
           </button>
@@ -836,6 +851,7 @@ export function MoveToFolderDialog({
   /** Create a folder under `parentId` (null = top level); resolve to the new id. */
   onCreateFolder: (parentId: string | null, name: string) => Promise<string | null>;
 }) {
+  const { t } = useTranslation();
   const model = useMemo(() => treeFromResult(result), [result]);
   const [query, setQuery] = useState("");
   const [target, setTarget] = useState<string | null | undefined>(undefined);
@@ -862,7 +878,7 @@ export function MoveToFolderDialog({
   const previewPath = chosen === undefined
     ? null
     : chosen === null
-      ? "Unfiled"
+      ? t("projectsWorkspaces.folders.unfiled")
       : chosenFolder?.path ?? null;
 
   async function submitNewFolder() {
@@ -908,7 +924,7 @@ export function MoveToFolderDialog({
           ) : (
             <FolderSwatch color={folder.color} />
           )}
-          <span className="min-w-0 flex-1 truncate">{reservedRootLabel(folder)}</span>
+          <span className="min-w-0 flex-1 truncate">{localizedReservedRootLabel(folder)}</span>
           {isCurrent ? <span className="text-xs text-muted-foreground">{t("projectsWorkspaces.folders.current")}</span> : null}
           {bundled ? <span className="text-xs text-muted-foreground">{t("projectsWorkspaces.folders.readOnly")}</span> : null}
           {isChosen ? <Check className="h-3.5 w-3.5" /> : null}
@@ -994,7 +1010,7 @@ export function MoveToFolderDialog({
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent/40 hover:text-foreground"
               >
                 <Plus className="h-3.5 w-3.5" />
-                New top-level folder…
+                {t("projectsWorkspaces.folders.newTopLevel")}
               </button>
             )}
           </div>
@@ -1003,7 +1019,7 @@ export function MoveToFolderDialog({
         <div className="min-h-5 text-xs text-muted-foreground">
           {previewPath ? (
             <span>
-              Moving to <span className="font-mono text-foreground">{previewPath}</span>
+              {t("projectsWorkspaces.folders.movingTo")} <span className="font-mono text-foreground">{previewPath}</span>
             </span>
           ) : (
             <span>{t("projectsWorkspaces.folders.pickDestination")}</span>
@@ -1012,7 +1028,7 @@ export function MoveToFolderDialog({
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={pending}>
-            Cancel
+            {t("projectsWorkspaces.folders.cancel")}
           </Button>
           <Button
             disabled={pending || chosen === undefined || chosen === currentFolderId}

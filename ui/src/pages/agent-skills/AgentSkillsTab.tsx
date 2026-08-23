@@ -27,6 +27,7 @@ import { filterAgentSkills } from "./agent-skill-filter";
 import { buildAgentSkillSourceMeta } from "./agent-skill-source";
 import { AgentSkillReleasePicker, releaseShortLabel } from "./AgentSkillReleasePicker";
 import { skillText } from "../skills/skill-i18n";
+import { t } from "@/i18n";
 
 const MATERIALIZATION_NOTE = "Enabled skills are materialized into the stable Paperclip-managed prompt bundle on the agent's next run.";
 
@@ -493,7 +494,7 @@ export function AgentSkillsTab({ agent, companyId }: { agent: Agent; companyId?:
                   ? skillText("No available skills match your search.")
                   : libraryEmpty
                     ? skillText("Import skills into the company library to enable them here.")
-                    : "Every library skill is enabled on this agent."}
+                    : t("skillsResidualRound2.everyLibrarySkillEnabled")}
               </SectionEmpty>
             )}
           </SkillSection>
@@ -509,7 +510,7 @@ export function AgentSkillsTab({ agent, companyId }: { agent: Agent; companyId?:
                     )}
                   />
                   <span className="text-xs font-medium text-muted-foreground">
-                    Detected on adapter (read-only)
+                    {skillText("Detected on adapter (read-only)")}
                   </span>
                   <span className="text-xs text-muted-foreground/70">{filteredDetected.length}</span>
                 </CollapsibleTrigger>
@@ -527,7 +528,7 @@ export function AgentSkillsTab({ agent, companyId }: { agent: Agent; companyId?:
           ) : null}
 
           <div className="text-xs text-muted-foreground">
-            Adapter: {adapterLabels[agent.adapterType] ?? agent.adapterType}
+            {t("agents.properties.adapter")}: {adapterLabels[agent.adapterType] ?? agent.adapterType}
           </div>
         </div>
       )}
@@ -548,7 +549,7 @@ function SaveStatusChip({
     return (
       <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        Saving…
+        {skillText("Saving…")}
       </span>
     );
   }
@@ -556,7 +557,7 @@ function SaveStatusChip({
     return (
       <span className="inline-flex items-center gap-1.5 text-xs text-destructive">
         <AlertCircle className="h-3.5 w-3.5" />
-        Couldn’t save
+        {skillText("Couldn’t save")}
       </span>
     );
   }
@@ -564,14 +565,14 @@ function SaveStatusChip({
     return (
       <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        Saving soon…
+        {skillText("Saving soon…")}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1.5 text-xs text-(--status-task-done)">
       <CheckCircle2 className="h-3.5 w-3.5" />
-      Saved
+      {skillText("Saved")}
     </span>
   );
 }
