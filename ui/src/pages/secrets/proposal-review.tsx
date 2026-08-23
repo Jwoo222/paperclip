@@ -34,6 +34,7 @@ import {
 import { cn } from "../../lib/utils";
 import { copyTextToClipboard } from "../../lib/clipboard";
 import { SecretPathName } from "./SecretPathName";
+import { t } from "../../i18n";
 
 /* -------------------------------------------------------------------------- */
 /* Presentation helpers (shared by the tab + agent-settings surfaces)         */
@@ -41,8 +42,8 @@ import { SecretPathName } from "./SecretPathName";
 
 /** Short, non-reversible fingerprint label. Never renders the value. */
 export function fingerprintLabel(fingerprint: string | null, length: number | null): string {
-  const digest = fingerprint ? `sha256:${fingerprint.slice(0, 10)}…` : "no fingerprint";
-  const size = typeof length === "number" ? `${length} ${length === 1 ? "byte" : "bytes"}` : null;
+  const digest = fingerprint ? `sha256:${fingerprint.slice(0, 10)}…` : t("secretsSupport.noFingerprint");
+  const size = typeof length === "number" ? `${length} ${t(length === 1 ? "secretsSupport.byte" : "secretsSupport.bytes")}` : null;
   return size ? `${digest} · ${size}` : digest;
 }
 
@@ -76,8 +77,8 @@ export function FingerprintChip({
       type="button"
       onClick={() => {
         copyTextToClipboard(full)
-          .then(() => pushToast({ title: "Fingerprint copied", tone: "success" }))
-          .catch(() => pushToast({ title: "Couldn’t copy fingerprint", tone: "error" }));
+          .then(() => pushToast({ title: t("secretsSupport.fingerprintCopied"), tone: "success" }))
+          .catch(() => pushToast({ title: t("secretsSupport.couldNotCopyFingerprint"), tone: "error" }));
       }}
       title={`Copy full digest — ${full}`}
       className={cn(
@@ -108,7 +109,7 @@ export function ProposalJustification({
 }) {
   return (
     <div className={cn("space-y-0.5", className)}>
-      <p className="text-(length:--text-micro) text-muted-foreground">Reason given by the agent</p>
+      <p className="text-(length:--text-micro) text-muted-foreground">{t("secretsSupport.reasonGivenByAgent")}</p>
       <p className="whitespace-pre-wrap break-words text-xs text-foreground/80">
         “{justification}”
       </p>
@@ -164,7 +165,7 @@ export function ProposedBadge({ className }: { className?: string }) {
         className,
       )}
     >
-      <ShieldAlert className="size-3" /> Proposed
+      <ShieldAlert className="size-3" /> {t("secretsSupport.proposed")}
     </Badge>
   );
 }
@@ -180,15 +181,15 @@ export function bindingSecretLabel(proposal: SecretProposalView): {
   pending: boolean;
 } {
   if (proposal.secretProposalId) {
-    return { name: proposal.secretProposalName ?? "proposed secret", pending: true };
+    return { name: proposal.secretProposalName ?? t("secretsSupport.proposedSecret"), pending: true };
   }
-  return { name: proposal.secretName ?? "secret", pending: false };
+  return { name: proposal.secretName ?? t("secretsMain.labels.secret"), pending: false };
 }
 
 function readableError(error: unknown): string {
   if (error instanceof ApiError) return error.message || `Request failed: ${error.status}`;
   if (error instanceof Error) return error.message;
-  return "Something went wrong. Try again.";
+  return t("secretsSupport.somethingWentWrong");
 }
 
 /* -------------------------------------------------------------------------- */
@@ -261,11 +262,11 @@ export function useProposalReview(
     },
     onSuccess: (result) => {
       pushToast({
-        title: result.kind === "secret" ? "Secret approved" : "Binding approved",
+        title: result.kind === "secret" ? t("secretsSupport.secretApproved") : t("secretsSupport.bindingApproved"),
         body:
           result.kind === "secret"
-            ? (result.proposedName ?? "Secret created")
-            : `${result.target?.name ?? "Agent"} · ${bindingEnvKey(result) || "binding"}`,
+            ? (result.proposedName ?? t("secretsSupport.secretCreated"))
+            : `${result.target?.name ?? t("secretsSupport.agent")} · ${bindingEnvKey(result) || t("secretsSupport.binding")}`,
         tone: "success",
       });
       setApproveDraft(null);
@@ -280,7 +281,7 @@ export function useProposalReview(
       secretsApi.rejectProposal(companyId!, proposal.id, { reason: reason.trim() }),
     onSuccess: (result) => {
       pushToast({
-        title: "Proposal rejected",
+        title: t("secretsSupport.proposalRejected"),
         body: result.kind === "secret" ? (result.proposedName ?? undefined) : undefined,
         tone: "info",
       });
@@ -397,19 +398,19 @@ function ApproveDialog({
           <>
             <DialogHeader>
               <DialogTitle>
-                {isSecret ? "Approve & create secret" : "Approve binding"}
+                {isSecret ? t("secretsSupport.approveCreateSecret") : t("secretsSupport.approveBinding")}
               </DialogTitle>
               <DialogDescription>
                 {isSecret
-                  ? "The value is created as the proposing agent recorded it. Re-folder or rename it before it lands."
-                  : "Grant the target agent access to this secret. This runs with your permissions."}
+                  ? t("secretsSupport.approveSecretDescription")
+                  : t("secretsSupport.approveBindingDescription")}
               </DialogDescription>
             </DialogHeader>
 
             {/* Provenance recap — keeps the social-engineering surface visible. */}
             <div className="space-y-1.5 rounded-md border border-border bg-muted/30 p-2.5 text-xs">
               <div className="flex items-center gap-1.5 text-muted-foreground">
-                <span>Proposed by</span>
+                <span>{t("secretsSupport.proposedBy")}</span>
                 <AgentRefChip agent={draft.proposal.proposedBy} className="font-medium text-foreground" />
               </div>
               <ProposalJustification justification={draft.proposal.justification} />
@@ -419,22 +420,22 @@ function ApproveDialog({
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <Label htmlFor="approve-folder">Folder</Label>
+                    <Label htmlFor="approve-folder">{t("secretsMain.folder.name")}</Label>
                     <Input
                       id="approve-folder"
                       value={draft.folder}
                       onChange={(event) => onChange({ ...draft, folder: event.target.value })}
-                      placeholder="dev/github"
+                      placeholder={t("secretsSupport.folderPlaceholder")}
                       className="font-mono text-xs"
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="approve-name">Name</Label>
+                    <Label htmlFor="approve-name">{t("secretsMain.labels.name")}</Label>
                     <Input
                       id="approve-name"
                       value={draft.leaf}
                       onChange={(event) => onChange({ ...draft, leaf: event.target.value })}
-                      placeholder="client-secret"
+                      placeholder={t("secretsSupport.secretNamePlaceholder")}
                       autoFocus
                       aria-invalid={!draft.leaf.trim()}
                       className="font-mono text-xs"
@@ -442,27 +443,27 @@ function ApproveDialog({
                   </div>
                 </div>
                 <p className="text-(length:--text-micro) text-muted-foreground">
-                  Lands as{" "}
+                  {t("secretsSupport.landsAs")} {" "}
                   {previewName ? (
                     <SecretPathName name={previewName} className="font-mono" />
                   ) : (
-                    <span className="italic">enter a name</span>
+                    <span className="italic">{t("secretsSupport.enterAName")}</span>
                   )}
                 </p>
 
                 <div className="space-y-1">
-                  <Label htmlFor="approve-description">Description</Label>
+                  <Label htmlFor="approve-description">{t("secretsMain.labels.description")}</Label>
                   <Input
                     id="approve-description"
                     value={draft.description}
                     onChange={(event) => onChange({ ...draft, description: event.target.value })}
-                    placeholder="Optional"
+                    placeholder={t("secretsMain.optional")}
                   />
                 </div>
 
                 {localConfigs.length > 0 ? (
                   <div className="space-y-1">
-                    <Label htmlFor="approve-provider-config">Provider vault</Label>
+                    <Label htmlFor="approve-provider-config">{t("secretsMain.labels.providerVault")}</Label>
                     <select
                       id="approve-provider-config"
                       value={draft.providerConfigId}
@@ -471,7 +472,7 @@ function ApproveDialog({
                       }
                       className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                     >
-                      <option value="">Deployment default</option>
+                      <option value="">{t("secretsMain.vault.deploymentDefault")}</option>
                       {localConfigs.map((config) => (
                         <option key={config.id} value={config.id}>
                           {config.displayName}
@@ -500,16 +501,16 @@ function ApproveDialog({
 
             <DialogFooter>
               <Button variant="ghost" onClick={onCancel} disabled={pending}>
-                Cancel
+                {t("secretsMain.actions.cancel")}
               </Button>
               <Button onClick={onConfirm} disabled={pending || !canConfirm}>
                 {pending
-                  ? "Approving…"
+                  ? t("secretsSupport.approving")
                   : isSecret
-                    ? "Approve & create"
+                    ? t("secretsSupport.approveCreate")
                     : draft.cascade
-                      ? "Approve secret & bind"
-                      : "Approve binding"}
+                      ? t("secretsSupport.approveSecretBind")
+                      : t("secretsSupport.approveBinding")}
               </Button>
             </DialogFooter>
           </>
@@ -533,7 +534,7 @@ function BindingApproveBody({
     <div className="space-y-3 text-sm">
       <div className="space-y-2 rounded-md border border-border p-3">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs text-muted-foreground">Target agent</span>
+          <span className="text-xs text-muted-foreground">{t("secretsSupport.targetAgent")}</span>
           {proposal.target ? (
             <AgentRefChip agent={proposal.target} className="text-sm font-medium" />
           ) : (
@@ -541,14 +542,14 @@ function BindingApproveBody({
           )}
         </div>
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs text-muted-foreground">Delivered as</span>
+          <span className="text-xs text-muted-foreground">{t("secretsSupport.deliveredAs")}</span>
           <span className="flex items-center gap-1.5">
             <DeliveryBadge configPath={proposal.configPath} />
             <code className="font-mono text-xs">{envKey || proposal.configPath}</code>
           </span>
         </div>
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs text-muted-foreground">Secret</span>
+          <span className="text-xs text-muted-foreground">{t("secretsMain.labels.secret")}</span>
           <span className="flex items-center gap-1.5">
             <KeyRound className="size-3.5 text-muted-foreground" />
             <span className="font-medium">{secret.name}</span>
@@ -564,10 +565,10 @@ function BindingApproveBody({
             checked={draft.cascade}
             onCheckedChange={(checked) => onChange({ ...draft, cascade: checked === true })}
             className="mt-0.5"
-            aria-label="Also approve the proposed secret"
+            aria-label={t("secretsSupport.alsoApproveProposedSecret")}
           />
           <span className="text-foreground/90">
-            Also approve the proposed secret{" "}
+            {t("secretsSupport.alsoApproveProposedSecret")} {" "}
             <span className="font-medium">{secret.name}</span> and create it in the same step. The
             binding can’t land without it.
           </span>
@@ -605,22 +606,22 @@ function RejectDialog({
         {proposal ? (
           <>
             <DialogHeader>
-              <DialogTitle>Reject proposal</DialogTitle>
+            <DialogTitle>{t("secretsSupport.rejectProposal")}</DialogTitle>
               <DialogDescription>
-                The reason is sent back to{" "}
+                {t("secretsSupport.rejectDescription")} {" "}
                 <AgentRefChip agent={proposal.proposedBy} className="text-foreground" />. Dependent
                 bindings are rejected too.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-1">
-              <Label htmlFor="reject-reason">Reason</Label>
+              <Label htmlFor="reject-reason">{t("secretsSupport.reason")}</Label>
               <Textarea
                 id="reject-reason"
                 value={reason}
                 onChange={(event) => onReasonChange(event.target.value)}
                 rows={3}
                 autoFocus
-                placeholder="Why is this being rejected?"
+                placeholder={t("secretsSupport.rejectReasonPlaceholder")}
               />
             </div>
             {error ? (
@@ -630,10 +631,10 @@ function RejectDialog({
             ) : null}
             <DialogFooter>
               <Button variant="ghost" onClick={onCancel} disabled={pending}>
-                Cancel
+                {t("secretsMain.actions.cancel")}
               </Button>
               <Button variant="destructive" onClick={onConfirm} disabled={pending || !canConfirm}>
-                {pending ? "Rejecting…" : "Reject"}
+                {pending ? t("secretsSupport.rejecting") : t("secretsSupport.reject")}
               </Button>
             </DialogFooter>
           </>
@@ -681,7 +682,7 @@ export function ProposalActions({
               <span tabIndex={0}>{approveButton}</span>
             </TooltipTrigger>
             <TooltipContent className="max-w-72">
-              {proposal.approveBlockReason ?? "You don’t have permission to approve this."}
+              {proposal.approveBlockReason ?? t("secretsSupport.noApprovePermission")}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

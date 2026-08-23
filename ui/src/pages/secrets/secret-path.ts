@@ -105,8 +105,10 @@ export function buildSecretPathBreadcrumbs(path: string): SecretPathBreadcrumb[]
   }));
 }
 
+import { t } from "../../i18n";
+
 export function validateSecretFolderSegment(value: string): string | null {
-  if (!value.trim()) return "Folder name is required.";
-  if (value.includes("/")) return "Folder name cannot contain slashes.";
+  if (!value.trim()) return t("secretsSupport.folderNameRequired");
+  if (value.includes("/")) return t("secretsSupport.folderNameNoSlashes");
   return null;
 }
