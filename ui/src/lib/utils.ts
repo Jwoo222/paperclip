@@ -50,8 +50,8 @@ export function formatProjectBudget(budget: { amountCents: number; windowKind: s
   return budget.windowKind === "calendar_month_utc" ? `${amount}/mo` : amount;
 }
 
-export function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString("en-US", {
+export function formatDate(date: Date | string, locale = "en"): string {
+  return new Date(date).toLocaleDateString(locale.toLowerCase().startsWith("ko") ? "ko-KR" : "en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -75,18 +75,19 @@ export function formatShortDate(date: Date | string): string {
   });
 }
 
-export function relativeTime(date: Date | string): string {
+export function relativeTime(date: Date | string, locale = "en"): string {
   const now = Date.now();
   const then = new Date(date).getTime();
   const diffSec = Math.round((now - then) / 1000);
-  if (diffSec < 60) return "just now";
+  const korean = locale.toLowerCase().startsWith("ko");
+  if (diffSec < 60) return korean ? "방금" : "just now";
   const diffMin = Math.round(diffSec / 60);
-  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffMin < 60) return korean ? `${diffMin}분 전` : `${diffMin}m ago`;
   const diffHr = Math.round(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h ago`;
+  if (diffHr < 24) return korean ? `${diffHr}시간 전` : `${diffHr}h ago`;
   const diffDay = Math.round(diffHr / 24);
-  if (diffDay < 30) return `${diffDay}d ago`;
-  return formatDate(date);
+  if (diffDay < 30) return korean ? `${diffDay}일 전` : `${diffDay}d ago`;
+  return formatDate(date, locale);
 }
 
 export function formatTokens(n: number): string {

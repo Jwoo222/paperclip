@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { useTranslation } from "@/i18n";
+import type { TFunction } from "i18next";
 
 /* ------------------------------------------------------------------ */
 /*  Canonical verb table — one verb per action, used on every card.    */
@@ -34,94 +36,113 @@ function humanize(value: unknown): string {
   return typeof value === "string" ? value.replace(/_/g, " ") : String(value ?? "");
 }
 
+function localizedValue(value: unknown, t: TFunction): string {
+  if (typeof value !== "string") return String(value ?? "");
+  const keyByValue: Record<string, string> = {
+    backlog: "activity.values.backlog",
+    todo: "activity.values.todo",
+    in_progress: "activity.values.inProgress",
+    in_review: "activity.values.inReview",
+    done: "activity.values.done",
+    blocked: "activity.values.blocked",
+    cancelled: "activity.values.cancelled",
+    low: "activity.values.low",
+    medium: "activity.values.medium",
+    high: "activity.values.high",
+    critical: "activity.values.critical",
+  };
+  return keyByValue[value] ? t(keyByValue[value]!) : humanize(value);
+}
+
 /** One verb per action. Pinned context (Tier 0) swaps a couple of verbs to
  *  emphasize that user action is needed. */
 function formatVerb(
   action: string,
   details: Record<string, unknown> | null | undefined,
+  t: TFunction,
   context: VerbContext = "chronological",
 ): string {
   switch (action) {
     case "issue.created":
-      return "opened";
+      return t("activity.verbs.issueCreated");
     case "issue.updated": {
       const status = details?.status;
-      if (typeof status === "string") return `moved to ${humanize(status)}`;
+      if (typeof status === "string") return t("activity.verbs.issueStatus", { status: localizedValue(status, t) });
       const priority = details?.priority;
-      if (typeof priority === "string") return `set priority to ${humanize(priority)} on`;
-      return "updated";
+      if (typeof priority === "string") return t("activity.verbs.issuePriority", { priority: localizedValue(priority, t) });
+      return t("activity.verbs.issueUpdated");
     }
     case "issue.document_created":
-      return "wrote doc on";
+      return t("activity.verbs.documentCreated");
     case "issue.document_updated":
-      return "edited doc on";
+      return t("activity.verbs.documentUpdated");
     case "issue.document_deleted":
-      return "deleted doc from";
+      return t("activity.verbs.documentDeleted");
     case "issue.work_product_created":
-      return "delivered work on";
+      return t("activity.verbs.workProductCreated");
     case "issue.work_product_updated":
-      return "updated work on";
+      return t("activity.verbs.workProductUpdated");
     case "issue.work_product_deleted":
-      return "removed work from";
+      return t("activity.verbs.workProductDeleted");
     case "issue.checked_out":
-      return "picked up";
+      return t("activity.verbs.issueCheckedOut");
     case "issue.released":
-      return "released";
+      return t("activity.verbs.issueReleased");
     case "issue.commented":
     case "issue.comment_added":
-      return "commented on";
+      return t("activity.verbs.issueCommented");
     case "issue.attachment_added":
-      return "attached a file to";
+      return t("activity.verbs.attachmentAdded");
     case "issue.attachment_removed":
-      return "removed attachment from";
+      return t("activity.verbs.attachmentRemoved");
     case "issue.deleted":
-      return "deleted";
+      return t("activity.verbs.issueDeleted");
 
     case "approval.created":
-      return context === "pinned" ? "needs approval on" : "requested approval on";
+      return context === "pinned" ? t("activity.verbs.approvalNeeded") : t("activity.verbs.approvalCreated");
     case "approval.approved":
-      return "approved";
+      return t("activity.verbs.approvalApproved");
     case "approval.rejected":
-      return "rejected";
+      return t("activity.verbs.approvalRejected");
     case "approval.revision_requested":
-      return "requested changes on";
+      return t("activity.verbs.approvalRevisionRequested");
 
     case "agent.created":
-      return context === "pinned" ? "wants to hire" : "hired";
+      return context === "pinned" ? t("activity.verbs.agentHireNeeded") : t("activity.verbs.agentCreated");
     case "agent.paused":
-      return "paused";
+      return t("activity.verbs.agentPaused");
     case "agent.resumed":
-      return "resumed";
+      return t("activity.verbs.agentResumed");
     case "agent.updated":
-      return "updated";
+      return t("activity.verbs.agentUpdated");
     case "agent.terminated":
-      return "terminated";
+      return t("activity.verbs.agentTerminated");
 
     case "heartbeat.invoked":
-      return "started a run on";
+      return t("activity.verbs.heartbeatInvoked");
     case "heartbeat.cancelled":
-      return "cancelled a run on";
+      return t("activity.verbs.heartbeatCancelled");
 
     case "project.created":
-      return "created project";
+      return t("activity.verbs.projectCreated");
     case "project.updated":
-      return "updated project";
+      return t("activity.verbs.projectUpdated");
     case "project.deleted":
-      return "deleted project";
+      return t("activity.verbs.projectDeleted");
     case "goal.created":
-      return "created goal";
+      return t("activity.verbs.goalCreated");
     case "goal.updated":
-      return "updated goal";
+      return t("activity.verbs.goalUpdated");
     case "goal.deleted":
-      return "deleted goal";
+      return t("activity.verbs.goalDeleted");
     case "company.created":
-      return "created company";
+      return t("activity.verbs.companyCreated");
     case "company.updated":
-      return "updated company";
+      return t("activity.verbs.companyUpdated");
     case "company.archived":
-      return "archived company";
+      return t("activity.verbs.companyArchived");
     case "company.budget_updated":
-      return "updated company budget";
+      return t("activity.verbs.companyBudgetUpdated");
 
     default:
       return action.replace(/[._]/g, " ");
@@ -287,16 +308,17 @@ function resolveContent(
   agentMap: Map<string, Agent>,
   entityNameMap: Map<string, string>,
   entityTitleMap: Map<string, string> | undefined,
+  t: TFunction,
 ): CardContent {
   const details = event.details as Record<string, unknown> | null;
   const actor = event.actorType === "agent" ? agentMap.get(event.actorId) ?? null : null;
   const actorName =
     actor?.name ??
     (event.actorType === "system"
-      ? "System"
+      ? t("activity.actors.system")
       : event.actorType === "user"
-        ? "Board"
-        : event.actorId || "Unknown");
+        ? t("activity.actors.board")
+        : event.actorId || t("activity.actors.unknown"));
 
   const entityTitle = entityTitleMap?.get(`${event.entityType}:${event.entityId}`) ?? null;
 
@@ -351,7 +373,7 @@ function resolveContent(
     if (approvalAgentName) {
       identifier = approvalAgentName;
     } else {
-      identifier = approvalType ? humanize(approvalType) : "approval";
+      identifier = approvalType ? humanize(approvalType) : t("activity.entities.approval");
       identifierMono = false;
     }
     title = entityTitle;
@@ -425,9 +447,10 @@ export function FeedCard({
   isPinned = false,
   className,
 }: FeedCardProps) {
+  const { t, i18n } = useTranslation();
   const details = event.details as Record<string, unknown> | null;
-  const content = resolveContent(event, agentMap, entityNameMap, entityTitleMap);
-  const verb = formatVerb(event.action, details, isPinned ? "pinned" : "chronological");
+  const content = resolveContent(event, agentMap, entityNameMap, entityTitleMap, t);
+  const verb = formatVerb(event.action, details, t, isPinned ? "pinned" : "chronological");
   const iconSpec = getIconSpec(event, details, isActive);
 
   const mutedTextBase = isMuted ? "text-muted-foreground/70" : "text-(--hex-959596)";
@@ -468,10 +491,10 @@ export function FeedCard({
         )}
       </span>
       {isPinned && (
-        <span className="shrink-0 text-xs text-muted-foreground">Review →</span>
+        <span className="shrink-0 text-xs text-muted-foreground">{t("activity.review")} →</span>
       )}
       <span data-fc="time" className="shrink-0 text-muted-foreground">
-        {timeAgo(event.createdAt)}
+        {timeAgo(event.createdAt, i18n.resolvedLanguage)}
       </span>
     </Card>
   );

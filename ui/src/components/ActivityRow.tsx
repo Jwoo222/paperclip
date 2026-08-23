@@ -7,6 +7,7 @@ import { cn } from "../lib/utils";
 import { formatActivityVerb } from "../lib/activity-format";
 import { deriveProjectUrlKey, type ActivityEvent, type Agent } from "@paperclipai/shared";
 import type { CompanyUserProfile } from "../lib/company-members";
+import { useTranslation } from "@/i18n";
 
 function entityLink(entityType: string, entityId: string, name?: string | null): string | null {
   switch (entityType) {
@@ -29,7 +30,11 @@ interface ActivityRowProps {
 }
 
 export function ActivityRow({ event, agentMap, userProfileMap, entityNameMap, entityTitleMap, className }: ActivityRowProps) {
-  const verb = formatActivityVerb(event.action, event.details, { agentMap, userProfileMap });
+  const { t, i18n } = useTranslation();
+  const fallbackVerb = formatActivityVerb(event.action, event.details, { agentMap, userProfileMap });
+  const verb = t(`activity.actions.${event.action.replaceAll(".", "_")}`, {
+    defaultValue: fallbackVerb,
+  });
 
   const isHeartbeatEvent = event.entityType === "heartbeat_run";
   const heartbeatAgentId = isHeartbeatEvent
@@ -48,7 +53,7 @@ export function ActivityRow({ event, agentMap, userProfileMap, entityNameMap, en
 
   const actor = event.actorType === "agent" ? agentMap.get(event.actorId) : null;
   const userProfile = event.actorType === "user" ? userProfileMap?.get(event.actorId) : null;
-  const actorName = actor?.name ?? (event.actorType === "system" ? "System" : userProfile?.label ?? (event.actorType === "user" ? "Board" : event.actorId || "Unknown"));
+  const actorName = actor?.name ?? (event.actorType === "system" ? t("activity.actors.system") : userProfile?.label ?? (event.actorType === "user" ? t("activity.actors.board") : event.actorId || t("activity.actors.unknown")));
   const actorAvatarUrl = userProfile?.image ?? null;
 
   const inner = (
@@ -66,7 +71,7 @@ export function ActivityRow({ event, agentMap, userProfileMap, entityNameMap, en
             {entityTitle && <span className="text-muted-foreground"> — {entityTitle}</span>}
           </p>
         </div>
-        <span className="text-xs text-muted-foreground shrink-0">{timeAgo(event.createdAt)}</span>
+        <span className="text-xs text-muted-foreground shrink-0">{timeAgo(event.createdAt, i18n.resolvedLanguage)}</span>
       </div>
       <IssueReferenceActivitySummary event={event} />
     </div>

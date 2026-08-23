@@ -44,6 +44,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { cn, SIDEBAR_RAIL_HIDDEN_LABEL } from "@/lib/utils";
 import { useSidebar } from "../context/SidebarContext";
 import { CompanyPatternIcon } from "./CompanyPatternIcon";
+import { t } from "@/i18n";
 
 interface SidebarCompanyMenuProps {
   open?: boolean;
@@ -175,7 +176,7 @@ function SortableCompanyItem({
         <button
           type="button"
           ref={setActivatorNodeRef}
-          aria-label={`Reorder ${company.name}`}
+          aria-label={t("shell.reorder", { name: company.name })}
           className="inline-flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-(length:--rad-2) focus-visible:ring-ring"
           onClick={(event) => {
             event.preventDefault();
@@ -250,7 +251,7 @@ export function SidebarCompanyMenu({ open: controlledOpen, onOpenChange }: Sideb
       ?? null
     : null;
   const createStackUrl = isCloud ? cloudStackCreateUrl(cloudBaseUrl) : null;
-  const switcherNoun = isCloud ? "organization" : "company";
+  const switcherNoun = isCloud ? t("shell.organization") : t("shell.company");
   // The one name the chrome shows for "where am I": the stack in cloud, the
   // company when self-hosted.
   const currentName = isCloud
@@ -344,9 +345,9 @@ export function SidebarCompanyMenu({ open: controlledOpen, onOpenChange }: Sideb
           // names were short in practice; cloud stack names are user-chosen.
           className="h-9 min-w-0 flex-1 justify-start gap-2 px-3 text-left"
           aria-label={
-            currentName
-              ? `Open ${currentName} ${switcherNoun} switcher`
-              : `Open ${switcherNoun} switcher`
+            t("shell.openSwitcher", {
+              name: currentName ? `${currentName} ${switcherNoun}` : switcherNoun,
+            })
           }
         >
           <span className="flex min-w-0 flex-1 items-center gap-2">
@@ -387,7 +388,7 @@ export function SidebarCompanyMenu({ open: controlledOpen, onOpenChange }: Sideb
               }}
               className="rounded px-1.5 py-0.5 text-(length:--text-micro) font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
-              {isEditingOrder ? "Done" : "Edit"}
+              {isEditingOrder ? t("companyMenu.done") : t("companyMenu.edit")}
             </button>
           )}
         </div>
@@ -405,10 +406,10 @@ export function SidebarCompanyMenu({ open: controlledOpen, onOpenChange }: Sideb
               {stacks.length === 0 ? (
                 <DropdownMenuItem disabled>
                   {stacksQuery.isLoading
-                    ? "Loading organizations..."
+                    ? t("companyMenu.loadingOrganizations")
                     : stacksQuery.isError
-                      ? "Could not load organizations"
-                      : "No organizations"}
+                      ? t("companyMenu.couldNotLoadOrganizations")
+                      : t("companyMenu.noOrganizations")}
                 </DropdownMenuItem>
               ) : null}
             </>
@@ -435,7 +436,7 @@ export function SidebarCompanyMenu({ open: controlledOpen, onOpenChange }: Sideb
                 </SortableContext>
               </DndContext>
               {orderedCompanies.length === 0 ? (
-                <DropdownMenuItem disabled>No companies</DropdownMenuItem>
+                <DropdownMenuItem disabled>{t("shell.noCompanies")}</DropdownMenuItem>
               ) : null}
             </>
           )}
@@ -451,7 +452,7 @@ export function SidebarCompanyMenu({ open: controlledOpen, onOpenChange }: Sideb
               disabled={isEditingOrder}
             >
               <Plus className="size-4" />
-              <span>{isCloud ? "Create new organization..." : "Create new company..."}</span>
+              <span>{isCloud ? t("companyMenu.createOrganization") : t("companyMenu.createCompany")}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
           </>
@@ -469,7 +470,7 @@ export function SidebarCompanyMenu({ open: controlledOpen, onOpenChange }: Sideb
           >
             <UserPlus className="size-4" />
             <span className="truncate">
-              {currentName ? `Invite people to ${currentName}` : "Invite people"}
+              {currentName ? t("companyMenu.invitePeopleTo", { name: currentName }) : t("companyMenu.invitePeople")}
             </span>
           </Link>
         </DropdownMenuItem>

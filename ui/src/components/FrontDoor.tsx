@@ -1,4 +1,5 @@
 import { Rocket, Zap } from "lucide-react";
+import { useTranslation } from "@/i18n";
 import { cn } from "../lib/utils";
 
 interface FrontDoorProps {
@@ -6,14 +7,15 @@ interface FrontDoorProps {
 }
 
 export function FrontDoor({ onChoose }: FrontDoorProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center min-h-(--sz-60vh) px-8">
       <div className="text-center mb-10">
         <h2 className="text-2xl font-bold tracking-tight">
-          Welcome to Paperclip
+          {t("shell.welcome")}
         </h2>
         <p className="text-sm text-muted-foreground mt-2">
-          How would you like to get started?
+          {t("shell.getStarted")}
         </p>
       </div>
 
@@ -30,9 +32,9 @@ export function FrontDoor({ onChoose }: FrontDoorProps) {
             <Rocket className="h-6 w-6" />
           </div>
           <div>
-            <h3 className="font-semibold text-sm">Build a new company</h3>
+            <h3 className="font-semibold text-sm">{t("shell.buildCompany")}</h3>
             <p className="text-xs text-muted-foreground mt-1">
-              Begin with a mission, bring on a lead agent, and grow a team of agents to do the work.
+              {t("shell.buildCompanyDescription")}
             </p>
           </div>
         </button>
@@ -49,9 +51,9 @@ export function FrontDoor({ onChoose }: FrontDoorProps) {
             <Zap className="h-6 w-6" />
           </div>
           <div>
-            <h3 className="font-semibold text-sm">Add agents to your org</h3>
+            <h3 className="font-semibold text-sm">{t("shell.addAgents")}</h3>
             <p className="text-xs text-muted-foreground mt-1">
-              Bring AI agents into your existing team or workflows.
+              {t("shell.addAgentsDescription")}
             </p>
           </div>
         </button>
