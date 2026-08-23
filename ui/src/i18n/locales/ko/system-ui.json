@@ -1,0 +1,67 @@
+{
+  "systemUi": {
+    "bootstrap": {
+      "finishFromHost": "호스트에서 설정을 마치시겠습니까?",
+      "activeInvite": "부트스트랩 초대가 이미 활성화되어 있습니다. Paperclip 시작 로그에서 최초 관리자 URL을 확인하거나 호스트에서 다음 명령을 실행해 새로 발급하세요:",
+      "runHostCommand": "Paperclip을 실행하는 호스트에서 다음 명령을 실행하면 일회성 최초 관리자 초대 URL이 표시됩니다:",
+      "alreadyClaimed": "다른 사용자가 이미 이 인스턴스의 소유권을 확인했습니다.",
+      "alreadyClaimedBody": "새로 고쳐 로그인하거나 기존 관리자에게 인스턴스 설정 -> 접근에서 초대를 요청하세요.",
+      "sessionExpired": "세션이 만료되었습니다. 다시 로그인해 이 인스턴스의 소유권을 확인하세요.",
+      "serverUnavailable": "서버에 연결할 수 없습니다. 잠시 후 다시 시도하세요.",
+      "waitingFirstAdmin": "Paperclip이 최초 관리자를 기다리고 있습니다",
+      "inviteOnlyDescription": "이 인스턴스는 초대 전용 모드입니다. 운영자가 호스트에서 일회성 최초 관리자 초대 URL을 생성해야 합니다. 링크를 받으면 이 브라우저에서 열어 설정을 마치세요.",
+      "publicClaimDisabled": "네트워크의 아무나 관리자로 승격할 수 없도록 공개 모드에서는 브라우저 소유권 확인을 비활성화합니다.",
+      "successTitle": "인스턴스 관리자가 되었습니다",
+      "successDescription": "설정을 마쳤습니다. 첫 회사를 만들 수 있도록 온보딩으로 이동합니다...",
+      "redirecting": "이동 중...",
+      "continueDashboard": "대시보드로 계속",
+      "finishSetup": "Paperclip 설정 마치기",
+      "signInDescription": "아직 이 인스턴스의 관리자가 없습니다. 로그인하거나 Paperclip 계정을 만들어 이 브라우저에서 최초 관리자가 되세요.",
+      "signInOrCreate": "로그인 / 계정 만들기",
+      "claimDescription": "아직 이 인스턴스의 관리자가 없습니다. 지금 소유권을 확인해 최초 관리자가 되고 온보딩을 시작하세요.",
+      "claiming": "확인 중...",
+      "claim": "인스턴스 소유권 확인",
+      "signedInAs": "로그인 계정:",
+      "wrongAccount": "다른 계정인가요?",
+      "switchAccount": "계정 전환"
+    },
+    "access": {
+      "noCompany": "회사 접근 권한 없음",
+      "noCompanyDescription": "이 계정은 로그인되어 있지만 이 Paperclip 인스턴스의 활성 회사 멤버십이나 인스턴스 관리자 권한이 없습니다.",
+      "inviteHint": "회사 초대를 사용하거나 이미 이 조직에 속한 계정으로 로그인하세요.",
+      "loadFailed": "앱 상태를 불러오지 못했습니다"
+    },
+    "routeError": {
+      "title": "페이지 오류가 발생했습니다",
+      "description": "페이지를 표시하는 중 문제가 발생했습니다. 뒤로 가서 다시 시도하거나 페이지를 새로 고치세요.",
+      "goBack": "뒤로",
+      "reload": "새로 고침"
+    },
+    "restart": {
+      "justNow": "방금",
+      "minutesAgo": "{{count}}분 전",
+      "hoursAgo": "{{count}}시간 전",
+      "daysAgo": "{{count}}일 전",
+      "backendAndMigrations": "백엔드 파일이 변경되었고 적용 대기 중인 마이그레이션이 있습니다",
+      "pendingMigrationsReason": "대기 중인 마이그레이션을 적용하려면 새로 시작해야 합니다",
+      "backendChanged": "서버 시작 후 백엔드 파일이 변경되었습니다",
+      "activeRunOne": "실행 중인 작업 {{count}}개",
+      "activeRunMany": "실행 중인 작업 {{count}}개",
+      "confirmWithRuns": "Paperclip을 지금 다시 시작할까요? {{activeRunLabel}}가 중단될 수 있습니다.",
+      "confirm": "Paperclip을 지금 다시 시작할까요?",
+      "requestFailed": "재시작을 요청하지 못했습니다",
+      "required": "재시작 필요",
+      "autoOn": "자동 재시작 켜짐",
+      "updated": " · {{changedAt}} 업데이트",
+      "changed": "변경됨: {{paths}}",
+      "more": " 외 {{count}}개",
+      "pendingMigrations": "대기 중인 마이그레이션: {{migrations}}",
+      "waitingRuns": "{{activeRunLabel}}가 끝나기를 기다리는 중",
+      "autoWhenIdle": "인스턴스가 유휴 상태가 되면 자동으로 재시작합니다",
+      "manualHintBefore": "실행 중인 작업을 안전하게 중단할 수 있을 때",
+      "manualHintAfter": "명령으로 재시작하세요",
+      "requested": "재시작 요청됨",
+      "now": "지금 재시작"
+    }
+  }
+}

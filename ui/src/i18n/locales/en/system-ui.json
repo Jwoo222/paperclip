@@ -1,0 +1,67 @@
+{
+  "systemUi": {
+    "bootstrap": {
+      "finishFromHost": "Prefer to finish setup from the host?",
+      "activeInvite": "A bootstrap invite is already active. Check your Paperclip startup logs for the first-admin URL, or run this command on the host to rotate it:",
+      "runHostCommand": "Run this command on the host that runs Paperclip to print a one-time first-admin invite URL:",
+      "alreadyClaimed": "Someone else has already claimed this instance.",
+      "alreadyClaimedBody": "Refresh to sign in, or ask the existing admin to invite you from Instance settings -> Access.",
+      "sessionExpired": "Your session expired. Sign in again to claim this instance.",
+      "serverUnavailable": "We couldn't reach the server. Try again in a moment.",
+      "waitingFirstAdmin": "This Paperclip is waiting on its first admin",
+      "inviteOnlyDescription": "This instance runs in invite-only mode. The operator must generate a one-time first-admin invite URL from the host. Once you have the link, open it from this browser to finish setup.",
+      "publicClaimDisabled": "Browser-based claim is intentionally disabled in public mode so anyone on the network can't promote themselves.",
+      "successTitle": "You're the instance admin",
+      "successDescription": "Setup is complete. Taking you to onboarding to create your first company...",
+      "redirecting": "Redirecting...",
+      "continueDashboard": "Continue to dashboard",
+      "finishSetup": "Finish setting up this Paperclip",
+      "signInDescription": "No admin has claimed this instance yet. Sign in or create your Paperclip account to become the first admin from this browser.",
+      "signInOrCreate": "Sign in / Create account",
+      "claimDescription": "No admin has claimed this instance yet. Claim it now to become the first admin and start onboarding.",
+      "claiming": "Claiming...",
+      "claim": "Claim this instance",
+      "signedInAs": "Signed in as",
+      "wrongAccount": "Wrong account?",
+      "switchAccount": "Switch account"
+    },
+    "access": {
+      "noCompany": "No company access",
+      "noCompanyDescription": "This account is signed in, but it does not have an active company membership or instance-admin access on this Paperclip instance.",
+      "inviteHint": "Use a company invite or sign in with an account that already belongs to this org.",
+      "loadFailed": "Failed to load app state"
+    },
+    "routeError": {
+      "title": "This page hit an error",
+      "description": "Something went wrong while rendering this page. You can go back and try again, or reload.",
+      "goBack": "Go back",
+      "reload": "Reload page"
+    },
+    "restart": {
+      "justNow": "just now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago",
+      "backendAndMigrations": "backend files changed and migrations are pending",
+      "pendingMigrationsReason": "pending migrations need a fresh boot",
+      "backendChanged": "backend files changed since this server booted",
+      "activeRunOne": "{{count}} live run",
+      "activeRunMany": "{{count}} live runs",
+      "confirmWithRuns": "Restart Paperclip now? This may interrupt {{activeRunLabel}}.",
+      "confirm": "Restart Paperclip now?",
+      "requestFailed": "Failed to request restart",
+      "required": "Restart Required",
+      "autoOn": "Auto-Restart On",
+      "updated": " · updated {{changedAt}}",
+      "changed": "Changed: {{paths}}",
+      "more": " +{{count}} more",
+      "pendingMigrations": "Pending migrations: {{migrations}}",
+      "waitingRuns": "Waiting for {{activeRunLabel}} to finish",
+      "autoWhenIdle": "Auto-restart will trigger when the instance is idle",
+      "manualHintBefore": "Restart",
+      "manualHintAfter": "after the active work is safe to interrupt",
+      "requested": "Restart requested",
+      "now": "Restart now"
+    }
+  }
+}
