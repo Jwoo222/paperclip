@@ -40,13 +40,13 @@ import { copyTextToClipboard } from "@/lib/clipboard";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n";
 
-const STATUS_LABEL: Record<CaseStatus, string> = {
-  draft: "Draft",
-  in_progress: "In progress",
-  in_review: "In review",
-  approved: "Approved",
-  done: "Done",
-  cancelled: "Cancelled",
+const STATUS_KEYS: Record<CaseStatus, string> = {
+  draft: "casesExtra.status.draft",
+  in_progress: "casesExtra.status.in_progress",
+  in_review: "casesExtra.status.in_review",
+  approved: "casesExtra.status.approved",
+  done: "casesExtra.status.done",
+  cancelled: "casesExtra.status.cancelled",
 };
 
 const PRIMARY_FIELD_KEYS = ["name", "title", "body", "description"] as const;
@@ -124,19 +124,20 @@ function CaseRelationshipsSection({
   parent: CaseParentRef | null;
   children: CaseSummary[];
 }) {
+  const { t } = useTranslation();
   if (!parent && children.length === 0) return null;
 
   return (
-    <section className="space-y-3" aria-label="Case relationships">
+    <section className="space-y-3" aria-label={t("casesExtra.detail.relationships")}>
       {parent ? (
         <div className="space-y-1">
-          <h2 className="text-xs font-medium text-muted-foreground">Parent</h2>
+          <h2 className="text-xs font-medium text-muted-foreground">{t("casesExtra.detail.parent")}</h2>
           <CaseChildrenTree children={[parent]} />
         </div>
       ) : null}
       {children.length > 0 ? (
         <div className="space-y-1">
-          <h2 className="text-xs font-medium text-muted-foreground">Children {children.length}</h2>
+          <h2 className="text-xs font-medium text-muted-foreground">{t("casesExtra.detail.children")} {children.length}</h2>
           <CaseChildrenTree children={children} maxVisible={5} />
         </div>
       ) : null}
@@ -196,6 +197,7 @@ function CaseStatusPicker({
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation();
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -203,9 +205,9 @@ function CaseStatusPicker({
           type="button"
           disabled={disabled}
           className="inline-flex items-center gap-1 rounded-md hover:bg-accent/50 disabled:opacity-50"
-          aria-label="Change case status"
+          aria-label={t("casesExtra.action.changeStatus")}
         >
-          <StatusBadge status={status} />
+          <StatusBadge status={status} label={t(STATUS_KEYS[status])} />
           <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
         </button>
       </PopoverTrigger>
@@ -220,7 +222,7 @@ function CaseStatusPicker({
             }}
             className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left hover:bg-accent"
           >
-            <StatusBadge status={s} />
+            <StatusBadge status={s} label={t(STATUS_KEYS[s])} />
             {s === status && <Check className="h-4 w-4 text-muted-foreground" />}
           </button>
         ))}
@@ -242,6 +244,7 @@ function CaseLabelsPicker({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [newColor, setNewColor] = useState<string>(PROJECT_COLORS[0]);
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const labelsQuery = useQuery({
     queryKey: queryKeys.issues.labels(companyId),
@@ -276,14 +279,14 @@ function CaseLabelsPicker({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="sm" className="h-6 gap-1 px-2 text-xs text-muted-foreground">
-          <Plus className="h-3.5 w-3.5" /> Labels
+          <Plus className="h-3.5 w-3.5" /> {t("casesExtra.detail.addLabels")}
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-64 p-2">
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search labels…"
+          placeholder={t("casesExtra.detail.searchLabels")}
           className="mb-2 h-7 text-xs"
         />
         <div className="max-h-52 space-y-0.5 overflow-y-auto">
@@ -300,7 +303,7 @@ function CaseLabelsPicker({
             </button>
           ))}
           {filtered.length === 0 && !search.trim() && (
-            <p className="px-2 py-1 text-xs text-muted-foreground">No labels yet.</p>
+            <p className="px-2 py-1 text-xs text-muted-foreground">{t("casesExtra.detail.noLabels")}</p>
           )}
         </div>
         {search.trim() && !all.some((l) => l.name.toLowerCase() === search.trim().toLowerCase()) && (
@@ -310,7 +313,7 @@ function CaseLabelsPicker({
               value={newColor}
               onChange={(e) => setNewColor(e.target.value)}
               className="h-6 w-6 shrink-0 cursor-pointer rounded border border-border bg-transparent"
-              aria-label="New label color"
+              aria-label={t("casesExtra.detail.newLabelColor")}
             />
             <Button
               size="sm"
@@ -319,7 +322,7 @@ function CaseLabelsPicker({
               disabled={createLabel.isPending}
               onClick={() => createLabel.mutate({ name: search.trim(), color: newColor })}
             >
-              Create “{search.trim()}”
+              {t("casesExtra.action.createLabel", { name: search.trim() })}
             </Button>
           </div>
         )}
@@ -344,26 +347,27 @@ function CasePropertiesContent({
   onLabelIdsChange: (labelIds: string[]) => void;
   mode: CasePropertyDisplayMode;
 }) {
+  const { t } = useTranslation();
   const propertyRows = casePropertyRows(caseData);
   const isFull = mode === "full";
 
   return (
     <div className={cn("space-y-4", isFull && "space-y-6")}>
-      <PropertySection title="Case" first>
-        <CasePropertyRow label="Type" mode={mode}>
+      <PropertySection title={t("casesExtra.detail.case")} first>
+        <CasePropertyRow label={t("casesExtra.detail.type")} mode={mode}>
           <PropertyChip>{caseData.caseType}</PropertyChip>
         </CasePropertyRow>
         {caseData.key ? (
-          <CasePropertyRow label="Key" mode={mode}>
+            <CasePropertyRow label={t("casesExtra.detail.key")} mode={mode}>
             <CaseCopyableToken
               value={caseData.key}
-              label="case key"
+              label={t("casesExtra.label.caseKey")}
               className="font-mono text-xs text-muted-foreground"
               truncate={!isFull}
             />
           </CasePropertyRow>
         ) : null}
-        <CasePropertyRow label="Labels" wrap mode={mode}>
+        <CasePropertyRow label={t("casesExtra.detail.labels")} wrap mode={mode}>
           {caseData.labels.length > 0 ? (
             caseData.labels.map((label) => (
               <PropertyChip
@@ -375,7 +379,7 @@ function CasePropertiesContent({
               </PropertyChip>
             ))
           ) : (
-            <span className="text-xs text-muted-foreground">None</span>
+            <span className="text-xs text-muted-foreground">{t("casesExtra.label.none")}</span>
           )}
           {companyId ? (
             <CaseLabelsPicker
@@ -384,12 +388,12 @@ function CasePropertiesContent({
               onChange={onLabelIdsChange}
             />
           ) : null}
-          {labelsPending ? <span className="text-xs text-muted-foreground">Saving...</span> : null}
+          {labelsPending ? <span className="text-xs text-muted-foreground">{t("casesExtra.detail.saving")}</span> : null}
         </CasePropertyRow>
       </PropertySection>
 
       {propertyRows.length > 0 ? (
-        <PropertySection title="Fields">
+        <PropertySection title={t("casesExtra.detail.fields")}>
           {propertyRows.map(({ key, label, value }) => (
             <CasePropertyRow
               key={key}
@@ -405,13 +409,13 @@ function CasePropertiesContent({
         </PropertySection>
       ) : null}
 
-      <PropertySection title="Linked tasks">
+      <PropertySection title={t("casesExtra.detail.linkedTasks")}>
         {caseData.issueLinks.length === 0 ? (
-          <CasePropertyRow label="Tasks" mode={mode}>
-            <span className="text-xs text-muted-foreground">None yet</span>
+          <CasePropertyRow label={t("casesExtra.detail.tasks")} mode={mode}>
+            <span className="text-xs text-muted-foreground">{t("casesExtra.detail.noneYet")}</span>
           </CasePropertyRow>
         ) : (
-          <CasePropertyRow label="Tasks" wrap mode={mode}>
+          <CasePropertyRow label={t("casesExtra.detail.tasks")} wrap mode={mode}>
             <div className="flex flex-wrap items-center gap-1.5">
               {caseData.issueLinks.map((link) => (
                 <IssueReferencePill
@@ -429,15 +433,15 @@ function CasePropertiesContent({
         )}
       </PropertySection>
 
-      <PropertySection title={`Children${childCases.length > 0 ? ` ${childCases.length}` : ""}`}>
+      <PropertySection title={`${t("casesExtra.detail.children")}${childCases.length > 0 ? ` ${childCases.length}` : ""}`}>
         <CaseChildrenTree children={childCases} />
       </PropertySection>
 
       {caseData.attachments.length > 0 ? (
-        <PropertySection title="Attachments">
-          <CasePropertyRow label="Files" mode={mode}>
+        <PropertySection title={t("casesExtra.detail.attachments")}>
+          <CasePropertyRow label={t("casesExtra.detail.files")} mode={mode}>
             <span className="text-xs text-muted-foreground">
-              {caseData.attachments.length} {caseData.attachments.length === 1 ? "file" : "files"}
+              {caseData.attachments.length} {caseData.attachments.length === 1 ? t("casesExtra.label.file") : t("casesExtra.label.files")}
             </span>
           </CasePropertyRow>
         </PropertySection>
@@ -606,7 +610,7 @@ export function CaseDetail() {
       "",
       `- Key: ${currentCase.key ?? "none"}`,
       `- Type: ${currentCase.caseType}`,
-      `- Status: ${STATUS_LABEL[currentCase.status]}`,
+      `- Status: ${t(STATUS_KEYS[currentCase.status])}`,
       currentCase.labels.length > 0 ? `- Labels: ${currentCase.labels.map((label) => label.name).join(", ")}` : "- Labels: none",
     ].join("\n");
     void copyTextToClipboard(markdown).then(() => {
@@ -642,7 +646,7 @@ export function CaseDetail() {
                   onClick={() => copyCaseToClipboard(caseData)}
                 >
                   {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                  Copy as markdown
+                  {t("casesExtra.action.copyAsMarkdown")}
                 </button>
                 <button
                   type="button"
@@ -652,7 +656,7 @@ export function CaseDetail() {
                   }}
                 >
                   <SlidersHorizontal className="h-3 w-3" />
-                  Properties
+                  {t("casesExtra.action.properties")}
                 </button>
               </PopoverContent>
             </Popover>
@@ -695,7 +699,7 @@ export function CaseDetail() {
 
           {caseData.attachments.length > 0 && (
             <section className="space-y-2">
-              <h2 className="text-sm font-semibold">Attachments ({caseData.attachments.length})</h2>
+              <h2 className="text-sm font-semibold">{t("casesExtra.detail.attachments")} ({caseData.attachments.length})</h2>
               <CaseAttachmentsGallery attachments={caseData.attachments} />
             </section>
           )}
