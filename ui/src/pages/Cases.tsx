@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { CaseCopyableToken } from "@/components/CaseIdentifierKey";
 import { hasBlockingShortcutDialog, isKeyboardShortcutTextInputTarget } from "@/lib/keyboardShortcuts";
 import { cn, relativeTime } from "@/lib/utils";
+import { useTranslation } from "@/i18n";
 
 type GroupBy = "type" | "project" | "status" | "none";
 type CaseColumn = "id" | "key" | "title" | "status" | "updated" | "created" | "type" | "project" | "parent";
@@ -740,6 +741,7 @@ function CasesEmptyHero() {
 }
 
 export function Cases() {
+  const { t } = useTranslation();
   const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const { keyboardShortcutsEnabled } = useGeneralSettings();
@@ -755,8 +757,8 @@ export function Cases() {
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Cases" }]);
-  }, [setBreadcrumbs]);
+    setBreadcrumbs([{ label: t("operations.common.cases") }]);
+  }, [setBreadcrumbs, t]);
 
   useEffect(() => {
     setViewState(loadCaseViewState(viewStorageKey));
@@ -1194,8 +1196,8 @@ export function Cases() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-bold">Cases</h1>
-          <Badge variant="secondary">Experimental</Badge>
+          <h1 className="text-xl font-bold">{t("operations.common.cases")}</h1>
+          <Badge variant="secondary">{t("operations.common.experimental")}</Badge>
         </div>
       </div>
 
@@ -1209,9 +1211,9 @@ export function Cases() {
               <Input
                 value={viewState.search}
                 onChange={(e) => updateView({ search: e.target.value })}
-                placeholder="Search cases..."
+                placeholder={t("operations.cases.search")}
                 className="pl-7 text-xs sm:text-sm"
-                aria-label="Search cases"
+                aria-label={t("operations.cases.searchLabel")}
                 data-page-search-target="true"
               />
             </div>
@@ -1236,7 +1238,7 @@ export function Cases() {
                 onReset={resetColumns}
               />
 
-              <CaseToolbarButton icon={Filter} title="Filters" active={hasActiveFilters}>
+              <CaseToolbarButton icon={Filter} title={t("operations.cases.filters")} active={hasActiveFilters}>
                 <PopoverContent align="end" className="w-72 p-3">
                   <div className="grid gap-3">
                     <FilterField label="Type">
@@ -1314,7 +1316,7 @@ export function Cases() {
                 onChange={updateView}
               />
 
-              <CaseToolbarButton icon={Layers} title="Group" active={viewState.groupBy !== "type"}>
+              <CaseToolbarButton icon={Layers} title={t("operations.cases.group")} active={viewState.groupBy !== "type"}>
                 <PopoverContent align="end" className="w-44 p-2">
                   {([
                     ["type", "Type"],
@@ -1343,7 +1345,7 @@ export function Cases() {
           <FilterBar filters={activeFilters} onRemove={removeFilter} onClear={clearFilters} />
 
           {filtered.length === 0 ? (
-            <EmptyState icon={SearchX} message="No cases match these filters." action="Clear filters" onAction={clearFilters} />
+            <EmptyState icon={SearchX} message={t("operations.cases.noMatch")} action={t("operations.common.clearFilters")} onAction={clearFilters} />
           ) : (
             <div ref={caseListRef}>
               <CaseColumnHeader visibleColumnSet={visibleColumnSet} trailingColumns={trailingColumns} />

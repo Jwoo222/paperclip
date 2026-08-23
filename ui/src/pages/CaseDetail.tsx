@@ -38,6 +38,7 @@ import { IssueDocumentsSection } from "@/components/IssueDocumentsSection";
 import { CaseCopyableToken, CaseIdentifierKey } from "@/components/CaseIdentifierKey";
 import { copyTextToClipboard } from "@/lib/clipboard";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n";
 
 const STATUS_LABEL: Record<CaseStatus, string> = {
   draft: "Draft",
@@ -446,6 +447,7 @@ function CasePropertiesContent({
 }
 
 export function CaseDetail() {
+  const { t } = useTranslation();
   const { caseIdentifier } = useParams<{ caseIdentifier: string }>();
   const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
@@ -493,10 +495,10 @@ export function CaseDetail() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Cases", href: caseHref() },
-      { label: caseData ? `${caseData.identifier} — ${caseData.title}` : (caseIdentifier ?? "Case") },
+      { label: t("operations.common.cases"), href: caseHref() },
+      { label: caseData ? `${caseData.identifier} — ${caseData.title}` : (caseIdentifier ?? t("operations.common.case")) },
     ]);
-  }, [setBreadcrumbs, caseData, caseIdentifier, caseHref]);
+  }, [setBreadcrumbs, caseData, caseIdentifier, caseHref, t]);
 
   const events = useMemo(() => eventsQuery.data ?? [], [eventsQuery.data]);
   const caseDocumentSubject = useMemo(() => {
@@ -588,9 +590,9 @@ export function CaseDetail() {
   if (caseQuery.isError || !caseData) {
     return (
       <div className="mx-auto max-w-md py-16 text-center">
-        <p className="text-sm text-muted-foreground">Case not found.</p>
+        <p className="text-sm text-muted-foreground">{t("operations.common.notFound")}</p>
         <Link to={caseHref()} className="mt-2 inline-block text-sm text-primary hover:underline">
-          ← Back to cases
+          ← {t("operations.cases.backToCases")}
         </Link>
       </div>
     );
@@ -629,7 +631,7 @@ export function CaseDetail() {
             />
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon-xs" aria-label="More case actions" title="More case actions">
+                <Button variant="ghost" size="icon-xs" aria-label={t("operations.cases.moreActions")} title={t("operations.cases.moreActions")}>
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
@@ -666,10 +668,10 @@ export function CaseDetail() {
 
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList variant="line" className="w-full justify-start gap-1">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="properties">Properties</TabsTrigger>
+          <TabsTrigger value="overview">{t("operations.common.overview")}</TabsTrigger>
+          <TabsTrigger value="properties">{t("operations.cases.properties")}</TabsTrigger>
           <TabsTrigger value="activity">
-            Activity{events.length > 0 && <span className="ml-1 text-muted-foreground">{events.length}</span>}
+            {t("operations.common.activity")}{events.length > 0 && <span className="ml-1 text-muted-foreground">{events.length}</span>}
           </TabsTrigger>
         </TabsList>
 
@@ -684,7 +686,7 @@ export function CaseDetail() {
 
           {description ? (
             <section className="space-y-2">
-              <h2 className="text-sm font-semibold">Description</h2>
+              <h2 className="text-sm font-semibold">{t("operations.cases.description")}</h2>
               <Card className="px-4 py-3">
                 <CaseFieldValue value={description} />
               </Card>

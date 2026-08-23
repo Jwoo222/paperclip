@@ -17,6 +17,7 @@ import { LiveRunWidget } from "../LiveRunWidget";
 import { RoutineHistoryTab } from "../RoutineHistoryTab";
 import { RoutineActivityRow } from "../RoutineActivityRow";
 import { useRoutineDetail } from "./context";
+import { useTranslation } from "@/i18n";
 
 const DATE_WINDOW_OPTIONS: { value: string; label: string; ms: number | null }[] = [
   { value: "any", label: "Any time", ms: null },
@@ -26,6 +27,7 @@ const DATE_WINDOW_OPTIONS: { value: string; label: string; ms: number | null }[]
 ];
 
 export function RunsSection() {
+  const { t } = useTranslation();
   const ctx = useRoutineDetail();
   const { routine, routineRuns, hasLiveRun, activeIssueId, onOpenRunDialog } = ctx;
   const runs = useMemo(() => routineRuns ?? [], [routineRuns]);
@@ -88,8 +90,8 @@ export function RunsSection() {
       {runs.length === 0 ? (
         <EmptyState
           icon={Play}
-          message="No runs yet. Trigger a run from the header or wait for the schedule."
-          action="Run now"
+          message={t("operations.routines.noRuns")}
+          action={t("operations.routines.runNow")}
           onAction={onOpenRunDialog}
         />
       ) : (
@@ -98,8 +100,8 @@ export function RunsSection() {
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <Select value={sourceFilter} onValueChange={setSourceFilter}>
-                <SelectTrigger size="sm" className="h-8 w-auto gap-1.5 text-xs" aria-label="Filter by source">
-                  <span className="text-muted-foreground">Source:</span>
+                <SelectTrigger size="sm" className="h-8 w-auto gap-1.5 text-xs" aria-label={t("operations.routines.filterSource")}>
+                  <span className="text-muted-foreground">{t("operations.routines.source")}:</span>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -112,8 +114,8 @@ export function RunsSection() {
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger size="sm" className="h-8 w-auto gap-1.5 text-xs" aria-label="Filter by status">
-                  <span className="text-muted-foreground">Status:</span>
+                <SelectTrigger size="sm" className="h-8 w-auto gap-1.5 text-xs" aria-label={t("operations.routines.filterStatus")}>
+                  <span className="text-muted-foreground">{t("operations.common.status")}:</span>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

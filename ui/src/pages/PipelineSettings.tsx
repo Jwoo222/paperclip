@@ -99,6 +99,7 @@ import {
 } from "../lib/project-workspace-defaults";
 import { orderReusableExecutionWorkspaces } from "../lib/reusable-execution-workspaces";
 import { cn, relativeTime } from "../lib/utils";
+import { useTranslation } from "@/i18n";
 import { useProjectOrder } from "../hooks/useProjectOrder";
 import { Link, useNavigate, useParams, useSearchParams } from "@/lib/router";
 import { StageHealthWarnings } from "../components/PipelineHealthWarnings";
@@ -1273,6 +1274,7 @@ function StageEventsList({
 }
 
 export function PipelineSettings() {
+  const { t } = useTranslation();
   const { pipelineId } = useParams<{ pipelineId: string }>();
   const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
@@ -2119,11 +2121,11 @@ export function PipelineSettings() {
   };
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Hexagon} message="Select a company to edit pipeline settings." />;
+    return <EmptyState icon={Hexagon} message={t("operations.pipelineSettings.selectCompany")} />;
   }
 
   if (!pipelineId) {
-    return <EmptyState icon={Hexagon} message="No pipeline selected." />;
+    return <EmptyState icon={Hexagon} message={t("operations.pipelineSettings.noPipeline")} />;
   }
 
   if (pipelineQuery.isLoading) {
@@ -2135,7 +2137,7 @@ export function PipelineSettings() {
   }
 
   if (!pipeline) {
-    return <EmptyState icon={Hexagon} message="Pipeline not found." />;
+    return <EmptyState icon={Hexagon} message={t("operations.pipelineSettings.notFound")} />;
   }
 
   const isArchived = Boolean(pipeline.archivedAt);
