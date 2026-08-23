@@ -1,0 +1,35 @@
+{
+  "boardChat": {
+    "title": "Conference Room",
+    "typing": "typing",
+    "connecting": "Connecting...",
+    "thinking": "Thinking...",
+    "couldNotRespond": "The board assistant couldn't respond. Please try again.",
+    "unavailable": "The board assistant is unavailable right now. Please try again in a moment.",
+    "noCompany": "No company selected",
+    "selectCompany": "Select a company to start chatting with your board concierge.",
+    "yourCompany": "Your company",
+    "chatHistory": "chat history",
+    "newChat": "new chat",
+    "welcomeWithMission": "Welcome to **{{companyName}}**! I'm {{ceoName}}, your team lead. I've read through what you shared in the wizard — your mission is \"{{missionText}}\".\n\nHere are a few things I can help you put on paper right now. Pick one below and I'll draft it for you using everything you told us.",
+    "welcome": "Welcome to **{{companyName}}**! I'm {{ceoName}}, your team lead. I've read through what you shared in the wizard.\n\nHere are a few things I can help you put on paper right now. Pick one below and I'll draft it for you using everything you told us.",
+    "suggestions": {
+      "companyBrief": "Draft a Company Brief",
+      "hiringPlan": "Create a hiring plan",
+      "firstThirtyDays": "Outline our first 30 days",
+      "introPitch": "Write an intro pitch"
+    },
+    "prompts": {
+      "companyBrief": "Draft a one-page Company Brief for {{companyName}} — include our mission, team roster, and first priorities.",
+      "hiringPlan": "Create a hiring plan for {{companyName}}. List the next roles to hire, in priority order, with a short rationale for each.",
+      "firstThirtyDays": "Outline our first 30 days. Break it into weekly priorities with who owns what.",
+      "introPitch": "Write a short intro pitch for {{companyName}} that I could reuse for investors, customers, or recruits."
+    },
+    "assistant": "Assistant",
+    "jumpToLatest": "Jump to latest messages",
+    "placeholder": "Ask anything about your company...",
+    "send": "Send message",
+    "resize": "Resize board chat and agent feed",
+    "openAgentFeed": "Open agent feed"
+  }
+}
