@@ -568,9 +568,8 @@ function BindingApproveBody({
             aria-label={t("secretsSupport.alsoApproveProposedSecret")}
           />
           <span className="text-foreground/90">
-            {t("secretsSupport.alsoApproveProposedSecret")} {" "}
-            <span className="font-medium">{secret.name}</span> and create it in the same step. The
-            binding can’t land without it.
+                {t("secretsSupport.alsoApproveProposedSecret")} {" "}
+            <span className="font-medium">{secret.name}</span> {t("workResidualRound3.createSameStepBinding")}
           </span>
         </label>
       ) : null}
@@ -609,8 +608,7 @@ function RejectDialog({
             <DialogTitle>{t("secretsSupport.rejectProposal")}</DialogTitle>
               <DialogDescription>
                 {t("secretsSupport.rejectDescription")} {" "}
-                <AgentRefChip agent={proposal.proposedBy} className="text-foreground" />. Dependent
-                bindings are rejected too.
+                <AgentRefChip agent={proposal.proposedBy} className="text-foreground" /> {t("workResidualRound3.dependentBindingsRejected")}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-1">
@@ -670,7 +668,7 @@ export function ProposalActions({
       disabled={disabled || blocked}
       onClick={() => onApprove(proposal)}
     >
-      Approve
+      {t("workResidualRound3.approve")}
     </Button>
   );
   return (
@@ -696,7 +694,7 @@ export function ProposalActions({
         disabled={disabled}
         onClick={() => onReject(proposal)}
       >
-        Reject
+        {t("workResidualRound3.reject")}
       </Button>
     </div>
   );

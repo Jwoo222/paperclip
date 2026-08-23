@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { t } from "@/i18n";
 import { Apple, Monitor, Terminal } from "lucide-react";
 import {
   Dialog,
@@ -25,7 +26,7 @@ const instructions: Record<Platform, { steps: string[]; tip?: string }> = {
       "Hold the Option (⌥) key — \"Copy\" changes to \"Copy as Pathname\".",
       "Click \"Copy as Pathname\", then paste here.",
     ],
-    tip: "You can also open Terminal, type cd, drag the folder into the terminal window, and press Enter. Then type pwd to see the full path.",
+    tip: t("workResidualRound3.pathTipMac"),
   },
   windows: {
     steps: [
@@ -33,7 +34,7 @@ const instructions: Record<Platform, { steps: string[]; tip?: string }> = {
       "Click in the address bar at the top — the full path will appear.",
       "Copy the path, then paste here.",
     ],
-    tip: "Alternatively, hold Shift and right-click the folder, then select \"Copy as path\".",
+    tip: t("workResidualRound3.pathTipWindows"),
   },
   linux: {
     steps: [
@@ -41,7 +42,7 @@ const instructions: Record<Platform, { steps: string[]; tip?: string }> = {
       "Run pwd to print the full path.",
       "Copy the output and paste here.",
     ],
-    tip: "In most file managers, Ctrl+L reveals the full path in the address bar.",
+    tip: t("workResidualRound3.pathTipLinux"),
   },
 };
 
@@ -69,7 +70,7 @@ export function PathInstructionsModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-base">How to get a full path</DialogTitle>
+          <DialogTitle className="text-base">{t("workResidualRound3.fullPathTitle")}</DialogTitle>
           <DialogDescription>
             Paste the absolute path (e.g.{" "}
             <code className="text-xs bg-muted px-1 py-0.5 rounded">/Users/you/project</code>
@@ -135,7 +136,7 @@ export function ChoosePathButton({ className }: { className?: string }) {
         )}
         onClick={() => setOpen(true)}
       >
-        Choose
+        {t("workResidualRound3.choose")}
       </button>
       <PathInstructionsModal open={open} onOpenChange={setOpen} />
     </>

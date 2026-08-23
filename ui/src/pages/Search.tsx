@@ -55,7 +55,7 @@ import {
 } from "../lib/search-filters";
 import type { ReactNode } from "react";
 import type { Agent, IssueLabel, Project } from "@paperclipai/shared";
-import { useTranslation } from "../i18n";
+import { t, useTranslation } from "../i18n";
 
 const SEARCH_DEBOUNCE_MS = 250;
 const IDENTIFIER_PATTERN = /^[A-Z]+-\d+$/;
@@ -163,7 +163,7 @@ export function buildSearchUrl(
 }
 
 function shapeError(error: unknown): { message: string; status?: number } {
-  if (!error) return { message: "Unknown error" };
+  if (!error) return { message: t("workResidualRound3.unknownError") };
   if (error instanceof Error) {
     const status = (error as Error & { status?: number }).status;
     return { message: error.message, status: typeof status === "number" ? status : undefined };
@@ -912,19 +912,16 @@ function SearchTabContent({
         <div className="text-base font-semibold">
           {t("coreNavigation.search.noResults", { query: trimmedQuery, defaultValue: "No results for “{{query}}”" })}
         </div>
-        <p className="text-sm text-muted-foreground">
-          We couldn’t find a match in {describeScope(scope).toLowerCase()}. Try widening the scope or rephrasing your
-          query.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("workResidualRound3.noScopeMatch", { scope: t(`workResidualRound3.scope.${scope}`, { defaultValue: describeScope(scope) }).toLowerCase() })}</p>
         <div className="flex flex-wrap items-center justify-center gap-2">
           {scope !== "all" ? (
             <Button onClick={showAllScope} size="sm" variant="outline">
-              Search all scopes
+              {t("workResidualRound3.searchAllScopes")}
             </Button>
           ) : null}
           <Button onClick={openNewIssue} size="sm" variant="default">
             <Plus className="mr-1.5 h-4 w-4" />
-            Create task from this query
+            {t("workResidualRound3.createTaskFromQuery")}
           </Button>
           <Button onClick={navigateIssuesFallback} size="sm" variant="ghost">
             {t("coreNavigation.search.openTasks", { defaultValue: "Open Tasks filter view" })}
@@ -950,11 +947,11 @@ function SearchTabContent({
           {allMatchTotal > totalResults
             ? `${totalResults} of ${allMatchTotal} results`
             : totalResults === 1
-              ? "1 result"
-              : `${totalResults} results`}
-          {` · sorted by ${sortLabel}`}
+              ? t("workResidualRound3.resultsCountSingular")
+            : t("workResidualRound3.resultsCount", { count: totalResults, suffix: t("workResidualRound3.pluralSuffix") })}
+          {` · ${t("workResidualRound3.sortedBy", { sort: sortLabel })}`}
           {activeFilterCount > 0
-            ? ` · ${activeFilterCount} ${activeFilterCount === 1 ? "filter" : "filters"} active`
+            ? ` · ${t("workResidualRound3.activeFilters", { count: activeFilterCount, suffix: activeFilterCount === 1 ? "" : t("workResidualRound3.pluralSuffix") })}`
             : ""}
         </span>
         {isFetching ? <span aria-live="polite" className="normal-case tracking-normal">{t("coreNavigation.search.updating", { defaultValue: "Updating…" })}</span> : null}
@@ -964,11 +961,11 @@ function SearchTabContent({
           subgroups.map((group, groupIndex) => (
             <section
               key={group.key}
-              aria-label={SUBGROUP_LABELS[group.key]}
+              aria-label={t(`workResidualRound3.searchGroup.${group.key}`, { defaultValue: SUBGROUP_LABELS[group.key] })}
               className={cn("flex flex-col", groupIndex > 0 && "mt-6")}
             >
               <IssueGroupHeader
-                label={SUBGROUP_LABELS[group.key]}
+                label={t(`workResidualRound3.searchGroup.${group.key}`, { defaultValue: SUBGROUP_LABELS[group.key] })}
                 trailing={
                   <span className="text-xs font-normal tabular-nums text-muted-foreground">
                     {group.results.length}

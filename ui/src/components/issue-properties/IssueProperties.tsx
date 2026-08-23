@@ -62,7 +62,7 @@ import { IssuePropertiesPlansTab } from "./IssuePropertiesPlansTab";
 import { IssuePropertiesArtifactsTab } from "./IssuePropertiesArtifactsTab";
 import { User, ArrowUpRight, Plus, GitBranch, FolderOpen, HardDrive, Check, Clock, RotateCcw, Loader2, CheckCircle2, ArchiveRestore } from "lucide-react";
 import { AgentIcon } from "../AgentIconPicker";
-import { useTranslation } from "@/i18n";
+import { t as translate, useTranslation } from "@/i18n";
 import { InlineEntitySelector, type InlineEntityOption } from "../InlineEntitySelector";
 import {
   AssigneeRunningBanner,
@@ -116,14 +116,14 @@ function TruncatedCopyable({ value, icon: Icon }: { value: string; icon: Compone
         className="text-sm font-mono min-w-0 truncate text-left cursor-pointer hover:text-foreground transition-colors"
         onClick={handleCopy}
         title={value}
-        aria-label={`Copy ${value} to clipboard`}
+        aria-label={translate("workResidualRound3.copyToClipboard", { value })}
       >
         {value}
       </button>
       {copied && (
         <span className={cn("inline-flex items-center gap-1 text-xs shrink-0", issueStatusText.done)} role="status">
           <Check className="h-3 w-3 shrink-0" />
-          Copied
+          {translate("workResidualRound3.copied")}
         </span>
       )}
     </div>
@@ -633,10 +633,10 @@ export function IssueProperties({
           <p className="text-xs text-muted-foreground">
              {t("issueProperties.sends")} <code>modelProfile: "cheap"</code>{" "}
             {assigneeCheapProfile?.adapterConfig && typeof (assigneeCheapProfile.adapterConfig as Record<string, unknown>).model === "string"
-              ? <>· adapter default <code>{String((assigneeCheapProfile.adapterConfig as Record<string, unknown>).model)}</code></>
+              ? <>· {t("workResidualRound3.adapterDefault")} <code>{String((assigneeCheapProfile.adapterConfig as Record<string, unknown>).model)}</code></>
               : assigneeCheapProfile
-                ? <>· uses the agent&apos;s configured cheap profile</>
-                : <>· falls back to the primary model if no cheap profile is configured</>}
+                ? <>· {t("workResidualRound3.usesCheapProfile")}</>
+                : <>· {t("workResidualRound3.fallsBackPrimary")}</>}
           </p>
         ) : null}
         {assigneeOverrideLane === "custom" ? (
@@ -924,7 +924,7 @@ export function IssueProperties({
         </span>
       ) : null}
       {issue.watchdog.status === "disabled" ? (
-        <span className="shrink-0 text-xs text-muted-foreground">(disabled)</span>
+        <span className="shrink-0 text-xs text-muted-foreground">({t("workResidualRound3.disabled")})</span>
       ) : null}
     </span>
   ) : (
@@ -1335,7 +1335,7 @@ export function IssueProperties({
             disabled={!monitorAtInput}
             onClick={saveMonitor}
           >
-            Schedule
+            {t("workResidualRound3.schedule")}
           </button>
           {issue.executionPolicy?.monitor ? (
             <button
@@ -1343,7 +1343,7 @@ export function IssueProperties({
               className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
               onClick={clearMonitor}
             >
-              Clear
+              {t("issueProperties.clear")}
             </button>
           ) : null}
         </div>
@@ -1380,7 +1380,7 @@ export function IssueProperties({
       ))}
       {selectedIssueLabels.length > 3 && (
         <Badge variant="outline" className="border-border text-muted-foreground">
-          +{selectedIssueLabels.length - 3} more
+          {t("workResidualRound3.moreCount", { count: selectedIssueLabels.length - 3 })}
         </Badge>
       )}
     </div>
@@ -1396,7 +1396,7 @@ export function IssueProperties({
           title={t("issueProperties.addLabel")}
     >
       <Plus className="h-3 w-3" />
-      Add label
+      {t("issueProperties.addLabel")}
     </button>
   ) : undefined;
 
@@ -1656,7 +1656,7 @@ export function IssueProperties({
             onClick={() => toggleExecutionParticipant(stageType, `user:${currentUserId}`)}
           >
             <User className="h-3 w-3 shrink-0 text-muted-foreground" />
-            Assign to me
+            {t("issueProperties.assignToMe")}
           </button>
         )}
         {issue.createdByUserId && issue.createdByUserId !== currentUserId && (

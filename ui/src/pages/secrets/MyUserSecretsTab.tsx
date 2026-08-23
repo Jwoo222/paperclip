@@ -72,10 +72,10 @@ export function MyUserSecretsTab({ companyId }: { companyId: string }) {
       <div className="min-h-0 flex-1 overflow-y-auto">
         {mySecretsQuery.isError ? (
           <div className="flex items-center gap-2 py-4 text-sm text-destructive">
-            <AlertCircle className="h-4 w-4" /> Failed to load your secrets:{" "}
+            <AlertCircle className="h-4 w-4" /> {t("workResidualRound3.failedLoadSecrets")}{" "}
             {(mySecretsQuery.error as Error).message}
             <Button variant="ghost" size="sm" onClick={() => mySecretsQuery.refetch()}>
-              Retry
+              {t("workResidualRound3.retry")}
             </Button>
           </div>
         ) : entries.length === 0 && !mySecretsQuery.isPending ? (
