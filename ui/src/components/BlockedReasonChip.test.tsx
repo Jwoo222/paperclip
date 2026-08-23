@@ -4,13 +4,15 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { BlockedReasonChip } from "./BlockedReasonChip";
+import { i18n, t } from "@/i18n";
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe("BlockedReasonChip", () => {
   let container: HTMLDivElement;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18n.changeLanguage("en");
     container = document.createElement("div");
     document.body.appendChild(container);
   });
@@ -30,8 +32,12 @@ describe("BlockedReasonChip", () => {
     expect(chip).not.toBeNull();
     expect(chip?.getAttribute("data-variant")).toBe("needs_decision");
     expect(chip?.getAttribute("data-severity")).toBe("high");
-    expect(chip?.getAttribute("aria-label")).toBe("Reason: Needs decision, severity high");
-    expect(chip?.textContent).toContain("Needs decision");
+    const reason = t("coreNavigation.inbox.blockedReason.needs_decision");
+    expect(chip?.getAttribute("aria-label")).toBe(t("coreNavigation.inbox.reasonSeverity", {
+      reason,
+      severity: t("coreNavigation.inbox.severity.high"),
+    }));
+    expect(chip?.textContent).toContain(reason);
     act(() => {
       root.unmount();
     });

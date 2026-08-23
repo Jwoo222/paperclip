@@ -41,6 +41,7 @@ function act(callback: () => void | Promise<void>) {
 
 import { BlockedInboxView } from "./BlockedInboxView";
 import { defaultIssueFilterState } from "../lib/issue-filters";
+import { i18n, t } from "@/i18n";
 
 function attention(
   overrides: Partial<IssueBlockedInboxAttention> = {},
@@ -149,7 +150,8 @@ async function waitFor(predicate: () => boolean, attempts = 30): Promise<void> {
 describe("BlockedInboxView", () => {
   let container: HTMLDivElement;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18n.changeLanguage("en");
     container = document.createElement("div");
     document.body.appendChild(container);
     mockIssuesApi.list.mockReset();
@@ -265,10 +267,12 @@ describe("BlockedInboxView", () => {
 
     const rowText = container.querySelector("a")?.parentElement?.textContent ?? "";
     expect(rowText.indexOf("Pending board decision")).toBeGreaterThanOrEqual(0);
-    expect(rowText.indexOf("Needs decision")).toBeGreaterThan(rowText.indexOf("Pending board decision"));
-    expect(rowText.indexOf("Board")).toBeGreaterThan(rowText.indexOf("Needs decision"));
+    const needsDecision = t("coreNavigation.inbox.blockedReason.needs_decision");
+    expect(rowText.indexOf(needsDecision)).toBeGreaterThan(rowText.indexOf("Pending board decision"));
+    expect(rowText.indexOf("Board")).toBeGreaterThan(rowText.indexOf(needsDecision));
     expect(rowText).not.toContain("Accept or reject");
-    expect(container.querySelector('[data-testid="blocked-row-reason-column"]')?.textContent).toContain("Needs decision");
+    expect(container.querySelector('[data-testid="blocked-row-reason-column"]')?.textContent)
+      .toContain(t("coreNavigation.inbox.blockedReason.needs_decision"));
 
     act(() => root.unmount());
   });
@@ -360,7 +364,7 @@ describe("BlockedInboxView", () => {
     const banner = container.querySelector('[data-testid="blocked-inbox-error"]');
     expect(banner).not.toBeNull();
     expect(banner?.getAttribute("role")).toBe("alert");
-    expect(banner?.textContent).toContain("Couldn't load the Blocked tab");
+    expect(banner?.textContent).toContain(t("coreNavigation.inbox.blockedLoadFailed"));
 
     act(() => root.unmount());
   });

@@ -11,6 +11,7 @@ import {
   clearLocalInboxArchive,
   getLocalInboxArchiveIssueIds,
 } from "../lib/inboxArchiveCache";
+import { i18n, t } from "@/i18n";
 
 const routerMock = vi.hoisted(() => ({
   location: { pathname: "/", search: "", hash: "" },
@@ -300,7 +301,8 @@ function resetInboxApiMocks() {
 describe("Inbox toolbar", () => {
   let container: HTMLDivElement;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18n.changeLanguage("en");
     resetInboxApiMocks();
     container = document.createElement("div");
     document.body.appendChild(container);
@@ -360,14 +362,14 @@ describe("Inbox toolbar", () => {
       );
     });
 
-    expect(container.querySelector('input[placeholder="Search inbox…"]')).not.toBeNull();
+    expect(container.querySelector(`input[placeholder="${t("coreNavigation.inbox.search")}"]`)).not.toBeNull();
     expect(container.querySelector('[data-testid="inbox-blocked-tab-badge"]')).toBeNull();
     expect(container.querySelector('button[title="Filter"]')).not.toBeNull();
-    expect(container.querySelector('button[title="Group"]')).not.toBeNull();
+    expect(container.querySelector(`button[title="${t("coreNavigation.inbox.group")}"]`)).not.toBeNull();
     expect(container.querySelector('button[title="Columns"]')).not.toBeNull();
-    expect(container.querySelector('button[title="Sort"]')).not.toBeNull();
-    expect(container.querySelector('button[title="Enable parent-child nesting"]')).toBeNull();
-    expect(container.textContent).not.toContain("Mark all as read");
+    expect(container.querySelector(`button[title="${t("coreNavigation.inbox.sort")}"]`)).not.toBeNull();
+    expect(container.querySelector(`button[title="${t("coreNavigation.inbox.enableNesting")}"]`)).toBeNull();
+    expect(container.textContent).not.toContain(t("coreNavigation.inbox.markAllRead"));
 
     act(() => {
       root.unmount();
@@ -391,7 +393,7 @@ describe("Inbox toolbar", () => {
       );
     });
 
-    const groupButton = container.querySelector<HTMLButtonElement>('button[title="Group"]');
+    const groupButton = container.querySelector<HTMLButtonElement>(`button[title="${t("coreNavigation.inbox.group")}"]`);
     expect(groupButton).not.toBeNull();
 
     await act(async () => {
@@ -531,7 +533,7 @@ describe("Inbox toolbar", () => {
 
     const rows = Array.from(container.querySelectorAll("[data-inbox-item]"));
     const rowFor = (text: string) => rows.find((row) => row.textContent?.includes(text));
-    const markReadButton = (row: Element) => row.querySelector('button[aria-label="Mark as read"]');
+    const markReadButton = (row: Element) => row.querySelector(`button[aria-label="${t("coreNavigation.inbox.markRead")}"]`);
     // The empty spacer that reserves the chevron column on every leaf row.
     // Excludes the tree-guide span (`.self-stretch`), which only renders on
     // nested rows.
@@ -557,7 +559,7 @@ describe("Inbox toolbar", () => {
     expect(unreadSlot?.className).not.toContain("absolute");
     // Only the unread row carries the dot button; the read slot is empty.
     expect(markReadButton(unreadSlot!)).not.toBeNull();
-    expect(readSlot?.querySelector('button[aria-label="Mark as read"]')).toBeNull();
+    expect(readSlot?.querySelector(`button[aria-label="${t("coreNavigation.inbox.markRead")}"]`)).toBeNull();
     expect(hasLeadingSpacer(unreadRow)).toBe(true);
 
     // Read rows keep the same spacer, so both rows line up.
@@ -764,7 +766,7 @@ describe("Inbox toolbar", () => {
     });
 
     const initialArchiveButtons = Array.from(
-      container.querySelectorAll<HTMLButtonElement>('button[aria-label="Archive"]'),
+      container.querySelectorAll<HTMLButtonElement>(`button[aria-label="${t("coreNavigation.inbox.archive")}"]`),
     );
     expect(initialArchiveButtons.length).toBeGreaterThanOrEqual(2);
 
@@ -779,7 +781,7 @@ describe("Inbox toolbar", () => {
     });
 
     const remainingArchiveButton = container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Archive"]',
+      `button[aria-label="${t("coreNavigation.inbox.archive")}"]`,
     );
     expect(remainingArchiveButton).not.toBeNull();
     expect(remainingArchiveButton?.disabled).toBe(false);
@@ -826,7 +828,7 @@ describe("Inbox toolbar", () => {
       expect(container.textContent).toContain("Archived inbox row");
     });
 
-    const archiveButton = container.querySelector<HTMLButtonElement>('button[aria-label="Archive"]');
+    const archiveButton = container.querySelector<HTMLButtonElement>(`button[aria-label="${t("coreNavigation.inbox.archive")}"]`);
     expect(archiveButton).not.toBeNull();
 
     await act(async () => {
@@ -878,7 +880,7 @@ describe("Inbox toolbar", () => {
         expect(container.textContent).toContain("Undoable inbox row");
       });
 
-      const archiveButton = container.querySelector<HTMLButtonElement>('button[aria-label="Archive"]');
+      const archiveButton = container.querySelector<HTMLButtonElement>(`button[aria-label="${t("coreNavigation.inbox.archive")}"]`);
       expect(archiveButton).not.toBeNull();
       await act(async () => {
         archiveButton!.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));

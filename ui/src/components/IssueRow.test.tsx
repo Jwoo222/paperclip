@@ -7,6 +7,7 @@ import type { Issue } from "@paperclipai/shared";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { IssueRow } from "./IssueRow";
 import { StatusIcon } from "./StatusIcon";
+import { i18n, t } from "@/i18n";
 
 vi.mock("@/lib/router", () => ({
   Link: ({
@@ -88,7 +89,8 @@ function createIssue(overrides: Partial<Issue> = {}): Issue {
 describe("IssueRow", () => {
   let container: HTMLDivElement;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18n.changeLanguage("en");
     container = document.createElement("div");
     document.body.appendChild(container);
   });
@@ -174,7 +176,7 @@ describe("IssueRow", () => {
       root.render(<IssueRow issue={createIssue()} selected unreadState="visible" />);
     });
 
-    const markReadButton = container.querySelector('button[aria-label="Mark as read"]');
+    const markReadButton = container.querySelector(`button[aria-label="${t("coreNavigation.inbox.markRead")}"]`);
     const unreadDot = markReadButton?.querySelector("span");
     // Selected rows neutralize the status glyph to muted via `!`-important
     // utilities, which override the glyph's inline colour var. The glyph is an
@@ -212,7 +214,7 @@ describe("IssueRow", () => {
     // In flow, not an absolute overlay.
     expect(slot?.className).not.toContain("absolute");
     // Read rows carry no dot button in the slot.
-    expect(slot?.querySelector('button[aria-label="Mark as read"]')).toBeNull();
+    expect(slot?.querySelector(`button[aria-label="${t("coreNavigation.inbox.markRead")}"]`)).toBeNull();
 
     act(() => {
       root.unmount();
@@ -229,12 +231,12 @@ describe("IssueRow", () => {
     // any leading control such as a parent's collapse caret).
     const slot = container.querySelector('[data-testid="issue-row-unread-slot"]');
     expect(slot).not.toBeNull();
-    expect(slot?.querySelector('button[aria-label="Mark as read"]')).not.toBeNull();
+    expect(slot?.querySelector(`button[aria-label="${t("coreNavigation.inbox.markRead")}"]`)).not.toBeNull();
 
     // Mobile: all inbox rows reserve a gutter and the dot stays fully inside
     // it, so the control cannot be clipped or indent the status/title.
     const mobileDot = container
-      .querySelector('button[aria-label="Mark as read"].sm\\:hidden, span.sm\\:hidden button[aria-label="Mark as read"]')
+      .querySelector(`button[aria-label="${t("coreNavigation.inbox.markRead")}"].sm\\:hidden, span.sm\\:hidden button[aria-label="${t("coreNavigation.inbox.markRead")}"]`)
       ?.closest("span.sm\\:hidden");
     expect(mobileDot).not.toBeNull();
     expect(mobileDot?.className).toContain("absolute");
@@ -429,7 +431,7 @@ describe("IssueRow", () => {
 
     const badges = container.querySelectorAll('[data-testid="issue-row-parked-blocker"]');
     expect(badges.length).toBeGreaterThan(0);
-    expect(badges[0]?.textContent).toContain("Blocked by parked work");
+    expect(badges[0]?.textContent).toContain(t("coreNavigation.inbox.blockedByParkedWork"));
 
     act(() => {
       root.unmount();

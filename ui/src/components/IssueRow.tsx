@@ -11,15 +11,21 @@ import { cn } from "../lib/utils";
 import {
   deriveActiveRecoveryDisplayState,
   RECOVERY_CHIP_DEFAULT_TONE,
-  recoveryChipLabel,
 } from "../lib/recovery-display";
 import { StatusIcon } from "./StatusIcon";
-import { productivityReviewTriggerLabel } from "./ProductivityReviewBadge";
 import { hasAssignedBacklogBlocker } from "../lib/issue-blockers";
 import { ExternalObjectStatusSummary } from "./ExternalObjectStatusSummary";
 import { Badge } from "@/components/ui/badge";
+import { t as translate, useTranslation } from "@/i18n";
 
 type UnreadState = "hidden" | "visible" | "fading";
+
+function localizedProductivityReviewTriggerLabel(trigger: string | null | undefined): string {
+  if (trigger === "no_comment_streak") return translate("coreNavigation.inbox.productivityTriggerNoComment");
+  if (trigger === "long_active_duration") return translate("coreNavigation.inbox.productivityTriggerLongActive");
+  if (trigger === "high_churn") return translate("coreNavigation.inbox.productivityTriggerHighChurn");
+  return translate("coreNavigation.inbox.productivityReviewGeneric");
+}
 
 interface IssueRowProps {
   issue: Issue;
@@ -88,6 +94,7 @@ export function IssueRow({
   chevronInGuide = false,
   showDivider = false,
 }: IssueRowProps) {
+  const { t } = useTranslation();
   const issuePathId = issue.identifier ?? issue.id;
   const identifier = issue.identifier ?? issue.id.slice(0, 8);
   // A row participates in the unread system whenever `unreadState` is supplied
@@ -116,7 +123,7 @@ export function IssueRow({
         "inline-flex h-4 w-4 items-center justify-center rounded-full transition-colors",
         selected ? "hover:bg-muted/80" : "hover:bg-blue-500/20",
       )}
-      aria-label="Mark as read"
+      aria-label={t("coreNavigation.inbox.markRead")}
     >
       <span
         className={cn(
@@ -136,8 +143,10 @@ export function IssueRow({
         "inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-300",
         selected ? "border-muted-foreground text-muted-foreground" : null,
       )}
-      title={`Productivity review: ${productivityReviewTriggerLabel(productivityReview.trigger)}`}
-      aria-label="Productivity review open"
+      title={t("coreNavigation.inbox.productivityReview", {
+        trigger: localizedProductivityReviewTriggerLabel(productivityReview.trigger),
+      })}
+      aria-label={t("coreNavigation.inbox.productivityReviewOpen")}
     >
       <Eye className="h-2.5 w-2.5" aria-hidden />
     </span>
@@ -154,10 +163,10 @@ export function IssueRow({
     <Badge variant="outline"
       data-testid="issue-row-parked-blocker"
       className="[&>svg]:size-2.5 ml-1.5 gap-0.5 border-amber-500/60 bg-amber-500/15 text-(length:--text-nano) text-amber-700 dark:text-amber-300"
-      title="Blocked by parked work — at least one assigned blocker is in backlog and will not wake its assignee."
+      title={t("coreNavigation.inbox.parkedWorkDescription")}
     >
       <Flag className="h-2.5 w-2.5" aria-hidden />
-      Blocked by parked work
+      {t("coreNavigation.inbox.blockedByParkedWork")}
     </Badge>
   ) : null;
 
@@ -196,7 +205,7 @@ export function IssueRow({
           "absolute inset-0 rounded-lg no-underline text-inherit focus-visible:z-10 focus-visible:outline-none focus-visible:ring-(length:--rad-3) focus-visible:ring-ring",
         )}
       >
-        <span className="sr-only">Open {identifier}: {issue.title}</span>
+        <span className="sr-only">{t("coreNavigation.inbox.openTask", { identifier, title: issue.title })}</span>
       </Link>
       <span className="flex shrink-0 items-center gap-1 pt-px sm:hidden">
         {mobileLeading ?? <StatusIcon status={issue.status} blockerAttention={issue.blockerAttention} size="md" className={selectedStatusClass} />}
@@ -308,10 +317,10 @@ export function IssueRow({
               }}
               disabled={archiveDisabled}
               className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100 disabled:pointer-events-none disabled:opacity-30"
-              aria-label="Archive"
+              aria-label={t("coreNavigation.inbox.archive")}
             >
               <Archive className="h-3.5 w-3.5" />
-              Archive
+              {t("coreNavigation.inbox.archive")}
             </button>
           ) : null}
           {externalObjectSummary ? (
@@ -340,7 +349,15 @@ function renderRecoveryChip(action: IssueRecoveryAction, selected: boolean): Rea
   if (!state) return null;
   const tone = RECOVERY_CHIP_DEFAULT_TONE[state];
   const Icon = tone.icon;
-  const label = recoveryChipLabel(state, action.kind);
+  const label = action.kind === "workspace_validation" && state === "needed"
+    ? translate("coreNavigation.inbox.workspaceRecoveryNeeded")
+    : state === "needed"
+      ? translate("coreNavigation.inbox.recoveryNeeded")
+      : state === "in_progress"
+        ? translate("coreNavigation.inbox.recoveryInProgress")
+        : state === "observe_only"
+          ? translate("coreNavigation.inbox.observingActiveRun")
+          : translate("coreNavigation.inbox.recoveryEscalated");
   return (
     <Badge variant="outline"
       data-testid="issue-row-recovery-indicator"
@@ -353,7 +370,7 @@ function renderRecoveryChip(action: IssueRecoveryAction, selected: boolean): Rea
         tone.className,
         selected ? "!border-muted-foreground !text-muted-foreground" : null,
       )}
-      title={`${label} — open the source task to act.`}
+      title={translate("coreNavigation.inbox.openSourceTaskToAct", { label })}
     >
       <Icon className="h-2.5 w-2.5" aria-hidden />
       {label}

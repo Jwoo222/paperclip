@@ -4,13 +4,16 @@ import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { useState, type AnchorHTMLAttributes, type ReactElement } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AttentionItem, AttentionSourceKind } from "@paperclipai/shared";
 import { approvalsApi } from "../api/approvals";
+import { accessApi } from "../api/access";
 import { issuesApi } from "../api/issues";
+import { relativeTime } from "../lib/utils";
 import { ToastViewport } from "./ToastViewport";
 import { ToastProvider } from "../context/ToastContext";
 import { AttentionQueueRow } from "./AttentionQueueRow";
+import { i18n, t } from "@/i18n";
 
 vi.mock("@/lib/router", () => ({
   Link: ({ children, to, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { to: string }) => (
@@ -23,6 +26,13 @@ vi.mock("../api/approvals", () => ({
     approve: vi.fn(),
     reject: vi.fn(),
     requestRevision: vi.fn(),
+  },
+}));
+
+vi.mock("../api/access", () => ({
+  accessApi: {
+    approveJoinRequest: vi.fn(),
+    rejectJoinRequest: vi.fn(),
   },
 }));
 
@@ -54,6 +64,10 @@ function act<T>(cb: () => T): T {
 
 let root: ReturnType<typeof createRoot> | null = null;
 let container: HTMLDivElement | null = null;
+
+beforeEach(async () => {
+  await i18n.changeLanguage("en");
+});
 
 afterEach(() => {
   if (root) act(() => root?.unmount());
@@ -143,11 +157,11 @@ describe("AttentionQueueRow", () => {
         onDismiss={noop}
       />,
     );
-    expect(el.textContent).toContain("Approve");
-    expect(el.textContent).toContain("Request revision");
-    expect(el.textContent).toContain("Reject");
+    expect(el.textContent).toContain(t("coreNavigation.inbox.approve"));
+    expect(el.textContent).toContain(t("coreNavigation.inbox.requestRevision"));
+    expect(el.textContent).toContain(t("coreNavigation.inbox.reject"));
     // Inline rows show an expand chevron, not an "Open" deep-link.
-    expect(el.textContent).not.toContain("Open");
+    expect(el.textContent).not.toContain(t("coreNavigation.inbox.open"));
   });
 
   it("inlines a stalled review with the three review verbs (PAP-16080 §4.4)", () => {
@@ -174,7 +188,7 @@ describe("AttentionQueueRow", () => {
       />,
     );
     // Inline rows resolve in place, not via an "Open" deep-link.
-    expect(el.textContent).not.toContain("Open");
+    expect(el.textContent).not.toContain(t("coreNavigation.inbox.open"));
     expect(el.textContent).toContain("Approve");
     expect(el.textContent).toContain("Request changes");
     expect(el.textContent).toContain("Send back to work");
@@ -203,7 +217,7 @@ describe("AttentionQueueRow", () => {
         onDismiss={noop}
       />,
     );
-    expect(el.textContent).toContain("Open");
+    expect(el.textContent).toContain(t("coreNavigation.inbox.open"));
     expect(el.textContent).not.toContain("Send back to work");
   });
 
@@ -222,7 +236,7 @@ describe("AttentionQueueRow", () => {
     // The dropdown trigger + item live in a portal; invoke the handler contract
     // directly via the rendered menu after opening is environment-flaky in
     // jsdom, so assert the wiring by locating the trigger exists.
-    const trigger = container?.querySelector('[aria-label="Row actions"]');
+    const trigger = container?.querySelector(`[aria-label="${t("coreNavigation.inbox.rowActions")}"]`);
     expect(trigger).toBeTruthy();
   });
 
@@ -258,7 +272,7 @@ describe("AttentionQueueRow", () => {
       />,
     );
 
-    const chevronButton = container?.querySelector('button[aria-label="Expand decision"]');
+    const chevronButton = container?.querySelector(`button[aria-label="${t("coreNavigation.inbox.expandDecision")}"]`);
     expect(chevronButton).toBeTruthy();
     expect(chevronButton?.getAttribute("aria-expanded")).toBe("false");
     act(() => chevronButton?.dispatchEvent(new MouseEvent("click", { bubbles: true })));
@@ -384,7 +398,7 @@ describe("AttentionQueueRow", () => {
       />,
     );
 
-    const menu = container?.querySelector('[aria-label="Row actions"]');
+    const menu = container?.querySelector(`[aria-label="${t("coreNavigation.inbox.rowActions")}"]`);
     const menuArea = menu?.closest('[data-attention-menu="true"]');
     expect(menuArea?.textContent).not.toBe("");
     expect(container?.querySelector("svg.lucide-clock")).toBeNull();
@@ -430,7 +444,7 @@ describe("AttentionQueueRow", () => {
     expect(header?.textContent).not.toContain("Approve");
     expect(header?.textContent).not.toContain("Reject");
 
-    const decisionActions = container?.querySelector('[aria-label="Decision actions"]');
+    const decisionActions = container?.querySelector(`[aria-label="${t("coreNavigation.inbox.decisionActions")}"]`);
     expect(decisionActions?.textContent).toContain("Approve");
     expect(decisionActions?.textContent).toContain("Reject");
 
@@ -441,7 +455,7 @@ describe("AttentionQueueRow", () => {
     expect(actionArea?.getAttribute("class")).toContain("justify-between");
     expect(decisionActions?.parentElement?.getAttribute("class")).toContain("@xl:justify-end");
 
-    const rowMenu = container?.querySelector('[aria-label="Row actions"]');
+    const rowMenu = container?.querySelector(`[aria-label="${t("coreNavigation.inbox.rowActions")}"]`);
     expect(rowMenu?.closest('[data-attention-menu="true"]')).toBeTruthy();
     expect(rowMenu?.closest('[data-attention-actions="true"]')).toBeNull();
 
@@ -477,7 +491,71 @@ describe("AttentionQueueRow", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(approvalsApi.approve).toHaveBeenCalledWith("approval-1");
     expect(onToggleExpand).not.toHaveBeenCalled();
-    expect(container?.textContent).toContain("Approval approved");
+    expect(container?.textContent).toContain(t("coreNavigation.inbox.approvalDecisionResult", {
+      result: t("coreNavigation.inbox.decisionApproved"),
+    }));
+  });
+
+  it("renders a localized compact-decision failure message", async () => {
+    vi.mocked(approvalsApi.reject).mockRejectedValue(new Error("Server unavailable"));
+    render(
+      <AttentionQueueRow
+        item={buildItem({
+          decisionVerbs: [{ id: "reject", label: "Reject", description: null }],
+        })}
+        companyId="c1"
+        expanded={false}
+        onToggleExpand={noop}
+        onDismiss={noop}
+      />,
+    );
+
+    const reject = Array.from(container?.querySelectorAll("button") ?? []).find(
+      (button) => button.textContent === "Reject",
+    );
+    act(() => reject?.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(container?.textContent).toContain(t("coreNavigation.inbox.couldNotDecision", {
+      action: t("coreNavigation.inbox.decisionReject"),
+    }));
+  });
+
+  it("renders a localized join-request decision result", async () => {
+    vi.mocked(accessApi.approveJoinRequest).mockResolvedValue({} as never);
+    render(
+      <AttentionQueueRow
+        item={buildItem({
+          sourceKind: "join_request",
+          subject: {
+            kind: "join_request",
+            id: "join-1",
+            companyId: "c1",
+            title: "Join request",
+            identifier: null,
+            status: "pending",
+            href: null,
+            metadata: {},
+          },
+          decisionVerbs: [{ id: "approve", label: "Approve", description: null }],
+        })}
+        companyId="c1"
+        expanded={false}
+        onToggleExpand={noop}
+        onDismiss={noop}
+      />,
+    );
+
+    const approve = Array.from(container?.querySelectorAll("button") ?? []).find(
+      (button) => button.textContent === "Approve",
+    );
+    act(() => approve?.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(accessApi.approveJoinRequest).toHaveBeenCalledWith("c1", "join-1");
+    expect(container?.textContent).toContain(t("coreNavigation.inbox.joinRequestDecisionResult", {
+      result: t("coreNavigation.inbox.decisionApproved"),
+    }));
   });
 
   it("renders configured confirmation labels and accepts from the compact action area", async () => {
@@ -509,7 +587,7 @@ describe("AttentionQueueRow", () => {
       />,
     );
 
-    const decisionActions = container?.querySelector('[aria-label="Decision actions"]');
+    const decisionActions = container?.querySelector(`[aria-label="${t("coreNavigation.inbox.decisionActions")}"]`);
     expect(decisionActions?.textContent).toContain("Approve plan");
     expect(decisionActions?.textContent).toContain("Request changes");
     expect(Array.from(decisionActions?.querySelectorAll("button") ?? []).find((button) => button.textContent === "Approve plan")?.getAttribute("data-variant")).toBe("default");
@@ -697,7 +775,7 @@ describe("AttentionQueueRow", () => {
     expect(gallery?.querySelectorAll("img")).toHaveLength(3);
     // "n more" link points at the related issue (5 images − 3 shown = 2 more).
     const moreLink = Array.from(gallery?.querySelectorAll("a") ?? []).find((a) =>
-      a.textContent?.includes("2 more"),
+      a.textContent?.includes(`2 ${t("coreNavigation.inbox.more")}`),
     );
     expect(moreLink).toBeDefined();
     expect(moreLink?.getAttribute("href")).toBe("/PAP/issues/PAP-42");
@@ -738,7 +816,7 @@ describe("AttentionQueueRow", () => {
     );
 
     const gallery = container?.querySelector('[data-attention-expanded-images="true"]');
-    expect(gallery?.textContent).toContain("1 more");
+    expect(gallery?.textContent).toContain(`1 ${t("coreNavigation.inbox.more")}`);
     expect(gallery?.querySelectorAll("a")).toHaveLength(0);
   });
 
@@ -778,10 +856,10 @@ describe("AttentionQueueRow", () => {
         onTrain={onTrain}
       />,
     );
-    expect(container?.querySelector('[aria-label="Row actions"]')).toBeTruthy();
+    expect(container?.querySelector(`[aria-label="${t("coreNavigation.inbox.rowActions")}"]`)).toBeTruthy();
     expect(container?.querySelector('[data-testid="attention-trained-badge"]')).toBeNull();
     const trainPill = container?.querySelector('[data-testid="attention-train-inline"]');
-    expect(trainPill?.textContent).toContain("Train");
+    expect(trainPill?.textContent).toContain(t("coreNavigation.inbox.train"));
     act(() => trainPill?.dispatchEvent(new MouseEvent("click", { bubbles: true })));
     expect(onTrain).toHaveBeenCalledWith(expect.objectContaining({ id: "a1" }));
   });
@@ -814,7 +892,7 @@ describe("AttentionQueueRow", () => {
       />,
     );
     const badge = container?.querySelector('[data-testid="attention-trained-badge"]');
-    expect(badge?.textContent).toContain("Trained");
+    expect(badge?.textContent).toContain(t("coreNavigation.inbox.trained"));
     act(() => badge?.dispatchEvent(new MouseEvent("click", { bubbles: true })));
     expect(onTrain).toHaveBeenCalledWith(expect.objectContaining({ id: "a1" }));
   });
@@ -831,5 +909,66 @@ describe("AttentionQueueRow", () => {
       />,
     );
     expect(container?.querySelector('[data-testid="attention-train-button"]')).toBeNull();
+  });
+
+  it("renders Korean training and reappearance labels from the catalog", async () => {
+    await i18n.changeLanguage("ko");
+    const activityAt = new Date().toISOString();
+    const snoozedUntil = "2026-08-25T09:00:00.000Z";
+    render(
+      <>
+        <AttentionQueueRow
+          item={trainableItem({ activityAt, decideBy: "this_week" })}
+          companyId="c1"
+          expanded={false}
+          onToggleExpand={noop}
+          onDismiss={noop}
+          onTrain={noop}
+        />
+        <AttentionQueueRow
+          item={buildItem({
+            dismissal: {
+              kind: "snooze",
+              dismissedAt: "2026-08-23T09:00:00.000Z",
+              snoozedUntil,
+              isActive: true,
+            },
+          })}
+          companyId="c1"
+          expanded={false}
+          onToggleExpand={noop}
+          onDismiss={noop}
+          onRestore={noop}
+          variant="hidden"
+        />
+        <AttentionQueueRow
+          item={buildItem({
+            sourceKind: "failed_run",
+            inlineResolvable: false,
+            detail: {
+              kind: "questions",
+              questionCount: 2,
+              firstQuestionText: "Which auth provider?",
+              images: [],
+            },
+          })}
+          companyId="c1"
+          expanded={false}
+          onToggleExpand={noop}
+          onDismiss={noop}
+        />
+      </>,
+    );
+
+    expect(container?.querySelector('[data-testid="attention-train-inline"]')?.textContent)
+      .toContain(t("coreNavigation.inbox.train"));
+    expect(container?.textContent).toContain(t("coreNavigation.inbox.attentionSource.decisionRequested"));
+    expect(container?.textContent).toContain(t("coreNavigation.inbox.decideByThisWeek"));
+    expect(container?.textContent).toContain(t("coreNavigation.inbox.attentionDetail.questionsMany", { count: 2 }));
+    expect(container?.textContent).toContain(relativeTime(activityAt, i18n.resolvedLanguage ?? i18n.language));
+    const reappearsTitle = t("coreNavigation.inbox.reappears", {
+      time: new Date(snoozedUntil).toLocaleString(i18n.resolvedLanguage ?? i18n.language),
+    });
+    expect(container?.querySelector(`[title="${reappearsTitle}"]`)).not.toBeNull();
   });
 });
