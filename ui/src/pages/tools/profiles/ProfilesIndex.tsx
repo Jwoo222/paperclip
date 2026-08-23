@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArchiveRestore, MoreHorizontal, Plus, ShieldCheck, Users } from "lucide-react";
 import type { ToolProfileWithDetails } from "@paperclipai/shared";
 import { useNavigate } from "@/lib/router";
+import { useTranslation } from "@/i18n";
 import { toolsApi } from "@/api/tools";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,7 @@ export function ProfilesIndex({
   initialStatusFilter?: "active" | "archived";
   initialResolverOpen?: boolean;
 }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -81,45 +83,45 @@ export function ProfilesIndex({
     mutationFn: (profile: ToolProfileWithDetails) =>
       toolsApi.duplicateProfile(profile.id, { name: `${profile.name} (copy)` }),
     onSuccess: () => {
-      pushToast({ title: "Profile duplicated", body: "The copy is not assigned to anyone yet.", tone: "success" });
+      pushToast({ title: t("toolsAdvanced.residual.profileDuplicated"), body: t("toolsAdvanced.residual.copyUnassigned"), tone: "success" });
       invalidate();
     },
     onError: (error: unknown) =>
-      pushToast({ title: "Could not duplicate", body: errorBody(error), tone: "error" }),
+      pushToast({ title: t("toolsAdvanced.residual.duplicateFailed"), body: errorBody(error), tone: "error" }),
   });
 
   const archive = useMutation({
     mutationFn: (profile: ToolProfileWithDetails) =>
       toolsApi.updateProfile(profile.id, { status: "archived" }),
     onSuccess: () => {
-      pushToast({ title: "Profile archived", tone: "success" });
+      pushToast({ title: t("toolsAdvanced.residual.profileArchived"), tone: "success" });
       invalidate();
     },
-    onError: (error: unknown) => pushToast({ title: "Could not archive", body: errorBody(error), tone: "error" }),
+    onError: (error: unknown) => pushToast({ title: t("toolsAdvanced.residual.archiveFailed"), body: errorBody(error), tone: "error" }),
   });
 
   const restore = useMutation({
     mutationFn: (profile: ToolProfileWithDetails) =>
       toolsApi.updateProfile(profile.id, { status: "active" }),
     onSuccess: () => {
-      pushToast({ title: "Profile restored", tone: "success" });
+      pushToast({ title: t("toolsAdvanced.residual.profileRestored"), tone: "success" });
       invalidate();
     },
-    onError: (error: unknown) => pushToast({ title: "Could not restore", body: errorBody(error), tone: "error" }),
+    onError: (error: unknown) => pushToast({ title: t("toolsAdvanced.residual.restoreFailed"), body: errorBody(error), tone: "error" }),
   });
 
   const remove = useMutation({
     mutationFn: (profile: ToolProfileWithDetails) => toolsApi.deleteProfile(profile.id),
     onSuccess: () => {
-      pushToast({ title: "Profile deleted", tone: "success" });
+      pushToast({ title: t("toolsAdvanced.residual.profileDeleted"), tone: "success" });
       invalidate();
     },
-    onError: (error: unknown) => pushToast({ title: "Could not delete", body: errorBody(error), tone: "error" }),
+    onError: (error: unknown) => pushToast({ title: t("toolsAdvanced.residual.deleteFailed"), body: errorBody(error), tone: "error" }),
   });
 
   const header = (
     <ToolsPageHeader
-      title="Access profiles"
+        title={t("toolsAdvanced.profiles.title")}
       description="Decide which tools your agents can use. Build a profile once, then assign it to the agents that need it."
       actions={
         <>
@@ -140,7 +142,7 @@ export function ProfilesIndex({
     <Sheet open={resolverOpen} onOpenChange={setResolverOpen}>
       <SheetContent className="w-full gap-0 p-0 sm:max-w-xl">
         <SheetHeader className="border-b border-border">
-          <SheetTitle>Check an agent's access</SheetTitle>
+          <SheetTitle>{t("toolsAdvanced.profileExtra.checkAgentAccess")}</SheetTitle>
           <SheetDescription>
             See exactly which tools an agent can use right now, and which profile allows each one.
           </SheetDescription>
@@ -156,7 +158,7 @@ export function ProfilesIndex({
     return (
       <div className="space-y-5">
         {header}
-        <LoadingState label="Loading profiles…" />
+        <LoadingState label={t("toolsAdvanced.residual.loadingProfiles")} />
       </div>
     );
   }
@@ -213,11 +215,11 @@ export function ProfilesIndex({
             </colgroup>
             <thead>
               <tr className="border-b border-border bg-muted/40 text-left text-xs font-medium text-muted-foreground">
-                <th className="px-3 py-2 font-medium">Profile</th>
-                <th className="px-3 py-2 font-medium">Allows</th>
-                <th className="px-3 py-2 font-medium">Assigned to</th>
-                <th className="px-3 py-2 font-medium">Status</th>
-                <th className="px-3 py-2 font-medium">Updated</th>
+                <th className="px-3 py-2 font-medium">{t("toolsAdvanced.profiles.profile")}</th>
+                <th className="px-3 py-2 font-medium">{t("toolsAdvanced.profiles.allows")}</th>
+                <th className="px-3 py-2 font-medium">{t("toolsAdvanced.profiles.assignedTo")}</th>
+                <th className="px-3 py-2 font-medium">{t("toolsAdvanced.profiles.status")}</th>
+                <th className="px-3 py-2 font-medium">{t("toolsAdvanced.profiles.updated")}</th>
                 <th className="w-10 px-3 py-2" />
               </tr>
             </thead>
@@ -255,7 +257,7 @@ export function ProfilesIndex({
                       {assigned.unassigned ? (
                         <span className="text-muted-foreground">
                           {assigned.text}
-                          <span className="ml-1 text-xs text-muted-foreground/70">— does not change access</span>
+                          <span className="ml-1 text-xs text-muted-foreground/70">{t("toolsAdvanced.profiles.noAccessChange")}</span>
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 text-foreground">
@@ -336,27 +338,28 @@ function RowMenu({
   onRestore?: () => void;
   onDelete: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          aria-label="Profile actions"
+          aria-label={t("toolsAdvanced.profiles.profileActions")}
           className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-accent group-hover:opacity-100 data-[state=open]:opacity-100"
         >
           <MoreHorizontal className="h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={onEdit}>Edit</DropdownMenuItem>
-        <DropdownMenuItem onSelect={onDuplicate}>Duplicate</DropdownMenuItem>
+        <DropdownMenuItem onSelect={onEdit}>{t("toolsAdvanced.profiles.edit")}</DropdownMenuItem>
+        <DropdownMenuItem onSelect={onDuplicate}>{t("toolsAdvanced.profiles.duplicate")}</DropdownMenuItem>
         {onRestore ? (
           <DropdownMenuItem onSelect={onRestore}>
             <ArchiveRestore className="mr-1.5 h-4 w-4" />
             Restore
           </DropdownMenuItem>
         ) : (
-          <DropdownMenuItem onSelect={onArchive}>Archive</DropdownMenuItem>
+        <DropdownMenuItem onSelect={onArchive}>{t("toolsAdvanced.profiles.archive")}</DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onDelete} className="text-destructive focus:text-destructive">
@@ -369,10 +372,11 @@ function RowMenu({
 
 /** Empty state (AP2): the same five step-1 template cards the wizard opens with. */
 function EmptyTemplatePicker({ onPick }: { onPick: (key: TemplateKey) => void }) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-lg border border-dashed border-border p-6">
       <div className="mb-4 max-w-2xl">
-        <h3 className="text-base font-semibold text-foreground">Create your first access profile</h3>
+        <h3 className="text-base font-semibold text-foreground">{t("toolsAdvanced.profiles.createFirst")}</h3>
         <p className="text-sm text-muted-foreground">
           Pick a starting point. You can fine-tune exactly which tools it allows in the next step.
         </p>

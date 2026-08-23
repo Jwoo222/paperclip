@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Plug, Plus, Search, X } from "lucide-react";
 import { Link } from "@/lib/router";
+import { useTranslation } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ export interface WizardToolsStepProps {
 }
 
 export function WizardToolsStep(props: WizardToolsStepProps) {
+  const { t } = useTranslation();
   const { appGroups, catalogLoading, selections, onSelectionsChange } = props;
   const [search, setSearch] = useState("");
   const [capabilityFilter, setCapabilityFilter] = useState<ToolCapability | null>(null);
@@ -74,7 +76,7 @@ export function WizardToolsStep(props: WizardToolsStepProps) {
       .filter((entry) => entry.tools.length > 0);
   }, [appGroups, search, capabilityFilter]);
 
-  if (catalogLoading) return <LoadingState label="Loading tools…" />;
+  if (catalogLoading) return <LoadingState label={t("toolsAdvanced.residual.loadingTools")} />;
 
   // Cold state A (AP17): nothing connected at all.
   if (appGroups.length === 0) {
@@ -82,14 +84,14 @@ export function WizardToolsStep(props: WizardToolsStepProps) {
       <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border py-12 text-center">
         <Plug className="h-6 w-6 text-muted-foreground" />
         <div>
-          <p className="text-sm font-medium text-foreground">App connections are coming soon</p>
+          <p className="text-sm font-medium text-foreground">{t("toolsAdvanced.profiles.appsComingSoon")}</p>
           <p className="mx-auto max-w-sm text-sm text-muted-foreground">
             Profiles will be available once app connections are ready. Browse the planned integrations in the
             meantime.
           </p>
         </div>
         <Button asChild variant="outline">
-          <Link to="/apps">Browse app connections</Link>
+          <Link to="/apps">{t("toolsAdvanced.profiles.browseConnections")}</Link>
         </Button>
       </div>
     );
@@ -103,7 +105,7 @@ export function WizardToolsStep(props: WizardToolsStepProps) {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search tools…"
+            placeholder={t("toolsAdvanced.profiles.searchTools")}
             className="pl-8"
           />
         </div>
@@ -129,7 +131,7 @@ export function WizardToolsStep(props: WizardToolsStepProps) {
       {filteredGroups.length === 0 ? (
         // Cold state B (AP17): a search/filter that matches nothing.
         <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border py-10 text-center">
-          <p className="text-sm font-medium text-foreground">No tools match “{search}”.</p>
+            <p className="text-sm font-medium text-foreground">{t("toolsAdvanced.profiles.noToolsMatch", { search })}</p>
           <button
             type="button"
             onClick={() => {
@@ -270,7 +272,7 @@ function NewToolsRadio({
   ];
   return (
     <fieldset className="space-y-2 rounded-lg border border-border p-4">
-      <legend className="px-1 text-sm font-medium text-foreground">New tools that appear later</legend>
+      <legend className="px-1 text-sm font-medium text-foreground">{t("toolsAdvanced.profiles.newToolsLater")}</legend>
       <div className="space-y-2">
         {options.map((opt) => (
           <label key={opt.value} className="flex cursor-pointer items-start gap-2.5">
@@ -327,6 +329,7 @@ function AdvancedRules({
   rules: AdvancedRule[];
   onChange: (next: AdvancedRule[]) => void;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<AdvancedRuleKind>("tool_name");
   const [value, setValue] = useState("");
@@ -349,7 +352,7 @@ function AdvancedRules({
   return (
     <Collapsible open={open} onOpenChange={setOpen} className="rounded-lg border border-border">
       <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3 text-left">
-        <span className="text-sm font-medium text-foreground">Advanced rules</span>
+        <span className="text-sm font-medium text-foreground">{t("toolsAdvanced.profiles.advancedRules")}</span>
         <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")} />
       </CollapsibleTrigger>
       <CollapsibleContent className="space-y-3 border-t border-border px-4 py-3">
@@ -368,7 +371,7 @@ function AdvancedRules({
                 <span className="text-foreground">{ruleSummary(rule)}</span>
                 <button
                   type="button"
-                  aria-label="Remove rule"
+                  aria-label={t("toolsAdvanced.profiles.removeRule")}
                   onClick={() => onChange(rules.filter((r) => r.id !== rule.id))}
                   className="text-muted-foreground hover:text-destructive"
                 >
@@ -385,8 +388,8 @@ function AdvancedRules({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="include">Allow</SelectItem>
-              <SelectItem value="exclude">Block</SelectItem>
+                <SelectItem value="include">{t("toolsAdvanced.profiles.allow")}</SelectItem>
+                <SelectItem value="exclude">{t("toolsAdvanced.profiles.block")}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={kind} onValueChange={(v) => setKind(v as AdvancedRuleKind)}>
@@ -407,9 +410,9 @@ function AdvancedRules({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="read">Read-only</SelectItem>
-                <SelectItem value="write">Makes changes</SelectItem>
-                <SelectItem value="destructive">Destructive</SelectItem>
+                <SelectItem value="read">{t("toolsAdvanced.profiles.readOnly")}</SelectItem>
+                <SelectItem value="write">{t("toolsAdvanced.profiles.makesChanges")}</SelectItem>
+                <SelectItem value="destructive">{t("integrations.tools.destructive")}</SelectItem>
               </SelectContent>
             </Select>
           ) : (

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useTranslation } from "@/i18n";
 import { useParams } from "@/lib/router";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { useCompany } from "@/context/CompanyContext";
@@ -7,6 +8,7 @@ import { ToolsAdminGate } from "./ToolsAdminGate";
 import { ProfileDetail } from "./ProfileDetail";
 
 export function ProfileDetailRoute() {
+  const { t } = useTranslation();
   const { selectedCompany, selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const params = useParams<{ profileId?: string }>();
@@ -22,7 +24,7 @@ export function ProfileDetailRoute() {
   }, [setBreadcrumbs, selectedCompany?.name]);
 
   if (!selectedCompanyId || !params.profileId) {
-    return <div className="p-6 text-sm text-muted-foreground">Select a company and profile.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{t("toolsAdvanced.profiles.selectCompanyProfile")}</div>;
   }
 
   return (

@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import type { ToolProfileWithDetails } from "@paperclipai/shared";
 import { useNavigate } from "@/lib/router";
+import { useTranslation } from "@/i18n";
 import { toolsApi, type ToolProfileBindingInput } from "@/api/tools";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
@@ -54,6 +55,7 @@ export function ProfileWizard({
   initialTemplate?: TemplateKey;
   initialStep?: WizardStep;
 }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -178,12 +180,12 @@ export function ProfileWizard({
       invalidate();
     },
     onError: (error: unknown) =>
-      pushToast({ title: "Could not save", body: String((error as Error)?.message ?? error), tone: "error" }),
+      pushToast({ title: t("toolsAdvanced.residual.saveFailed"), body: String((error as Error)?.message ?? error), tone: "error" }),
   });
 
   const finish = useMutation({
     mutationFn: async () => {
-      if (!draftId) throw new Error("No draft to finish");
+      if (!draftId) throw new Error(t("toolsAdvanced.residual.noDraftToFinish"));
       const entries = buildEntries(appGroups, selections, advancedRules, newToolsAction);
       const profile = await toolsApi.updateProfile(draftId, {
         defaultAction: newToolsAction,
@@ -199,12 +201,12 @@ export function ProfileWizard({
       return toolsApi.updateProfile(draftId, { status: "active" });
     },
     onSuccess: (profile) => {
-      pushToast({ title: "Profile saved", tone: "success" });
+      pushToast({ title: t("toolsAdvanced.residual.profileSaved"), tone: "success" });
       invalidate();
       navigate(`/apps/advanced/profiles/${profile.id}${selectedAgentIds.size === 0 && !companyDefault ? "?created=1" : ""}`);
     },
     onError: (error: unknown) =>
-      pushToast({ title: "Could not save profile", body: String((error as Error)?.message ?? error), tone: "error" }),
+      pushToast({ title: t("toolsAdvanced.residual.profileSaveFailed"), body: String((error as Error)?.message ?? error), tone: "error" }),
   });
 
   const saveAndExit = () => {
@@ -213,7 +215,7 @@ export function ProfileWizard({
       { goToStep: step, completedStep: completed },
       {
         onSuccess: () => {
-          pushToast({ title: "Draft saved", body: "Pick it back up from the profiles list.", tone: "success" });
+          pushToast({ title: t("toolsAdvanced.residual.draftSaved"), body: t("toolsAdvanced.residual.draftSavedBody"), tone: "success" });
           navigate("/apps/advanced/profiles");
         },
       },
@@ -223,7 +225,7 @@ export function ProfileWizard({
   const busy = saveDraft.isPending || finish.isPending;
   const step1Valid = name.trim().length > 0 && (template !== "copy" || Boolean(copyFromId));
 
-  if (profileId && profiles.isLoading) return <LoadingState label="Loading draft…" />;
+  if (profileId && profiles.isLoading) return <LoadingState label={t("toolsAdvanced.residual.loadingDraft")} />;
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 pb-24">
@@ -452,11 +454,12 @@ export function StepName({
   profileKey: string;
   onProfileKey: (v: string) => void;
 }) {
+  const { t } = useTranslation();
   const [advancedOpen, setAdvancedOpen] = useState(false);
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-foreground">Start from</h3>
+        <h3 className="text-sm font-medium text-foreground">{t("toolsAdvanced.profiles.startFrom")}</h3>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {TEMPLATES.map((t) => (
             <button
@@ -479,9 +482,9 @@ export function StepName({
 
       {template === "copy" ? (
         <div className="space-y-2">
-          <h3 className="text-sm font-medium text-foreground">Which profile?</h3>
+          <h3 className="text-sm font-medium text-foreground">{t("toolsAdvanced.profiles.whichProfile")}</h3>
           {copyOptions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">You don't have another profile to copy yet.</p>
+          <p className="text-sm text-muted-foreground">{t("toolsAdvanced.profiles.noProfileToCopy")}</p>
           ) : (
             <div className="space-y-1.5">
               {copyOptions.map((p) => (
@@ -505,21 +508,21 @@ export function StepName({
 
       <div className="space-y-3">
         <div className="space-y-1.5">
-          <Label htmlFor="profile-name">Name</Label>
+          <Label htmlFor="profile-name">{t("toolsAdvanced.profiles.name")}</Label>
           <Input
             id="profile-name"
             value={name}
             onChange={(e) => onName(e.target.value)}
-            placeholder="e.g. Everyday work"
+            placeholder={t("toolsAdvanced.residual.profileNamePlaceholder")}
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="profile-description">Description (optional)</Label>
+          <Label htmlFor="profile-description">{t("toolsAdvanced.profiles.descriptionOptional")}</Label>
           <Textarea
             id="profile-description"
             value={description}
             onChange={(e) => onDescription(e.target.value)}
-            placeholder="What is this profile for?"
+            placeholder={t("toolsAdvanced.residual.profileDescriptionPlaceholder")}
             rows={2}
           />
         </div>
@@ -532,7 +535,7 @@ export function StepName({
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-2">
           <div className="space-y-1.5">
-            <Label htmlFor="profile-key">Identifier</Label>
+          <Label htmlFor="profile-key">{t("toolsAdvanced.profiles.identifier")}</Label>
             <Input
               id="profile-key"
               value={profileKey}
@@ -609,7 +612,7 @@ export function StepAssign({
           onChange={(e) => onCompanyDefault(e.target.checked)}
         />
         <span className="flex flex-col gap-0.5">
-          <span className="text-sm font-medium text-foreground">Make this the company default</span>
+          <span className="text-sm font-medium text-foreground">{t("toolsAdvanced.profiles.makeCompanyDefault")}</span>
           <span className="text-xs text-muted-foreground">
             Every agent without its own profile uses this one.
             {defaultProfileName ? ` Replaces “${defaultProfileName}”.` : ""}
@@ -618,7 +621,7 @@ export function StepAssign({
       </label>
 
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-foreground">Assign to agents</h3>
+        <h3 className="text-sm font-medium text-foreground">{t("toolsAdvanced.profiles.assignAgents")}</h3>
         <AgentMultiSelect
           agents={agents}
           selectedAgentIds={selectedAgentIds}
@@ -642,7 +645,7 @@ export function StepAssign({
       {(projects.length > 0 || routines.length > 0) && onToggleProject && onToggleRoutine ? (
         <Collapsible open={moreOpen} onOpenChange={setMoreOpen} className="rounded-lg border border-border">
           <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3 text-left">
-            <span className="text-sm font-medium text-foreground">More targets</span>
+            <span className="text-sm font-medium text-foreground">{t("toolsAdvanced.profiles.moreTargets")}</span>
             <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", moreOpen && "rotate-180")} />
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-4 border-t border-border px-4 py-3">
@@ -651,13 +654,13 @@ export function StepAssign({
               individual agents.
             </p>
             <TargetChecklist
-              label="Projects"
+              label={t("toolsAdvanced.residual.projects")}
               options={projects}
               selected={selectedProjectIds ?? new Set()}
               onToggle={onToggleProject}
             />
             <TargetChecklist
-              label="Routines"
+              label={t("toolsAdvanced.residual.routines")}
               options={routines}
               selected={selectedRoutineIds ?? new Set()}
               onToggle={onToggleRoutine}

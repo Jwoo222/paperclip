@@ -50,7 +50,7 @@ export function ToolsAccess() {
   const params = useParams<{ tab?: string }>();
   const activeTab = (TOOL_TABS.find((t) => t.key === params.tab)?.key ?? "run-your-own") as ToolTabKey;
   const advanced = isAdvancedSetupTab(activeTab);
-  const tabLabel = TOOL_TABS.find((t) => t.key === activeTab)?.label;
+  const tabLabel = t(`toolsAdvanced.tabs.${activeTab}`) || TOOL_TABS.find((item) => item.key === activeTab)?.label;
 
   useEffect(() => {
     setBreadcrumbs([
@@ -113,7 +113,7 @@ export function ToolsAccess() {
                   : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
-              {tab.label}
+              {t(`toolsAdvanced.tabs.${tab.key}`) || tab.label}
             </Link>
           ))}
         </nav>

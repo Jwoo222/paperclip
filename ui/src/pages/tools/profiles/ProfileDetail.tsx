@@ -11,6 +11,7 @@ import type {
   ToolProfileWithDetails,
 } from "@paperclipai/shared";
 import { useNavigate, useSearchParams } from "@/lib/router";
+import { useTranslation } from "@/i18n";
 import { toolsApi } from "@/api/tools";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn, formatShortDate } from "@/lib/utils";
@@ -57,6 +58,7 @@ export function ProfileDetail({
   initialCreated?: boolean;
   initialReviewOpen?: boolean;
 }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
@@ -104,29 +106,29 @@ export function ProfileDetail({
     mutationFn: (input: Parameters<typeof toolsApi.updateProfile>[1]) => toolsApi.updateProfile(profileId, input),
     onSuccess: () => {
       invalidate();
-      pushToast({ title: "Profile updated", tone: "success" });
+      pushToast({ title: t("toolsAdvanced.residual.profileUpdated"), tone: "success" });
     },
-    onError: (error: unknown) => pushToast({ title: "Could not update profile", body: errorBody(error), tone: "error" }),
+    onError: (error: unknown) => pushToast({ title: t("toolsAdvanced.residual.profileUpdateFailed"), body: errorBody(error), tone: "error" }),
   });
 
   const duplicateProfile = useMutation({
     mutationFn: (input: { name: string; includeAssignments: boolean }) => toolsApi.duplicateProfile(profileId, input),
     onSuccess: (copy) => {
       invalidate();
-      pushToast({ title: "Profile duplicated", body: "The copy is not assigned to anyone yet.", tone: "success" });
+      pushToast({ title: t("toolsAdvanced.residual.profileDuplicated"), body: t("toolsAdvanced.residual.copyUnassigned"), tone: "success" });
       navigate(`/apps/advanced/profiles/${copy.id}?created=1`);
     },
-    onError: (error: unknown) => pushToast({ title: "Could not duplicate", body: errorBody(error), tone: "error" }),
+    onError: (error: unknown) => pushToast({ title: t("toolsAdvanced.residual.duplicateFailed"), body: errorBody(error), tone: "error" }),
   });
 
   const deleteProfile = useMutation({
     mutationFn: () => toolsApi.deleteProfile(profileId),
     onSuccess: () => {
       invalidate();
-      pushToast({ title: "Profile deleted", tone: "success" });
+      pushToast({ title: t("toolsAdvanced.residual.profileDeleted"), tone: "success" });
       navigate("/apps/advanced/profiles");
     },
-    onError: (error: unknown) => pushToast({ title: "Could not delete", body: errorBody(error), tone: "error" }),
+    onError: (error: unknown) => pushToast({ title: t("toolsAdvanced.residual.deleteFailed"), body: errorBody(error), tone: "error" }),
   });
 
   const removeAssignment = useMutation({
@@ -135,9 +137,9 @@ export function ProfileDetail({
     onSuccess: () => {
       setAssignmentToRemove(null);
       invalidate();
-      pushToast({ title: "Assignment removed", tone: "success" });
+      pushToast({ title: t("toolsAdvanced.residual.assignmentRemoved"), tone: "success" });
     },
-    onError: (error: unknown) => pushToast({ title: "Could not remove assignment", body: errorBody(error), tone: "error" }),
+    onError: (error: unknown) => pushToast({ title: t("toolsAdvanced.residual.removeAssignmentFailed"), body: errorBody(error), tone: "error" }),
   });
 
   const reviewNewTools = useMutation({
@@ -153,18 +155,18 @@ export function ProfileDetail({
       setSearchParams({});
       queryClient.invalidateQueries({ queryKey: queryKeys.tools.profiles(companyId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.tools.profileNewTools(profileId) });
-      pushToast({ title: "New tools reviewed", tone: "success" });
+      pushToast({ title: t("toolsAdvanced.residual.newToolsReviewed"), tone: "success" });
     },
-    onError: (error: unknown) => pushToast({ title: "Could not submit review", body: errorBody(error), tone: "error" }),
+    onError: (error: unknown) => pushToast({ title: t("toolsAdvanced.residual.reviewSubmitFailed"), body: errorBody(error), tone: "error" }),
   });
 
-  if (data.profiles.isLoading) return <LoadingState label="Loading profile..." />;
+  if (data.profiles.isLoading) return <LoadingState label={t("toolsAdvanced.residual.loadingProfile")} />;
   if (data.profiles.isError) return <ErrorState error={data.profiles.error} onRetry={() => data.profiles.refetch()} />;
   if (!profile) {
     return (
       <div className="space-y-4">
-        <ToolsPageHeader title="Profile not found" description="This access profile may have been deleted." />
-        <Button variant="outline" onClick={() => navigate("/apps/advanced/profiles")}>Back to profiles</Button>
+        <ToolsPageHeader title={t("toolsAdvanced.profileExtra.notFound")} description={t("toolsAdvanced.profileExtra.deletedProfile")} />
+        <Button variant="outline" onClick={() => navigate("/apps/advanced/profiles")}>{t("toolsAdvanced.profiles.backToProfiles")}</Button>
       </div>
     );
   }
@@ -193,7 +195,7 @@ export function ProfileDetail({
                 Restore
               </Button>
             ) : (
-              <Button variant="outline" onClick={() => setDialog("archive")}>Archive</Button>
+              <Button variant="outline" onClick={() => setDialog("archive")}>{t("toolsAdvanced.profiles.archive")}</Button>
             )}
             <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setDialog("delete")}>
               <Trash2 className="mr-1.5 h-4 w-4" />
@@ -205,14 +207,14 @@ export function ProfileDetail({
 
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <Badge variant={archived ? "outline" : "default"}>{STATUS_LABEL[profile.status]}</Badge>
-        <span className="text-muted-foreground">Updated <RelativeTime value={profile.updatedAt} /></span>
+        <span className="text-muted-foreground">{t("toolsAdvanced.residual.updated")} <RelativeTime value={profile.updatedAt} /></span>
         <span className="text-muted-foreground">{allowsLabel(profile.summary)}</span>
       </div>
 
       {created ? (
         <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
           <div>
-            <p className="text-sm font-medium text-foreground">Profile saved</p>
+            <p className="text-sm font-medium text-foreground">{t("toolsAdvanced.profileExtra.profileSaved")}</p>
             <p className="text-sm text-muted-foreground">
               {unassigned ? "Assign it to agents before it changes their access." : "Assignments are active now."}
             </p>
@@ -245,7 +247,7 @@ export function ProfileDetail({
 
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-base font-semibold text-foreground">What it allows</h2>
+        <h2 className="text-base font-semibold text-foreground">{t("toolsAdvanced.profiles.whatAllows")}</h2>
           <Button variant="outline" size="sm" disabled={archived} onClick={() => navigate(`/apps/advanced/profiles/${profile.id}/edit?step=2`)}>
             Edit tools
           </Button>
@@ -255,7 +257,7 @@ export function ProfileDetail({
 
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-base font-semibold text-foreground">Who has it</h2>
+        <h2 className="text-base font-semibold text-foreground">{t("toolsAdvanced.profiles.whoHasIt")}</h2>
           <Button variant="outline" size="sm" disabled={archived} onClick={() => navigate(`/apps/advanced/profiles/${profile.id}/edit?step=3`)}>
             Assign
           </Button>
@@ -270,7 +272,7 @@ export function ProfileDetail({
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">New tools that appear later</h2>
+        <h2 className="text-base font-semibold text-foreground">{t("toolsAdvanced.profiles.newToolsLater")}</h2>
         <NewToolsSetting
           value={profile.defaultAction}
           disabled={archived || updateProfile.isPending}
@@ -333,6 +335,7 @@ function NewToolsReviewBanner({
   loading: boolean;
   onReview: () => void;
 }) {
+  const { t } = useTranslation();
   const appLabel = newToolsAppLabel(tools);
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
@@ -340,9 +343,9 @@ function NewToolsReviewBanner({
         <p className="font-medium">
           {loading ? "New tools need review" : `${appLabel} added ${count} new ${count === 1 ? "tool" : "tools"} since your last review`}
         </p>
-        <p className="text-amber-900/80">Choose which ones this profile should allow.</p>
+        <p className="text-amber-900/80">{t("toolsAdvanced.residual.chooseAllowedTools")}</p>
       </div>
-      <Button size="sm" onClick={onReview}>Review</Button>
+      <Button size="sm" onClick={onReview}>{t("toolsAdvanced.profileExtra.review")}</Button>
     </div>
   );
 }
@@ -370,17 +373,18 @@ function NewToolsReviewDialog({
   onDecision: (catalogEntryId: string, decision: ToolProfileNewToolReviewDecision) => void;
   onSubmit: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Review new tools</DialogTitle>
+          <DialogTitle>{t("toolsAdvanced.profileExtra.reviewNewTools")}</DialogTitle>
           <DialogDescription>
             Allow the tools this profile should use. Keep the rest blocked.
           </DialogDescription>
         </DialogHeader>
         {loading ? (
-          <LoadingState label="Loading new tools..." />
+          <LoadingState label={t("toolsAdvanced.residual.loadingNewTools")} />
         ) : error ? (
           <ErrorState error={error} onRetry={onRetry} />
         ) : tools.length === 0 ? (
@@ -430,7 +434,7 @@ function NewToolsReviewDialog({
           </div>
         )}
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" onClick={onClose}>{t("toolsAdvanced.profiles.cancel")}</Button>
           <Button disabled={pending || loading || tools.length === 0} onClick={onSubmit}>
             Submit review
           </Button>
@@ -453,10 +457,10 @@ function AllowList({ rows, total }: { rows: AllowRow[]; total: number }) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border bg-muted/40 text-left text-xs font-medium text-muted-foreground">
-            <th className="px-3 py-2 font-medium">Tool</th>
-            <th className="px-3 py-2 font-medium">App</th>
-            <th className="px-3 py-2 font-medium">Capabilities</th>
-            <th className="px-3 py-2 font-medium">Source</th>
+            <th className="px-3 py-2 font-medium">{t("toolsAdvanced.residual.tool")}</th>
+            <th className="px-3 py-2 font-medium">{t("toolsAdvanced.residual.app")}</th>
+            <th className="px-3 py-2 font-medium">{t("toolsAdvanced.residual.capabilities")}</th>
+            <th className="px-3 py-2 font-medium">{t("toolsAdvanced.residual.source")}</th>
           </tr>
         </thead>
         <tbody>
@@ -523,8 +527,8 @@ function Assignments({
   if (profile.bindings.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-border px-4 py-5">
-        <p className="text-sm font-medium text-foreground">Not assigned yet</p>
-        <p className="text-sm text-muted-foreground">Assign this profile before it changes access.</p>
+        <p className="text-sm font-medium text-foreground">{t("toolsAdvanced.residual.notAssigned")}</p>
+        <p className="text-sm text-muted-foreground">{t("toolsAdvanced.residual.assignBeforeAccess")}</p>
       </div>
     );
   }
@@ -560,9 +564,10 @@ function NewToolsSetting({
   disabled: boolean;
   onChange: (value: ToolProfileDefaultAction) => void;
 }) {
+  const { t } = useTranslation();
   const options: Array<{ value: ToolProfileDefaultAction; title: string; body: string }> = [
-    { value: "deny", title: "Stay blocked until reviewed", body: "New tools do not become available automatically." },
-    { value: "allow", title: "Allowed automatically", body: "New tools from selected apps become available right away." },
+    { value: "deny", title: t("toolsAdvanced.profiles.denyUnlessIncluded"), body: t("toolsAdvanced.profiles.newToolsLater") },
+    { value: "allow", title: t("toolsAdvanced.profiles.allowUnlessExcluded"), body: t("toolsAdvanced.profiles.appsComingSoon") },
   ];
   return (
     <div className="grid gap-2 sm:grid-cols-2">
@@ -615,6 +620,7 @@ function ProfileDialogs({
   onRestore: () => void;
   onDelete: () => void;
 }) {
+  const { t } = useTranslation();
   const [name, setName] = useState(profile.name);
   const [description, setDescription] = useState(profile.description ?? "");
   const [profileKey, setProfileKey] = useState(profile.profileKey);
@@ -633,33 +639,33 @@ function ProfileDialogs({
       <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit profile</DialogTitle>
-            <DialogDescription>Update the profile name and description.</DialogDescription>
+            <DialogTitle>{t("toolsAdvanced.residual.editProfile")}</DialogTitle>
+            <DialogDescription>{t("toolsAdvanced.residual.updateProfileDescription")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="edit-profile-name">Name</Label>
+              <Label htmlFor="edit-profile-name">{t("toolsAdvanced.residual.name")}</Label>
               <Input id="edit-profile-name" value={name} onChange={(e) => setName(e.target.value)} />
-              {duplicateName ? <p className="text-xs text-destructive">Another profile already uses this name.</p> : null}
+              {duplicateName ? <p className="text-xs text-destructive">{t("toolsAdvanced.residual.duplicateName")}</p> : null}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="edit-profile-description">Description</Label>
+              <Label htmlFor="edit-profile-description">{t("toolsAdvanced.residual.description")}</Label>
               <Textarea id="edit-profile-description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
             </div>
             <button type="button" className="text-sm font-medium text-muted-foreground hover:text-foreground" onClick={() => setAdvancedOpen((v) => !v)}>
-              Advanced
+              {t("toolsAdvanced.residual.advanced")}
             </button>
             {advancedOpen ? (
               <div className="space-y-1.5">
-                <Label htmlFor="edit-profile-key">Identifier</Label>
+                <Label htmlFor="edit-profile-key">{t("toolsAdvanced.residual.identifier")}</Label>
                 <Input id="edit-profile-key" value={profileKey} onChange={(e) => setProfileKey(e.target.value)} className="font-mono text-xs" />
               </div>
             ) : null}
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={onClose}>Cancel</Button>
+            <Button variant="ghost" onClick={onClose}>{t("toolsAdvanced.residual.cancel")}</Button>
             <Button disabled={!name.trim() || duplicateName || pending} onClick={() => onUpdate({ name: name.trim(), description: description.trim() || null, profileKey: profileKey.trim() })}>
-              Save
+              {t("toolsAdvanced.residual.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -672,24 +678,24 @@ function ProfileDialogs({
       <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Duplicate profile</DialogTitle>
-            <DialogDescription>The copy starts unassigned unless you choose to copy assignments too.</DialogDescription>
+            <DialogTitle>{t("toolsAdvanced.residual.duplicateProfile")}</DialogTitle>
+            <DialogDescription>{t("toolsAdvanced.residual.duplicateDescription")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="copy-profile-name">Name</Label>
+              <Label htmlFor="copy-profile-name">{t("toolsAdvanced.residual.name")}</Label>
               <Input id="copy-profile-name" value={copyName} onChange={(e) => setCopyName(e.target.value)} />
-              {duplicateCopyName ? <p className="text-xs text-destructive">Another profile already uses this name.</p> : null}
+              {duplicateCopyName ? <p className="text-xs text-destructive">{t("toolsAdvanced.residual.duplicateName")}</p> : null}
             </div>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={copyAssignments} onChange={(e) => setCopyAssignments(e.target.checked)} />
-              Also copy assignments?
+              {t("toolsAdvanced.residual.copyAssignments")}
             </label>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={onClose}>Cancel</Button>
+            <Button variant="ghost" onClick={onClose}>{t("toolsAdvanced.residual.cancel")}</Button>
             <Button disabled={!copyName.trim() || duplicateCopyName || pending} onClick={() => onDuplicate({ name: copyName.trim(), includeAssignments: copyAssignments })}>
-              Duplicate
+              {t("toolsAdvanced.residual.duplicate")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -723,20 +729,21 @@ function RemoveAssignmentDialog({
   onClose: () => void;
   onConfirm: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <Dialog open={Boolean(binding)} onOpenChange={(next) => !next && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Remove assignment</DialogTitle>
+          <DialogTitle>{t("toolsAdvanced.residual.removeAssignment")}</DialogTitle>
           <DialogDescription>
             {binding?.targetType === "company"
-              ? "Removing the company default changes access for every agent that relies on it."
-              : `Remove this profile from ${label}.`}
+              ? t("toolsAdvanced.residual.removeCompanyDefault")
+              : t("toolsAdvanced.residual.removeFrom", { label })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button disabled={pending} onClick={onConfirm}>Remove</Button>
+          <Button variant="ghost" onClick={onClose}>{t("toolsAdvanced.residual.cancel")}</Button>
+          <Button disabled={pending} onClick={onConfirm}>{t("toolsAdvanced.residual.remove")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

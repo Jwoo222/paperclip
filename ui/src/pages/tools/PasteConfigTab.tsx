@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { toolsApi } from "@/api/tools";
 import { ErrorState } from "./shared";
+import { useTranslation } from "@/i18n";
 
 const SAMPLE_CONFIG = `{
   "mcpServers": {
@@ -91,6 +92,7 @@ function askFirstLevelsFrom(result: ConnectToolAppResult): string[] {
  * of the two M8 screens where "MCP" vocabulary is allowed (PAP-10827 vocab map).
  */
 export function PasteConfigTab({ companyId }: { companyId: string }) {
+  const { t } = useTranslation();
   const [draftText, setDraftText] = useState("");
   const [preview, setPreview] = useState<McpJsonImportPreview | null>(null);
   const [credentialValues, setCredentialValues] = useState<Record<string, string>>({});
@@ -110,7 +112,7 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
   const connectMutation = useMutation({
     mutationFn: (draft: McpJsonImportDraft) => {
       const url = draftConnectUrl(draft);
-      if (!url) throw new Error("Only remote HTTP drafts can be checked and activated from pasted config.");
+      if (!url) throw new Error(t("toolsAdvanced.residual.onlyRemoteHttp"));
       return toolsApi.connectApp(companyId, {
         link: url,
         name: draft.name,
@@ -288,6 +290,7 @@ function DraftCard({
   canCheck: boolean;
   onCheck?: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-3">
@@ -319,7 +322,7 @@ function DraftCard({
                   type="password"
                   value={credentialValues[credentialValueKey(draft, field.configPath)] ?? ""}
                   onChange={(event) => onCredentialChange(field.configPath, event.target.value)}
-                  placeholder="Paste replacement value"
+                  placeholder={t("toolsAdvanced.residual.pasteReplacement")}
                   className="h-8 max-w-sm text-xs"
                 />
               </div>
@@ -331,7 +334,7 @@ function DraftCard({
           Keys from this config stay draft-only until an admin maps them to an approved template.
         </p>
       ) : (
-        <p className="mt-3 text-xs text-muted-foreground">No keys needed for this one.</p>
+        <p className="mt-3 text-xs text-muted-foreground">{t("toolsAdvanced.residual.noKeysNeeded")}</p>
       )}
 
       {draft.warnings.length > 0 ? (
@@ -364,6 +367,7 @@ function CatalogReview({
   activatedName: string | null;
   onFinish: () => void;
 }) {
+  const { t } = useTranslation();
   const askFirstLevels = askFirstLevelsFrom(result);
   const enabledCount = Object.values(enabled).filter(Boolean).length;
   const total = result.actions.readOnly.length + result.actions.canMakeChanges.length;
@@ -385,7 +389,7 @@ function CatalogReview({
         </Button>
       </div>
       <ActionGroup
-        title="Read-only"
+        title={t("toolsAdvanced.residual.readOnlyTitle")}
         actions={result.actions.readOnly}
         enabled={enabled}
         onToggle={onToggle}
@@ -393,7 +397,7 @@ function CatalogReview({
         askFirstLevels={askFirstLevels}
       />
       <ActionGroup
-        title="Can make changes"
+        title={t("toolsAdvanced.residual.canMakeChangesTitle")}
         actions={result.actions.canMakeChanges}
         enabled={enabled}
         onToggle={onToggle}

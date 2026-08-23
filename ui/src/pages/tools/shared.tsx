@@ -172,10 +172,10 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
   let message: string;
   if (error instanceof ApiError) {
     if (error.status === 403) {
-      message = "You do not have permission to view this. Tools & Access requires board/admin access.";
+      message = t("toolsAdvanced.errors.forbidden");
     } else if (error.status === 404 || /route not found/i.test(error.message)) {
       // Snapshot-skew window: the route exists in this build but not on the live server snapshot yet.
-      message = "Tools & Access isn't available on this server yet — try refreshing after the next deployment.";
+      message = t("toolsAdvanced.errors.notAvailable");
     } else {
       message = error.message;
     }
@@ -232,7 +232,7 @@ export function PendingBackendNotice({
         <p className="max-w-2xl text-sm text-muted-foreground">{body}</p>
         {issue ? (
           <a href={issue.href} className="text-sm font-medium text-primary hover:underline">
-            Tracked in {issue.identifier} →
+            {t("toolsAdvanced.common.trackedIn", { identifier: issue.identifier })} →
           </a>
         ) : null}
       </CardContent>

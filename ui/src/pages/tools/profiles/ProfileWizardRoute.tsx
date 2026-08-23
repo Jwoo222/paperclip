@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useTranslation } from "@/i18n";
 import { useParams, useSearchParams } from "@/lib/router";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { useCompany } from "@/context/CompanyContext";
@@ -14,6 +15,7 @@ import { TEMPLATES, type TemplateKey } from "./profile-model";
  * the rest of the tool-access surface.
  */
 export function ProfileWizardRoute({ mode }: { mode: "new" | "edit" }) {
+  const { t } = useTranslation();
   const { selectedCompany, selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const params = useParams<{ profileId?: string }>();
@@ -37,7 +39,7 @@ export function ProfileWizardRoute({ mode }: { mode: "new" | "edit" }) {
   }, [setBreadcrumbs, selectedCompany?.name, mode]);
 
   if (!selectedCompanyId) {
-    return <div className="p-6 text-sm text-muted-foreground">Select a company to create a profile.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{t("toolsAdvanced.profiles.selectCompanyCreate")}</div>;
   }
 
   return (
