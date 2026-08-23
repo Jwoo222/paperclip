@@ -98,7 +98,7 @@ export function ArtifactsPanel({ taskId, isAgentWorking, openDocKey, openDocTitl
 
   // Open doc from parent (e.g. clicking plan link in chat)
   const effectiveViewingDoc = openDocKey
-    ? { key: openDocKey, title: openDocTitle ?? "Document" }
+    ? { key: openDocKey, title: openDocTitle ?? t("targetedUi.artifactPanel.document") }
     : viewingDoc;
 
   const handleBack = () => {
@@ -149,7 +149,7 @@ export function ArtifactsPanel({ taskId, isAgentWorking, openDocKey, openDocTitl
             )}
             onClick={() => setFilter(f.value)}
           >
-            {t(`sharedOperationsExtra.artifactFilter${f.value.replace("_", "")}`)}
+            {t(`targetedUi.artifactPanel.${f.value === "in_progress" ? "inProgress" : f.value === "for_review" ? "forReview" : f.value}`)}
           </button>
         ))}
       </div>

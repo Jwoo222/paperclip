@@ -1,10 +1,15 @@
 // @vitest-environment node
 
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { GoalPropertiesToggleButton } from "./GoalDetail";
+import { setLocale } from "@/i18n";
 
 describe("GoalPropertiesToggleButton", () => {
+  beforeEach(async () => {
+    await setLocale("en");
+  });
+
   it("shows the reopen control when the properties panel is hidden", () => {
     const html = renderToStaticMarkup(
       <GoalPropertiesToggleButton panelVisible={false} onShowProperties={() => {}} />,

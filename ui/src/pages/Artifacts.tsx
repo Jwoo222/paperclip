@@ -319,7 +319,7 @@ export function Artifacts() {
                     : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                 )}
               >
-                {t(`coreNavigation.artifacts.${filter.value === "image" ? "images" : filter.value === "video" ? "videos" : filter.value === "document" ? "documents" : filter.value === "file" ? "files" : filter.value}`, { defaultValue: filter.label })}
+                {t(`targetedUi.artifacts.${filter.value === "image" ? "images" : filter.value === "video" ? "videos" : filter.value === "document" ? "documents" : filter.value === "file" ? "files" : filter.value}`, { defaultValue: filter.label })}
               </button>
             ))}
           </div>

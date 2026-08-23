@@ -100,7 +100,7 @@ export function describeUnavailable(reason: string): { title: string; body: stri
   return {
     icon: <AlertTriangle aria-hidden="true" className="h-5 w-5 text-amber-500" />,
     title: t("taskDetail.workspaceUnavailable"),
-    body: "These workspace files can't be browsed right now.",
+    body: t("targetedUi.workspaceFiles.unavailableBody"),
   };
 }
 
@@ -129,7 +129,7 @@ function WorkspaceFileBreadcrumbs({
   if (!rootLabel && segments.length === 0) return null;
 
   return (
-    <nav aria-label="Current folder" className="min-w-0 overflow-hidden text-(length:--text-micro) text-muted-foreground">
+    <nav aria-label={t("targetedUi.workspaceFiles.currentFolder")} className="min-w-0 overflow-hidden text-(length:--text-micro) text-muted-foreground">
       <ol className="flex min-w-0 items-center gap-1 overflow-hidden">
         {rootLabel ? (
           <li className="min-w-0 shrink">
@@ -197,8 +197,8 @@ function WorkspaceFileRow({ item, treeItemId, selected, highlighted, depth, onOp
         <a
           href={downloadUrl}
           download={name}
-          aria-label={`Download ${name}`}
-          title={`Download ${name}`}
+          aria-label={t("targetedUi.workspaceFiles.download", { name })}
+          title={t("targetedUi.workspaceFiles.download", { name })}
           onClick={(event) => event.stopPropagation()}
           className="ml-auto inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-70 hover:bg-background/70 hover:text-foreground hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
@@ -405,7 +405,7 @@ function WorkspaceFileTree({
                   style={{ paddingLeft: `${1 + (node.depth + 1) * 0.875}rem` }}
                 >
                   <Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin" />
-                  <span>Loading folder…</span>
+                  <span>{t("targetedUi.workspaceFiles.loadingFolder")}</span>
                 </div>
               ) : null}
               {truncated ? (
@@ -416,7 +416,7 @@ function WorkspaceFileTree({
                   style={{ paddingLeft: `${1 + (node.depth + 1) * 0.875}rem` }}
                 >
                   <span className="h-3.5 w-3.5 shrink-0" />
-                  <span>Load more from this folder</span>
+                  <span>{t("targetedUi.workspaceFiles.loadMore")}</span>
                 </button>
               ) : null}
             </>
@@ -441,7 +441,7 @@ function WorkspaceFileTree({
   }
 
   return (
-    <div role="tree" id={listboxId} aria-label="Workspace files" className="space-y-0.5 py-1">
+    <div role="tree" id={listboxId} aria-label={t("targetedUi.workspaceFiles.files")} className="space-y-0.5 py-1">
       {nodes.map(renderNode)}
     </div>
   );
@@ -810,7 +810,9 @@ export function WorkspaceFileBrowser({
     if (listQuery.isError) return translate("taskDetail.unableToLoadFiles");
     if (data?.state === "unavailable") return describeUnavailable(data.unavailableReason ?? "").title;
     if (items.length === 0) return translate("taskDetail.noMatchingFiles");
-    return `${items.length} item${items.length === 1 ? "" : "s"} found.`;
+    return items.length === 1
+      ? translate("targetedUi.workspaceFiles.itemFound")
+      : translate("targetedUi.workspaceFiles.itemsFound", { count: items.length });
   }, [data, items.length, listQuery.isError, listQuery.isFetching]);
 
   function openTypedPath() {
@@ -997,7 +999,7 @@ export function WorkspaceFileBrowser({
         title={translate("taskDetail.unableToLoadFiles")}
         body={
           status === 404
-            ? "Workspace browsing isn't available for this issue."
+            ? translate("targetedUi.workspaceFiles.issueBrowseUnavailable")
             : translate("taskDetail.workspaceLoadError")
         }
       />
@@ -1081,10 +1083,10 @@ export function WorkspaceFileBrowser({
               onClick={() => loadMoreFolder(currentFolderKey)}
               className="rounded px-1 py-0.5 text-left hover:bg-accent hover:text-foreground"
             >
-              Load more from this folder
+              {translate("targetedUi.workspaceFiles.loadMore")}
             </button>
           ) : (
-            <>Showing first {items.length} — refine the search to narrow.</>
+            <>{translate("targetedUi.workspaceFiles.showingFirst", { count: items.length })}</>
           )}
         </div>
       ) : null}
