@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Puzzle, ArrowLeft, ShieldAlert, ActivitySquare, CheckCircle, XCircle, Loader2, Clock, Cpu, Webhook, CalendarClock, AlertTriangle, FolderOpen, Save } from "lucide-react";
 import type { PluginLocalFolderDeclaration } from "@paperclipai/shared";
 import { useCompany } from "@/context/CompanyContext";
+import { useTranslation } from "@/i18n";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { Link, Navigate, useParams } from "@/lib/router";
 import { PluginSlotMount, usePluginSlots } from "@/plugins/slots";
@@ -60,6 +61,7 @@ import {
  * @see doc/plugins/PLUGIN_SPEC.md §19.8 — Plugin Settings UI.
  */
 export function PluginSettings() {
+  const { t } = useTranslation();
   const { selectedCompany, selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const { companyPrefix, pluginId } = useParams<{ companyPrefix?: string; pluginId: string }>();
@@ -133,7 +135,7 @@ export function PluginSettings() {
   }, [pluginId]);
 
   if (pluginLoading) {
-    return <div className="p-4 text-sm text-muted-foreground">Loading plugin details...</div>;
+    return <div className="p-4 text-sm text-muted-foreground">{t("integrations.common.loading")}</div>;
   }
 
   if (!plugin) {
@@ -147,7 +149,7 @@ export function PluginSettings() {
       : plugin.status === "error"
         ? "destructive"
         : "secondary";
-  const pluginDescription = plugin.manifestJson.description || "No description provided.";
+  const pluginDescription = plugin.manifestJson.description || t("integrations.common.noDescription");
   const pluginCapabilities = plugin.manifestJson.capabilities ?? [];
   const environmentDrivers = plugin.manifestJson.environmentDrivers ?? [];
   const localFolderDeclarations = plugin.manifestJson.localFolders ?? [];
@@ -191,19 +193,19 @@ export function PluginSettings() {
         <TabsContent value="configuration" className="space-y-6">
           <div className="space-y-8">
             <section className="space-y-5">
-              <h2 className="text-base font-semibold">About</h2>
+              <h2 className="text-base font-semibold">{t("integrations.common.about")}</h2>
               <div className="grid gap-8 lg:grid-cols-(--gtc-52)">
                 <div className="space-y-2">
-                  <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
+                  <h3 className="text-sm font-medium text-muted-foreground">{t("integrations.common.description")}</h3>
                   <p className="text-sm leading-6 text-foreground/90">{pluginDescription}</p>
                 </div>
                 <div className="space-y-4 text-sm">
                   <div className="space-y-1.5">
-                    <h3 className="font-medium text-muted-foreground">Author</h3>
+                    <h3 className="font-medium text-muted-foreground">{t("integrations.common.author")}</h3>
                     <p className="text-foreground">{plugin.manifestJson.author}</p>
                   </div>
                   <div className="space-y-2">
-                    <h3 className="font-medium text-muted-foreground">Categories</h3>
+                    <h3 className="font-medium text-muted-foreground">{t("integrations.common.categories")}</h3>
                     <div className="flex flex-wrap gap-2">
                       {plugin.categories.length > 0 ? (
                         plugin.categories.map((category) => (
@@ -212,7 +214,7 @@ export function PluginSettings() {
                           </Badge>
                         ))
                       ) : (
-                        <span className="text-foreground">None</span>
+                        <span className="text-foreground">{t("integrations.common.none")}</span>
                       )}
                     </div>
                   </div>

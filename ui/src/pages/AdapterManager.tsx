@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Cpu, Plus, Power, Trash2, FolderOpen, Package, RefreshCw, Download } from "lucide-react";
 import { useCompany } from "@/context/CompanyContext";
+import { useTranslation } from "@/i18n";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { adaptersApi } from "@/api/adapters";
 import type { AdapterInfo } from "@/api/adapters";
@@ -255,6 +256,7 @@ function ReinstallDialog({
 }
 
 export function AdapterManager() {
+  const { t } = useTranslation();
   const { selectedCompany } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const queryClient = useQueryClient();
@@ -392,7 +394,7 @@ export function AdapterManager() {
       menuDisabled: !!a.disabled,
     }));
 
-  if (isLoading) return <div className="p-4 text-sm text-muted-foreground">Loading adapters...</div>;
+  if (isLoading) return <div className="p-4 text-sm text-muted-foreground">{t("integrations.common.loading")}</div>;
 
   const isMutating = installMutation.isPending || removeMutation.isPending || toggleMutation.isPending || overrideMutation.isPending || reloadMutation.isPending || reinstallMutation.isPending;
 
@@ -402,7 +404,7 @@ export function AdapterManager() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Cpu className="h-6 w-6 text-muted-foreground" />
-          <h1 className="text-xl font-semibold">Adapters</h1>
+          <h1 className="text-xl font-semibold">{t("integrations.admin.adapters")}</h1>
           <Badge variant="outline" className="text-amber-600 border-amber-400">
             Alpha
           </Badge>
@@ -417,7 +419,7 @@ export function AdapterManager() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Install External Adapter</DialogTitle>
+              <DialogTitle>{t("integrations.admin.installAdapter")}</DialogTitle>
               <DialogDescription>
                 Add an adapter from npm or a local path. The adapter package must export <code className="text-xs bg-muted px-1 py-0.5 rounded">createServerAdapter()</code>.
               </DialogDescription>
@@ -496,7 +498,7 @@ export function AdapterManager() {
               )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setInstallDialogOpen(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setInstallDialogOpen(false)}>{t("integrations.common.cancel")}</Button>
               <Button
                 onClick={() =>
                   installMutation.mutate({

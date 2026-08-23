@@ -10,6 +10,7 @@ import type { PluginRecord } from "@paperclipai/shared";
 import { Link } from "@/lib/router";
 import { AlertTriangle, FlaskConical, Plus, Power, Puzzle, Settings, Trash } from "lucide-react";
 import { useCompany } from "@/context/CompanyContext";
+import { useTranslation } from "@/i18n";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { pluginsApi } from "@/api/plugins";
 import { queryKeys } from "@/lib/queryKeys";
@@ -86,6 +87,7 @@ function ExperimentalBadge() {
  * @see doc/plugins/PLUGIN_SPEC.md §3 — Plugin Lifecycle for status semantics.
  */
 export function PluginManager() {
+  const { t } = useTranslation();
   const { selectedCompany } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const queryClient = useQueryClient();
@@ -186,15 +188,15 @@ export function PluginManager() {
     [installedPlugins]
   );
 
-  if (isLoading) return <div className="p-4 text-sm text-muted-foreground">Loading plugins...</div>;
-  if (error) return <div className="p-4 text-sm text-destructive">Failed to load plugins.</div>;
+  if (isLoading) return <div className="p-4 text-sm text-muted-foreground">{t("integrations.common.loading")}</div>;
+  if (error) return <div className="p-4 text-sm text-destructive">{t("integrations.admin.loadPluginsFailed")}</div>;
 
   return (
     <div className="space-y-6 max-w-5xl">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Puzzle className="h-6 w-6 text-muted-foreground" />
-          <h1 className="text-xl font-semibold">Plugin Manager</h1>
+          <h1 className="text-xl font-semibold">{t("integrations.common.plugins")}</h1>
         </div>
         
         <Dialog open={installDialogOpen} onOpenChange={setInstallDialogOpen}>
@@ -206,7 +208,7 @@ export function PluginManager() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Install Plugin</DialogTitle>
+              <DialogTitle>{t("integrations.admin.installPlugin")}</DialogTitle>
               <DialogDescription>
                 Enter the npm package name of the plugin you wish to install.
               </DialogDescription>
@@ -223,7 +225,7 @@ export function PluginManager() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setInstallDialogOpen(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setInstallDialogOpen(false)}>{t("integrations.common.cancel")}</Button>
               <Button
                 onClick={() => installMutation.mutate({ packageName: installPackage })}
                 disabled={!installPackage || installMutation.isPending}
