@@ -89,6 +89,7 @@ import {
 import { SkillCardIcon } from "../components/SkillCardIcon";
 import { ImportSkillsFromProjectDialog } from "./skills/ImportSkillsFromProjectDialog";
 import { skillText } from "./skills/skill-i18n";
+import { i18n } from "../i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -179,6 +180,8 @@ const SKILL_TREE_BASE_INDENT = 16;
 const SKILL_TREE_STEP_INDENT = 24;
 const SKILL_TREE_ROW_HEIGHT_CLASS = "min-h-9";
 
+const cst = (key: string, options?: Record<string, unknown>) => i18n.t(`companySkills.${key}`, options);
+
 function VercelMark(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
@@ -262,19 +265,19 @@ function sourceMeta(sourceBadge: CompanySkillSourceBadge, sourceLabel: string | 
 
   switch (sourceBadge) {
     case "skills_sh":
-      return { icon: VercelMark, label: sourceLabel ?? "skills.sh", managedLabel: "skills.sh managed" };
+      return { icon: VercelMark, label: sourceLabel ?? "skills.sh", managedLabel: cst("catalog") };
     case "github":
       return isSkillsShManaged
-        ? { icon: VercelMark, label: sourceLabel ?? "skills.sh", managedLabel: "skills.sh managed" }
-        : { icon: Github, label: sourceLabel ?? "GitHub", managedLabel: "GitHub managed" };
+        ? { icon: VercelMark, label: sourceLabel ?? "skills.sh", managedLabel: cst("catalog") }
+        : { icon: Github, label: sourceLabel ?? "GitHub", managedLabel: cst("source") };
     case "url":
-      return { icon: Link2, label: sourceLabel ?? "URL", managedLabel: "URL managed" };
+      return { icon: Link2, label: sourceLabel ?? "URL", managedLabel: cst("external") };
     case "local":
-      return { icon: Folder, label: sourceLabel ?? "Folder", managedLabel: "Folder managed" };
+      return { icon: Folder, label: sourceLabel ?? "Folder", managedLabel: cst("company") };
     case "paperclip":
-      return { icon: Paperclip, label: sourceLabel ?? "Paperclip", managedLabel: "Paperclip managed" };
+      return { icon: Paperclip, label: sourceLabel ?? "Paperclip", managedLabel: "companySkills.company" };
     default:
-      return { icon: Boxes, label: sourceLabel ?? "Catalog", managedLabel: "Catalog managed" };
+      return { icon: Boxes, label: sourceLabel ?? "Catalog", managedLabel: cst("catalog") };
   }
 }
 
@@ -291,13 +294,13 @@ function middleTruncate(value: string, maxLength = 72) {
 
 function formatProjectScanSummary(result: CompanySkillProjectScanResult) {
   const parts = [
-    `${result.discovered} found`,
-    `${result.imported.length} imported`,
-    `${result.updated.length} updated`,
+    `${result.discovered} ${cst("found")}`,
+    `${result.imported.length} ${cst("imported")}`,
+    `${result.updated.length} ${cst("updated")}`,
   ];
-  if (result.conflicts.length > 0) parts.push(`${result.conflicts.length} conflicts`);
-  if (result.skipped.length > 0) parts.push(`${result.skipped.length} skipped`);
-  return `${parts.join(", ")} across ${result.scannedWorkspaces} workspace${result.scannedWorkspaces === 1 ? "" : "s"}.`;
+  if (result.conflicts.length > 0) parts.push(`${result.conflicts.length} ${cst("conflicts")}`);
+  if (result.skipped.length > 0) parts.push(`${result.skipped.length} ${cst("skipped")}`);
+  return `${parts.join(", ")} ${cst("acrossWorkspaces", { count: result.scannedWorkspaces, suffix: result.scannedWorkspaces === 1 ? "" : "s" })}.`;
 }
 
 function fileIcon(kind: CompanySkillFileInventoryEntry["kind"]) {
@@ -321,11 +324,11 @@ function parentDirectoryPaths(filePath: string) {
 type SourceFilter = "all" | "company" | "bundled" | "optional" | "external";
 
 const SOURCE_FILTER_LABELS: Record<SourceFilter, string> = {
-  all: "All",
-  company: "Company",
-  bundled: "Bundled",
-  optional: "Optional",
-  external: "External",
+  all: "all",
+  company: "company",
+  bundled: "bundled",
+  optional: "optional",
+  external: "external",
 };
 
 function readonlyMetadataValue(metadata: Record<string, unknown> | null | undefined, key: string): string | null {
@@ -383,7 +386,7 @@ function SourceFilterMenu({
           variant="ghost"
           size="icon-sm"
           className={cn("relative shrink-0", activeFilterCount > 0 && "text-blue-600 dark:text-blue-400")}
-          title={activeFilterCount > 0 ? `Filters: ${activeFilterCount}` : "Filter"}
+          title={activeFilterCount > 0 ? cst("filtersCount", { count: activeFilterCount }) : cst("filter")}
         >
           <Filter className="h-3.5 w-3.5" />
           {activeFilterCount > 0 ? (
@@ -394,11 +397,11 @@ function SourceFilterMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuLabel>{skillText("Source")}</DropdownMenuLabel>
+        <DropdownMenuLabel>{cst("source")}</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={value} onValueChange={(next) => onChange(next as SourceFilter)}>
           {filters.map((filter) => (
             <DropdownMenuRadioItem key={filter} value={filter}>
-              <span>{SOURCE_FILTER_LABELS[filter]}</span>
+              <span>{cst(SOURCE_FILTER_LABELS[filter])}</span>
               <span className="ml-auto text-xs text-muted-foreground">{counts[filter] ?? 0}</span>
             </DropdownMenuRadioItem>
           ))}
@@ -429,7 +432,7 @@ function CatalogFilterMenu({
           variant="ghost"
           size="icon-sm"
           className={cn("relative shrink-0", activeFilterCount > 0 && "text-blue-600 dark:text-blue-400")}
-          title={activeFilterCount > 0 ? `Filters: ${activeFilterCount}` : "Filter"}
+          title={activeFilterCount > 0 ? cst("filtersCount", { count: activeFilterCount }) : cst("filter")}
         >
           <Filter className="h-3.5 w-3.5" />
           {activeFilterCount > 0 ? (
@@ -440,16 +443,16 @@ function CatalogFilterMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="max-h-(--sz-calc-32) w-56 overflow-y-auto">
-        <DropdownMenuLabel>{skillText("Type")}</DropdownMenuLabel>
+        <DropdownMenuLabel>{cst("type")}</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={kindFilter} onValueChange={(next) => onKindChange(next as "all" | "bundled" | "optional")}>
-          <DropdownMenuRadioItem value="all">{skillText("All")}</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="bundled">{skillText("Bundled")}</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="optional">{skillText("Optional")}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="all">{cst("all")}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="bundled">{cst("bundled")}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="optional">{cst("optional")}</DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel>{skillText("Category")}</DropdownMenuLabel>
+        <DropdownMenuLabel>{cst("category")}</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={categoryFilter || "__all__"} onValueChange={(next) => onCategoryChange(next === "__all__" ? "" : next)}>
-          <DropdownMenuRadioItem value="__all__">{skillText("All categories")}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="__all__">{cst("allCategories")}</DropdownMenuRadioItem>
           {categories.map((category) => (
             <DropdownMenuRadioItem key={category} value={category}>
               {category}
@@ -465,20 +468,20 @@ function TrustChip({ level }: { level: CompanySkillTrustLevel }) {
   const map = {
     markdown_only: {
       icon: ShieldCheck,
-      label: "Markdown only",
-      tooltip: "Text only — no scripts, no binaries, no assets.",
+      label: cst("markdownOnly"),
+      tooltip: cst("markdownOnlyTooltip"),
       className: "border-border bg-muted/40 text-muted-foreground",
     },
     assets: {
       icon: Folder,
-      label: "Includes assets",
-      tooltip: "Ships images, fonts, or other non-script files.",
+      label: cst("includesAssets"),
+      tooltip: cst("includesAssetsTooltip"),
       className: "border-cyan-500/30 bg-cyan-500/10 text-cyan-800 dark:text-cyan-200",
     },
     scripts_executables: {
       icon: AlertTriangle,
-      label: "Includes scripts",
-      tooltip: "Ships executable scripts. Review before installing.",
+      label: cst("includesScripts"),
+      tooltip: cst("includesScriptsTooltip"),
       className: "border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-200",
     },
   } as const;
@@ -502,14 +505,14 @@ function CompatChip({ compatibility }: { compatibility: CompanySkillCompatibilit
   const map = {
     unknown: {
       icon: HelpCircle,
-      label: "Unknown format",
-      tooltip: "Paperclip could not validate this skill as Agent Skills markdown. Install at your own risk.",
+      label: cst("unknownFormat"),
+      tooltip: cst("unknownFormatTooltip"),
       className: "border-yellow-500/40 bg-yellow-500/10 text-yellow-800 dark:text-yellow-200",
     },
     invalid: {
       icon: XOctagon,
-      label: "Invalid",
-      tooltip: "This skill cannot be installed — content is not valid Agent Skills markdown.",
+      label: cst("invalid"),
+      tooltip: cst("invalidTooltip"),
       className: "border-destructive/40 bg-destructive/10 text-destructive",
     },
   } as const;
@@ -538,7 +541,7 @@ function ProvenanceBadge({ packageName, packageVersion }: { packageName: string 
           <span>{packageName}{packageVersion ? ` v${packageVersion}` : ""}</span>
         </span>
       </TooltipTrigger>
-      <TooltipContent>Installed from the app-shipped skills catalog. Provenance is signed by package version and content hash.</TooltipContent>
+      <TooltipContent>{cst("catalogProvenance")}</TooltipContent>
     </Tooltip>
   );
 }
@@ -580,7 +583,7 @@ export function skillDetailBreadcrumbs(
     ? folderBreadcrumbTrail(treeFromResult(folderResult), detail.folderId)
     : [];
   return [
-    { label: "Skills", href: "/skills" },
+    { label: cst("skills"), href: "/skills" },
     ...trail.map((folder, index) => ({
       label: index === 0 ? reservedRootLabel(folder) : folder.name,
       href: `/skills?folder=${encodeURIComponent(folder.id)}`,
@@ -592,11 +595,11 @@ export function skillDetailBreadcrumbs(
 type DiscoverySort = "agents" | "stars" | "forks" | "recent" | "alphabetical";
 
 const DISCOVERY_SORT_LABELS: Record<DiscoverySort, string> = {
-  agents: "Most agents",
-  stars: "Most stars",
-  forks: "Most forks",
-  recent: "Recently updated",
-  alphabetical: "Alphabetical",
+  agents: "mostAgents",
+  stars: "mostStars",
+  forks: "mostForks",
+  recent: "recentlyUpdated",
+  alphabetical: "alphabetical",
 };
 
 const DISCOVERY_SORTS: DiscoverySort[] = ["agents", "stars", "forks", "recent", "alphabetical"];
@@ -655,8 +658,8 @@ function categorySetKey(categories: string[]) {
 }
 
 function skillSettingsToastBody(skill: Pick<CompanySkillDetail, "categories" | "sharingScope">) {
-  const sharing = skill.sharingScope === "private" ? "Sharing: private" : "Sharing: company";
-  const categories = skill.categories.length ? `Categories: ${skill.categories.join(", ")}` : "Categories: none";
+  const sharing = skill.sharingScope === "private" ? `${cst("sharing")}: ${cst("private")}` : `${cst("sharing")}: ${cst("company")}`;
+  const categories = skill.categories.length ? `${cst("categories")}: ${skill.categories.join(", ")}` : `${cst("categories")}: ${cst("none")}`;
   return `${sharing} | ${categories}`;
 }
 
@@ -856,7 +859,7 @@ function SkillCard({
             type="checkbox"
             className="mt-1 h-4 w-4 rounded border-border"
             checked={selected}
-            aria-label={`Select ${card.name}`}
+            aria-label={cst("select", { name: card.name })}
             onClick={(event) => event.stopPropagation()}
             onChange={(event) => onSelectChange?.(card, event.target.checked)}
           />
@@ -865,12 +868,12 @@ function SkillCard({
         <div className="min-w-0 flex-1">
           <div className="truncate font-mono text-sm font-medium text-foreground">{card.name}</div>
           <div className="truncate text-xs text-muted-foreground">
-            by {card.author}{card.version ? ` · ${card.version}` : ""}
+            {cst("by", { author: card.author })}{card.version ? ` · ${card.version}` : ""}
           </div>
           {badgeFolder !== undefined ? (
             <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
               <FolderSwatch color={badgeFolder?.color} className="h-2 w-2" />
-              <span className="truncate">{badgeFolder ? badgeFolder.name : "Unfiled"}</span>
+              <span className="truncate">{badgeFolder ? badgeFolder.name : cst("unfiled")}</span>
             </div>
           ) : null}
         </div>
@@ -879,7 +882,7 @@ function SkillCard({
           const meta = sourceMeta(card.sourceBadge ?? "catalog", card.sourceLabel ?? null);
           const SourceIcon = meta.icon;
           return (
-            <span className="shrink-0 text-muted-foreground" title={`From ${meta.label}`} aria-label={`From ${meta.label}`}>
+            <span className="shrink-0 text-muted-foreground" title={cst("from", { label: meta.label })} aria-label={cst("from", { label: meta.label })}>
               <SourceIcon className="h-3.5 w-3.5" aria-hidden="true" />
             </span>
           );
@@ -891,7 +894,7 @@ function SkillCard({
                 variant="ghost"
                 size="icon-sm"
                 className="-mr-1 -mt-1 opacity-70 group-hover:opacity-100"
-                aria-label={`More actions for ${card.name}`}
+                aria-label={cst("moreActions", { name: card.name })}
                 onClick={(event) => event.stopPropagation()}
               >
                 <MoreHorizontal className="h-4 w-4" />
@@ -902,7 +905,7 @@ function SkillCard({
                 <>
                   <DropdownMenuItem onSelect={() => onOpenMove(card)}>
                     <FolderInput className="h-3.5 w-3.5" />
-                    Move to folder…
+                    {cst("moveToFolder")}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                 </>
@@ -938,7 +941,7 @@ function SkillCard({
       <div className="mt-auto pt-3">
         {/* Stats: installed agents · stars · forks — stars/forks only when > 0. */}
         <div className="flex items-center gap-2 text-(length:--text-micro) text-muted-foreground">
-          <span>{card.agentCount} {card.agentCount === 1 ? "agent" : "agents"}</span>
+          <span>{card.agentCount} {cst(card.agentCount === 1 ? "agent" : "agents")}</span>
           {card.starCount > 0 ? (
             <>
               <span aria-hidden="true">·</span>
@@ -996,7 +999,7 @@ function CategoryNav({
           active == null ? "bg-accent/60 font-medium text-foreground" : "text-muted-foreground",
         )}
       >
-        <span>All</span>
+        <span>{cst("all")}</span>
         <span className="text-xs text-muted-foreground">{total}</span>
       </button>
       {categories.map((category) => (
@@ -1169,8 +1172,8 @@ export function DiscoveryGrid({
           this is present (handled in Layout). */}
       <aside className={cn("hidden w-60 shrink-0 flex-col overflow-hidden border-r border-border md:flex", showFolderRail && "md:hidden")}>
         <div className="border-b border-border px-4 py-4">
-          <h2 className="text-sm font-semibold text-foreground">{skillText("Skills Store")}</h2>
-          <p className="text-xs text-muted-foreground">{skillText("Discover, install, fork, share")}</p>
+        <h2 className="text-sm font-semibold text-foreground">{cst("skillsStore")}</h2>
+        <p className="text-xs text-muted-foreground">{cst("discoverInstallForkShare")}</p>
         </div>
         <div className="px-4 pb-1 pt-3 text-(length:--text-micro) font-medium uppercase tracking-wide text-muted-foreground">
           Categories
@@ -1193,15 +1196,15 @@ export function DiscoveryGrid({
             <input
               value={search}
               onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Search skills, authors, categories…"
+              placeholder={cst("searchPlaceholder")}
               className="h-full w-full bg-transparent text-base outline-none placeholder:text-muted-foreground sm:text-sm"
             />
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
-                <span className="text-muted-foreground">{skillText("Sort")}</span>
-                <span className="ml-1.5">{DISCOVERY_SORT_LABELS[sort]}</span>
+                <span className="text-muted-foreground">{cst("sort")}</span>
+                <span className="ml-1.5">{cst(DISCOVERY_SORT_LABELS[sort])}</span>
                 <ChevronDown className="ml-1 h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
@@ -1219,16 +1222,16 @@ export function DiscoveryGrid({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
-                <span className="text-muted-foreground">{skillText("Source")}</span>
+                <span className="text-muted-foreground">{cst("source")}</span>
                   <span className="ml-1.5 capitalize">
-                    {sourceBadgeFilter === "all" ? "All" : sourceMeta(sourceBadgeFilter as CompanySkillSourceBadge, null).label}
+                    {sourceBadgeFilter === "all" ? cst("all") : sourceMeta(sourceBadgeFilter as CompanySkillSourceBadge, null).label}
                   </span>
                   <ChevronDown className="ml-1 h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuRadioGroup value={sourceBadgeFilter} onValueChange={setSourceBadgeFilter}>
-                  <DropdownMenuRadioItem value="all">{skillText("All sources")}</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="all">{cst("allSources")}</DropdownMenuRadioItem>
                   {availableSources.map((badge) => (
                     <DropdownMenuRadioItem key={badge} value={badge}>
                       {sourceMeta(badge as CompanySkillSourceBadge, null).label}
@@ -1243,7 +1246,7 @@ export function DiscoveryGrid({
             size="icon-sm"
             onClick={onScan}
             disabled={scanPending}
-            title="Scan project workspaces for skills"
+            title={cst("scanWorkspaces")}
           >
             <RefreshCw className={cn("h-4 w-4", scanPending && "animate-spin")} />
           </Button>
@@ -1285,7 +1288,7 @@ export function DiscoveryGrid({
               <FolderChip
                 result={folderResult}
                 selection={folderSelection}
-                allLabel="All skills"
+                allLabel={cst("allSkills")}
                 onClick={onOpenMobileFolders ?? (() => undefined)}
               />
             </div>
@@ -1298,7 +1301,7 @@ export function DiscoveryGrid({
           ) : null}
           {onToggleSelectMode ? (
             <Button variant="ghost" size="sm" onClick={onToggleSelectMode}>
-              {selectMode ? "Done" : "Select"}
+              {selectMode ? cst("done") : cst("selectMode")}
             </Button>
           ) : null}
         </div>
@@ -1309,7 +1312,7 @@ export function DiscoveryGrid({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="w-full justify-between">
-                  <span className="capitalize">{activeCategory ?? "All categories"}</span>
+                  <span className="capitalize">{activeCategory ?? cst("allCategories")}</span>
                   <ChevronDown className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
@@ -1335,19 +1338,19 @@ export function DiscoveryGrid({
           <Tabs value={tab} onValueChange={(value) => onTabChange(value as DiscoveryTab)}>
             <TabsList variant="line" className="p-0">
               <TabsTrigger value="all" className="px-3">
-                <span>All</span>
+                <span>{cst("all")}</span>
                 <span className="ml-1.5 text-(length:--text-micro) text-muted-foreground">{tabCounts.all}</span>
               </TabsTrigger>
               <TabsTrigger value="installed" className="px-3">
-                <span>Installed</span>
+                <span>{cst("installed")}</span>
                 <span className="ml-1.5 text-(length:--text-micro) text-muted-foreground">{tabCounts.installed}</span>
               </TabsTrigger>
               <TabsTrigger value="catalog" className="px-3">
-                <span>Catalog</span>
+                <span>{cst("catalog")}</span>
                 <span className="ml-1.5 text-(length:--text-micro) text-muted-foreground">{tabCounts.catalog}</span>
               </TabsTrigger>
               <TabsTrigger value="bundled" className="px-3">
-                <span>Bundled</span>
+                <span>{cst("bundled")}</span>
                 <span className="ml-1.5 text-(length:--text-micro) text-muted-foreground">{tabCounts.bundled}</span>
               </TabsTrigger>
             </TabsList>
@@ -1365,7 +1368,7 @@ export function DiscoveryGrid({
           {folderNudgeStorageKey && onCreateFolder && folderResult && folderResult.folders.length === 0 && !loading && cards.length > 0 ? (
             <AllUnfiledBanner
               storageKey={folderNudgeStorageKey}
-              itemLabelPlural="skills"
+              itemLabelPlural={cst("skills")}
               onCreateFolder={onCreateFolder}
             />
           ) : null}
@@ -1391,16 +1394,16 @@ export function DiscoveryGrid({
                 icon={LayoutGrid}
                 message={
                   totalCount === 0
-                    ? "No skills yet. Create one or install from the catalog."
+                    ? cst("noSkillsYet")
                     : search || activeCategory || sourceFilterActive
-                      ? "No skills match your filters."
-                      : "No skills in this tab yet."
+                      ? cst("noSkillsMatch")
+                      : cst("noSkillsInTab")
                 }
               />
               {totalCount === 0 ? (
                 <div className="mt-3 flex flex-col items-center gap-2">
                   <Button size="sm" onClick={onBrowseCatalog}>
-                    <Boxes className="mr-1.5 h-3.5 w-3.5" /> Browse catalog
+                    <Boxes className="mr-1.5 h-3.5 w-3.5" /> {cst("browseCatalog")}
                   </Button>
                   <Button size="sm" variant="ghost" onClick={onCreate}>
                     Create a skill
@@ -1425,7 +1428,7 @@ export function DiscoveryGrid({
           ) : (
             <>
               <p className="mb-3 text-xs text-muted-foreground">
-                {sourceFilteredCards.length} {sourceFilteredCards.length === 1 ? "skill" : "skills"}
+                {sourceFilteredCards.length} {cst(sourceFilteredCards.length === 1 ? "skill" : "skills")}
                 {activeCategory ? <span className="capitalize"> · {activeCategory}</span> : null}
               </p>
               <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(19rem,1fr))]">
@@ -1470,7 +1473,7 @@ function NewSkillWizard({
   const [draft, setDraft] = useState<SkillCreateDraft>(initialDraft);
   const [slugDirty, setSlugDirty] = useState(initialDraft.slug.trim().length > 0);
   const categoryDraft = draft.categories.join(", ");
-  const steps = ["Basics", "Design", "Content", "Review"];
+  const steps = ["basics", "design", "content", "review"];
 
   useEffect(() => {
     setStep(0);
@@ -1501,7 +1504,7 @@ function NewSkillWizard({
               step === index ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >
-            {label}
+            {cst(label)}
           </button>
         ))}
       </div>
@@ -1509,7 +1512,7 @@ function NewSkillWizard({
       {draft.forkedFromName ? (
         <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
           <GitFork className="h-3.5 w-3.5" />
-          Forking {draft.forkedFromName}
+          {cst("forking")} {draft.forkedFromName}
         </div>
       ) : null}
 
@@ -1527,7 +1530,7 @@ function NewSkillWizard({
                   : draft.markdown,
               });
             }}
-            placeholder="Skill name"
+            placeholder={cst("skillName")}
             className="h-9"
           />
           <Input
@@ -1537,7 +1540,7 @@ function NewSkillWizard({
               setSlugDirty(nextSlug.length > 0);
               patchDraft({ slug: nextSlug });
             }}
-            placeholder="skill-shortname"
+            placeholder={cst("shortSlug")}
             className="h-9 font-mono"
           />
           <Textarea
@@ -1552,7 +1555,7 @@ function NewSkillWizard({
                   : draft.markdown,
               });
             }}
-            placeholder="One-line promise for the skill"
+            placeholder={cst("tagline")}
             className="min-h-20"
           />
         </div>
@@ -1563,19 +1566,19 @@ function NewSkillWizard({
               size={48}
               card={{
                 key: effectiveSlug || draft.name || "new-skill",
-                name: draft.name || "New Skill",
+                name: draft.name || cst("newSkill"),
                 slug: effectiveSlug || "skill",
                 iconUrl: null,
                 color: draft.color,
               }}
             />
             <div className="min-w-0">
-              <div className="truncate text-sm font-medium">{draft.name || "New Skill"}</div>
-              <div className="truncate text-xs text-muted-foreground">{draft.tagline || "No tagline yet."}</div>
+              <div className="truncate text-sm font-medium">{draft.name || cst("newSkill")}</div>
+              <div className="truncate text-xs text-muted-foreground">{draft.tagline || cst("noTagline")}</div>
             </div>
           </div>
           <div>
-            <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-muted-foreground">Color</label>
+            <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-muted-foreground">{cst("color")}</label>
             <div className="flex flex-wrap gap-2">
               {SKILL_CREATE_ACCENTS.map((color) => (
                 <button
@@ -1587,7 +1590,7 @@ function NewSkillWizard({
                     draft.color === color ? "border-foreground" : "border-border",
                   )}
                   style={{ backgroundColor: color }}
-                  aria-label={`Use ${color}`}
+                  aria-label={cst("useColor", { color })}
                 />
               ))}
               <Input
@@ -1598,11 +1601,11 @@ function NewSkillWizard({
             </div>
           </div>
           <div>
-            <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-muted-foreground">Categories</label>
+            <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-muted-foreground">{cst("categories")}</label>
             <Input
               value={categoryDraft}
               onChange={(event) => patchDraft({ categories: splitCategoryDraft(event.target.value) })}
-              placeholder="engineering, review, memory"
+              placeholder={cst("categoriesPlaceholder")}
               className="h-9"
             />
           </div>
@@ -1618,17 +1621,17 @@ function NewSkillWizard({
       ) : (
         <div className="space-y-4 text-sm">
           <div className="grid grid-cols-(--gtc-26) gap-y-2">
-            <span className="text-muted-foreground">Name</span>
-            <span>{draft.name || "Untitled"}</span>
-            <span className="text-muted-foreground">Slug</span>
+            <span className="text-muted-foreground">{cst("name")}</span>
+            <span>{draft.name || cst("untitled")}</span>
+            <span className="text-muted-foreground">{cst("slug")}</span>
             <span className="font-mono">{effectiveSlug || "skill"}</span>
-            <span className="text-muted-foreground">Scope</span>
-            <span>{draft.sharingScope === "private" ? "Private" : "Company"}</span>
-            <span className="text-muted-foreground">Categories</span>
-            <span>{draft.categories.length ? draft.categories.join(", ") : "none"}</span>
+            <span className="text-muted-foreground">{cst("scope")}</span>
+            <span>{draft.sharingScope === "private" ? cst("private") : cst("company")}</span>
+            <span className="text-muted-foreground">{cst("categories")}</span>
+            <span>{draft.categories.length ? draft.categories.join(", ") : cst("none")}</span>
           </div>
           <div className="space-y-2">
-            <label className="block text-xs font-medium uppercase tracking-wide text-muted-foreground">Sharing</label>
+            <label className="block text-xs font-medium uppercase tracking-wide text-muted-foreground">{cst("sharing")}</label>
             <div className="grid gap-2 sm:grid-cols-3">
               {(["company", "private"] as const).map((scope) => (
                 <button
@@ -1640,9 +1643,9 @@ function NewSkillWizard({
                     draft.sharingScope === scope ? "border-foreground bg-accent/50" : "border-border",
                   )}
                 >
-                  <span className="block font-medium">{scope === "company" ? "Company" : "Private"}</span>
+                  <span className="block font-medium">{scope === "company" ? cst("company") : cst("private")}</span>
                   <span className="mt-1 block text-xs text-muted-foreground">
-                    {scope === "company" ? "Visible inside this company." : "Only visible in your library."}
+                    {scope === "company" ? cst("companyVisible") : cst("privateVisible")}
                   </span>
                 </button>
               ))}
@@ -1651,8 +1654,8 @@ function NewSkillWizard({
                 disabled
                 className="rounded-md border border-dashed border-border px-3 py-2 text-left text-sm text-muted-foreground"
               >
-                <span className="block font-medium">Public link</span>
-                <span className="mt-1 block text-xs">Coming later.</span>
+                <span className="block font-medium">{cst("publicLink")}</span>
+                <span className="mt-1 block text-xs">{cst("comingLater")}</span>
               </button>
             </div>
           </div>
@@ -1667,19 +1670,19 @@ function NewSkillWizard({
 
       <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
         <Button variant="ghost" size="sm" onClick={onCancel} disabled={isPending}>
-          Cancel
+          {cst("cancel")}
         </Button>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => setStep((value) => Math.max(0, value - 1))} disabled={isPending || step === 0}>
-            Back
+            {cst("back")}
           </Button>
           {step < steps.length - 1 ? (
             <Button size="sm" onClick={() => setStep((value) => Math.min(steps.length - 1, value + 1))} disabled={!nameValid}>
-              Next
+              {cst("next")}
             </Button>
           ) : (
             <Button size="sm" onClick={submit} disabled={isPending || !nameValid}>
-              {isPending ? "Creating..." : draft.forkedFromSkillId ? "Create fork" : "Create skill"}
+          {isPending ? cst("creating") : draft.forkedFromSkillId ? cst("createFork") : cst("createSkill")}
             </Button>
           )}
         </div>
@@ -1857,7 +1860,7 @@ function CatalogDetailPane({
   loadingPrimaryAction: boolean;
 }) {
   if (!skill) {
-    return <EmptyState icon={Boxes} message="Select a catalog skill to inspect." />;
+    return <EmptyState icon={Boxes} message={cst("selectCatalogSkill")} />;
   }
 
   const installedHash = installedSkill?.originHash ?? null;
@@ -1876,28 +1879,28 @@ function CatalogDetailPane({
             </Button>
           </span>
         </TooltipTrigger>
-        <TooltipContent>This skill cannot be installed — its content is not valid Agent Skills markdown.</TooltipContent>
+        <TooltipContent>{cst("invalidTooltip")}</TooltipContent>
       </Tooltip>
     );
   } else if (!isInstalled) {
     cta = (
       <Button onClick={onInstall} disabled={loadingPrimaryAction}>
         {skill.trustLevel === "scripts_executables" ? <AlertTriangle className="mr-1.5 h-3.5 w-3.5" /> : <Download className="mr-1.5 h-3.5 w-3.5" />}
-        {loadingPrimaryAction ? "Preparing..." : "Install skill in this organization"}
+        {loadingPrimaryAction ? cst("preparing") : cst("installSkill")}
       </Button>
     );
   } else if (hashOutOfSync) {
     cta = (
       <Button onClick={onUpdate} disabled={loadingPrimaryAction} className="border-amber-500/40 bg-amber-500/20 text-amber-900 dark:text-amber-100 hover:bg-amber-500/30">
         <ArrowUpCircle className="mr-1.5 h-3.5 w-3.5" />
-        Update from catalog
+        {cst("updateFromCatalog")}
       </Button>
     );
   } else {
     cta = (
       <Button variant="ghost" onClick={() => installedSkillId && onOpenInstalled(installedSkillId)}>
         <Check className="mr-1.5 h-3.5 w-3.5" />
-        Installed · Open in library
+        {cst("openInstalled")}
       </Button>
     );
   }
@@ -1936,7 +1939,7 @@ function CatalogDetailPane({
                   Update available
                 </Badge>
               </TooltipTrigger>
-              <TooltipContent>Catalog content hash has changed since this skill was installed.</TooltipContent>
+              <TooltipContent>{cst("catalogChanged")}</TooltipContent>
             </Tooltip>
           ) : null}
           {skill.requires.length > 0 ? (
@@ -1957,16 +1960,16 @@ function CatalogDetailPane({
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span className="uppercase tracking-(--tracking-caps)">Key</span>
+          <span className="uppercase tracking-(--tracking-caps)">{cst("key")}</span>
           <span className="font-mono">{skill.key}</span>
           <span className="uppercase tracking-(--tracking-caps)">·</span>
-          <span className="uppercase tracking-(--tracking-caps)">Hash</span>
+          <span className="uppercase tracking-(--tracking-caps)">{cst("hash")}</span>
           <span className="font-mono">{skill.contentHash.slice(0, 24)}…</span>
           <CopyText
             text={skill.contentHash}
-            copiedLabel="Copied hash"
-            ariaLabel="Copy content hash"
-            title="Copy content hash"
+            copiedLabel={cst("copiedHash")}
+            ariaLabel={cst("copyContentHash")}
+            title={cst("copyContentHash")}
             className="inline-flex h-6 w-6 items-center justify-center rounded-sm border border-border text-muted-foreground hover:bg-accent hover:text-foreground"
           >
             <Copy className="h-3 w-3" />
@@ -1982,9 +1985,9 @@ function CatalogDetailPane({
         {fileQuery.isLoading ? (
           <PageSkeleton variant="detail" />
         ) : fileQuery.error ? (
-          <div className="text-sm text-destructive">{fileQuery.error instanceof Error ? fileQuery.error.message : "Failed to load file"}</div>
+          <div className="text-sm text-destructive">{fileQuery.error instanceof Error ? fileQuery.error.message : cst("failedLoadFile")}</div>
         ) : !fileQuery.data ? (
-          <div className="text-sm text-muted-foreground">Select a file to inspect.</div>
+          <div className="text-sm text-muted-foreground">{cst("selectFile")}</div>
         ) : fileQuery.data.markdown ? (
           <MarkdownBody softBreaks={false} linkIssueReferences={false}>{body}</MarkdownBody>
         ) : (
@@ -2037,22 +2040,22 @@ function InstallPreviewDialog({
 
   if (!skill) return null;
 
-  let confirmLabel = "Install skill";
+  let confirmLabel = cst("installSkillShort");
   let confirmVariant: "default" | "destructive" = "default";
   if (defaultAction === "update") {
-    confirmLabel = "Install update";
+    confirmLabel = cst("installUpdate");
   } else if (defaultAction === "replace") {
-    confirmLabel = "Replace existing skill";
+    confirmLabel = cst("replaceExisting");
     confirmVariant = "destructive";
   }
-  if (isPending) confirmLabel = "Installing…";
+  if (isPending) confirmLabel = cst("installing");
 
   return (
     <Dialog open={open} onOpenChange={(value) => (!isPending ? onOpenChange(value) : null)}>
       <DialogContent className="sm:max-w-2xl" showCloseButton={!isPending}>
         <DialogHeader>
           <DialogTitle>
-            {defaultAction === "update" ? "Update" : defaultAction === "replace" ? "Replace" : "Install"} · {skill.name}
+            {defaultAction === "update" ? cst("update") : defaultAction === "replace" ? cst("replace") : cst("install")} · {skill.name}
           </DialogTitle>
           <DialogDescription>
             <span className="capitalize">{skill.kind}</span> · {skill.category}
@@ -2063,18 +2066,18 @@ function InstallPreviewDialog({
         <div className="space-y-4 text-sm">
           <div className="rounded-md border border-border p-3">
             <div className="grid grid-cols-(--gtc-26) gap-y-2 text-xs">
-              <div className="text-muted-foreground">Trust</div>
+              <div className="text-muted-foreground">{cst("trust")}</div>
               <div className="flex items-center gap-2">
                 <TrustChip level={skill.trustLevel} />
                 {skill.trustLevel === "markdown_only" ? (
-                  <span className="text-muted-foreground">Safe</span>
+                  <span className="text-muted-foreground">{cst("safe")}</span>
                 ) : skill.trustLevel === "scripts_executables" ? (
-                  <span className="text-amber-800 dark:text-amber-200">Review required</span>
+                  <span className="text-amber-800 dark:text-amber-200">{cst("reviewRequired")}</span>
                 ) : (
-                  <span className="text-muted-foreground">Non-script assets</span>
+                  <span className="text-muted-foreground">{cst("nonScriptAssets")}</span>
                 )}
               </div>
-              <div className="text-muted-foreground">Compatibility</div>
+              <div className="text-muted-foreground">{cst("compatibility")}</div>
               <div className="flex items-center gap-2">
                 {skill.compatibility === "compatible" ? (
                   <span className="inline-flex items-center gap-1 text-muted-foreground">
@@ -2085,11 +2088,11 @@ function InstallPreviewDialog({
                   <CompatChip compatibility={skill.compatibility} />
                 )}
               </div>
-              <div className="text-muted-foreground">Requires</div>
-              <div className="text-foreground">{skill.requires.length === 0 ? "none" : skill.requires.join(", ")}</div>
-              <div className="text-muted-foreground">Roles</div>
-              <div className="text-foreground">{skill.recommendedForRoles.length === 0 ? "any" : skill.recommendedForRoles.join(" · ")}</div>
-              <div className="text-muted-foreground">Provenance</div>
+              <div className="text-muted-foreground">{cst("requires")}</div>
+              <div className="text-foreground">{skill.requires.length === 0 ? cst("none") : skill.requires.join(", ")}</div>
+              <div className="text-muted-foreground">{cst("roles")}</div>
+              <div className="text-foreground">{skill.recommendedForRoles.length === 0 ? cst("any") : skill.recommendedForRoles.join(" · ")}</div>
+              <div className="text-muted-foreground">{cst("provenance")}</div>
               <div className="min-w-0">
                 <div className="truncate">{packageName ?? "—"}{packageVersion ? ` v${packageVersion}` : ""}</div>
                 <div className="truncate font-mono text-(length:--text-micro) text-muted-foreground">{skill.contentHash}</div>
@@ -2114,8 +2117,7 @@ function InstallPreviewDialog({
 
           {conflict ? (
             <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-200">
-              An existing skill with key <span className="font-mono">{conflict.key}</span> is installed (
-              {conflict.sourceLabel ?? conflict.sourceType}). Installing will {defaultAction === "update" ? "overwrite the catalog content" : "replace the existing skill"}.
+              {cst("existingSkillConflict", { key: conflict.key, source: conflict.sourceLabel ?? conflict.sourceType, action: defaultAction === "update" ? cst("overwriteCatalog") : cst("replaceExisting") })}
             </div>
           ) : null}
 
@@ -2130,12 +2132,12 @@ function InstallPreviewDialog({
           {advancedOpen ? (
             <div className="space-y-3 rounded-md border border-border p-3 text-xs">
               <div>
-                <label className="mb-1 block uppercase tracking-wide text-muted-foreground">Slug override</label>
+                <label className="mb-1 block uppercase tracking-wide text-muted-foreground">{cst("slugOverride")}</label>
                 <Input value={slug} onChange={(event) => setSlug(event.target.value)} placeholder={defaultSlug ?? skill.slug} className="h-8" />
               </div>
               <label className="flex items-center gap-2">
                 <Checkbox checked={force} onCheckedChange={(value) => setForce(Boolean(value))} />
-                <span>Force replace existing same-key skill</span>
+                <span>{cst("forceReplace")}</span>
               </label>
             </div>
           ) : null}
@@ -4265,51 +4267,51 @@ export function CompanySkills() {
       if (result.imported[0]) navigate(routeForSkill(result.imported[0]));
       pushToast({
         tone: "success",
-        title: "Skills imported",
-        body: `${result.imported.length} skill${result.imported.length === 1 ? "" : "s"} added.`,
+        title: cst("skillsImported"),
+        body: cst("skillAdded", { count: result.imported.length, suffix: result.imported.length === 1 ? "" : "s" }),
       });
       if (result.warnings[0]) {
-        pushToast({ tone: "warn", title: "Import warnings", body: result.warnings[0] });
+        pushToast({ tone: "warn", title: cst("importWarnings"), body: result.warnings[0] });
       }
       setSource("");
     },
     onError: (error) => {
-      reportSkillError(error, "Skill import failed", "Failed to import skill source.", "Importing skills");
+      reportSkillError(error, cst("skillImportFailed"), cst("failedImportSource"), cst("importingSkills"));
     },
   });
 
   const scanProjects = useMutation({
     mutationFn: () => companySkillsApi.scanProjects(selectedCompanyId!),
     onMutate: () => {
-      setScanStatusMessage("Scanning project workspaces for skills...");
+      setScanStatusMessage(cst("scanningWorkspaces"));
     },
     onSuccess: async (result) => {
-      setScanStatusMessage("Refreshing skills list...");
+      setScanStatusMessage(cst("refreshingSkills"));
       await queryClient.invalidateQueries({ queryKey: queryKeys.companySkills.list(selectedCompanyId!) });
       const summary = formatProjectScanSummary(result);
       setScanStatusMessage(summary);
       pushToast({
         tone: "success",
-        title: "Project skill scan complete",
+        title: cst("scanComplete"),
         body: summary,
       });
       if (result.conflicts[0]) {
         pushToast({
           tone: "warn",
-          title: "Skill conflicts found",
+          title: cst("conflictsFound"),
           body: result.conflicts[0].reason,
         });
       } else if (result.warnings[0]) {
         pushToast({
           tone: "warn",
-          title: "Scan warnings",
+          title: cst("scanWarnings"),
           body: result.warnings[0],
         });
       }
     },
     onError: (error) => {
       setScanStatusMessage(null);
-      reportSkillError(error, "Project skill scan failed", "Failed to scan project workspaces.", "Scanning projects for skills");
+      reportSkillError(error, cst("scanFailed"), cst("failedScan"), cst("scanningWorkspaces"));
     },
   });
 
@@ -4322,14 +4324,14 @@ export function CompanySkills() {
       setCreateError(null);
       pushToast({
         tone: "success",
-        title: skill.forkedFromSkillId ? "Skill fork created" : "Skill created",
+        title: skill.forkedFromSkillId ? cst("skillForkCreated") : cst("skillCreated"),
         body: `${skill.name} is now editable in the Paperclip workspace.`,
       });
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "Failed to create skill.";
+      const message = error instanceof Error ? error.message : cst("failedCreateSkill");
       setCreateError(message);
-      reportSkillError(error, "Skill creation failed", "Failed to create skill.", "Creating a skill");
+      reportSkillError(error, cst("skillCreationFailed"), cst("failedCreateSkill"), cst("creating"));
     },
   });
 
@@ -4350,15 +4352,15 @@ export function CompanySkills() {
       setEditMode(false);
       pushToast({
         tone: "success",
-        title: "Skill saved",
+        title: cst("skillSaved"),
         body: result.path,
       });
     },
     onError: (error) => {
       pushToast({
         tone: "error",
-        title: "Save failed",
-        body: error instanceof Error ? error.message : "Failed to save skill file.",
+        title: cst("saveFailed"),
+        body: error instanceof Error ? error.message : cst("failedSaveFile"),
       });
     },
   });
@@ -5039,16 +5041,16 @@ export function CompanySkills() {
       <Dialog open={deleteOpen} onOpenChange={closeDeleteDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Remove skill</DialogTitle>
+            <DialogTitle>{cst("removeSkill")}</DialogTitle>
             <DialogDescription>
-              Remove this skill from the company library. If any agents still use it, removal will be blocked until it is detached.
+              {cst("removeWarning")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 text-sm">
             <p>
               {deleteTargetDetail
-                ? `You are about to remove ${deleteTargetDetail.name}.`
-                : "You are about to remove this skill."}
+                ? cst("aboutToRemoveNamed", { name: deleteTargetDetail.name })
+                : cst("aboutToRemove")}
             </p>
             {deleteTargetDetail?.usedByAgents?.length ? (
               <div className="rounded-md border border-border px-3 py-3 text-muted-foreground">
@@ -5076,7 +5078,7 @@ export function CompanySkills() {
                   onClick={() => deleteSkill.mutate()}
                   disabled={deleteSkill.isPending || !deleteTargetSkillId}
                 >
-                  {deleteSkill.isPending ? "Removing..." : "Remove skill"}
+                  {deleteSkill.isPending ? cst("removing") : cst("removeSkill")}
                 </Button>
               </>
             )}
@@ -5087,7 +5089,7 @@ export function CompanySkills() {
       <Dialog open={emptySourceHelpOpen} onOpenChange={setEmptySourceHelpOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add a skill source</DialogTitle>
+            <DialogTitle>{cst("addSkillSource")}</DialogTitle>
             <DialogDescription>
               Paste a local path, GitHub URL, or `skills.sh` command into the field first.
             </DialogDescription>
@@ -5100,9 +5102,9 @@ export function CompanySkills() {
               className="flex items-start justify-between rounded-md border border-border px-3 py-3 text-foreground no-underline transition-colors hover:bg-accent/40"
             >
               <span>
-                <span className="block font-medium">Browse skills.sh</span>
+                <span className="block font-medium">{cst("browseSkillsSh")}</span>
                 <span className="mt-1 block text-muted-foreground">
-                  Find install commands and paste one here.
+                  {cst("findInstallCommands")}
                 </span>
               </span>
               <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
@@ -5114,9 +5116,9 @@ export function CompanySkills() {
               className="flex items-start justify-between rounded-md border border-border px-3 py-3 text-foreground no-underline transition-colors hover:bg-accent/40"
             >
               <span>
-                <span className="block font-medium">Search GitHub</span>
+                <span className="block font-medium">{cst("searchGithub")}</span>
                 <span className="mt-1 block text-muted-foreground">
-                  Look for repositories with `SKILL.md`, then paste the repo URL here.
+                  {cst("searchGithubDescription")}
                 </span>
               </span>
               <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
@@ -5151,9 +5153,9 @@ export function CompanySkills() {
       <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Import a skill</DialogTitle>
+            <DialogTitle>{cst("importTitle")}</DialogTitle>
             <DialogDescription>
-              Paste a local path, GitHub URL, or `skills.sh` command to import a skill into this company.
+              {cst("importDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -5161,11 +5163,11 @@ export function CompanySkills() {
               <Input
                 value={source}
                 onChange={(event) => setSource(event.target.value)}
-                placeholder="Paste path, GitHub URL, or skills.sh command"
+                placeholder={cst("importPlaceholder")}
                 className="h-9 rounded-none border-0 px-0 shadow-none focus-visible:ring-0"
               />
               <Button size="sm" onClick={handleAddSkillSource} disabled={importSkill.isPending}>
-                {importSkill.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : "Import"}
+                {importSkill.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : cst("import")}
               </Button>
             </div>
             <a
@@ -5175,8 +5177,8 @@ export function CompanySkills() {
               className="flex items-start justify-between rounded-md border border-border px-3 py-3 text-sm text-foreground no-underline transition-colors hover:bg-accent/40"
             >
               <span>
-                <span className="block font-medium">Browse skills.sh</span>
-                <span className="mt-1 block text-muted-foreground">Find install commands and paste one here.</span>
+                <span className="block font-medium">{cst("browseSkillsSh")}</span>
+                <span className="mt-1 block text-muted-foreground">{cst("findInstallCommands")}</span>
               </span>
               <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             </a>
@@ -5187,8 +5189,8 @@ export function CompanySkills() {
               className="flex items-start justify-between rounded-md border border-border px-3 py-3 text-sm text-foreground no-underline transition-colors hover:bg-accent/40"
             >
               <span>
-                <span className="block font-medium">Search GitHub</span>
-                <span className="mt-1 block text-muted-foreground">Look for repositories with `SKILL.md`, then paste the repo URL.</span>
+                <span className="block font-medium">{cst("searchGithub")}</span>
+                <span className="mt-1 block text-muted-foreground">{cst("searchGithubDescription")}</span>
               </span>
               <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             </a>
@@ -5239,7 +5241,7 @@ export function CompanySkills() {
         result={railSkillFolderResult}
         selection={folderSelection}
         allLabel="All skills"
-        itemLabelPlural="Skills"
+        itemLabelPlural={cst("skills")}
         onSelect={setFolderSelection}
         onCreate={() => openCreateFolder()}
       />
@@ -5249,7 +5251,7 @@ export function CompanySkills() {
           if (!open) setMoveDialog(null);
         }}
         result={railSkillFolderResult}
-        title={moveDialog?.title ?? "Move to folder"}
+        title={moveDialog?.title ?? cst("moveToFolderTitle")}
         subtitle={moveDialog?.subtitle ?? null}
         currentFolderId={moveDialog?.currentFolderId ?? null}
         onMove={(folderId) => void performDialogMove(folderId)}
@@ -5264,7 +5266,7 @@ export function CompanySkills() {
               className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground no-underline transition-colors hover:text-foreground"
             >
               <ChevronLeft className="h-4 w-4" />
-              Back
+              {cst("back")}
             </Link>
             <h1 className="text-2xl font-semibold">{studioTitle}</h1>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{studioDescription}</p>
@@ -5274,7 +5276,7 @@ export function CompanySkills() {
               {studioForkFromId && studioForkDetailQuery.isLoading ? (
                 <PageSkeleton variant="detail" />
               ) : studioForkFromId && !studioForkDetailQuery.data ? (
-                <EmptyState icon={Boxes} message="Fork source skill not found." />
+                <EmptyState icon={Boxes} message={cst("forkSourceNotFound")} />
               ) : (
                 <NewSkillWizard
                   initialDraft={studioDraft}
@@ -5452,11 +5454,11 @@ export function CompanySkills() {
           {catalogListQuery.isLoading || catalogDetailQuery.isLoading ? (
             <PageSkeleton variant="detail" />
           ) : !selectedCatalogSkill ? (
-            <EmptyState icon={Boxes} message="Catalog skill not found." />
+              <EmptyState icon={Boxes} message={cst("catalogSkillNotFound")} />
           ) : (
             <div className="grid gap-0 xl:grid-cols-(--gtc-30)">
               <aside className="border-b border-border px-3 py-4 xl:border-b-0 xl:border-r">
-                <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Files</div>
+                <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{cst("files")}</div>
                 <SkillTree
                   nodes={buildTree(selectedCatalogSkill.files.map((file) => ({ path: file.path, kind: file.kind })))}
                   skillId={selectedCatalogSkill.id}
@@ -5497,7 +5499,7 @@ export function CompanySkills() {
           {skillsQuery.isLoading ? (
             <PageSkeleton variant="detail" />
           ) : (
-            <EmptyState icon={Boxes} message="Skill not found." />
+            <EmptyState icon={Boxes} message={cst("skillNotFound")} />
           )}
         </div>
       )}
