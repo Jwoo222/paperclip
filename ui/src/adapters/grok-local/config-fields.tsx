@@ -4,11 +4,10 @@ import {
   Field,
 } from "../../components/agent-config-primitives";
 import { ChoosePathButton } from "../../components/PathInstructionsModal";
+import { t } from "@/i18n";
 
 const inputClass =
   "w-full rounded-md border border-border px-2.5 py-1.5 bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/40";
-const instructionsFileHint =
-  "Absolute path to a markdown file (e.g. AGENTS.md) that defines this agent's behavior. Paperclip stages it into the Grok workspace as Agents.md when possible.";
 
 export function GrokLocalConfigFields({
   isCreate,
@@ -22,7 +21,7 @@ export function GrokLocalConfigFields({
   if (hideInstructionsFile) return null;
   return (
     <>
-      <Field label="Agent instructions file" hint={instructionsFileHint}>
+      <Field label={t("adapterImport.adapter.instructionsFile")} hint={t("adapterImport.adapter.instructionsHintGrok")}>
         <div className="flex items-center gap-2">
           <DraftInput
             value={

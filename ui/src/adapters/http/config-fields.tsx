@@ -2,8 +2,8 @@ import type { AdapterConfigFieldsProps } from "../types";
 import {
   Field,
   DraftInput,
-  help,
 } from "../../components/agent-config-primitives";
+import { t } from "@/i18n";
 
 const inputClass =
   "w-full rounded-md border border-border px-2.5 py-1.5 bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/40";
@@ -17,7 +17,7 @@ export function HttpConfigFields({
   mark,
 }: AdapterConfigFieldsProps) {
   return (
-    <Field label="Webhook URL" hint={help.webhookUrl}>
+    <Field label={t("adapterImport.adapter.webhookUrl")} hint={t("adapterImport.adapter.webhookHint")}>
       <DraftInput
         value={
           isCreate
@@ -31,7 +31,7 @@ export function HttpConfigFields({
         }
         immediate
         className={inputClass}
-        placeholder="https://..."
+        placeholder={t("adapterImport.adapter.webhookPlaceholder")}
       />
     </Field>
   );

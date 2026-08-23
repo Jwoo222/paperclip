@@ -1,0 +1,10 @@
+{
+  "agentConfigResidual": {
+    "adapterDefault": "Adapter default · {{model}}",
+    "noAdapterDefault": "No adapter default — choose a cheaper model",
+    "cheapModelDescription": "Used when a run requests the cheap profile, such as for routine summaries. The primary model stays unchanged.",
+    "fallbackPrefix": "No explicit cheap model is selected — runtime falls back to",
+    "fallbackSuffix": ".",
+    "noCheapModel": "No cheap model is selected and the adapter has no default. Cheap-lane runs will continue on the primary model with a fallback note."
+  }
+}

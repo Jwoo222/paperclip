@@ -707,9 +707,7 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
             queryFn: () => instanceSettingsApi.get(),
           });
         } catch {
-          throw new Error(
-            "Could not load instance settings to determine which environment to test in. Retry the test.",
-          );
+          throw new Error(t("adapterImport.form.instanceSettingsError"));
         }
       }
       const environmentId = resolveAdapterTestEnvironmentId({
@@ -838,7 +836,7 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
       const refreshed = await agentsApi.adapterModels(selectedCompanyId, adapterType, { refresh: true });
       queryClient.setQueryData(modelQueryKey, refreshed);
     } catch (error) {
-      setRefreshModelsError(error instanceof Error ? error.message : "Failed to refresh adapter models.");
+      setRefreshModelsError(error instanceof Error ? error.message : t("adapterImport.form.refreshModelsFailed"));
     } finally {
       setRefreshingModels(false);
     }
@@ -1032,7 +1030,7 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
                 value={eff("identity", "reportsTo", props.agent.reportsTo ?? null)}
                 onChange={(id) => mark("identity", "reportsTo", id)}
                 excludeAgentIds={[props.agent.id]}
-                chooseLabel="Choose manager…"
+                chooseLabel={t("adapterImport.form.chooseManager")}
               />
             </Field>
             <Field label={t("agentManagement.form.capabilities", { defaultValue: "Capabilities" })} hint={help.capabilities}>
@@ -1060,7 +1058,7 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
                       String(config.promptTemplate ?? ""),
                     )}
                     onChange={(v) => mark("adapterConfig", "promptTemplate", v ?? "")}
-                    placeholder="You are agent {{ agent.name }}. Your role is {{ agent.role }}..."
+                    placeholder={t("adapterImport.form.promptTemplatePlaceholder")}
                     contentClassName="min-h-(--sz-88px) text-sm font-mono"
                     imageUploadHandler={async (file) => {
                       const namespace = `agents/${props.agent.id}/prompt-template`;
@@ -1091,7 +1089,7 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
           <div className={cn(cards ? "border border-border rounded-lg p-4 space-y-3" : "px-4 pb-3 space-y-3")}>
             <Field
               label={t("agentManagement.form.defaultEnvironment", { defaultValue: "Default environment" })}
-              hint="This instance runs all agents in the Kubernetes sandbox. Local execution is disabled."
+              hint={t("adapterImport.form.kubernetesHint")}
             >
               {kubernetesEnvironment ? (
                 <div className={cn(inputClass, "flex items-center text-muted-foreground")}>
@@ -1099,9 +1097,7 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
                 </div>
               ) : (
                 <div className="rounded-md border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
-                  This instance requires the Kubernetes sandbox, but no managed Kubernetes
-                  environment is available for this company yet. Configure one before creating
-                  agents; execution will not fall back to local.
+                  {t("adapterImport.form.kubernetesMissing")}
                 </div>
               )}
             </Field>
@@ -1342,14 +1338,14 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
                   {refreshModelsError
                     ?? (fetchedModelsError instanceof Error
                       ? fetchedModelsError.message
-                      : "Failed to load adapter models.")}
+                      : t("adapterImport.form.loadModelsFailed"))}
                 </p>
               )}
               {adapterType === "opencode_local"
                 && currentDefaultEnvironment
                 && currentDefaultEnvironment.driver !== "local" && (
                 <p className="text-xs text-muted-foreground">
-                  Live OpenCode model discovery only runs for Local environments. Using the curated list and manual entry for {currentDefaultEnvironment.name}.
+                  {t("adapterImport.form.openCodeDiscovery", { name: currentDefaultEnvironment.name })}
                 </p>
               )}
 
@@ -1411,7 +1407,7 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
                     />
                   </Field>
                   <div className="rounded-md border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
-                    Bootstrap prompt is legacy and will be removed in a future release. Consider moving this content into the agent&apos;s prompt template or instructions file instead.
+                    {t("adapterImport.form.legacyBootstrapNotice")}
                   </div>
                 </>
               )}
@@ -1433,7 +1429,7 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
                       : mark("adapterConfig", "extraArgs", v?.trim() ? parseCommaArgs(v) : null)
                   }
                   className={inputClass}
-                  placeholder="e.g. --verbose, --foo=bar"
+                  placeholder={t("adapterImport.form.extraArgsPlaceholder")}
                 />
               </Field>
 
@@ -2091,15 +2087,15 @@ function CheapModelSection({
 }) {
   const { t } = useTranslation();
   const placeholderHint = adapterDefaultModel
-    ? `Adapter default · ${adapterDefaultModel}`
-    : "No adapter default — choose a cheaper model";
+    ? t("agentConfigResidual.adapterDefault", { model: adapterDefaultModel })
+    : t("agentConfigResidual.noAdapterDefault");
   return (
     <div className="rounded-md border border-border/70 bg-muted/20 p-3 space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="text-(length:--text-micro) uppercase tracking-wide text-muted-foreground">{t("agentManagement.form.cheapModel", { defaultValue: "Cheap model" })}</div>
           <p className="text-xs text-muted-foreground">
-            Used when a run requests the cheap profile (e.g. routine summaries). The primary model stays unchanged.
+            {t("agentConfigResidual.cheapModelDescription")}
           </p>
         </div>
         <ToggleSwitch checked={enabled} onCheckedChange={onEnabledChange} />
@@ -2123,12 +2119,13 @@ function CheapModelSection({
       ) : null}
       {enabled && !model && adapterDefaultModel ? (
         <p className="text-(length:--text-micro) text-muted-foreground">
-          No explicit cheap model selected — runtime falls back to <code>{adapterDefaultModel}</code>.
+          {t("agentConfigResidual.fallbackPrefix")} <code>{adapterDefaultModel}</code>
+          {t("agentConfigResidual.fallbackSuffix")}
         </p>
       ) : null}
       {enabled && !model && !adapterDefaultModel ? (
         <p className="text-(length:--text-micro) text-amber-500">
-          No cheap model selected and the adapter has no default. Cheap-lane runs will continue on the primary model with a fallback note.
+          {t("agentConfigResidual.noCheapModel")}
         </p>
       ) : null}
     </div>
