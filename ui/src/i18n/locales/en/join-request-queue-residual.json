@@ -1,0 +1,23 @@
+{
+  "joinRequestQueueResidual": {
+    "company": "Company",
+    "inbox": "Inbox",
+    "joinRequests": "Join Requests",
+    "noPermission": "You do not have permission to review join requests for this company.",
+    "loadFailed": "Failed to load join requests.",
+    "description": "Review human and agent join requests outside the mixed inbox feed. This queue uses the same approval actions as the inline inbox cards.",
+    "noMatches": "No join requests match the current filters.",
+    "unknownHuman": "Unknown human requester",
+    "unknownAgent": "Unknown agent requester",
+    "reject": "Reject",
+    "approve": "Approve",
+    "joinTypes": {
+      "both": "Human or agent"
+    },
+    "inviteSummary": "{{types}} join invite{{roleSuffix}}",
+    "defaultRoleSuffix": " • default role {{role}}",
+    "inviteUnavailable": "Invite metadata unavailable",
+    "submitted": "Submitted {{date}}",
+    "sourceIp": "Source IP {{ip}}"
+  }
+}

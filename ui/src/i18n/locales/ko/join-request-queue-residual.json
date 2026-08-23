@@ -1,0 +1,23 @@
+{
+  "joinRequestQueueResidual": {
+    "company": "회사",
+    "inbox": "받은 편지함",
+    "joinRequests": "참여 요청",
+    "noPermission": "이 회사의 참여 요청을 검토할 권한이 없습니다.",
+    "loadFailed": "참여 요청을 불러오지 못했습니다.",
+    "description": "사람과 에이전트의 참여 요청을 받은 편지함과 분리해 검토합니다. 받은 편지함 카드와 같은 승인 작업을 사용합니다.",
+    "noMatches": "현재 필터와 일치하는 참여 요청이 없습니다.",
+    "unknownHuman": "알 수 없는 사용자 요청자",
+    "unknownAgent": "알 수 없는 에이전트 요청자",
+    "reject": "거부",
+    "approve": "승인",
+    "joinTypes": {
+      "both": "사용자 또는 에이전트"
+    },
+    "inviteSummary": "{{types}} 참여 초대{{roleSuffix}}",
+    "defaultRoleSuffix": " • 기본 역할 {{role}}",
+    "inviteUnavailable": "초대 정보를 사용할 수 없음",
+    "submitted": "{{date}}에 제출됨",
+    "sourceIp": "요청 IP {{ip}}"
+  }
+}

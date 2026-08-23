@@ -23,11 +23,11 @@ export function JoinRequestQueue() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
-      { label: "Inbox", href: "/inbox" },
-      { label: "Join Requests" },
+      { label: selectedCompany?.name ?? t("joinRequestQueueResidual.company", { defaultValue: "Company" }), href: "/dashboard" },
+      { label: t("joinRequestQueueResidual.inbox", { defaultValue: "Inbox" }), href: "/inbox" },
+      { label: t("joinRequestQueueResidual.joinRequests", { defaultValue: "Join Requests" }) },
     ]);
-  }, [selectedCompany?.name, setBreadcrumbs]);
+  }, [selectedCompany?.name, setBreadcrumbs, t]);
 
   const requestsQuery = useQuery({
     queryKey: queryKeys.access.joinRequests(selectedCompanyId ?? "", `${status}:${requestType}`),
@@ -69,10 +69,10 @@ export function JoinRequestQueue() {
   if (requestsQuery.error) {
     const message =
       requestsQuery.error instanceof ApiError && requestsQuery.error.status === 403
-        ? "You do not have permission to review join requests for this company."
+        ? t("joinRequestQueueResidual.noPermission", { defaultValue: "You do not have permission to review join requests for this company." })
         : requestsQuery.error instanceof Error
           ? requestsQuery.error.message
-          : "Failed to load join requests.";
+          : t("joinRequestQueueResidual.loadFailed", { defaultValue: "Failed to load join requests." });
     return <div className="text-sm text-destructive">{message}</div>;
   }
 
@@ -84,7 +84,7 @@ export function JoinRequestQueue() {
           <h1 className="text-lg font-semibold">{t("settingsSecurity.joinRequestQueue", { defaultValue: "Join Request Queue" })}</h1>
         </div>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          Review human and agent join requests outside the mixed inbox feed. This queue uses the same approval mutations as the inline inbox cards.
+          {t("joinRequestQueueResidual.description", { defaultValue: "Review human and agent join requests outside the mixed inbox feed. This queue uses the same approval actions as the inline inbox cards." })}
         </p>
       </div>
 
@@ -122,7 +122,7 @@ export function JoinRequestQueue() {
       <div className="space-y-4">
         {(requestsQuery.data ?? []).length === 0 ? (
           <div className="rounded-xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
-            No join requests match the current filters.
+            {t("joinRequestQueueResidual.noMatches", { defaultValue: "No join requests match the current filters." })}
           </div>
         ) : (
           requestsQuery.data!.map((request) => (
@@ -131,16 +131,24 @@ export function JoinRequestQueue() {
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant={request.status === "pending_approval" ? "secondary" : request.status === "approved" ? "outline" : "destructive"}>
-                      {request.status.replace("_", " ")}
+                      {request.status === "pending_approval"
+                        ? t("settingsSecurity.pendingApproval", { defaultValue: "Pending approval" })
+                        : request.status === "approved"
+                          ? t("settingsSecurity.approved", { defaultValue: "Approved" })
+                          : t("settingsSecurity.rejected", { defaultValue: "Rejected" })}
                     </Badge>
-                    <Badge variant="outline">{request.requestType}</Badge>
+                    <Badge variant="outline">
+                      {request.requestType === "human"
+                        ? t("settingsSecurity.human", { defaultValue: "Human" })
+                        : t("settingsSecurity.agent", { defaultValue: "Agent" })}
+                    </Badge>
                     {request.adapterType ? <Badge variant="outline">{request.adapterType}</Badge> : null}
                   </div>
                   <div>
                     <div className="text-base font-medium">
                       {request.requestType === "human"
-                        ? request.requesterUser?.name || request.requestEmailSnapshot || request.requestingUserId || "Unknown human requester"
-                        : request.agentName || "Unknown agent requester"}
+                        ? request.requesterUser?.name || request.requestEmailSnapshot || request.requestingUserId || t("joinRequestQueueResidual.unknownHuman", { defaultValue: "Unknown human requester" })
+                        : request.agentName || t("joinRequestQueueResidual.unknownAgent", { defaultValue: "Unknown agent requester" })}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {request.requestType === "human"
@@ -157,13 +165,13 @@ export function JoinRequestQueue() {
                       onClick={() => rejectMutation.mutate(request.id)}
                       disabled={rejectMutation.isPending}
                     >
-                      Reject
+                      {t("joinRequestQueueResidual.reject", { defaultValue: "Reject" })}
                     </Button>
                     <Button
                       onClick={() => approveMutation.mutate(request.id)}
                       disabled={approveMutation.isPending}
                     >
-                      Approve
+                      {t("joinRequestQueueResidual.approve", { defaultValue: "Approve" })}
                     </Button>
                   </div>
                 ) : null}
@@ -174,8 +182,18 @@ export function JoinRequestQueue() {
                   <div className="text-xs font-medium uppercase tracking-wide">{t("settingsSecurity.inviteContext", { defaultValue: "Invite context" })}</div>
                   <div className="mt-2">
                     {request.invite
-                      ? `${request.invite.allowedJoinTypes} join invite${request.invite.humanRole ? ` • default role ${request.invite.humanRole}` : ""}`
-                      : "Invite metadata unavailable"}
+                      ? t("joinRequestQueueResidual.inviteSummary", {
+                        types: request.invite.allowedJoinTypes === "both"
+                          ? t("joinRequestQueueResidual.joinTypes.both", { defaultValue: "Human or agent" })
+                          : request.invite.allowedJoinTypes === "human"
+                            ? t("settingsSecurity.human", { defaultValue: "Human" })
+                            : t("settingsSecurity.agent", { defaultValue: "Agent" }),
+                        roleSuffix: request.invite.humanRole
+                          ? t("joinRequestQueueResidual.defaultRoleSuffix", { role: request.invite.humanRole, defaultValue: ` • default role ${request.invite.humanRole}` })
+                          : "",
+                        defaultValue: "{{types}} join invite{{roleSuffix}}",
+                      })
+                      : t("joinRequestQueueResidual.inviteUnavailable", { defaultValue: "Invite metadata unavailable" })}
                   </div>
                   {request.invite?.inviteMessage ? (
                     <div className="mt-2 text-foreground">{request.invite.inviteMessage}</div>
@@ -183,8 +201,8 @@ export function JoinRequestQueue() {
                 </div>
                 <div className="rounded-lg border border-border bg-background px-3 py-2">
                   <div className="text-xs font-medium uppercase tracking-wide">{t("settingsSecurity.requestDetails", { defaultValue: "Request details" })}</div>
-                  <div className="mt-2">Submitted {new Date(request.createdAt).toLocaleString()}</div>
-                  <div>Source IP {request.requestIp}</div>
+                  <div className="mt-2">{t("joinRequestQueueResidual.submitted", { date: new Date(request.createdAt).toLocaleString(), defaultValue: `Submitted ${new Date(request.createdAt).toLocaleString()}` })}</div>
+                  <div>{t("joinRequestQueueResidual.sourceIp", { ip: request.requestIp, defaultValue: `Source IP ${request.requestIp}` })}</div>
                   {request.requestType === "agent" && request.capabilities ? <div>{request.capabilities}</div> : null}
                 </div>
               </div>
