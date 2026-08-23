@@ -100,7 +100,11 @@
       "clipboardUnavailable": "클립보드를 사용할 수 없습니다.",
       "clipboardUnavailableTitle": "클립보드를 사용할 수 없음",
       "inviteFailed": "에이전트 초대를 만들지 못했습니다.",
-      "unknown": "알 수 없는 오류"
+      "unknown": "알 수 없는 오류",
+      "selectCompanyCreateSecrets": "보안 값을 만들 회사를 선택하세요.",
+      "selectCompanyUploadImages": "이미지를 업로드할 회사를 선택하세요.",
+      "selectCompanyDetectModel": "모델을 감지할 회사를 선택하세요.",
+      "selectCompanyTestEnvironment": "어댑터 환경을 테스트할 회사를 선택하세요."
     },
     "toasts": {
       "duplicated": "에이전트를 복제했습니다.",
@@ -173,7 +177,16 @@
         "max": "최대",
         "plan": "계획",
         "ask": "질문"
-      }
+      },
+      "test": "테스트",
+      "detectModel": "모델 감지",
+      "noModelDetectedSelect": "감지된 모델이 없습니다. 모델을 선택하거나 직접 입력하세요.",
+      "selectModelRequired": "모델 선택(필수)",
+      "selectModel": "모델 선택",
+      "passed": "통과",
+      "warnings": "경고",
+      "failed": "실패",
+      "hint": "힌트:"
     },
     "detail": {
       "liveRun": "실시간 실행",
