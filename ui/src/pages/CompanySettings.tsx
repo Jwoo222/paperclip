@@ -87,6 +87,7 @@ function GovernanceSelect({
   testId,
   ariaLabel,
   mobileLabel,
+  options = GOVERNANCE_POLICY_OPTIONS,
 }: {
   value: GovernanceSelectValue;
   onChange: (value: GovernanceSelectValue) => void;
@@ -94,6 +95,7 @@ function GovernanceSelect({
   testId?: string;
   ariaLabel: string;
   mobileLabel: string;
+  options?: { value: GovernanceSelectValue; label: string }[];
 }) {
   return (
     <div className="min-w-0">
@@ -117,7 +119,7 @@ function GovernanceSelect({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {GOVERNANCE_POLICY_OPTIONS.map((option) => (
+          {options.map((option) => (
             <SelectItem key={option.value} value={option.value} className="text-xs">
               {option.label}
             </SelectItem>
@@ -130,6 +132,12 @@ function GovernanceSelect({
 
 export function CompanySettings() {
   const { t } = useTranslation();
+  const tr = (key: string, defaultValue: string, options?: Record<string, unknown>) =>
+    t(`pluginsSettings.${key}`, { defaultValue, ...options });
+  const governanceOptions = GOVERNANCE_POLICY_OPTIONS.map((option) => ({
+    ...option,
+    label: tr(`policy.${option.value}`, option.label),
+  }));
   const {
     companies,
     selectedCompany,
@@ -271,8 +279,8 @@ export function CompanySettings() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
-      { label: "Settings" }
+      { label: selectedCompany?.name ?? tr("company", "Company"), href: "/dashboard" },
+      { label: tr("settings", "Settings") }
     ]);
   }, [setBreadcrumbs, selectedCompany?.name]);
 
@@ -493,18 +501,11 @@ export function CompanySettings() {
       {/* Interaction governance */}
       <div className="space-y-4" data-testid="company-settings-interaction-governance-section">
         <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          Interaction governance
+          {tr("interactionGovernance", "Interaction governance")}
         </div>
         <div className="space-y-4 rounded-md border border-border px-4 py-4">
           <p className="text-sm text-muted-foreground">
-            Control who may resolve each kind of thread interaction.{" "}
-            <span className="font-medium text-foreground">Default policy</span> is the
-            resolver policy new interactions request;{" "}
-            <span className="font-medium text-foreground">Cap</span> is the maximum a
-            request may reach — set it to{" "}
-            <span className="font-medium text-foreground">Board only</span> to always
-            require the board. Tool-approval confirmations always stay board-only
-            regardless of these settings.
+            {tr("interactionGovernanceDescription", "Control who may resolve each kind of thread interaction. Default policy is the resolver policy new interactions request; Cap is the maximum a request may reach — set it to Board only to always require the board. Tool-approval confirmations always stay board-only regardless of these settings.")}
           </p>
           {/*
            * Responsive: below `sm` the row collapses to a single column so the
@@ -515,32 +516,34 @@ export function CompanySettings() {
            */}
           <div className="grid grid-cols-1 gap-y-4 sm:grid-cols-[1fr_auto_auto] sm:items-center sm:gap-x-4 sm:gap-y-2.5">
             <div className="hidden text-xs font-medium text-muted-foreground uppercase tracking-wide sm:block">
-              Kind
+              {tr("kind", "Kind")}
             </div>
             <div className="hidden text-xs font-medium text-muted-foreground uppercase tracking-wide sm:block">
-              Default policy
+              {tr("defaultPolicy", "Default policy")}
             </div>
             <div className="hidden text-xs font-medium text-muted-foreground uppercase tracking-wide sm:block">
-              Cap
+              {tr("cap", "Cap")}
             </div>
             {ISSUE_THREAD_INTERACTION_KINDS.map((kind) => {
               const entry = governance[kind] ?? {};
-              const kindLabel = INTERACTION_KIND_LABELS[kind];
+              const kindLabel = tr(`kind.${kind}`, INTERACTION_KIND_LABELS[kind]);
               return (
                 <Fragment key={kind}>
                   <div className="text-sm font-medium sm:font-normal">{kindLabel}</div>
                   <GovernanceSelect
                     testId={`governance-${kind}-default`}
-                    ariaLabel={`Default resolver policy for ${kindLabel}`}
-                    mobileLabel="Default policy"
+                    ariaLabel={tr("defaultResolverPolicyFor", `Default resolver policy for ${kindLabel}`, { kind: kindLabel })}
+                    mobileLabel={tr("defaultPolicy", "Default policy")}
+                    options={governanceOptions}
                     value={toSelectValue(entry.defaultPolicy)}
                     disabled={governanceMutation.isPending}
                     onChange={(v) => handleGovernanceChange(kind, "defaultPolicy", v)}
                   />
                   <GovernanceSelect
                     testId={`governance-${kind}-cap`}
-                    ariaLabel={`Resolver cap for ${kindLabel}`}
-                    mobileLabel="Cap"
+                    ariaLabel={tr("resolverCapFor", `Resolver cap for ${kindLabel}`, { kind: kindLabel })}
+                    mobileLabel={tr("cap", "Cap")}
+                    options={governanceOptions}
                     value={toSelectValue(entry.cap)}
                     disabled={governanceMutation.isPending}
                     onChange={(v) => handleGovernanceChange(kind, "cap", v)}
@@ -553,7 +556,7 @@ export function CompanySettings() {
             <span className="text-xs text-destructive">
               {governanceMutation.error instanceof Error
                 ? governanceMutation.error.message
-                : "Failed to save interaction governance"}
+                : tr("saveInteractionGovernanceFailed", "Failed to save interaction governance")}
             </span>
           )}
         </div>
@@ -562,20 +565,20 @@ export function CompanySettings() {
       {/* Import / Export */}
       <div className="space-y-4">
         <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          Company Packages
+          {tr("companyPackages", "Company Packages")}
         </div>
         <div className="rounded-md border border-border px-4 py-4">
           <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" variant="outline" asChild>
               <Link to="/company/export">
                 <Download className="mr-1.5 h-3.5 w-3.5" />
-                Export
+                {tr("export", "Export")}
               </Link>
             </Button>
             <Button size="sm" variant="outline" asChild>
               <Link to="/company/import">
                 <Upload className="mr-1.5 h-3.5 w-3.5" />
-                Import
+                {tr("import", "Import")}
               </Link>
             </Button>
           </div>
@@ -585,12 +588,11 @@ export function CompanySettings() {
       {/* Danger Zone */}
       <div className="space-y-4">
         <div className="text-xs font-medium text-destructive uppercase tracking-wide">
-          Danger Zone
+          {tr("dangerZone", "Danger Zone")}
         </div>
         <div className="space-y-3 rounded-md border border-destructive/40 bg-destructive/5 px-4 py-4">
           <p className="text-sm text-muted-foreground">
-            Archive this company to hide it from the sidebar. This persists in
-            the database.
+            {tr("archiveDescription", "Archive this company to hide it from the sidebar. This persists in the database.")}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -603,7 +605,7 @@ export function CompanySettings() {
               onClick={() => {
                 if (!selectedCompanyId) return;
                 const confirmed = window.confirm(
-                  `Archive company "${selectedCompany.name}"? It will be hidden from the sidebar.`
+                  tr("archiveConfirm", `Archive company "${selectedCompany.name}"? It will be hidden from the sidebar.`, { name: selectedCompany.name })
                 );
                 if (!confirmed) return;
                 const nextCompanyId =
@@ -619,16 +621,16 @@ export function CompanySettings() {
               }}
             >
               {archiveMutation.isPending
-                ? "Archiving..."
+                ? tr("archiving", "Archiving...")
                 : selectedCompany.status === "archived"
-                ? "Already archived"
-                : "Archive company"}
+                ? tr("alreadyArchived", "Already archived")
+                : tr("archiveCompany", "Archive company")}
             </Button>
             {archiveMutation.isError && (
               <span className="text-xs text-destructive">
                 {archiveMutation.error instanceof Error
                   ? archiveMutation.error.message
-                  : "Failed to archive company"}
+                  : tr("archiveFailed", "Failed to archive company")}
               </span>
             )}
           </div>

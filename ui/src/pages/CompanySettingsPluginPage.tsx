@@ -4,6 +4,7 @@ import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { useCompany } from "@/context/CompanyContext";
 import { PluginSlotMount, usePluginSlots } from "@/plugins/slots";
 import { NotFoundPage } from "./NotFound";
+import { useTranslation } from "@/i18n";
 
 export function CompanySettingsPluginPage() {
   const params = useParams<{
@@ -13,6 +14,9 @@ export function CompanySettingsPluginPage() {
   const { companyPrefix: routeCompanyPrefix, settingsRoutePath } = params;
   const { companies, selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
+  const { t } = useTranslation();
+  const tr = (key: string, defaultValue: string, options?: Record<string, unknown>) =>
+    t(`pluginsSettings.${key}`, { defaultValue, ...options });
 
   const routeCompany = useMemo(() => {
     if (!routeCompanyPrefix) return null;
@@ -41,7 +45,7 @@ export function CompanySettingsPluginPage() {
   useEffect(() => {
     if (!pageSlot) return;
     setBreadcrumbs([
-      { label: "Settings", href: "/company/settings" },
+      { label: tr("settings", "Settings"), href: "/company/settings" },
       { label: pageSlot.displayName },
     ]);
   }, [pageSlot, setBreadcrumbs]);
@@ -50,17 +54,17 @@ export function CompanySettingsPluginPage() {
     if (hasInvalidCompanyPrefix) {
       return <NotFoundPage scope="invalid_company_prefix" requestedPrefix={routeCompanyPrefix} />;
     }
-    return <div className="text-sm text-muted-foreground">Select a company to view this page.</div>;
+    return <div className="text-sm text-muted-foreground">{tr("selectCompanyToView", "Select a company to view this page.")}</div>;
   }
 
   if (!settingsRoutePath || isLoading) {
-    return <div className="text-sm text-muted-foreground">Loading...</div>;
+    return <div className="text-sm text-muted-foreground">{tr("loading", "Loading...")}</div>;
   }
 
   if (errorMessage) {
     return (
       <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-        Plugin extensions unavailable: {errorMessage}
+        {tr("pluginExtensionsUnavailable", "Plugin extensions unavailable:")} {errorMessage}
       </div>
     );
   }
@@ -68,7 +72,7 @@ export function CompanySettingsPluginPage() {
   if (pageSlots.length > 1) {
     return (
       <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-        Multiple plugins declare the company settings route <code>{settingsRoutePath}</code>. Disable one plugin or change its route.
+        {tr("multipleCompanyRoutes", "Multiple plugins declare the company settings route {{route}}. Disable one plugin or change its route.", { route: settingsRoutePath })}
       </div>
     );
   }
