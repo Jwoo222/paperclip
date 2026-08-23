@@ -312,15 +312,18 @@ function RiskBanner({ team }: { team: CatalogTeam }) {
     >
       <div className="flex items-center gap-2 text-sm font-medium">
         <AlertTriangle className="h-4 w-4" />
-        This team references {unsafe.length} external source
-        {unsafe.length === 1 ? "" : "s"}
+        {unsafe.length === 1
+          ? t("teamCatalogExtra.externalSourceOne", { count: unsafe.length })
+          : t("teamCatalogExtra.externalSourceMany", { count: unsafe.length })}
       </div>
       <ul className="mt-1.5 space-y-0.5 text-xs">
         {unsafe.map((s) => (
           <li key={`${s.type}:${s.ref}`} className="font-mono">
             {s.ref}{" "}
             <span className="not-italic font-sans opacity-80">
-              ({sourceWarningCode(s) === "unsupported_in_ui" ? "unsupported in browser install" : "unpinned"})
+              ({sourceWarningCode(s) === "unsupported_in_ui"
+                ? t("statusTraining.team.unsupportedBrowser")
+                : t("statusTraining.team.unpinned")})
             </span>
           </li>
         ))}
@@ -545,11 +548,11 @@ export function RequiredSkillsList({ skills }: { skills: CatalogTeamSkillRequire
           </Badge>
           {skill.resolved ? (
             <Badge variant="outline" className="text-(length:--text-nano) text-emerald-600 dark:text-emerald-300 border-emerald-500/30">
-              resolved
+              {t("teamCatalogExtra.resolved")}
             </Badge>
           ) : (
             <Badge variant="outline" className="text-(length:--text-nano) text-amber-600 dark:text-amber-300 border-amber-500/30">
-              external
+              {t("teamCatalogExtra.external")}
             </Badge>
           )}
         </li>
@@ -610,7 +613,7 @@ export function ExternalSourcesList({ sources }: { sources: CatalogTeamSourceRef
         className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
       >
         {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-        External sources · {external.length}
+        {t("teamCatalogExtra.externalSourcesHeader", { count: external.length })}
       </button>
       {open && (
         <ul className="divide-y divide-border rounded-md border border-border">
@@ -709,7 +712,7 @@ export function TeamDetailPane({
               <ProvenanceBadge team={team} />
               {isInstalled && !outOfDate && (
                 <Badge variant="secondary" className="gap-1 text-(length:--text-nano)">
-                  <CheckCircle2 className="h-3 w-3" /> Installed
+                  <CheckCircle2 className="h-3 w-3" /> {t("teamCatalogExtra.installed")}
                 </Badge>
               )}
               {outOfDate && (
@@ -717,7 +720,7 @@ export function TeamDetailPane({
                   variant="outline"
                   className="gap-1 border-amber-500/40 bg-amber-500/10 text-(length:--text-nano) text-amber-600 dark:text-amber-300"
                 >
-                  <ChevronUp className="h-3 w-3" /> Update available
+                  <ChevronUp className="h-3 w-3" /> {t("statusTraining.teamExtra.updateAvailable")}
                 </Badge>
               )}
             </div>
@@ -813,7 +816,7 @@ export function TeamDetailPane({
                   className="text-xs text-muted-foreground hover:text-foreground"
                   onClick={() => onSelectFile(null)}
                 >
-                  Close
+                  {t("teamCatalogExtra.close")}
                 </button>
               </div>
               <div className="max-h-96 overflow-auto p-3">
@@ -1301,7 +1304,7 @@ function TeamInstallerDialog({
                 <p className="font-medium">{skillText("Install failed")}</p>
                 <p className="mt-0.5 text-xs">{applyError}</p>
                 <p className="mt-1 text-xs opacity-80">
-                  Partial state is not rolled back. Review the company activity log before retrying.
+                  {t("teamCatalogExtra.partialStateWarning")}
                 </p>
               </div>
             </div>
@@ -1335,7 +1338,7 @@ function TeamInstallerDialog({
             needsScriptsConfirm && confirmScripts ? (
               <Button variant="destructive" onClick={submitInstall} disabled={installBlocked || previewMutation.isPending}>
                 <AlertTriangle className="h-4 w-4" />
-                Confirm — install with executables
+                {t("teamCatalogExtra.confirmExecutables")}
               </Button>
             ) : (
               <Button onClick={submitInstall} disabled={installBlocked || previewMutation.isPending || !previewResult}>
@@ -1409,8 +1412,7 @@ export function StepTargetManager({
         className="rounded-md border border-blue-500/30 bg-blue-500/10 px-3 py-2.5 text-sm text-blue-700 dark:text-blue-300"
         id="target-manager-help"
       >
-        This team&apos;s root agents need a manager in your company. Pick the agent who will become
-        their parent. Internal team hierarchy is preserved.
+        {t("teamCatalogExtra.targetManagerHelp")}
       </div>
 
       <div className="space-y-1.5">
@@ -1463,7 +1465,7 @@ export function StepTargetManager({
             checked={fullCompany}
             onChange={(e) => onToggleFullCompany(e.target.checked)}
           />
-          Use this team as a full-company package (no target manager)
+          {t("teamCatalogExtra.fullCompanyPackage")}
         </label>
       )}
     </div>
@@ -1488,8 +1490,9 @@ export function StepSourcePolicy({
   return (
     <div className="space-y-4">
       <div role="alert" className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-700 dark:text-amber-300">
-        This team references {external.length} external source{external.length === 1 ? "" : "s"}.
-        Review each one and decide what to allow before continuing.
+        {external.length === 1
+          ? t("teamCatalogExtra.sourcePolicyOne", { count: external.length })
+          : t("teamCatalogExtra.sourcePolicyMany", { count: external.length })}
       </div>
 
       <ul className="divide-y divide-border rounded-md border border-border">
@@ -1548,8 +1551,7 @@ export function StepSourcePolicy({
 
       {hasUnsupported && !allowLocalPathSources && (
         <p className="text-xs text-rose-600 dark:text-rose-300">
-          This team has local-path sources. Enable &ldquo;Allow local-path sources&rdquo; to continue,
-          or install it from the CLI.
+          {t("teamCatalogExtra.localPathWarning")}
         </p>
       )}
     </div>
@@ -1601,8 +1603,7 @@ export function StepSkillPlan({
   return (
     <div className="space-y-4">
       <div role="alert" className="rounded-md border border-blue-500/30 bg-blue-500/10 px-3 py-2.5 text-sm text-blue-700 dark:text-blue-300">
-        Before agents are imported, the catalog resolves the skills they depend on. This is the
-        resolution plan.
+        {t("teamCatalogExtra.skillResolutionPlan")}
       </div>
       <ul className="divide-y divide-border rounded-md border border-border">
         {(preparations ?? team.requiredSkills.map(toPreparation)).map((prep) => {
@@ -1724,7 +1725,7 @@ export function StepPreview({
   if (loading && !result) {
     return (
       <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" /> Preparing preview…
+        <Loader2 className="h-4 w-4 animate-spin" /> {t("teamCatalogExtra.preparingPreview")}
       </div>
     );
   }
@@ -1736,7 +1737,7 @@ export function StepPreview({
           {error}
         </div>
         <Button variant="outline" onClick={onRetry}>
-          <RotateCcw className="h-4 w-4" /> Retry
+          <RotateCcw className="h-4 w-4" /> {t("teamCatalogExtra.retry")}
         </Button>
       </div>
     );
@@ -1861,8 +1862,7 @@ export function StepPreview({
             );
           })}
           <li className="px-3 py-1.5 text-(length:--text-micro) text-muted-foreground">
-            Each imported agent defaults to its package adapter; override here before install.
-            Deeper per-adapter model config is editable on the agent after install.
+            {t("teamCatalogExtra.adapterOverrideHelp")}
           </li>
         </PreviewSection>
       )}
@@ -1896,7 +1896,7 @@ export function StepPreview({
                     value={secretValues[formKey] ?? ""}
                     onChange={(event) => onSecretChange(formKey, event.target.value)}
                     placeholder={input.requirement === "required" ? t("statusTraining.teamLabels.required") : t("statusTraining.team.optional")}
-                    aria-label={`${input.key} value`}
+                    aria-label={t("teamCatalogExtra.inputValue", { key: input.key })}
                     aria-invalid={missingRequired || undefined}
                     className={cn("h-8 min-w-0", missingRequired && "border-rose-500/60 focus-visible:ring-rose-500/30")}
                   />
@@ -1960,9 +1960,9 @@ export function ApplyProgress({ team }: { team: CatalogTeam }) {
     <div className="flex items-center gap-3 py-10 text-sm">
       <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       <div>
-        <p className="font-medium">Installing {team.name}…</p>
+        <p className="font-medium">{t("teamCatalogExtra.installing", { name: team.name })}</p>
         <p className="text-xs text-muted-foreground">
-          Resolving skills, importing agents, projects, and routines. This may take a moment.
+          {t("teamCatalogExtra.installProgress")}
         </p>
       </div>
     </div>
@@ -2382,7 +2382,7 @@ export function TeamCatalog() {
                   className="flex w-full items-center gap-1.5 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground"
                   onClick={() => setSearchParams(new URLSearchParams())}
                 >
-                  <RotateCcw className="h-3 w-3" /> Reset filters
+                  <RotateCcw className="h-3 w-3" /> {t("statusTraining.team.resetFilters")}
                 </button>
               </>
             )}
@@ -2391,7 +2391,7 @@ export function TeamCatalog() {
 
         {anyFilterActive && (
           <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setSearchParams(new URLSearchParams())}>
-            Reset filters
+            {t("statusTraining.team.resetFilters")}
           </Button>
         )}
       </div>
@@ -2413,10 +2413,10 @@ export function TeamCatalog() {
           ) : catalogQuery.isError ? (
             <div className="p-4">
               <div role="alert" className="rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-2.5 text-sm text-rose-700 dark:text-rose-300">
-                Failed to load team catalog.
+                {t("teamCatalogExtra.loadFailed")}
               </div>
               <Button variant="outline" size="sm" className="mt-3" onClick={() => catalogQuery.refetch()}>
-                <RotateCcw className="h-3.5 w-3.5" /> Retry
+                <RotateCcw className="h-3.5 w-3.5" /> {t("teamCatalogExtra.retry")}
               </Button>
             </div>
           ) : teams.length === 0 ? (
@@ -2433,7 +2433,7 @@ export function TeamCatalog() {
               {grouped.bundled.length > 0 && (
                 <>
                   <div className="px-3 py-2 text-(length:--text-micro) font-semibold uppercase tracking-wide text-muted-foreground">
-                    Bundled · {grouped.bundled.length}
+                    {t("teamCatalogExtra.bundledHeader", { count: grouped.bundled.length })}
                   </div>
                   {grouped.bundled.map((team) => (
                     <TeamRow
@@ -2448,7 +2448,7 @@ export function TeamCatalog() {
               {grouped.optional.length > 0 && (
                 <>
                   <div className="px-3 py-2 text-(length:--text-micro) font-semibold uppercase tracking-wide text-muted-foreground">
-                    Optional · {grouped.optional.length}
+                    {t("teamCatalogExtra.optionalHeader", { count: grouped.optional.length })}
                   </div>
                   {grouped.optional.map((team) => (
                     <TeamRow
@@ -2463,7 +2463,7 @@ export function TeamCatalog() {
               {grouped.installed.length > 0 && (
                 <>
                   <div className="px-3 py-2 text-(length:--text-micro) font-semibold uppercase tracking-wide text-muted-foreground">
-                    Installed · {grouped.installed.length}
+                    {t("teamCatalogExtra.installedHeader", { count: grouped.installed.length })}
                   </div>
                   {grouped.installed.map((team) => (
                     <TeamRow
@@ -2494,7 +2494,7 @@ export function TeamCatalog() {
                 onClick={() => navigate(withFilters(TEAM_CATALOG_ROUTE_ROOT))}
                 className="flex items-center gap-1.5 border-b border-border px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
               >
-                <ChevronLeft className="h-4 w-4" /> Back to catalog
+                <ChevronLeft className="h-4 w-4" /> {t("teamCatalogExtra.backToCatalog")}
               </button>
             )}
             {selectedTeam ? (
@@ -2511,7 +2511,7 @@ export function TeamCatalog() {
               />
             ) : (
               <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-                Select a team to view details.
+                {t("teamCatalogExtra.selectTeam")}
               </div>
             )}
           </div>

@@ -1,0 +1,31 @@
+{
+  "teamCatalogExtra": {
+    "externalSourceOne": "This team references {{count}} external source",
+    "externalSourceMany": "This team references {{count}} external sources",
+    "resolved": "resolved",
+    "external": "external",
+    "externalSourcesHeader": "External sources · {{count}}",
+    "installed": "Installed",
+    "close": "Close",
+    "partialStateWarning": "Partial state is not rolled back. Review the company activity log before retrying.",
+    "confirmExecutables": "Confirm — install with executables",
+    "targetManagerHelp": "This team's root agents need a manager in your company. Pick the agent who will become their parent. Internal team hierarchy is preserved.",
+    "fullCompanyPackage": "Use this team as a full-company package (no target manager)",
+    "sourcePolicyOne": "This team references {{count}} external source. Review it and decide what to allow before continuing.",
+    "sourcePolicyMany": "This team references {{count}} external sources. Review each one and decide what to allow before continuing.",
+    "localPathWarning": "This team has local-path sources. Enable “Allow local-path sources” to continue, or install it from the CLI.",
+    "skillResolutionPlan": "Before agents are imported, the catalog resolves the skills they depend on. This is the resolution plan.",
+    "preparingPreview": "Preparing preview…",
+    "retry": "Retry",
+    "adapterOverrideHelp": "Each imported agent defaults to its package adapter; override it here before installation. Deeper per-adapter model settings can be edited on the agent after installation.",
+    "inputValue": "{{key}} value",
+    "installing": "Installing {{name}}…",
+    "installProgress": "Resolving skills and importing agents, projects, and routines. This may take a moment.",
+    "loadFailed": "Failed to load team catalog.",
+    "bundledHeader": "Bundled · {{count}}",
+    "optionalHeader": "Optional · {{count}}",
+    "installedHeader": "Installed · {{count}}",
+    "backToCatalog": "Back to catalog",
+    "selectTeam": "Select a team to view details."
+  }
+}
