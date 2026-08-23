@@ -26,13 +26,14 @@ import { t as translate, useTranslation } from "@/i18n";
 export function ReviewQueueCard({
   connectionId,
   emptyState = "hidden",
-  heading = "Waiting for your OK",
+  heading,
 }: {
   connectionId?: string;
   emptyState?: "hidden" | "reassure";
   heading?: string;
 }) {
   const { t } = useTranslation();
+  const resolvedHeading = heading ?? t("appsResidual.waitingForApproval");
   const { selectedCompanyId } = useCompany();
 
   const query = useQuery({
@@ -63,7 +64,7 @@ export function ReviewQueueCard({
     <section className="space-y-3">
       <div className="flex items-center gap-2">
         <ShieldQuestion className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-        <h2 className="text-sm font-bold text-foreground">{heading}</h2>
+        <h2 className="text-sm font-bold text-foreground">{resolvedHeading}</h2>
         <span className="inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
           {items.length}
         </span>
@@ -183,7 +184,7 @@ function ReviewRow({ companyId, item }: { companyId: string; item: ToolActionReq
 }
 
 function actionLabel(item: ToolActionRequestListItem): string {
-  if (!item.toolTitle && !item.toolName) return "This action";
+  if (!item.toolTitle && !item.toolName) return translate("appsResidual.thisAction");
   return humanizeConnectionDisplayName(item.toolName ?? "", { title: item.toolTitle });
 }
 

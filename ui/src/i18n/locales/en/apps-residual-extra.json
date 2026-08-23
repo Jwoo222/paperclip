@@ -1,0 +1,35 @@
+{
+  "appsResidual": {
+    "tabs": {
+      "setup": "Setup",
+      "review": "Review",
+      "permissions": "Permissions",
+      "activity": "Activity",
+      "test": "Test",
+      "advanced": "Advanced",
+      "overview": "Overview",
+      "appsTools": "Apps & tools",
+      "tokens": "Tokens"
+    },
+    "app": "App",
+    "allApps": "All apps",
+    "needingReview": "needing review",
+    "company": "Company",
+    "apps": "Apps",
+    "gateways": "Gateways",
+    "appsGateways": "Apps · Gateways",
+    "tokenStatus": {
+      "active": "Active",
+      "expiring": "Expiring soon",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    },
+    "clientLabelPlaceholder": "Cursor on work laptop",
+    "ownerNotePlaceholder": "Dotta’s MacBook",
+    "waitingForApproval": "Waiting for your OK",
+    "thisAction": "This action",
+    "thisApp": "this app",
+    "twoApps": "{{first}} and {{second}}",
+    "moreApps": "{{first}}, {{second}} and {{count}} more"
+  }
+}

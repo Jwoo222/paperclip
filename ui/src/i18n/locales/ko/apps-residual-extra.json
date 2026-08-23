@@ -1,0 +1,35 @@
+{
+  "appsResidual": {
+    "tabs": {
+      "setup": "설정",
+      "review": "검토",
+      "permissions": "권한",
+      "activity": "활동",
+      "test": "테스트",
+      "advanced": "고급",
+      "overview": "개요",
+      "appsTools": "앱 및 도구",
+      "tokens": "토큰"
+    },
+    "app": "앱",
+    "allApps": "모든 앱",
+    "needingReview": "검토 필요",
+    "company": "회사",
+    "apps": "앱",
+    "gateways": "게이트웨이",
+    "appsGateways": "앱 · 게이트웨이",
+    "tokenStatus": {
+      "active": "활성",
+      "expiring": "곧 만료",
+      "expired": "만료됨",
+      "revoked": "폐기됨"
+    },
+    "clientLabelPlaceholder": "업무용 노트북의 Cursor",
+    "ownerNotePlaceholder": "담당자의 MacBook",
+    "waitingForApproval": "승인을 기다리는 중",
+    "thisAction": "이 작업",
+    "thisApp": "이 앱",
+    "twoApps": "{{first}}, {{second}}",
+    "moreApps": "{{first}}, {{second}} 외 {{count}}개"
+  }
+}

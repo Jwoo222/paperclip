@@ -14,7 +14,7 @@ import { RelativeTime } from "@/pages/tools/shared";
 import { cn } from "@/lib/utils";
 import { copyTextToClipboard } from "@/lib/clipboard";
 import { gatewaysQueryKey } from "../NewGatewayDialog";
-import { maskedTokenLabel, TOKEN_STATUS_LABEL, tokenStatus, type TokenStatus } from "../gateway-helpers";
+import { maskedTokenLabel, tokenStatus, type TokenStatus } from "../gateway-helpers";
 import { useTranslation } from "@/i18n";
 
 const DEFAULT_ACTIONS: ToolMcpGatewayTokenAction[] = ["tools/list", "tools/call"];
@@ -40,7 +40,7 @@ function StatusBadge({ status }: { status: TokenStatus }) {
         STATUS_CLASS[status],
       )}
     >
-      {status === "active" ? t("appsBrowserGateway.gateway.active") : TOKEN_STATUS_LABEL[status]}
+      {t(`appsResidual.tokenStatus.${status}`)}
     </span>
   );
 }
@@ -179,14 +179,18 @@ export function TokensPanel({
               <Input
                 value={clientLabel}
                 onChange={(e) => setClientLabel(e.target.value)}
-                placeholder="Cursor on work laptop"
+                placeholder={t("appsResidual.clientLabelPlaceholder")}
               />
             </label>
           </div>
           <div className="grid gap-3 md:grid-cols-[1fr_auto]">
             <label className="space-y-1.5 text-sm">
               <span className="text-xs font-medium text-muted-foreground">{t("appsBrowserGateway.gateway.tokens.note")}</span>
-              <Input value={ownerNote} onChange={(e) => setOwnerNote(e.target.value)} placeholder="Dotta’s MacBook" />
+              <Input
+                value={ownerNote}
+                onChange={(e) => setOwnerNote(e.target.value)}
+                placeholder={t("appsResidual.ownerNotePlaceholder")}
+              />
             </label>
             <label className="space-y-1.5 text-sm">
               <span className="text-xs font-medium text-muted-foreground">{t("appsBrowserGateway.gateway.tokens.expires")}</span>

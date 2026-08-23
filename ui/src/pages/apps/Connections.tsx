@@ -39,14 +39,13 @@ import {
 } from "./app-definition-display";
 import { useReviewCount } from "./useReviewCount";
 import { AdvancedToolsLink } from "./store-cards";
-import { useTranslation } from "@/i18n";
+import { t as translate, useTranslation } from "@/i18n";
 
 const BROWSE_HREF = "/apps";
 
 type StatusFilter = "all" | "attention";
 
 type AppStatus = {
-  label: "Healthy" | "Needs attention" | "Paused" | "Not connected";
   tone: "connected" | "attention" | "paused" | "not_connected";
 };
 
@@ -68,19 +67,19 @@ type AppRow = {
  */
 function statusFor(application: ToolApplication, connections: ToolConnection[]): AppStatus {
   if (connections.length === 0) {
-    return { label: "Not connected", tone: "not_connected" };
+    return { tone: "not_connected" };
   }
   if (
     application.status === "disabled" ||
     application.status === "archived" ||
     connections.every((connection) => connection.enabled === false || connection.status === "disabled")
   ) {
-    return { label: "Paused", tone: "paused" };
+    return { tone: "paused" };
   }
   if (connections.some((connection) => isAttentionHealthStatus(connection.healthStatus))) {
-    return { label: "Needs attention", tone: "attention" };
+    return { tone: "attention" };
   }
-  return { label: "Healthy", tone: "connected" };
+  return { tone: "connected" };
 }
 
 /** The single health-derived predicate that drives highlight, pill, banner, filter (F6). */
@@ -454,7 +453,9 @@ export function Connections() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {t("appsBrowserGateway.connections.deleteTitle", { name: connectionToDelete?.appName ?? "this" })}
+              {t("appsBrowserGateway.connections.deleteTitle", {
+                name: connectionToDelete?.appName ?? t("appsResidual.thisApp"),
+              })}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {connectionToDelete && connectionToDelete.remainingConnectionCount > 0
@@ -525,8 +526,15 @@ function enabledActionCount(profile: ToolProfileWithDetails): number {
 
 function floatSummary(rows: AppRow[]): string {
   const names = rows.map((row) => humanizeConnectionDisplayName(row.application.name));
-  if (names.length <= 2) return names.join(" and ");
-  return `${names.slice(0, 2).join(", ")} and ${names.length - 2} more`;
+  if (names.length <= 1) return names.join("");
+  if (names.length === 2) {
+    return translate("appsResidual.twoApps", { first: names[0], second: names[1] });
+  }
+  return translate("appsResidual.moreApps", {
+    first: names[0],
+    second: names[1],
+    count: names.length - 2,
+  });
 }
 
 function EmptyConnections({ onBrowse }: { onBrowse: () => void }) {

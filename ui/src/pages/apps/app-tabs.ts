@@ -1,12 +1,13 @@
 import { Activity, Beaker, Inbox, Settings2, ShieldCheck, Wrench } from "lucide-react";
+import { t } from "@/i18n";
 
 export const APP_TABS = [
-  { key: "setup", label: "Setup", icon: Settings2 },
-  { key: "review", label: "Review", icon: Inbox },
-  { key: "permissions", label: "Permissions", icon: ShieldCheck },
-  { key: "activity", label: "Activity", icon: Activity },
-  { key: "test", label: "Test", icon: Beaker },
-  { key: "advanced", label: "Advanced", icon: Wrench },
+  { key: "setup", labelKey: "setup", icon: Settings2 },
+  { key: "review", labelKey: "review", icon: Inbox },
+  { key: "permissions", labelKey: "permissions", icon: ShieldCheck },
+  { key: "activity", labelKey: "activity", icon: Activity },
+  { key: "test", labelKey: "test", icon: Beaker },
+  { key: "advanced", labelKey: "advanced", icon: Wrench },
 ] as const;
 
 export type AppTabKey = (typeof APP_TABS)[number]["key"];
@@ -31,5 +32,6 @@ export function isAppTabKey(value: string | undefined): value is AppTabKey {
 }
 
 export function appTabLabel(tabKey: AppTabKey): string {
-  return APP_TABS.find((tab) => tab.key === tabKey)?.label ?? "Setup";
+  const labelKey = APP_TABS.find((tab) => tab.key === tabKey)?.labelKey ?? "setup";
+  return t(`appsResidual.tabs.${labelKey}`);
 }
