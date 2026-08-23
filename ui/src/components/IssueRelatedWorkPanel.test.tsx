@@ -1,13 +1,18 @@
 import type { ComponentProps } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IssueRelatedWorkPanel } from "./IssueRelatedWorkPanel";
+import { setLocale } from "@/i18n";
 
 vi.mock("@/lib/router", () => ({
   Link: ({ children, to, ...props }: ComponentProps<"a"> & { to: string }) => <a href={to} {...props}>{children}</a>,
 }));
 
 describe("IssueRelatedWorkPanel", () => {
+  beforeEach(async () => {
+    await setLocale("en");
+  });
+
   it("renders outbound and inbound related work with source labels", () => {
     const html = renderToStaticMarkup(
       <IssueRelatedWorkPanel

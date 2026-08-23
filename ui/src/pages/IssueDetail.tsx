@@ -230,8 +230,8 @@ type StopAndFinalizeRunError = Error & {
 
 function createRunCancelledStatusUpdateError(err: unknown): StopAndFinalizeRunError {
   const message = err instanceof Error
-    ? `Run was stopped, but updating the task failed: ${err.message}`
-    : "Run was stopped, but updating the task failed. Retry the task status update.";
+    ? t("issueWork.runStoppedUpdateFailed", { message: err.message })
+    : t("issueWork.runStoppedUpdateFailedRetry");
   const error = new Error(message) as StopAndFinalizeRunError;
   error.runCancelledBeforeStatusUpdateFailed = true;
   return error;
@@ -261,24 +261,24 @@ const FEEDBACK_TERMS_URL = import.meta.env.VITE_FEEDBACK_TERMS_URL?.trim() || "h
 const ISSUE_COMMENT_AUTOLOAD_LIMIT = ISSUE_COMMENT_PAGE_SIZE * 3;
 const JUMP_TO_LATEST_MAX_COMMENT_PAGES = 10;
 const TREE_CONTROL_MODE_LABEL: Record<IssueTreeControlMode, string> = {
-  pause: "Pause subtree",
-  resume: "Resume subtree",
-  cancel: "Cancel subtree",
-  restore: "Restore subtree",
+  pause: t("issueWork.pauseSubtree"),
+  resume: t("issueWork.resumeSubtree"),
+  cancel: t("issueWork.cancelSubtree"),
+  restore: t("issueWork.restoreSubtree"),
 };
 const LEAF_WORK_CONTROL_MODE_LABEL: Partial<Record<IssueTreeControlMode, string>> = {
-  pause: "Pause work",
-  resume: "Resume work",
+  pause: t("issueWork.pauseWork"),
+  resume: t("issueWork.resumeWork"),
 };
 const TREE_CONTROL_MODE_HELP_TEXT: Record<IssueTreeControlMode, string> = {
-  pause: "Pause active execution in this task subtree until an explicit resume.",
-  resume: "Release the active subtree pause hold so held work can continue.",
-  cancel: "Cancel non-terminal tasks in this subtree and stop queued/running work where possible.",
-  restore: "Restore tasks cancelled by this subtree operation so work can resume.",
+  pause: t("issueWork.pauseActiveSubtreeHelp"),
+  resume: t("issueWork.releaseSubtreePauseHelp"),
+  cancel: t("issueWork.cancelSubtreeHelp"),
+  restore: t("issueWork.restoreSubtreeHelp"),
 };
 const LEAF_WORK_CONTROL_MODE_HELP_TEXT: Partial<Record<IssueTreeControlMode, string>> = {
-  pause: "Pause active execution on this task until an explicit resume.",
-  resume: "Release the active pause hold so this task can continue.",
+  pause: t("issueWork.pauseActiveTaskHelp"),
+  resume: t("issueWork.releaseTaskPauseHelp"),
 };
 function issueTreeControlLabel(mode: IssueTreeControlMode, scope: "leaf" | "subtree") {
   return scope === "leaf"
@@ -503,12 +503,12 @@ function ActorIdentity({ evt, agentMap, userProfileMap }: { evt: ActivityEvent; 
     const agent = agentMap.get(id);
     return <Identity name={agent?.name ?? id.slice(0, 8)} size="sm" />;
   }
-  if (evt.actorType === "system") return <Identity name="System" size="sm" />;
+  if (evt.actorType === "system") return <Identity name={t("issueWork.system")} size="sm" />;
   if (evt.actorType === "user") {
     const profile = userProfileMap?.get(id);
     return <Identity name={profile?.label ?? t("taskDetail.board")} avatarUrl={profile?.image} size="sm" />;
   }
-  return <Identity name={id || "Unknown"} size="sm" />;
+  return <Identity name={id || t("issueWork.unknown")} size="sm" />;
 }
 
 export type AttributionActor = {
@@ -1290,8 +1290,8 @@ const IssueDetailChatTab = memo(function IssueDetailChatTab({
         interruptingQueuedRunId={interruptingQueuedRunId}
         stoppingRunId={pausingWorkRunId}
         onStopRun={onPauseWorkRun}
-        stopRunLabel="Pause work"
-        stoppingRunLabel="Pausing..."
+        stopRunLabel={t("issueWork.pauseWork")}
+        stoppingRunLabel={t("issueWork.pausing")}
         stopRunVariant="pause"
         runFinalizationActions={runFinalizationActions}
         onAcceptInteraction={onAcceptInteraction}
@@ -1482,13 +1482,15 @@ function IssueDetailActivityTab({
                     Tokens {formatTokens(issueCostSummary.totalTokens)}
                     {issueCostSummary.cached > 0
                       ? ` (in ${formatTokens(issueCostSummary.input)}, out ${formatTokens(issueCostSummary.output)}, cached ${formatTokens(issueCostSummary.cached)})`
-                      : ` (in ${formatTokens(issueCostSummary.input)}, out ${formatTokens(issueCostSummary.output)})`}
+                      : ` (${t("issueWork.tokenBreakdown", { input: formatTokens(issueCostSummary.input), output: formatTokens(issueCostSummary.output) })})`}
                   </span>
                 ) : null}
                 {issueCostSummary.hasRuntime ? (
                   <span>
-                    Runtime {formatDurationMs(issueCostSummary.runtimeMs)}
-                    {` (${issueCostSummary.runCount} run${issueCostSummary.runCount === 1 ? "" : "s"})`}
+                    {t("issueWork.runtime", { duration: formatDurationMs(issueCostSummary.runtimeMs) })}
+                    {` (${issueCostSummary.runCount === 1
+                      ? t("issueWork.runCountOne", { count: issueCostSummary.runCount })
+                      : t("issueWork.runCountMany", { count: issueCostSummary.runCount })})`}
                   </span>
                 ) : null}
                 {!issueCostSummary.hasCost && !issueCostSummary.hasTokens && !issueCostSummary.hasRuntime ? (
@@ -1498,26 +1500,30 @@ function IssueDetailActivityTab({
               {hasIssueTreeCost && issueTreeCostSummary ? (
                 <div className="flex flex-wrap gap-3">
                   <span className="font-medium text-foreground">
-                    Including sub-tasks {(issueTreeCostSummary.costCents / 100).toLocaleString(undefined, {
+                    {t("issueWork.includingSubTasks", { cost: (issueTreeCostSummary.costCents / 100).toLocaleString(undefined, {
                       style: "currency",
                       currency: "USD",
                       minimumFractionDigits: 4,
                       maximumFractionDigits: 4,
-                    })}
+                    }) })}
                   </span>
                   <span>
-                    Tokens {formatTokens(issueTreeCostTokens)}
+                    {t("issueWork.tokens", { count: formatTokens(issueTreeCostTokens) })}
                     {issueTreeCostSummary.cachedInputTokens > 0
-                      ? ` (in ${formatTokens(issueTreeCostSummary.inputTokens)}, out ${formatTokens(issueTreeCostSummary.outputTokens)}, cached ${formatTokens(issueTreeCostSummary.cachedInputTokens)})`
-                      : ` (in ${formatTokens(issueTreeCostSummary.inputTokens)}, out ${formatTokens(issueTreeCostSummary.outputTokens)})`}
+                      ? ` (${t("issueWork.tokenBreakdownCached", { input: formatTokens(issueTreeCostSummary.inputTokens), output: formatTokens(issueTreeCostSummary.outputTokens), cached: formatTokens(issueTreeCostSummary.cachedInputTokens) })})`
+                      : ` (${t("issueWork.tokenBreakdown", { input: formatTokens(issueTreeCostSummary.inputTokens), output: formatTokens(issueTreeCostSummary.outputTokens) })})`}
                   </span>
                   {issueTreeCostSummary.runCount > 0 ? (
                     <span>
-                      Runtime {formatDurationMs(issueTreeCostSummary.runtimeMs)}
-                      {` (${issueTreeCostSummary.runCount} run${issueTreeCostSummary.runCount === 1 ? "" : "s"})`}
+                      {t("issueWork.runtime", { duration: formatDurationMs(issueTreeCostSummary.runtimeMs) })}
+                      {` (${issueTreeCostSummary.runCount === 1
+                        ? t("issueWork.runCountOne", { count: issueTreeCostSummary.runCount })
+                        : t("issueWork.runCountMany", { count: issueTreeCostSummary.runCount })})`}
                     </span>
                   ) : null}
-                  <span>{issueTreeCostSummary.issueCount} task{issueTreeCostSummary.issueCount === 1 ? "" : "s"}</span>
+                  <span>{issueTreeCostSummary.issueCount === 1
+                    ? t("issueWork.taskCountOne", { count: issueTreeCostSummary.issueCount })
+                    : t("issueWork.taskCountMany", { count: issueTreeCostSummary.issueCount })}</span>
                 </div>
               ) : null}
             </div>
@@ -2320,16 +2326,20 @@ export function IssueDetail() {
           ? treeControlScope === "leaf" ? t("taskDetail.workResumed") : t("taskDetail.subtreeResumed")
           : result.hold.mode === "pause"
             ? treeControlScope === "leaf" ? t("taskDetail.workPaused") : t("taskDetail.subtreePaused")
-            : `${modeLabel} applied`,
+            : t("issueWork.applyMode", { mode: modeLabel }),
         body: result.kind === "release"
           ? (result.hold.releaseReason?.trim() || (treeControlScope === "leaf" ? t("taskDetail.activeTaskPauseReleased") : t("taskDetail.activeSubtreePauseReleased")))
           : result.hold.mode === "pause"
             ? treeControlScope === "leaf"
-              ? `Work paused. ${cancelCount} run${cancelCount === 1 ? "" : "s"} cancelled.`
-              : `Subtree paused. ${cancelCount} run${cancelCount === 1 ? "" : "s"} cancelled.`
+          ? cancelCount === 1
+            ? t("issueWork.workPausedOne")
+            : t("issueWork.workPausedMany", { count: cancelCount })
+          : cancelCount === 1
+            ? t("issueWork.subtreePausedOne")
+            : t("issueWork.subtreePausedMany", { count: cancelCount })
             : result.hold.reason?.trim()
               ? result.hold.reason
-              : "Subtree control applied.",
+              : t("issueWork.subtreeControlApplied"),
       });
       setTreeControlOpen(false);
       setTreeControlReason("");
@@ -2360,7 +2370,7 @@ export function IssueDetail() {
     onError: (err) => {
       pushToast({
         title: t("taskDetail.unableApplySubtreeControl"),
-        body: err instanceof Error ? err.message : "Please try again.",
+        body: err instanceof Error ? err.message : t("issueWork.pleaseTryAgain"),
         tone: "error",
       });
     },
@@ -2380,8 +2390,10 @@ export function IssueDetail() {
       pushToast({
         title: t("taskDetail.workPaused"),
         body: cancelCount > 0
-          ? `Work paused. ${cancelCount} run${cancelCount === 1 ? "" : "s"} cancelled.`
-          : "Work paused. This task is held until resume.",
+          ? cancelCount === 1
+            ? t("issueWork.workPausedOne")
+            : t("issueWork.workPausedMany", { count: cancelCount })
+          : t("issueWork.workPausedUntilResume"),
         tone: "success",
       });
       await Promise.all([
@@ -2399,7 +2411,7 @@ export function IssueDetail() {
     onError: (err) => {
       pushToast({
         title: t("taskDetail.unablePauseWork"),
-        body: err instanceof Error ? err.message : "Please try again.",
+        body: err instanceof Error ? err.message : t("issueWork.pleaseTryAgain"),
         tone: "error",
       });
     },
@@ -3117,7 +3129,7 @@ export function IssueDetail() {
       }
       pushToast({
         title: t("taskDetail.failedSaveFeedback"),
-        body: err instanceof Error ? err.message : "Unknown error",
+        body: err instanceof Error ? err.message : t("issueWork.unknownError"),
         tone: "error",
       });
     },
@@ -3721,8 +3733,8 @@ export function IssueDetail() {
   const runFinalizationActions = useMemo<readonly IssueChatRunFinalizationAction[]>(() => [
     {
       id: "cancel",
-      label: "Stop and cancel",
-      pendingLabel: "Stopping and cancelling...",
+      label: t("issueWork.stopAndCancel"),
+      pendingLabel: t("issueWork.stoppingAndCancelling"),
       isPending:
         stopAndFinalizeRun.isPending &&
         stopAndFinalizeRun.variables?.status === "cancelled",
@@ -3732,8 +3744,8 @@ export function IssueDetail() {
     },
     {
       id: "done",
-      label: "Stop and done",
-      pendingLabel: "Stopping and marking done...",
+      label: t("issueWork.stopAndDone"),
+      pendingLabel: t("issueWork.stoppingAndMarkingDone"),
       isPending:
         stopAndFinalizeRun.isPending &&
         stopAndFinalizeRun.variables?.status === "done",
@@ -4095,15 +4107,15 @@ export function IssueDetail() {
   const treeControlPrimaryButtonLabel =
     treeControlMode === "pause"
       ? treeControlScope === "leaf"
-        ? "Pause work"
-        : "Pause and stop work"
+        ? t("issueWork.pauseWork")
+        : t("issueWork.pauseAndStopWork")
       : treeControlMode === "cancel"
-        ? `Cancel ${previewAffectedIssueCount} tasks`
+        ? t("issueWork.cancelTasks", { count: previewAffectedIssueCount })
       : treeControlMode === "restore"
-          ? `Restore ${previewAffectedIssueCount} tasks`
+          ? t("issueWork.restoreTasks", { count: previewAffectedIssueCount })
           : treeControlScope === "leaf"
-            ? "Resume work"
-            : "Resume subtree";
+            ? t("issueWork.resumeWork")
+            : t("issueWork.resumeSubtree");
   const treePreviewAffectedIssueRows = treePreviewDisplayIssues.map((candidate) => ({
     candidate,
     issue: {
@@ -4127,8 +4139,8 @@ export function IssueDetail() {
   const pausedComposerHint = activePauseHold
     ? (
       issue.assigneeAgentId
-        ? `Sending this comment will wake ${agentMap.get(issue.assigneeAgentId)?.name ?? "the assignee"} for triage while the subtree remains paused.`
-        : "Assign an agent to wake them for triage while the subtree remains paused."
+        ? t("issueWork.wakeAssigneeWhilePaused", { name: agentMap.get(issue.assigneeAgentId)?.name ?? t("taskDetail.assignee") })
+        : t("issueWork.assignAgentWhilePaused")
     )
     : null;
   const composerHint = pausedComposerHint;
@@ -4640,7 +4652,7 @@ export function IssueDetail() {
       {issue.hiddenAt && (
         <div className={cn("flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive", shellSectionClass)}>
           <EyeOff className="h-4 w-4 shrink-0" />
-          This task is hidden
+          {t("issueWork.tasksHidden")}
         </div>
       )}
       {activePauseHold && (
@@ -4649,19 +4661,21 @@ export function IssueDetail() {
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">
-                  {childIssues.length === 0 ? "Paused by board." : "Subtree pause is active."}
+                  {childIssues.length === 0 ? t("issueWork.pausedByBoard") : t("issueWork.subtreePauseActive")}
                 </span>
                 <span className="text-xs text-amber-900/80 dark:text-amber-100/80">
                   {childIssues.length === 0
-                    ? "Task execution is held until resume. Human comments can still wake the assignee for triage."
-                    : "Root and descendant execution is held until resume. Human comments can still wake assignee agents for triage."}
+                    ? t("issueWork.taskHeldUntilResume")
+                    : t("issueWork.subtreeHeldUntilResume")}
                 </span>
               </div>
               <div className="text-xs text-amber-900/80 dark:text-amber-100/80">
                 {childIssues.length === 0
-                  ? "1 task held"
-                  : `${heldDescendantCount} descendant${heldDescendantCount === 1 ? "" : "s"} held`}
-                {activeRootPauseHold?.createdAt ? ` · started ${relativeTime(activeRootPauseHold.createdAt)}` : ""}
+                  ? t("issueWork.oneTaskHeld")
+                  : heldDescendantCount === 1
+                    ? t("issueWork.oneDescendantHeld")
+                    : t("issueWork.manyDescendantsHeld", { count: heldDescendantCount })}
+                {activeRootPauseHold?.createdAt ? t("issueWork.startedAt", { time: relativeTime(activeRootPauseHold.createdAt) }) : ""}
               </div>
               {canShowSubtreeControls || canResumeLeafWork ? (
                 <div className="flex flex-wrap items-center gap-2">
@@ -4673,7 +4687,7 @@ export function IssueDetail() {
                       setTreeControlOpen(true);
                     }}
                   >
-                    {childIssues.length === 0 ? "Resume work" : "Resume subtree"}
+                    {childIssues.length === 0 ? t("issueWork.resumeWork") : t("issueWork.resumeSubtree")}
                   </Button>
                   <Button
                     variant="outline"
@@ -5149,11 +5163,11 @@ export function IssueDetail() {
                     onChange={(event) => setTreeControlWakeAgentsOnResume(event.target.checked)}
                   />
                   <span>
-                    <span className="block font-medium">Wake affected agents ({previewAffectedAgentCount})</span>
+                    <span className="block font-medium">{t("issueWork.wakeAffectedAgents", { count: previewAffectedAgentCount })}</span>
                     <span className="text-xs text-muted-foreground">
                       {previewAffectedAgentCount === 0
-                        ? "No assignee agents are eligible to wake from this preview."
-                        : "Wake assignee agents after this operation completes."}
+                        ? t("issueWork.noAgentsEligible")
+                        : t("issueWork.wakeAgentsAfterOperation")}
                     </span>
                   </span>
                 </label>

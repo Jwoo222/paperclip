@@ -616,11 +616,14 @@ export function NewIssueDialog() {
         const prefix = (companies.find((company) => company.id === companyId)?.issuePrefix ?? "").trim();
         const issueRef = issue.identifier ?? issue.id;
         pushToast({
-          title: `Created ${issueRef} with upload warnings`,
-          body: `${failures.length} staged ${failures.length === 1 ? "file" : "files"} could not be added.`,
+          title: t("issueWork.newIssueUploadWarningTitle", { issueRef }),
+          body: t("issueWork.newIssueUploadWarningBody", {
+            count: failures.length,
+            fileLabel: failures.length === 1 ? t("issueWork.file") : t("issueWork.files"),
+          }),
           tone: "warn",
           action: prefix
-            ? { label: `Open ${issueRef}`, href: `/${prefix}/issues/${issueRef}` }
+            ? { label: t("issueWork.openIssue", { issueRef }), href: `/${prefix}/issues/${issueRef}` }
             : undefined,
         });
       }
@@ -1159,12 +1162,12 @@ export function NewIssueDialog() {
     && !isUsingParentExecutionWorkspace;
   const assigneeOptionsTitle =
     assigneeAdapterType === "claude_local"
-      ? "Claude options"
+      ? t("issueWork.claudeOptions")
       : assigneeAdapterType === "codex_local"
-        ? "Codex options"
+        ? t("issueWork.codexOptions")
         : assigneeAdapterType === "opencode_local"
-          ? "OpenCode options"
-        : "Agent options";
+          ? t("issueWork.openCodeOptions")
+        : t("issueWork.agentOptions");
   const thinkingEffortOptions =
     assigneeAdapterType === "codex_local"
       ? ISSUE_THINKING_EFFORT_OPTIONS.codex_local
@@ -1376,7 +1379,7 @@ export function NewIssueDialog() {
               </PopoverContent>
             </Popover>
             <span className="text-muted-foreground/60">&rsaquo;</span>
-            <span>{isSubIssueMode ? "New sub-task" : "New task"}</span>
+            <span>{isSubIssueMode ? t("issueWork.newSubTask") : t("issueWork.newTask")}</span>
           </div>
           <div className="flex items-center gap-1">
             <Button
@@ -1437,9 +1440,9 @@ export function NewIssueDialog() {
                 recentOptionIds={recentAssigneeOptionIds}
                 placeholder={t("work.create.assignee")}
                 disablePortal
-                noneLabel="No assignee"
-                searchPlaceholder="Search assignees..."
-                emptyMessage="No assignees found."
+                noneLabel={t("issueWork.noAssignee")}
+                searchPlaceholder={t("issueWork.searchAssignees")}
+                emptyMessage={t("issueWork.noAssigneesFound")}
                 onChange={(value) => {
                   const nextAssignee = parseAssigneeValue(value);
                   if (nextAssignee.assigneeAgentId) {
@@ -1496,9 +1499,9 @@ export function NewIssueDialog() {
                 recentOptionIds={recentProjectIds}
                 placeholder={t("work.create.project")}
                 disablePortal
-                noneLabel="No project"
-                searchPlaceholder="Search projects..."
-                emptyMessage="No projects found."
+                noneLabel={t("issueWork.noProject")}
+                searchPlaceholder={t("issueWork.searchProjects")}
+                emptyMessage={t("issueWork.noProjectsFound")}
                 onChange={handleProjectChange}
                 onConfirm={() => {
                   descriptionEditorRef.current?.focus();
@@ -1537,7 +1540,7 @@ export function NewIssueDialog() {
                   <button
                     type="button"
                     className="inline-flex items-center justify-center rounded-md p-1 text-muted-foreground hover:bg-accent/50 transition-colors"
-                    title={taskWatchdogsEnabled ? "Add reviewer, approver, or watchdog" : "Add reviewer or approver"}
+                    title={taskWatchdogsEnabled ? t("issueWork.addParticipants") : t("issueWork.addReviewerApprover")}
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </button>
@@ -1555,7 +1558,7 @@ export function NewIssueDialog() {
                     }}
                   >
                     <Eye className="h-3 w-3" />
-                    Reviewer
+                    {t("issueWork.reviewer")}
                   </button>
                   <button
                     className={cn(
@@ -1569,7 +1572,7 @@ export function NewIssueDialog() {
                     }}
                   >
                     <ShieldCheck className="h-3 w-3" />
-                    Approver
+                    {t("issueWork.approver")}
                   </button>
                   {taskWatchdogsEnabled && (
                     <button
@@ -1609,9 +1612,9 @@ export function NewIssueDialog() {
                 recentOptionIds={recentAssigneeOptionIds}
                 placeholder={t("work.create.reviewer")}
                 disablePortal
-                noneLabel="No reviewer"
-                searchPlaceholder="Search reviewers..."
-                emptyMessage="No reviewers found."
+                noneLabel={t("issueWork.noReviewer")}
+                searchPlaceholder={t("issueWork.searchReviewers")}
+                emptyMessage={t("issueWork.noReviewersFound")}
                 onChange={setReviewerValue}
                 renderTriggerValue={(option) =>
                   option ? (
@@ -1654,9 +1657,9 @@ export function NewIssueDialog() {
                 recentOptionIds={recentAssigneeOptionIds}
                 placeholder={t("work.create.approver")}
                 disablePortal
-                noneLabel="No approver"
-                searchPlaceholder="Search approvers..."
-                emptyMessage="No approvers found."
+                noneLabel={t("issueWork.noApprover")}
+                searchPlaceholder={t("issueWork.searchApprovers")}
+                emptyMessage={t("issueWork.noApproversFound")}
                 onChange={setApproverValue}
                 renderTriggerValue={(option) =>
                   option ? (
@@ -1886,10 +1889,10 @@ export function NewIssueDialog() {
                     <p className="text-(length:--text-micro) text-muted-foreground">
                       {t("work.create.cheapModelProfile")} <code>modelProfile: "cheap"</code> {t("work.create.cheapModelProfileSuffix")}{" "}
                       {assigneeCheapProfile?.adapterConfig && typeof (assigneeCheapProfile.adapterConfig as Record<string, unknown>).model === "string"
-                        ? <>· adapter default <code>{String((assigneeCheapProfile.adapterConfig as Record<string, unknown>).model)}</code></>
+                        ? <>· {t("issueWork.adapterDefault")} <code>{String((assigneeCheapProfile.adapterConfig as Record<string, unknown>).model)}</code></>
                         : assigneeCheapProfile
-                          ? <>· uses the agent's configured cheap profile</>
-                          : <>· falls back to the primary model if no cheap profile is configured</>}
+                          ? <>· {t("issueWork.usesCheapProfile")}</>
+                          : <>· {t("issueWork.fallsBackToPrimary")}</>}
                     </p>
                   )}
                   {assigneeModelLane === "primary" && (
@@ -1905,11 +1908,11 @@ export function NewIssueDialog() {
                     <InlineEntitySelector
                       value={assigneeModelOverride}
                       options={modelOverrideOptions}
-                      placeholder={t("work.create.defaultModel")}
+                      placeholder={t("issueWork.defaultModel")}
                       disablePortal
-                      noneLabel="Default model"
-                      searchPlaceholder="Search models..."
-                      emptyMessage="No models found."
+                      noneLabel={t("issueWork.defaultModel")}
+                      searchPlaceholder={t("issueWork.searchModels")}
+                      emptyMessage={t("issueWork.noModelsFound")}
                       onChange={setAssigneeModelOverride}
                     />
                   </div>
@@ -2264,7 +2267,7 @@ export function NewIssueDialog() {
             onClick={discardDraft}
             disabled={createIssue.isPending || !canDiscardDraft}
           >
-            Discard Draft
+            {t("issueWork.discardDraft")}
           </Button>
           <div className="flex items-center gap-3">
             {createIssue.isError ? (
@@ -2281,7 +2284,7 @@ export function NewIssueDialog() {
             >
               <span className="inline-flex items-center justify-center gap-1.5">
                 {createIssue.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                <span>{createIssue.isPending ? "Creating..." : isSubIssueMode ? "Create Sub-Task" : "Create Task"}</span>
+                <span>{createIssue.isPending ? t("issueWork.creating") : isSubIssueMode ? t("issueWork.createSubTask") : t("issueWork.createTask")}</span>
               </span>
             </Button>
           </div>
