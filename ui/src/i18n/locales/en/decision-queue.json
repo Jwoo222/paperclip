@@ -1,0 +1,28 @@
+{
+  "decisionQueue": {
+    "decisions": "Decisions",
+    "updateSeedingFailed": "Could not update seeding",
+    "tryAgain": "Please try again.",
+    "selectCompany": "Select a company first.",
+    "empty": "This queue is empty.",
+    "emptyDescription": "Decisions land here when they match the queue's rules or an agent adds them.",
+    "noMatches": "No decisions match your filters.",
+    "adjustFilters": "Adjust or clear the filters to see the rest.",
+    "aging": "Aging",
+    "agingDescription": "Idle past {{days}} days — kept off the queue. Keep any you still want surfaced.",
+    "seedingOn": "Auto-seeding is on",
+    "seedingOff": "Auto-seeding is off",
+    "seedingOnDescription": "This queue fills itself automatically. Decisions are added the moment they match any of its rules:",
+    "seedingOffDescription": "Automatic adds are paused. These rules would add decisions to the queue when on:",
+    "disableHint": "Turning it off stops new automatic adds only — decisions already here stay, and you can still add or remove decisions by hand.",
+    "disabledHint": "Adding or removing decisions by hand still works while automatic seeding is off.",
+    "disable": "Disable",
+    "enable": "Enable",
+    "removed": "Removed from queue",
+    "excludeFailed": "Could not exclude",
+    "exclude": "Exclude",
+    "removeTitle": "Remove from this queue",
+    "reasonPlaceholder": "Reason (optional)…",
+    "cancel": "Cancel"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "decisionQueue": {
+    "decisions": "의사결정",
+    "updateSeedingFailed": "자동 추가 설정을 변경하지 못했습니다",
+    "tryAgain": "다시 시도하세요.",
+    "selectCompany": "먼저 회사를 선택하세요.",
+    "empty": "이 대기열은 비어 있습니다.",
+    "emptyDescription": "대기열 규칙과 일치하거나 에이전트가 추가한 의사결정이 여기에 표시됩니다.",
+    "noMatches": "필터에 맞는 의사결정이 없습니다.",
+    "adjustFilters": "나머지 항목을 보려면 필터를 조정하거나 해제하세요.",
+    "aging": "오래된 항목",
+    "agingDescription": "{{days}}일 넘게 활동이 없는 항목은 대기열에서 숨깁니다. 계속 표시할 항목은 유지하세요.",
+    "seedingOn": "자동 추가 켜짐",
+    "seedingOff": "자동 추가 꺼짐",
+    "seedingOnDescription": "규칙과 일치하는 의사결정이 이 대기열에 자동으로 추가됩니다:",
+    "seedingOffDescription": "자동 추가가 일시 중지되었습니다. 켜면 다음 규칙에 맞는 의사결정이 추가됩니다:",
+    "disableHint": "끄면 새 항목의 자동 추가만 중지됩니다. 기존 항목은 유지되며 수동으로 추가하거나 제거할 수 있습니다.",
+    "disabledHint": "자동 추가가 꺼져 있어도 의사결정을 직접 추가하거나 제거할 수 있습니다.",
+    "disable": "끄기",
+    "enable": "켜기",
+    "removed": "대기열에서 제거했습니다",
+    "excludeFailed": "대기열에서 제외하지 못했습니다",
+    "exclude": "제외",
+    "removeTitle": "이 대기열에서 제거",
+    "reasonPlaceholder": "사유(선택 사항)…",
+    "cancel": "취소"
+  }
+}
