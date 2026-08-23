@@ -3,6 +3,7 @@ import type { Issue } from "@paperclipai/shared";
 import { Paperclip } from "lucide-react";
 import { issuesApi } from "@/api/issues";
 import { queryKeys } from "@/lib/queryKeys";
+import { useTranslation } from "@/i18n";
 
 interface IssuePropertiesArtifactsTabProps {
   issue: Issue;
@@ -22,6 +23,7 @@ function formatBytes(n: number): string {
  * baseline; this tab consolidates the "what did this task produce" view.
  */
 export function IssuePropertiesArtifactsTab({ issue }: IssuePropertiesArtifactsTabProps) {
+  const { t } = useTranslation();
   const { data } = useQuery({
     queryKey: queryKeys.issues.attachments(issue.id),
     queryFn: () => issuesApi.listAttachments(issue.id),
@@ -31,7 +33,7 @@ export function IssuePropertiesArtifactsTab({ issue }: IssuePropertiesArtifactsT
   if (attachments.length === 0) {
     return (
       <div className="px-1 py-6 text-sm text-muted-foreground">
-        No artifacts yet. Attachments and work products will appear here.
+        {t("taskDetail.noArtifactsYet")}
       </div>
     );
   }

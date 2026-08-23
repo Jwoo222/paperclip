@@ -20,6 +20,7 @@ import { describeRunRetryState } from "../lib/runRetryState";
 import { readSourceResolvedWatchdogFold } from "../lib/source-resolved-watchdog-fold";
 import { SourceResolvedFoldBadge } from "./SourceResolvedFoldBadge";
 import { ResponsibleUserDenialNotice } from "./ResponsibleUserDenialNotice";
+import { t } from "@/i18n";
 
 type IssueRunLedgerProps = {
   issueId: string;
@@ -77,58 +78,58 @@ type LivenessCopy = {
 
 const LIVENESS_COPY: Record<RunLivenessState, LivenessCopy> = {
   completed: {
-    label: "Completed",
+    label: t("taskDetail.completed"),
     tone: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-    description: "Task reached a terminal state.",
+    description: t("taskDetail.taskReachedTerminal"),
   },
   advanced: {
-    label: "Advanced",
+    label: t("taskDetail.advanced"),
     tone: "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
-    description: "Run produced concrete evidence of progress.",
+    description: t("taskDetail.runProducedProgress"),
   },
   plan_only: {
-    label: "Plan only",
+    label: t("taskDetail.planOnly"),
     tone: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
-    description: "Run described future work without concrete action evidence.",
+    description: t("taskDetail.planWithoutAction"),
   },
   empty_response: {
-    label: "Empty response",
+    label: t("taskDetail.emptyResponse"),
     tone: "border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-300",
-    description: "Run finished without useful output.",
+    description: t("taskDetail.runNoUsefulOutput"),
   },
   blocked: {
-    label: "Blocked",
+    label: t("taskDetail.blocked"),
     tone: "border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300",
-    description: "Run or task declared a blocker.",
+    description: t("taskDetail.runDeclaredBlocker"),
   },
   failed: {
-    label: "Failed",
+    label: t("taskDetail.failed"),
     tone: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300",
-    description: "Run ended unsuccessfully.",
+    description: t("taskDetail.runEndedUnsuccessfully"),
   },
   needs_followup: {
-    label: "Needs follow-up",
+    label: t("taskDetail.needsFollowup"),
     tone: "border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300",
-    description: "Run produced useful output but did not prove concrete progress.",
+    description: t("taskDetail.runNeedsFollowup"),
   },
 };
 
 const PENDING_LIVENESS_COPY: LivenessCopy = {
-  label: "Checks after finish",
+  label: t("taskDetail.checksAfterFinish"),
   tone: "border-border bg-background text-muted-foreground",
-  description: "Liveness is evaluated after the run finishes.",
+  description: t("taskDetail.livenessAfterFinish"),
 };
 
 const RETRY_PENDING_LIVENESS_COPY: LivenessCopy = {
-  label: "Retry pending",
+  label: t("taskDetail.retryPending"),
   tone: "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300",
-  description: "Paperclip queued an automatic retry that has not started yet.",
+  description: t("taskDetail.automaticRetryPending"),
 };
 
 const MISSING_LIVENESS_COPY: LivenessCopy = {
-  label: "No liveness data",
+  label: t("taskDetail.noLivenessData"),
   tone: "border-border bg-background text-muted-foreground",
-  description: "This run has no persisted liveness classification.",
+  description: t("taskDetail.noPersistedLiveness"),
 };
 
 const TERMINAL_CHILD_STATUSES = new Set<Issue["status"]>(["done", "cancelled"]);

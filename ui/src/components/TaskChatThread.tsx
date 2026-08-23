@@ -35,6 +35,7 @@ import { latestSameRunHandoffTimestamp, type IssueChatComment } from "@/lib/issu
 import { isLiveIssueRun, isTerminalIssueStatus } from "@/lib/liveIssueIds";
 import { workModeInEffectAt } from "@/lib/issue-timeline-events";
 import { workModeMetaFor } from "@/lib/work-mode-meta";
+import { useTranslation } from "@/i18n";
 
 function toMs(value: Date | string | null | undefined): number {
   if (!value) return 0;
@@ -75,6 +76,7 @@ export type TaskChatThreadProps = ComponentProps<typeof IssueChatThread>;
  * folded row. flag-OFF remains byte-for-byte IssueChatThread.
  */
 export function TaskChatThread(props: TaskChatThreadProps) {
+  const { t } = useTranslation();
   const {
     comments,
     interactions,
@@ -90,7 +92,7 @@ export function TaskChatThread(props: TaskChatThreadProps) {
     footer,
     showComposer = true,
     composerDisabledReason,
-    emptyMessage = "No messages yet.",
+    emptyMessage = t("taskDetail.noMessagesYet"),
     companyId,
     linkedRuns,
     liveRuns,

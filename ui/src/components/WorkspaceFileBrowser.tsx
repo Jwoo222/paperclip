@@ -16,6 +16,7 @@ import { projectsApi } from "@/api/projects";
 import { ApiError } from "@/api/client";
 import { queryKeys } from "@/lib/queryKeys";
 import { parseWorkspaceFileRef } from "@/lib/workspace-file-parser";
+import { t, useTranslation } from "@/i18n";
 import type {
   Project,
   WorkspaceFileListItem,
@@ -78,27 +79,27 @@ export function describeUnavailable(reason: string): { title: string; body: stri
   if (lower.includes("remote")) {
     return {
       icon: <Cloud aria-hidden="true" className="h-5 w-5 text-muted-foreground" />,
-      title: "Remote workspace preview not supported",
-      body: "This workspace is hosted remotely and is not available for inline preview yet.",
+      title: t("taskDetail.remoteWorkspacePreviewUnsupported"),
+      body: t("taskDetail.remoteWorkspaceBody"),
     };
   }
   if (lower.includes("no_workspace") || lower.includes("no_local")) {
     return {
       icon: <FolderOpen aria-hidden="true" className="h-5 w-5 text-muted-foreground" />,
-      title: "No workspace yet",
-      body: "This issue does not have a workspace to browse. Files appear here once a run creates one.",
+      title: t("taskDetail.noWorkspaceYet"),
+      body: t("taskDetail.noWorkspaceBody"),
     };
   }
   if (lower.includes("archiv") || lower.includes("cleaned") || lower.includes("unavailable")) {
     return {
       icon: <FolderOpen aria-hidden="true" className="h-5 w-5 text-muted-foreground" />,
-      title: "Workspace is no longer available",
-      body: "The isolated worktree for this issue has been cleaned up, so files cannot be previewed.",
+      title: t("taskDetail.workspaceNoLongerAvailable"),
+      body: t("taskDetail.workspaceCleanedBody"),
     };
   }
   return {
     icon: <AlertTriangle aria-hidden="true" className="h-5 w-5 text-amber-500" />,
-    title: "Workspace unavailable",
+    title: t("taskDetail.workspaceUnavailable"),
     body: "These workspace files can't be browsed right now.",
   };
 }
@@ -493,6 +494,7 @@ export function WorkspaceFileBrowser({
   selectedWorkspaceId: activeWorkspaceId,
   className,
 }: WorkspaceFileBrowserProps) {
+  const { t: translate } = useTranslation();
   const source: BrowserSource =
     initialProjectId && initialWorkspaceId ? "other" : "current";
   const workspace: WorkspaceFileSelector = "auto";
@@ -804,10 +806,10 @@ export function WorkspaceFileBrowser({
   ]);
 
   const announcement = useMemo(() => {
-    if (listQuery.isFetching) return "Loading workspace files…";
-    if (listQuery.isError) return "Unable to load workspace files.";
+    if (listQuery.isFetching) return `${translate("taskDetail.workspaceFiles")}…`;
+    if (listQuery.isError) return translate("taskDetail.unableToLoadFiles");
     if (data?.state === "unavailable") return describeUnavailable(data.unavailableReason ?? "").title;
-    if (items.length === 0) return "No matching files.";
+    if (items.length === 0) return translate("taskDetail.noMatchingFiles");
     return `${items.length} item${items.length === 1 ? "" : "s"} found.`;
   }, [data, items.length, listQuery.isError, listQuery.isFetching]);
 
@@ -956,24 +958,24 @@ export function WorkspaceFileBrowser({
     body = (
       <StateMessage
         icon={<FolderOpen aria-hidden="true" className="h-5 w-5 text-muted-foreground" />}
-        title="No company selected"
-        body="Choose a company before browsing another project workspace."
+        title={translate("taskDetail.noCompanySelected")}
+        body={translate("taskDetail.chooseCompanyBody")}
       />
     );
   } else if (source === "other" && projectsQuery.isFetching && projectsWithWorkspaces.length === 0) {
     body = (
       <StateMessage
         icon={<Loader2 aria-hidden="true" className="h-5 w-5 animate-spin text-muted-foreground" />}
-        title="Loading project workspaces"
-        body="Registered workspaces will appear here."
+        title={translate("taskDetail.loadingProjectWorkspaces")}
+        body={translate("taskDetail.registeredWorkspacesBody")}
       />
     );
   } else if (source === "other" && !canListFiles) {
     body = (
       <StateMessage
         icon={<FolderOpen aria-hidden="true" className="h-5 w-5 text-muted-foreground" />}
-        title="No project workspaces"
-        body="No same-company project has a registered workspace to browse."
+        title={translate("taskDetail.noProjectWorkspaces")}
+        body={translate("taskDetail.noSameCompanyWorkspaceBody")}
       />
     );
   } else if (listQuery.isFetching && !data) {
@@ -992,11 +994,11 @@ export function WorkspaceFileBrowser({
     body = (
       <StateMessage
         icon={<AlertTriangle aria-hidden="true" className="h-5 w-5 text-amber-500" />}
-        title="Couldn't load files"
+        title={translate("taskDetail.unableToLoadFiles")}
         body={
           status === 404
             ? "Workspace browsing isn't available for this issue."
-            : "Something went wrong loading workspace files."
+            : translate("taskDetail.workspaceLoadError")
         }
       />
     );
@@ -1007,8 +1009,8 @@ export function WorkspaceFileBrowser({
     body = (
       <StateMessage
         icon={<Search aria-hidden="true" className="h-5 w-5 text-muted-foreground" />}
-        title={isSearch ? `No files match “${q}”` : "No recently changed files yet"}
-        body="Try searching by name or path."
+        title={isSearch ? translate("taskDetail.noFilesMatch", { query: q }) : translate("taskDetail.noRecentlyChangedFiles")}
+        body={translate("taskDetail.trySearching")}
       />
     );
   } else {
@@ -1046,8 +1048,8 @@ export function WorkspaceFileBrowser({
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
           onKeyDown={handleSearchKeyDown}
-          placeholder="Search files by name or path…"
-          aria-label="Search workspace files"
+          placeholder={`${translate("taskDetail.searchWorkspaceFiles")}…`}
+          aria-label={translate("taskDetail.searchWorkspaceFiles")}
           role="combobox"
           aria-expanded={items.length > 0}
           aria-controls={items.length > 0 ? listboxId : undefined}

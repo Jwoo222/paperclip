@@ -188,6 +188,7 @@ import {
 import { SourceTrustBadge } from "./SourceTrustBadge";
 import { CommentAttributionChip } from "./CommentAttributionChip";
 import { resolveCommentAttribution } from "../lib/comment-attribution";
+import { t } from "@/i18n";
 
 interface IssueChatMessageContext {
   feedbackDataSharingPreference: FeedbackDataSharingPreference;
@@ -651,9 +652,9 @@ function fallbackAuthorLabel(message: ThreadMessage) {
   const custom = message.metadata?.custom as Record<string, unknown> | undefined;
   if (typeof custom?.["authorName"] === "string") return custom["authorName"];
   if (typeof custom?.["runAgentName"] === "string") return custom["runAgentName"];
-  if (message.role === "assistant") return "Agent";
-  if (message.role === "user") return "You";
-  return "System";
+  if (message.role === "assistant") return t("taskDetail.agent");
+  if (message.role === "user") return t("taskDetail.you");
+  return t("taskDetail.system");
 }
 
 function fallbackTextParts(message: ThreadMessage) {
@@ -695,9 +696,9 @@ function IssueChatFallbackThread({
         <div className="flex items-start gap-2">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div className="space-y-1">
-            <p className="font-medium">Chat renderer hit an internal state error.</p>
-            <p className="text-xs opacity-80">
-              Showing a safe fallback transcript instead of crashing the tasks page.
+            <p className="font-medium">{t("taskDetail.chatRendererError")}</p>
+              <p className="text-xs opacity-80">
+              {t("taskDetail.safeFallbackTranscript")}
             </p>
           </div>
         </div>
@@ -732,7 +733,7 @@ function IssueChatFallbackThread({
                       {line}
                     </MarkdownBody>
                   )) : (
-                    <p className="text-sm text-muted-foreground">No message content.</p>
+                    <p className="text-sm text-muted-foreground">{t("taskDetail.noMessageContent")}</p>
                   )}
                 </div>
               </Card>
@@ -1023,15 +1024,15 @@ function IssueChatChainOfThought({
   let headerVerb: string;
   let headerSuffix: string | null = null;
   if (isActive) {
-    headerVerb = "Working";
+    headerVerb = t("taskDetail.working");
     if (liveElapsed) headerSuffix = `for ${liveElapsed}`;
   } else if (segmentTiming) {
     const durationMs = segmentTiming.endMs - segmentTiming.startMs;
     const durationText = formatDurationWords(durationMs);
-    headerVerb = "Worked";
+    headerVerb = t("taskDetail.worked");
     if (durationText) headerSuffix = `for ${durationText}`;
   } else {
-    headerVerb = "Worked";
+    headerVerb = t("taskDetail.worked");
   }
 
   const toolSummary = toolCountSummary(toolParts);
@@ -1473,7 +1474,7 @@ function IssueChatUserMessage({
   const sourceTrust = isSourceTrustMetadata(custom.sourceTrust) ? custom.sourceTrust : null;
   const followUpRequested = custom.followUpRequested === true;
   const queueReason = typeof custom.queueReason === "string" ? custom.queueReason : null;
-  const queueBadgeLabel = queueReason === "hold" ? "\u23f8 Deferred wake" : "Queued";
+  const queueBadgeLabel = queueReason === "hold" ? `\u23f8 ${t("taskDetail.deferredWake")}` : t("taskDetail.queued");
   const pending = custom.clientStatus === "pending";
   const deleted = Boolean(custom.deletedAt);
   const queueTargetRunId = typeof custom.queueTargetRunId === "string" ? custom.queueTargetRunId : null;

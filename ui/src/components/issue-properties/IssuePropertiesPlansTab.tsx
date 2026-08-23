@@ -9,6 +9,7 @@ import { DocumentAnnotationsCountChip, IssueDocumentAnnotations } from "@/compon
 import { useIssuePlanDocument } from "@/hooks/useIssuePlanDocument";
 import { useLocation } from "@/lib/router";
 import { IssuePlanConfirmationActionBar } from "./IssuePlanConfirmationActionBar";
+import { useTranslation } from "@/i18n";
 
 interface IssuePropertiesPlansTabProps {
   issue: Issue;
@@ -37,6 +38,7 @@ function hasPendingPlanConfirmation(interactions: IssueThreadInteraction[] | und
  * the /dev/task-chat-lab harness).
  */
 export function IssuePropertiesPlansTab({ issue, inline }: IssuePropertiesPlansTabProps) {
+  const { t } = useTranslation();
   const { data: planDocument, isLoading: planDocumentLoading } = useIssuePlanDocument(issue.id);
   const location = useLocation();
   const [annotationPanelOpen, setAnnotationPanelOpen] = useState(false);
@@ -59,18 +61,18 @@ export function IssuePropertiesPlansTab({ issue, inline }: IssuePropertiesPlansT
         <IssuePlanConfirmationActionBar issue={issue} inline={inline} />
         <div className="px-1 py-6 text-sm text-muted-foreground">
           {planDocumentLoading ? (
-            "Loading plan…"
+            t("taskDetail.loadingPlan")
           ) : issue.workMode === "planning" ? (
             <div className="space-y-2">
-              <p>This task is in plan mode but no plan document has been written yet.</p>
+              <p>{t("taskDetail.planModeNoDocument")}</p>
               {pendingPlanConfirmation ? (
                 <p className="text-amber-foreground">
-                  A plan confirmation is pending, but the plan document it should confirm is missing.
+                  {t("taskDetail.planConfirmationMissingDocument")}
                 </p>
               ) : null}
             </div>
           ) : (
-            "No plan yet. The plan document, accepted plans, and their revisions will appear here."
+            t("taskDetail.noPlanYet")
           )}
         </div>
       </>

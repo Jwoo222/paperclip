@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { PROPERTIES_PANE_FOOTER_SLOT_ID } from "../PropertiesPanel";
+import { useTranslation } from "@/i18n";
 
 /** The pending confirmation that targets the issue's `plan` document, if any. */
 function findPendingPlanConfirmation(
@@ -38,6 +39,7 @@ interface IssuePlanConfirmationActionBarProps {
  * and the optional decline reason) against the same interactions API.
  */
 export function IssuePlanConfirmationActionBar({ issue, inline }: IssuePlanConfirmationActionBarProps) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { data: interactions } = useQuery({
     queryKey: queryKeys.issues.interactions(issue.id),
@@ -75,7 +77,7 @@ export function IssuePlanConfirmationActionBar({ issue, inline }: IssuePlanConfi
   const accept = useMutation({
     mutationFn: (interactionId: string) => issuesApi.acceptInteraction(issue.id, interactionId),
     onSuccess: invalidate,
-    onError: () => setActionError("Couldn't confirm — try again."),
+    onError: () => setActionError(t("taskDetail.confirmFailed")),
   });
   const reject = useMutation({
     mutationFn: ({ interactionId, reason }: { interactionId: string; reason?: string }) =>
@@ -85,7 +87,7 @@ export function IssuePlanConfirmationActionBar({ issue, inline }: IssuePlanConfi
       setRejectReason("");
       invalidate();
     },
-    onError: () => setActionError("Couldn't send that back — try again."),
+    onError: () => setActionError(t("taskDetail.sendBackFailed")),
   });
 
   // Interaction changed under us (resolved elsewhere, superseded): reset.
@@ -124,8 +126,8 @@ export function IssuePlanConfirmationActionBar({ issue, inline }: IssuePlanConfi
             placeholder={
               confirmation.payload.declineReasonPlaceholder
               ?? (confirmation.payload.acceptLabel === "Approve plan"
-                ? "Optional: what would you like revised?"
-                : "Optional: tell the agent what you'd change.")
+                ? t("taskDetail.optionalRevision")
+                : t("taskDetail.optionalChange"))
             }
             aria-invalid={rejectAttempted && reasonInvalid}
             className={cn(
@@ -134,7 +136,7 @@ export function IssuePlanConfirmationActionBar({ issue, inline }: IssuePlanConfi
             )}
           />
           {rejectAttempted && reasonInvalid ? (
-            <p className="text-xs text-destructive">A decline reason is required.</p>
+            <p className="text-xs text-destructive">{t("taskDetail.declineReasonRequired")}</p>
           ) : null}
         </div>
       ) : null}
@@ -153,16 +155,16 @@ export function IssuePlanConfirmationActionBar({ issue, inline }: IssuePlanConfi
                 setRejectAttempted(false);
               }}
             >
-              Cancel
+              {t("taskDetail.cancel")}
             </Button>
             <Button size="sm" variant="outline" disabled={working !== null} onClick={handleReject}>
               {working === "reject" ? (
                 <>
                   <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                  Sending back...
+                  {t("taskDetail.sendingBack")}
                 </>
               ) : (
-                confirmation.payload.rejectLabel ?? "Decline"
+                confirmation.payload.rejectLabel ?? t("taskDetail.decline")
               )}
             </Button>
           </>
@@ -183,10 +185,10 @@ export function IssuePlanConfirmationActionBar({ issue, inline }: IssuePlanConfi
             {working === "reject" ? (
               <>
                 <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                Sending back...
+                {t("taskDetail.sendingBack")}
               </>
             ) : (
-              confirmation.payload.rejectLabel ?? "Decline"
+              confirmation.payload.rejectLabel ?? t("taskDetail.decline")
             )}
           </Button>
         )}
@@ -202,10 +204,10 @@ export function IssuePlanConfirmationActionBar({ issue, inline }: IssuePlanConfi
           {working === "accept" ? (
             <>
               <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-              Confirming...
+              {t("taskDetail.confirming")}
             </>
           ) : (
-            confirmation.payload.acceptLabel ?? "Confirm"
+            confirmation.payload.acceptLabel ?? t("taskDetail.confirm")
           )}
         </Button>
       </div>
