@@ -24,7 +24,7 @@ import { PageTabBar } from "../components/PageTabBar";
 import { Tabs } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Bot, Plus, List, GitBranch } from "lucide-react";
-import { AGENT_ROLE_LABELS, type Agent, type Environment, type EnvironmentCapabilities } from "@paperclipai/shared";
+import type { Agent, Environment, EnvironmentCapabilities } from "@paperclipai/shared";
 import {
   isStarred,
   resourceMembershipState,
@@ -36,7 +36,23 @@ import { usePublishSharedQueryData, useSharedPollingQuery } from "../hooks/useSh
 import { getAdapterLabel } from "../adapters/adapter-display-registry";
 import { useTranslation } from "@/i18n";
 
-const roleLabels = AGENT_ROLE_LABELS as Record<string, string>;
+function useAgentRoleLabels(): Record<string, string> {
+  const { t } = useTranslation();
+  return {
+    ceo: t("agentManagement.roles.ceo", { defaultValue: "CEO" }),
+    cto: t("agentManagement.roles.cto", { defaultValue: "CTO" }),
+    cmo: t("agentManagement.roles.cmo", { defaultValue: "CMO" }),
+    cfo: t("agentManagement.roles.cfo", { defaultValue: "CFO" }),
+    security: t("agentManagement.roles.security", { defaultValue: "Security" }),
+    engineer: t("agentManagement.roles.engineer", { defaultValue: "Engineer" }),
+    designer: t("agentManagement.roles.designer", { defaultValue: "Designer" }),
+    pm: t("agentManagement.roles.pm", { defaultValue: "PM" }),
+    qa: t("agentManagement.roles.qa", { defaultValue: "QA" }),
+    devops: t("agentManagement.roles.devops", { defaultValue: "DevOps" }),
+    researcher: t("agentManagement.roles.researcher", { defaultValue: "Researcher" }),
+    general: t("agentManagement.roles.general", { defaultValue: "General" }),
+  };
+}
 
 // Lazy-loaded so the roster page doesn't statically pull in the full
 // AgentConfigForm module graph (the modal reuses its adapter/model pickers).
@@ -180,6 +196,7 @@ function filterOrgTree(nodes: OrgNode[], tab: FilterTab, builtInAgentIds: Set<st
 
 export function Agents() {
   const { t } = useTranslation();
+  const roleLabels = useAgentRoleLabels();
   const { selectedCompanyId } = useCompany();
   const { openNewAgent } = useDialogActions();
   const { setBreadcrumbs } = useBreadcrumbs();
@@ -373,7 +390,7 @@ export function Agents() {
               variant="outline"
               onClick={() => setConfigureState(builtInState)}
             >
-              Set up
+              {t("agentManagement.actions.setUp", { defaultValue: "Set up" })}
             </Button>
           </span>
         )}
@@ -535,13 +552,17 @@ export function Agents() {
           )}
           <Button size="sm" variant="outline" onClick={openNewAgent}>
             <Plus className="h-3.5 w-3.5 mr-1.5" />
-            New Agent
+            {t("agentManagement.actions.newAgent", { defaultValue: "New Agent" })}
           </Button>
         </div>
       </div>
 
       {filtered.length > 0 && (
-        <p className="text-xs text-muted-foreground">{filtered.length} agent{filtered.length !== 1 ? "s" : ""}</p>
+        <p className="text-xs text-muted-foreground">
+          {filtered.length === 1
+            ? t("agentManagement.count.one", { count: filtered.length, defaultValue: "{{count}} agent" })
+            : t("agentManagement.count.many", { count: filtered.length, defaultValue: "{{count}} agents" })}
+        </p>
       )}
 
       {error && <p className="text-sm text-destructive">{error.message}</p>}
@@ -646,6 +667,7 @@ function OrgTreeNode({
   onConfigureBuiltIn: (state: BuiltInAgentState) => void;
 }) {
   const { t } = useTranslation();
+  const roleLabels = useAgentRoleLabels();
   const agent = agentMap.get(node.id);
   const builtInState = builtInByAgentId.get(node.id);
   const showBuiltInLifecycle = builtInState?.status === "needs_setup" || builtInState?.status === "pending_approval";
@@ -695,7 +717,7 @@ function OrgTreeNode({
                   }}
                 >
                   <Button size="xs" variant="outline" onClick={() => onConfigureBuiltIn(builtInState)}>
-                    Set up
+                    {t("agentManagement.actions.setUp", { defaultValue: "Set up" })}
                   </Button>
                 </span>
               )}

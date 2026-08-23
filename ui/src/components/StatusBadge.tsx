@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { useTranslation } from "@/i18n";
 import { cn } from "../lib/utils";
 import {
   statusBadge,
@@ -46,14 +47,24 @@ export function StatusBadge({ status, label }: { status: string; label?: string 
  * renders as "idle" (alias for dead code).
  */
 export function AgentStatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
   const cssVar = agentStatusVar[status] ?? agentStatusVarDefault;
-  const label = status === "active" ? "idle" : status;
+  const normalizedStatus = status === "active" ? "idle" : status;
+  const labels: Record<string, string> = {
+    idle: t("agentManagement.status.idle", { defaultValue: "idle" }),
+    running: t("agentManagement.status.running", { defaultValue: "running" }),
+    paused: t("agentManagement.status.paused", { defaultValue: "paused" }),
+    error: t("agentManagement.status.error", { defaultValue: "error" }),
+    terminated: t("agentManagement.status.terminated", { defaultValue: "terminated" }),
+    pending: t("agentManagement.status.pending", { defaultValue: "pending" }),
+  };
+  const label = labels[normalizedStatus] ?? normalizedStatus.replace(/_/g, " ");
   return (
     <span
       className="status-chip inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium leading-none whitespace-nowrap shrink-0"
       style={scStyle(cssVar)}
     >
-      {label.replace(/_/g, " ")}
+      {label}
     </span>
   );
 }

@@ -12,6 +12,32 @@
     "listView": "List view",
     "orgChartView": "Org chart view",
     "invalidReportingChain": "Invalid reporting chain",
+    "count": {
+      "one": "{{count}} agent",
+      "many": "{{count}} agents"
+    },
+    "roles": {
+      "ceo": "CEO",
+      "cto": "CTO",
+      "cmo": "CMO",
+      "cfo": "CFO",
+      "security": "Security",
+      "engineer": "Engineer",
+      "designer": "Designer",
+      "pm": "PM",
+      "qa": "QA",
+      "devops": "DevOps",
+      "researcher": "Researcher",
+      "general": "General"
+    },
+    "status": {
+      "idle": "idle",
+      "running": "running",
+      "paused": "paused",
+      "error": "error",
+      "terminated": "terminated",
+      "pending": "pending"
+    },
     "empty": {
       "selectCompany": "Select a company to view agents.",
       "createFirst": "Create your first agent to get started.",
@@ -58,7 +84,8 @@
       "assignTask": "Assign Task",
       "runNow": "Run now",
       "runHeartbeat": "Run Heartbeat",
-      "newAgent": "New Agent"
+      "newAgent": "New Agent",
+      "setUp": "Set up"
       ,"create": "Create"
     },
     "errors": {

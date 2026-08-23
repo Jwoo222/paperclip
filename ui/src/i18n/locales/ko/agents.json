@@ -12,6 +12,32 @@
     "listView": "목록 보기",
     "orgChartView": "조직도 보기",
     "invalidReportingChain": "잘못된 보고 체계",
+    "count": {
+      "one": "에이전트 {{count}}개",
+      "many": "에이전트 {{count}}개"
+    },
+    "roles": {
+      "ceo": "CEO",
+      "cto": "CTO",
+      "cmo": "CMO",
+      "cfo": "CFO",
+      "security": "보안",
+      "engineer": "엔지니어",
+      "designer": "디자이너",
+      "pm": "PM",
+      "qa": "QA",
+      "devops": "DevOps",
+      "researcher": "리서처",
+      "general": "일반"
+    },
+    "status": {
+      "idle": "대기",
+      "running": "실행 중",
+      "paused": "일시 중지",
+      "error": "오류",
+      "terminated": "종료됨",
+      "pending": "대기 중"
+    },
     "empty": {
       "selectCompany": "회사를 선택하면 에이전트를 볼 수 있습니다.",
       "createFirst": "첫 에이전트를 만들어 시작하세요.",
@@ -58,7 +84,8 @@
       "assignTask": "업무 할당",
       "runNow": "지금 실행",
       "runHeartbeat": "하트비트 실행",
-      "newAgent": "새 에이전트"
+      "newAgent": "새 에이전트",
+      "setUp": "설정"
       ,"create": "생성"
     },
     "errors": {
