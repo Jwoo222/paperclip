@@ -218,7 +218,7 @@ function ProjectTilePicker({
                     : "hover:ring-2 hover:ring-foreground/30"
                 }`}
                 style={{ backgroundColor: swatch }}
-                aria-label={`Select color ${swatch}`}
+                aria-label={t("workflowUiResidual.project.selectColor", { color: swatch })}
               />
             ))}
           </div>
@@ -757,7 +757,7 @@ export function ProjectDetail() {
       {showLeftProjectNotice ? (
         <div className="flex items-center gap-3 border border-yellow-300/35 bg-yellow-300/10 px-3 py-2 text-sm text-yellow-900 dark:text-yellow-100">
           <p className="min-w-0 flex-1">
-            You left this project. It no longer appears in your sidebar.
+            {t("workflowUiResidual.project.leftNotice")}
           </p>
           <MembershipAction
             compact
@@ -781,7 +781,7 @@ export function ProjectDetail() {
           <button
             type="button"
             className="h-6 w-6 shrink-0 text-yellow-900/70 hover:text-yellow-900 dark:text-yellow-100/70 dark:hover:text-yellow-100"
-            aria-label="Dismiss project membership notice"
+            aria-label={t("workflowUiResidual.project.dismissMembershipNotice")}
             onClick={() => setDismissedLeftProjectIds((current) => new Set(current).add(project.id))}
           >
             ×
@@ -807,13 +807,15 @@ export function ProjectDetail() {
           {project.pauseReason === "budget" ? (
             <div className="inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-(length:--text-micro) font-medium uppercase tracking-(--tracking-caps) text-red-800 dark:text-red-200">
               <span className="h-2 w-2 rounded-full bg-red-400" />
-              Paused by budget hard stop
+              {t("workflowUiResidual.project.pausedByBudget")}
             </div>
           ) : null}
           {project.managedByPlugin ? (
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1 text-(length:--text-micro) font-medium text-muted-foreground">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: project.color ?? "var(--project-seed)" }} />
-              Managed by {project.managedByPlugin.pluginDisplayName}
+              {t("workflowUiResidual.project.managedBy", {
+                name: project.managedByPlugin.pluginDisplayName,
+              })}
             </div>
           ) : null}
         </div>
@@ -838,7 +840,7 @@ export function ProjectDetail() {
         scopeKind="project"
         scopeId={project.id}
         title={t("overview.projectDetail.showSummary")}
-        description="Summarizer keeps the latest project status, next step, and operator-needed items here."
+        description={t("workflowUiResidual.project.summaryDescription")}
       />
 
       <PluginSlotOutlet
@@ -877,7 +879,9 @@ export function ProjectDetail() {
           items={[
             { value: "list", label: t("overview.projects.tasks") },
             { value: "overview", label: t("overview.projects.title") },
-            ...(project.managedByPlugin ? [{ value: "plugin-operations", label: "Plugin operations" }] : []),
+            ...(project.managedByPlugin
+              ? [{ value: "plugin-operations", label: t("workflowUiResidual.project.pluginOperations") }]
+              : []),
             ...(showWorkspacesTab ? [{ value: "workspaces", label: t("projectsWorkspaces.workspace.projectWorkspace") }] : []),
             { value: "configuration", label: t("overview.projectProperties.executionWorkspaces") },
             { value: "budget", label: t("overview.projectDetail.budget") },

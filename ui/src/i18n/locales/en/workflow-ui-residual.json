@@ -1,0 +1,40 @@
+{
+  "workflowUiResidual": {
+    "project": {
+      "selectColor": "Select color {{color}}",
+      "leftNotice": "You left this project. It no longer appears in your sidebar.",
+      "dismissMembershipNotice": "Dismiss project membership notice",
+      "pausedByBudget": "Paused by budget hard stop",
+      "managedBy": "Managed by {{name}}",
+      "summaryDescription": "Summarizer keeps the latest project status, next step, and operator-needed items here.",
+      "pluginOperations": "Plugin operations"
+    },
+    "liveRuns": {
+      "title": "Live Runs",
+      "description": "Uses the shared chat-style run surface from task activity.",
+      "stopping": "Stopping…",
+      "stop": "Stop",
+      "openRun": "Open run"
+    },
+    "kanban": {
+      "showMore": "Show {{count}} more",
+      "showing": "Showing {{shown}} of {{total}}"
+    },
+    "issues": {
+      "noWorkspace": "No workspace",
+      "noParent": "No parent",
+      "blockedBy": "blocked by {{label}}",
+      "blockedByStep": "blocked by {{label}} · step {{step}}",
+      "andMore": " … and {{count}} more",
+      "subtaskCount_one": "{{count}} sub-task",
+      "subtaskCount_other": "{{count}} sub-tasks"
+    },
+    "newProject": {
+      "noCompany": "No company selected",
+      "repoHelp": "Link a GitHub repository so agents can clone, read, and push code for this project.",
+      "localPathHelp": "Set an absolute path on this machine where local agents will read and write files for this project.",
+      "removeGoal": "Remove goal {{name}}",
+      "allGoalsSelected": "All goals already selected."
+    }
+  }
+}
