@@ -1,6 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import type { ToolCallEvent } from "@paperclipai/shared";
+import { i18n } from "@/i18n";
 import { humanizeEvent, isTestEvent, resolveActorLabel } from "./ActivityPanel";
+
+beforeEach(() => {
+  void i18n.changeLanguage("en");
+});
 
 function event(overrides: Partial<ToolCallEvent>): ToolCallEvent {
   return {

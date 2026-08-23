@@ -41,6 +41,7 @@ import {
 } from "@/components/JsonSchemaForm";
 import { cn, relativeTime } from "@/lib/utils";
 import { appTabHref } from "../app-tabs";
+import { t } from "@/i18n";
 
 // ---------------------------------------------------------------------------
 // Small format helpers
@@ -72,15 +73,15 @@ type DecisionMeta = { label: string; className: string };
 
 const DECISION_META: Record<ToolConnectionTestDecision, DecisionMeta> = {
   allowed: {
-    label: "Allowed",
+    label: t("appDetail.test.allowed"),
     className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
   },
   ask_first: {
-    label: "Ask first",
+    label: t("appDetail.test.askFirst"),
     className: "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300",
   },
   off: {
-    label: "Off",
+    label: t("appDetail.test.off"),
     className: "border-border bg-muted text-muted-foreground",
   },
 };
@@ -101,7 +102,7 @@ function DecisionBadge({ decision }: { decision: ToolConnectionTestDecision }) {
 
 /** "Allowed for 1 action · Ask first for 2 · Off for 1" — singular gets " action". */
 function summaryCount(label: string, n: number): string {
-  return `${label} ${n}${n === 1 ? " action" : ""}`;
+  return t("appDetail.test.summaryCount", { label, count: n });
 }
 
 function accessSummaryLine(summary: ToolConnectionAccessSummary): string {
@@ -213,11 +214,11 @@ export function TestPanel({
   if (agents.length === 0) {
     return (
       <div className="rounded-lg border border-border bg-card p-6 text-center">
-        <p className="text-sm font-medium text-foreground">No agents to test as</p>
+        <p className="text-sm font-medium text-foreground">{t("appDetail.test.noAgents")}</p>
         <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-          Only agents you can assign tasks to can preview {appName}. Give an agent access in{" "}
+          {t("appDetail.test.noAgentsHint", { app: appName })}{" "}
           <Link className="font-medium text-primary hover:underline" to={appTabHref(connectionId, "permissions")}>
-            Permissions
+            {t("appDetail.test.permissions")}
           </Link>{" "}
           to test it here.
         </p>
@@ -251,29 +252,29 @@ export function TestPanel({
           <div className="relative min-w-(--sz-12rem) flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              aria-label="Find an action"
-              placeholder="Find an action…"
+              aria-label={t("appDetail.test.findAction")}
+              placeholder={t("appDetail.test.findAction") + "…"}
               className="pl-9"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
           </div>
-          <FilterChip label={`All ${active.length + quarantinedActions.length}`} active={kindFilter === "all"} onClick={() => setKindFilter("all")} />
-          <FilterChip label={`Read ${readActions.length}`} active={kindFilter === "read"} onClick={() => setKindFilter("read")} />
-          <FilterChip label={`Write ${writeActions.length}`} active={kindFilter === "write"} onClick={() => setKindFilter("write")} />
+          <FilterChip label={t("appDetail.test.filterAll", { count: active.length + quarantinedActions.length })} active={kindFilter === "all"} onClick={() => setKindFilter("all")} />
+          <FilterChip label={t("appDetail.test.filterRead", { count: readActions.length })} active={kindFilter === "read"} onClick={() => setKindFilter("read")} />
+          <FilterChip label={t("appDetail.test.filterWrite", { count: writeActions.length })} active={kindFilter === "write"} onClick={() => setKindFilter("write")} />
         </div>
-        <p className="text-xs text-muted-foreground">{visibleCount} matches · sorted A–Z</p>
+        <p className="text-xs text-muted-foreground">{t("appDetail.test.matches", { count: visibleCount })}</p>
       </div>
 
       {visibleCount === 0 ? (
         <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          No actions match “{query}”. Clear the search to see them all.
+          {t("appDetail.test.noMatches", { query })}
         </div>
       ) : (
         <div className="space-y-6">
           {visibleRead.length > 0 && selectedAgent && (
             <ActionGroup
-              heading={`Read (${visibleRead.length})`}
+              heading={t("appDetail.test.groupRead", { count: visibleRead.length })}
               entries={visibleRead}
               decisionFor={decisionFor}
               agent={selectedAgent}
@@ -282,7 +283,7 @@ export function TestPanel({
           )}
           {visibleWrite.length > 0 && selectedAgent && (
             <ActionGroup
-              heading={`Write (${visibleWrite.length})`}
+              heading={t("appDetail.test.groupWrite", { count: visibleWrite.length })}
               entries={visibleWrite}
               decisionFor={decisionFor}
               agent={selectedAgent}
@@ -291,8 +292,8 @@ export function TestPanel({
           )}
           {visibleQuarantined.length > 0 && selectedAgent && (
             <ActionGroup
-              heading={`New (${visibleQuarantined.length})`}
-              subheading="New actions wait, switched off, until you turn them on."
+              heading={t("appDetail.test.groupNew", { count: visibleQuarantined.length })}
+              subheading={t("appDetail.test.newHint")}
               entries={visibleQuarantined}
               decisionFor={() => "off" as const}
               agent={selectedAgent}
@@ -312,12 +313,12 @@ export function TestPanel({
 function EmptyState({ connectionId, appName }: { connectionId: string; appName: string }) {
   return (
     <div className="rounded-lg border border-border bg-card p-8 text-center">
-      <p className="text-base font-bold text-foreground">Nothing to test yet</p>
+      <p className="text-base font-bold text-foreground">{t("appDetail.test.empty")}</p>
       <p className="mx-auto mt-1.5 max-w-md text-sm text-muted-foreground">
-        Once {appName} is connected, the actions it offers will show up here so you can try them out.
+        {t("appDetail.test.emptyHint", { app: appName })}
       </p>
       <Button asChild className="mt-4" variant="outline">
-        <Link to={appTabHref(connectionId, "setup")}>Go to Setup</Link>
+        <Link to={appTabHref(connectionId, "setup")}>{t("appDetail.test.goToSetup")}</Link>
       </Button>
     </div>
   );
@@ -346,7 +347,7 @@ function TestAsHeader({
     return (
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <p className="text-sm text-muted-foreground">
-          Testing as{" "}
+          {t("appDetail.test.testingAs")}{" "}
           <AgentPicker
             agents={agents}
             selectedAgent={selectedAgent}
@@ -364,7 +365,7 @@ function TestAsHeader({
     <div className="rounded-lg border border-border bg-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Test as</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("appDetail.test.testAs")}</p>
           <AgentPicker
             agents={agents}
             selectedAgent={selectedAgent}
@@ -376,7 +377,7 @@ function TestAsHeader({
         <p className="text-sm text-muted-foreground">{accessSummaryLine(selectedAgent.effectiveAccess)}</p>
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
-        Runs real actions in {appName}, exactly as this agent would.
+        {t("appDetail.test.runsAsAgent", { app: appName })}
       </p>
     </div>
   );
@@ -413,7 +414,7 @@ function AgentPicker({
             "items-center gap-1.5 text-foreground outline-none hover:text-primary focus-visible:text-primary",
             inline ? "inline-flex font-semibold underline-offset-2 hover:underline" : "mt-0.5 flex text-lg font-bold",
           )}
-          aria-label="Choose which agent to test as"
+          aria-label={t("appDetail.test.chooseAgent")}
         >
           {selectedAgent.name}
           <ChevronsUpDown className={cn("text-muted-foreground", inline ? "h-3.5 w-3.5" : "h-4 w-4")} />
@@ -424,8 +425,8 @@ function AgentPicker({
           <div className="relative">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
-              aria-label="Search agents"
-              placeholder="Search agents…"
+              aria-label={t("appDetail.test.searchAgents")}
+              placeholder={t("appDetail.test.searchAgents") + "…"}
               className="h-8 pl-8 text-sm"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -435,7 +436,7 @@ function AgentPicker({
         </div>
         <div className="max-h-60 overflow-y-auto p-1">
           {filtered.length === 0 ? (
-            <p className="px-3 py-4 text-center text-xs text-muted-foreground">No agents match.</p>
+            <p className="px-3 py-4 text-center text-xs text-muted-foreground">{t("appDetail.test.noAgentsMatch")}</p>
           ) : (
             filtered.map((agent) => {
               const summary = agent.effectiveAccess;
@@ -464,8 +465,8 @@ function AgentPicker({
                     <span className="block truncate text-sm font-medium text-foreground">{agent.name}</span>
                     <span className="block truncate text-xs text-muted-foreground">
                       {noAccess
-                        ? "No access — not allowed for any action"
-                        : `Allowed ${summary.allowedCount} · Ask first ${summary.askFirstCount} · Off ${summary.offCount}`}
+                        ? t("appDetail.test.noAccess")
+                        : t("appDetail.test.accessSummary", { allowed: summary.allowedCount, askFirst: summary.askFirstCount, off: summary.offCount })}
                     </span>
                   </span>
                 </button>
@@ -474,23 +475,23 @@ function AgentPicker({
           )}
         </div>
         <div className="border-t border-border px-3 py-2 text-(length:--text-micro) text-muted-foreground">
-          <p>Only agents you can assign tasks to are listed.</p>
-          <p>Pick one to preview what they'd see in {appName}.</p>
+          <p>{t("appDetail.test.assignableOnly")}</p>
+          <p>{t("appDetail.test.previewAs", { app: appName })}</p>
         </div>
         <div className="border-t border-border p-3">
-          <p className="text-xs font-semibold text-foreground">What the badges mean</p>
+          <p className="text-xs font-semibold text-foreground">{t("appDetail.test.badgesMeaning")}</p>
           <ul className="mt-1.5 space-y-1 text-xs text-muted-foreground">
-            <li><span className="font-medium text-foreground">Allowed</span> — runs immediately when you press Run.</li>
-            <li><span className="font-medium text-foreground">Ask first</span> — Run is parked in Review for your OK.</li>
+            <li><span className="font-medium text-foreground">{t("appDetail.test.allowed")}</span> — {t("appDetail.test.allowedHint")}</li>
+            <li><span className="font-medium text-foreground">{t("appDetail.test.askFirst")}</span> — {t("appDetail.test.askFirstHint")}</li>
             <li>
-              <span className="font-medium text-foreground">Off</span> — won't run. Change it in{" "}
+              <span className="font-medium text-foreground">{t("appDetail.test.off")}</span> — {t("appDetail.test.offHint")}{" "}
               <Link className="text-primary hover:underline" to={appTabHref(connectionId, "permissions")}>
-                Permissions
+                {t("appDetail.test.permissions")}
               </Link>.
             </li>
           </ul>
           <p className="mt-2 text-(length:--text-micro) text-muted-foreground">
-            Badges reflect this agent's current settings, not yours. Swap agents to see how an action would behave for each.
+            {t("appDetail.test.badgesHint")}
           </p>
         </div>
       </PopoverContent>
@@ -674,9 +675,9 @@ function splitRequiredOptional(schema: JsonSchemaNode): JsonSchemaNode {
 }
 
 const GUT_CHECK: Record<ToolConnectionTestDecision, (app: string, agent: string) => string> = {
-  allowed: (app, agent) => `This runs a real call against ${app} as ${agent}.`,
-  ask_first: () => `Waiting for your OK before this call leaves Paperclip.`,
-  off: (_app, agent) => `No call will be made — this action is off for ${agent}.`,
+  allowed: (app, agent) => t("appDetail.test.allowedWarning", { app, agent }),
+  ask_first: () => t("appDetail.test.askFirstWarning"),
+  off: (_app, agent) => t("appDetail.test.offWarning", { agent }),
 };
 
 function ActionTester({
@@ -802,10 +803,10 @@ function ActionTester({
           onChange={setValues}
           errors={errors}
           disabled={running}
-          advancedLabel="More options"
+          advancedLabel={t("appDetail.test.moreOptions")}
         />
       ) : (
-        <p className="text-xs text-muted-foreground">This action takes no inputs.</p>
+        <p className="text-xs text-muted-foreground">{t("appDetail.test.noInputs")}</p>
       )}
 
       <p className="text-xs text-muted-foreground">{GUT_CHECK[decision](appName, agent.name)}</p>
@@ -818,7 +819,7 @@ function ActionTester({
             </>
           ) : (
             <>
-              <Play className="h-3.5 w-3.5" /> {outcome ? "Run again" : "Run"}
+              <Play className="h-3.5 w-3.5" /> {outcome ? t("appDetail.test.runAgain") : t("appDetail.test.run")}
             </>
           )}
         </Button>
@@ -833,7 +834,7 @@ function ActionTester({
 
       {run.isError && !running && (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-          Couldn't reach {agent.name}. {run.error instanceof Error ? run.error.message : "Please try again."}
+          {t("appDetail.test.couldntReach", { agent: agent.name })} {run.error instanceof Error ? run.error.message : t("appDetail.errors.tryAgain")}
         </div>
       )}
 
@@ -861,18 +862,18 @@ function RunningCard({
   elapsedMs: number;
   onCancel: () => void;
 }) {
-  const verb = entry.isReadOnly ? "Reading from" : entry.isWrite ? "Writing to" : "Calling";
+  const verb = entry.isReadOnly ? t("appDetail.test.readingFrom") : entry.isWrite ? t("appDetail.test.writingTo") : t("appDetail.test.calling");
   return (
     <div className="rounded-md border border-border bg-muted/30 p-4">
       <div className="flex items-center gap-2">
         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        <span className="text-sm font-medium text-foreground">Running…</span>
+        <span className="text-sm font-medium text-foreground">{t("appDetail.test.running")}</span>
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
         {verb} {appName} as {agentName}.
       </p>
       <div className="mt-3 flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">Started {seconds(elapsedMs)} ago · Press cancel to stop</span>
+        <span className="text-xs text-muted-foreground">{t("appDetail.test.startedAgo", { time: seconds(elapsedMs) })}</span>
         <Button onClick={onCancel} size="sm" variant="outline">
           Cancel
         </Button>
@@ -903,7 +904,7 @@ function ResultPanel({
   if (result.decision === "off") {
     return (
       <div className="rounded-md border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
-        {result.error?.message ?? "This action is off and won't run."}
+        {result.error?.message ?? t("appDetail.test.actionOff")}
       </div>
     );
   }
@@ -934,7 +935,7 @@ function mcpToolError(value: unknown): { message: string; reasonCode: string | n
   const message =
     (typeof envelope.content === "string" && envelope.content.trim() !== "" && envelope.content)
     || (typeof envelope.error === "string" && envelope.error.trim() !== "" && envelope.error)
-    || "The app returned an error result.";
+    || t("appDetail.test.appError");
   return { message, reasonCode: "tool_error" };
 }
 
@@ -972,11 +973,11 @@ function writeVerb(entry: ToolCatalogEntry): string | null {
 
 function successHeadline(value: unknown, entry: ToolCatalogEntry, appName: string): string {
   const verb = writeVerb(entry);
-  if (!entry.isReadOnly && verb) return `Worked. Row ${verb}.`;
+  if (!entry.isReadOnly && verb) return t("appDetail.test.workedVerb", { verb });
   const rows = asRows(value);
-  if (rows) return `Worked. ${rows.length} ${rows.length === 1 ? "row" : "rows"} came back.`;
-  if (isEmptyResult(value)) return "Worked. No data to show.";
-  return `Worked. ${appName} sent back the result.`;
+  if (rows) return t("appDetail.test.workedRows", { count: rows.length });
+  if (isEmptyResult(value)) return t("appDetail.test.workedEmpty");
+  return t("appDetail.test.workedResult", { app: appName });
 }
 
 function AllowedResult({
@@ -1004,7 +1005,7 @@ function AllowedResult({
 
       {!isEmptyResult(value) && (
         <div className="mt-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Preview</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("appDetail.test.preview")}</p>
           <div className="mt-1.5">
             <PrettyPreview value={value} />
           </div>
@@ -1020,7 +1021,7 @@ function AllowedResult({
         </Link>
         .
       </p>
-      <p className="mt-1 text-xs text-muted-foreground">Last run finished in {seconds(outcome.durationMs)}.</p>
+      <p className="mt-1 text-xs text-muted-foreground">{t("appDetail.test.lastRun", { time: seconds(outcome.durationMs) })}</p>
     </div>
   );
 }
@@ -1095,7 +1096,7 @@ function RawResponseDisclosure({ value }: { value: unknown }) {
         onClick={() => setShowRaw((prev) => !prev)}
         className="text-xs font-semibold uppercase tracking-wide text-primary hover:underline"
       >
-        {showRaw ? "Hide raw response" : "Show raw response"}
+        {showRaw ? t("appDetail.test.hideRaw") : t("appDetail.test.showRaw")}
       </button>
       {showRaw && (
         <pre className="mt-2 max-h-64 overflow-auto rounded-md border border-border bg-background p-3 text-xs text-foreground">
@@ -1124,26 +1125,26 @@ function ErrorResult({
     <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-4">
       <div className="flex items-center gap-2">
         <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-        <span className="text-sm font-medium text-foreground">It didn't work.</span>
+        <span className="text-sm font-medium text-foreground">{t("appDetail.test.didntWork")}</span>
       </div>
       <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
         <Clock className="h-3 w-3" />
         Tried as {outcome.agentName} · {seconds(outcome.durationMs)} · {relTime(outcome.ranAt)}
       </p>
       <div className="mt-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">What {appName} said</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("appDetail.test.whatAppSaid", { app: appName })}</p>
         <p className="mt-1 break-words text-sm text-foreground">{error.message}</p>
         {error.reasonCode && <p className="mt-0.5 text-xs text-muted-foreground">code: {error.reasonCode}</p>}
       </div>
       <div className="mt-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">What to try</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("appDetail.test.whatToTry")}</p>
         <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm text-foreground">
           {hints.map((hint) => (
             <li key={hint}>{hint}</li>
           ))}
         </ul>
       </div>
-      <p className="mt-3 text-xs text-muted-foreground">Adjust the input above and try again.</p>
+      <p className="mt-3 text-xs text-muted-foreground">{t("appDetail.test.adjustAndRetry")}</p>
       <p className="mt-1 text-xs text-muted-foreground">
         Also visible in the{" "}
         <Link className="text-primary hover:underline" to={appTabHref(connectionId, "activity")}>
@@ -1245,37 +1246,37 @@ function AskFirstResult({
   const where = formatWhere(status?.parameters);
   const statusLabel =
     phase === "running"
-      ? "Approved · running"
+      ? t("appDetail.test.approvedRunning")
       : phase === "denied"
-        ? "Denied — see Review for why"
+        ? t("appDetail.test.deniedSeeReview")
         : phase === "cancelled"
-          ? "Cancelled"
+          ? t("appDetail.test.cancelled")
           : phase === "expired"
-            ? "Expired — send it again"
-            : `Waiting · ${relTime(requestedAt)}`;
+          ? t("appDetail.test.expired")
+          : t("appDetail.test.waiting", { time: relTime(requestedAt) });
   const settled = phase === "denied" || phase === "cancelled" || phase === "expired";
 
   return (
     <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-4">
       <div className="flex items-center gap-2">
         <ShieldQuestion className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-        <span className="text-sm font-medium text-foreground">Sent for your OK.</span>
+        <span className="text-sm font-medium text-foreground">{t("appDetail.test.sentForApproval")}</span>
       </div>
       <p className="mt-0.5 text-xs text-muted-foreground">{outcome.agentName} needs your approval before this runs.</p>
 
       <dl className="mt-3 space-y-1.5 text-sm">
         <div className="flex gap-3">
-          <dt className="w-16 shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Action</dt>
+          <dt className="w-16 shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("appDetail.test.action")}</dt>
           <dd className="text-foreground">{entry.title ?? entry.toolName}</dd>
         </div>
         {where && (
           <div className="flex gap-3">
-            <dt className="w-16 shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Where</dt>
+            <dt className="w-16 shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("appDetail.test.where")}</dt>
             <dd className="break-words text-foreground">{where}</dd>
           </div>
         )}
         <div className="flex gap-3">
-          <dt className="w-16 shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</dt>
+          <dt className="w-16 shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("appDetail.test.status")}</dt>
           <dd className={cn("flex items-center gap-1.5 text-foreground", settled && "text-muted-foreground")}>
             {phase === "running" && <Loader2 className="h-3 w-3 animate-spin" />}
             {statusLabel}
@@ -1295,11 +1296,11 @@ function AskFirstResult({
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <Button asChild size="sm" variant="outline">
-          <Link to={appTabHref(connectionId, "review")}>Open Review tab</Link>
+          <Link to={appTabHref(connectionId, "review")}>{t("appDetail.test.openReview")}</Link>
         </Button>
         {phase === "waiting" && actionRequestId && selectedCompanyId && (
           <Button size="sm" variant="ghost" onClick={() => cancel.mutate()} disabled={cancel.isPending}>
-            {cancel.isPending ? "Cancelling…" : "Cancel this request"}
+            {cancel.isPending ? t("appDetail.test.cancelling") : t("appDetail.test.cancelRequest")}
           </Button>
         )}
       </div>
@@ -1338,9 +1339,9 @@ function OffExplanation({
   const allOff = allAgents.every((a) => decisionOf(a) === "off");
 
   const whyBody = entry.status === "quarantined"
-    ? "This action is new and hasn't been turned on yet."
+    ? t("appDetail.test.newActionOff")
     : allOff
-      ? "An admin set it to Off for all agents using this app."
+      ? t("appDetail.test.adminTurnedOff")
       : `${agent.name}'s access profile sets this action to Off.`;
 
   // "Last changed by {Actor} · {relativeTime}" — only the access config carries
@@ -1362,7 +1363,7 @@ function OffExplanation({
           <Ban className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
           <div className="text-sm text-muted-foreground">
             <p className="font-medium text-foreground">{title} is off for {agent.name}.</p>
-            <p className="mt-0.5">It won't run here, and it won't run from a task either.</p>
+            <p className="mt-0.5">{t("appDetail.test.wontRun")}</p>
             <p className="mt-2">
               Want to test it? Turn it on for {agent.name} in{" "}
               <Link className="font-medium text-primary hover:underline" to={appTabHref(connectionId, "permissions")}>
@@ -1373,18 +1374,18 @@ function OffExplanation({
           </div>
         </div>
         <Button asChild size="sm">
-          <Link to={permHref}>Open Permissions →</Link>
+          <Link to={permHref}>{t("appDetail.test.openPermissions")} →</Link>
         </Button>
-        <p className="text-xs text-muted-foreground">No call will be made — this action is off for {agent.name}.</p>
+        <p className="text-xs text-muted-foreground">{t("appDetail.test.noCall", { agent: agent.name })}</p>
       </div>
 
       <aside className="rounded-md border border-border bg-card p-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Why this is off</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("appDetail.test.whyOff")}</p>
         <p className="mt-1.5 text-xs text-muted-foreground">{whyBody}</p>
         {auditHint && <p className="mt-1.5 text-(length:--text-micro) text-muted-foreground">{auditHint}</p>}
         {otherSettings.length > 0 && (
           <div className="mt-3">
-            <p className="text-(length:--text-micro) font-medium text-muted-foreground">Other agents using {appName}:</p>
+            <p className="text-(length:--text-micro) font-medium text-muted-foreground">{t("appDetail.test.otherAgents", { app: appName })}</p>
             <ul className="mt-1 space-y-0.5 text-(length:--text-micro) text-muted-foreground">
               {otherSettings.map((s) => (
                 <li key={s.name}>
@@ -1396,7 +1397,7 @@ function OffExplanation({
         )}
         {tryAgents.length > 0 && (
           <div className="mt-3">
-            <p className="text-(length:--text-micro) font-medium text-muted-foreground">Try as a different agent:</p>
+            <p className="text-(length:--text-micro) font-medium text-muted-foreground">{t("appDetail.test.tryDifferentAgent")}</p>
             <div className="mt-1 flex flex-wrap gap-1.5">
               {tryAgents.slice(0, 4).map((other) => (
                 <button
@@ -1437,25 +1438,25 @@ export function errorHints(message: string, reasonCode: string | null | undefine
   const haystack = `${reasonCode ?? ""} ${message}`.toUpperCase();
   if (haystack.includes("NOT_FOUND")) {
     return [
-      "Double-check the ID or name you entered — pick it from a dropdown if one is offered.",
-      "Make sure this agent has access to that resource in the connected account.",
+      t("appDetail.test.errorHints.notFoundId"),
+      t("appDetail.test.errorHints.notFoundAccess"),
     ];
   }
   if (haystack.includes("PERMISSION") || haystack.includes("FORBIDDEN") || haystack.includes("UNAUTHORIZED")) {
     return [
-      "The connected account may not have permission for this action.",
-      "Reconnect the app from Setup if its access was recently changed.",
+      t("appDetail.test.errorHints.permissionAccount"),
+      t("appDetail.test.errorHints.permissionReconnect"),
     ];
   }
   if (haystack.includes("INVALID_ARGUMENT") || haystack.includes("INVALID") || haystack.includes("BAD_REQUEST")) {
     return [
-      "Check the field formats above — a value may be the wrong type or shape.",
-      "Open “More options” to confirm any advanced fields are filled in correctly.",
+      t("appDetail.test.errorHints.invalidFields"),
+      t("appDetail.test.errorHints.invalidOptions"),
     ];
   }
   if (haystack.includes("RATE_LIMIT") || haystack.includes("RESOURCE_EXHAUSTED") || haystack.includes("429")) {
-    return ["The app is rate-limiting calls right now — wait a moment and run it again."];
+    return [t("appDetail.test.errorHints.rateLimit")];
   }
   // Locked generic fallback (copy-spec decision #2).
-  return ["Check the inputs above and try again."];
+  return [t("appDetail.test.errorHints.generic")];
 }

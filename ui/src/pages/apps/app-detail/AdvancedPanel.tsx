@@ -10,6 +10,7 @@ import { useToast } from "@/context/ToastContext";
 import { redactUrlSecrets } from "@/lib/redact-url-secrets";
 import { navigateTopLevel } from "@/lib/browserNavigation";
 import type { AppDetailSectionProps } from "./types";
+import { useTranslation, t } from "@/i18n";
 
 export function AdvancedPanel({
   connection,
@@ -23,6 +24,7 @@ export function AdvancedPanel({
   onRemove: () => void;
   onReplaced: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <KeySection connection={connection} galleryEntry={galleryEntry} onReplaced={onReplaced} />
@@ -42,21 +44,22 @@ function KeySection({
   onReplaced: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation();
   return (
     <section className="rounded-xl border border-border bg-card">
       <div className="flex items-center justify-between px-5 py-4">
         <div className="flex items-start gap-3">
           <Lock className="mt-0.5 h-4 w-4 text-muted-foreground" />
           <div>
-            <h2 className="text-sm font-bold text-foreground">Key</h2>
+            <h2 className="text-sm font-bold text-foreground">{t("appDetail.advanced.key")}</h2>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              Your key is stored securely. Replace it if it stopped working or you rotated it.
+              {t("appDetail.advanced.keyHint")}
             </p>
           </div>
         </div>
         {!open && (
           <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-            Replace key
+            {t("appDetail.actions.replaceKey")}
           </Button>
         )}
       </div>
@@ -86,14 +89,15 @@ export function ReconnectCard({
   galleryEntry: AppDefinition | null;
   onReconnected: () => void;
 }) {
+  const { t } = useTranslation();
   const { pushToast } = useToast();
   const reconnectOAuth = useMutation({
     mutationFn: () => toolsApi.startOAuth(connection.id),
     onSuccess: ({ authorizationUrl }) => navigateTopLevel(authorizationUrl),
     onError: (error) =>
       pushToast({
-        title: "Couldn’t start sign-in",
-        body: error instanceof Error ? error.message : "Please try again.",
+        title: t("appDetail.errors.startSignin"),
+        body: error instanceof Error ? error.message : t("appDetail.errors.tryAgain"),
         tone: "error",
       }),
   });
@@ -102,12 +106,12 @@ export function ReconnectCard({
   return (
     <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-5">
       <h2 className="text-sm font-bold text-amber-900 dark:text-amber-100">
-        {oauth ? "Reconnect required" : "This app needs reconnecting"}
+        {oauth ? t("appDetail.advanced.reconnectRequired") : t("appDetail.advanced.needsReconnect")}
       </h2>
       <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
         {connection.healthMessage?.trim() || (oauth
-          ? "Authorization expired or was revoked. Sign in again to restore access."
-          : "The key stopped working. Paste a new one to get it back online.")}
+          ? t("appDetail.advanced.oauthExpired")
+          : t("appDetail.advanced.keyStopped"))}
       </p>
       <div className="mt-3">
         {oauth ? (
@@ -118,7 +122,7 @@ export function ReconnectCard({
             onClick={() => reconnectOAuth.mutate()}
           >
             {reconnectOAuth.isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-            {reconnectOAuth.isPending ? "Opening sign-in…" : "Reconnect"}
+            {reconnectOAuth.isPending ? t("appDetail.advanced.openingSignin") : t("appDetail.actions.reconnect")}
           </Button>
         ) : (
           <ReconnectForm connection={connection} galleryEntry={galleryEntry} onReconnected={onReconnected} />
@@ -139,6 +143,7 @@ function ReconnectForm({
   onCancel?: () => void;
   onReconnected: () => void;
 }) {
+  const { t } = useTranslation();
   const { pushToast } = useToast();
   const method = galleryEntry && Array.isArray(galleryEntry.methods)
     ? getAvailableConnectionMethod(galleryEntry)
@@ -164,23 +169,23 @@ function ReconnectForm({
         result.connection.healthStatus === "healthy" || result.connection.healthStatus === "unknown";
       if (healthy) {
         pushToast({
-          title: "Reconnected",
-          body: `${humanizeConnectionDisplayName(connection)} is back online.`,
+          title: t("appDetail.advanced.reconnected"),
+          body: t("appDetail.advanced.backOnline", { app: humanizeConnectionDisplayName(connection) }),
           tone: "success",
         });
         onReconnected();
       } else {
         pushToast({
-          title: "Still not working",
-          body: result.connection.healthMessage?.trim() || "That key didn't check out. Try another.",
+          title: t("appDetail.advanced.stillNotWorking"),
+          body: result.connection.healthMessage?.trim() || t("appDetail.advanced.keyRejected"),
           tone: "error",
         });
       }
     },
     onError: (error) =>
       pushToast({
-        title: "That key didn't work",
-        body: error instanceof Error ? error.message : "Check the key and try again.",
+        title: t("appDetail.advanced.keyFailed"),
+        body: error instanceof Error ? error.message : t("appDetail.advanced.checkKey"),
         tone: "error",
       }),
   });
@@ -210,7 +215,7 @@ function ReconnectForm({
                 rel="noreferrer"
                 className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-foreground underline underline-offset-2"
               >
-                Where do I find this? <ArrowUpRight className="h-3 w-3" />
+                {t("appDetail.advanced.whereToFind")} <ArrowUpRight className="h-3 w-3" />
               </a>
             )}
           </div>
@@ -221,18 +226,18 @@ function ReconnectForm({
           autoComplete="off"
           value={single}
           onChange={(e) => setSingle(e.target.value)}
-          placeholder="Paste your new key"
+          placeholder={t("appDetail.advanced.keyPlaceholder")}
           className="h-10 font-mono"
         />
       )}
       <div className="flex items-center gap-2">
         <Button size="sm" disabled={!filled || reconnect.isPending} onClick={() => reconnect.mutate()}>
           {reconnect.isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-          {reconnect.isPending ? "Checking..." : "Check & reconnect"}
+          {reconnect.isPending ? t("appDetail.advanced.checking") : t("appDetail.advanced.checkReconnect")}
         </Button>
         {onCancel && (
           <Button size="sm" variant="ghost" onClick={onCancel} disabled={reconnect.isPending}>
-            Cancel
+            {t("appDetail.actions.cancel")}
           </Button>
         )}
       </div>
@@ -241,13 +246,14 @@ function ReconnectForm({
 }
 
 function TechnicalDetails({ connection }: { connection: ToolConnection }) {
+  const { t } = useTranslation();
   return (
     <section className="rounded-xl border border-border bg-card px-5 py-4">
-      <h2 className="text-sm font-bold text-foreground">Technical details</h2>
+      <h2 className="text-sm font-bold text-foreground">{t("appDetail.advanced.technicalDetails")}</h2>
       <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-(--gtc-59)">
-        <dt className="text-muted-foreground">Address</dt>
+        <dt className="text-muted-foreground">{t("appDetail.advanced.address")}</dt>
         <dd className="break-all font-mono text-foreground">{connectionAddress(connection)}</dd>
-        <dt className="text-muted-foreground">Connection type</dt>
+        <dt className="text-muted-foreground">{t("appDetail.advanced.connectionType")}</dt>
         <dd className="text-foreground">{connectionTransportLabel(connection.transport)}</dd>
       </dl>
     </section>
@@ -263,32 +269,33 @@ export function DangerZone({
   removing: boolean;
   onRemove: () => void;
 }) {
+  const { t } = useTranslation();
   const [confirming, setConfirming] = useState(false);
   return (
     <section className="rounded-xl border border-destructive/40 bg-card">
       <div className="border-b border-destructive/40 px-5 py-3 text-sm font-bold text-destructive">
-        Danger zone
+        {t("appDetail.advanced.dangerZone")}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
         <div>
-          <p className="text-sm font-medium text-foreground">Remove this app</p>
+          <p className="text-sm font-medium text-foreground">{t("appDetail.advanced.removeThisApp")}</p>
           <p className="text-xs text-muted-foreground">
-            Agents lose access to {appName} right away. You can connect it again later.
+            {t("appDetail.advanced.removeHint", { app: appName })}
           </p>
         </div>
         {confirming ? (
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => setConfirming(false)} disabled={removing}>
-              Cancel
+              {t("appDetail.actions.cancel")}
             </Button>
             <Button variant="destructive" size="sm" onClick={onRemove} disabled={removing}>
               {removing && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-              Yes, remove it
+              {t("appDetail.advanced.confirmRemove")}
             </Button>
           </div>
         ) : (
           <Button variant="destructive" size="sm" onClick={() => setConfirming(true)}>
-            Remove app
+            {t("appDetail.actions.removeApp")}
           </Button>
         )}
       </div>
@@ -300,12 +307,12 @@ export function connectionAddress(connection: ToolConnection): string {
   const config = connection.config ?? connection.transportConfig ?? {};
   const value = config.url ?? config.endpoint ?? config.remoteUrl;
   if (typeof value === "string" && value.trim().length > 0) return redactUrlSecrets(value);
-  if (connection.transport === "local_stdio") return "Local command";
-  return "Not set";
+  if (connection.transport === "local_stdio") return t("appDetail.advanced.localCommand");
+  return t("appDetail.advanced.notSet");
 }
 
 export function connectionTransportLabel(transport: ToolConnection["transport"]): string {
-  if (transport === "mcp_remote") return "Remote HTTP";
-  if (transport === "local_stdio") return "Local command";
-  return "Unknown";
+  if (transport === "mcp_remote") return t("appDetail.advanced.remoteHttp");
+  if (transport === "local_stdio") return t("appDetail.advanced.localCommand");
+  return t("appDetail.advanced.unknown");
 }

@@ -3,8 +3,9 @@
 import { flushSync } from "react-dom";
 import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Agent, ToolCallEvent } from "@paperclipai/shared";
+import { i18n } from "@/i18n";
 import { ActivityPanel } from "./ActivityPanel";
 
 vi.mock("@/lib/router", () => ({
@@ -17,6 +18,10 @@ vi.mock("@/lib/router", () => ({
 function act(callback: () => void) {
   flushSync(callback);
 }
+
+beforeEach(() => {
+  void i18n.changeLanguage("en");
+});
 
 function event(overrides: Partial<ToolCallEvent>): ToolCallEvent {
   return {

@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ToolCatalogEntry } from "@paperclipai/shared";
+import { i18n } from "@/i18n";
 import { TestPanel, errorHints } from "./TestPanel";
 
 const listTestAgentsMock = vi.hoisted(() => vi.fn());
@@ -190,6 +191,7 @@ function renderPanel(
 }
 
 beforeEach(() => {
+  void i18n.changeLanguage("en");
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);

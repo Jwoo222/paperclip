@@ -6,6 +6,7 @@ import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { appDefinitionSlug } from "../app-definition-display";
 import type { AppDetailSectionProps } from "./types";
 import { googleSheetsConfigWithAllowlist, parseGoogleSheetIds } from "../google-sheets";
+import { useTranslation } from "@/i18n";
 
 export function SetupPanel({
   connection,
@@ -27,6 +28,7 @@ export function SetupPanel({
   onStartOAuth: () => void;
   oauthStartDisabled: boolean;
 }) {
+  const { t } = useTranslation();
   const description = galleryEntry?.description ?? null;
   const oauth = connection.config?.oauth;
   const hasOAuthSignIn = Boolean(oauth && typeof oauth === "object" && !Array.isArray(oauth));
@@ -67,21 +69,22 @@ function OAuthConnectionSection({
   disabled: boolean;
   onStart: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <section className="rounded-xl border border-border bg-card px-5 py-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-sm font-bold text-foreground">
-            {connected ? `${providerName} connected` : `Connect with ${providerName}`}
+            <h2 className="text-sm font-bold text-foreground">
+            {connected ? t("appDetail.oauth.connected", { provider: providerName }) : t("appDetail.oauth.connectWith", { provider: providerName })}
           </h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {connected
-              ? "Your workspace authorization is active. Reconnect any time to replace it."
-              : "Open the provider's consent page to finish connecting this app."}
+              ? t("appDetail.oauth.active")
+              : t("appDetail.oauth.consent")}
           </p>
         </div>
         <Button type="button" disabled={disabled} onClick={onStart}>
-          {connected ? "Reconnect" : `Connect with ${providerName}`}
+          {connected ? t("appDetail.actions.reconnect") : t("appDetail.oauth.connectWith", { provider: providerName })}
         </Button>
       </div>
     </section>
@@ -106,6 +109,7 @@ function GoogleSheetsAllowlistSection({
   disabled: boolean;
   onUpdateConfig: (config: Record<string, unknown>) => void;
 }) {
+  const { t } = useTranslation();
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const ids = currentSpreadsheetIds(connection);
@@ -115,15 +119,15 @@ function GoogleSheetsAllowlistSection({
   return (
     <section className="rounded-xl border border-border bg-card px-5 py-4">
       <div>
-        <h2 className="text-sm font-bold text-foreground">Sheets agents can use</h2>
+        <h2 className="text-sm font-bold text-foreground">{t("appDetail.sheets.title")}</h2>
         <p className="mt-0.5 text-sm text-muted-foreground">
-          Agents can only use the sheets listed here.
+          {t("appDetail.sheets.description")}
         </p>
       </div>
 
       <div className="mt-4 space-y-2">
         {ids.length === 0 ? (
-          <div className="text-sm text-muted-foreground">No sheets are connected yet.</div>
+          <div className="text-sm text-muted-foreground">{t("appDetail.sheets.empty")}</div>
         ) : (
           ids.map((id) => {
             const sheetUrl = googleSheetsUrlForId(id);
@@ -135,12 +139,12 @@ function GoogleSheetsAllowlistSection({
                   rel="noreferrer"
                   className="min-w-0 flex-1 text-sm font-medium text-foreground underline-offset-2 hover:underline"
                 >
-                  <span className="block truncate">Open sheet</span>
+                  <span className="block truncate">{t("appDetail.actions.openSheet")}</span>
                   <span className="block truncate font-mono text-xs font-normal text-muted-foreground">
                     {sheetUrl}
                   </span>
                   <span className="block truncate font-mono text-(length:--text-micro) font-normal text-muted-foreground/80">
-                    ID: {id}
+                    {t("appDetail.sheets.id", { id })}
                   </span>
                 </a>
                 <Button
@@ -148,10 +152,10 @@ function GoogleSheetsAllowlistSection({
                   size="sm"
                   variant="outline"
                   disabled={disabled || ids.length <= 1}
-                  title={ids.length <= 1 ? "Add another sheet before removing this one." : undefined}
+                  title={ids.length <= 1 ? t("appDetail.sheets.removeDisabled") : undefined}
                   onClick={() => saveIds(ids.filter((current) => current !== id))}
                 >
-                  Remove
+                  {t("appDetail.actions.remove")}
                 </Button>
               </div>
             );
@@ -166,7 +170,7 @@ function GoogleSheetsAllowlistSection({
             setDraft(event.target.value);
             setError(null);
           }}
-          placeholder="https://docs.google.com/spreadsheets/d/..."
+          placeholder={t("appDetail.sheets.placeholder")}
           className="h-10"
         />
         <Button
@@ -176,18 +180,18 @@ function GoogleSheetsAllowlistSection({
           onClick={() => {
             const parsed = parseGoogleSheetIds(draft);
             if (parsed.ids.length === 0) {
-              setError("Paste a Google Sheets link.");
+              setError(t("appDetail.sheets.errors.pasteLink"));
               return;
             }
             if (parsed.invalidCount > 0) {
-              setError("That doesn't look like a Google Sheets link.");
+              setError(t("appDetail.sheets.errors.invalidLink"));
               return;
             }
             saveIds(Array.from(new Set([...ids, ...parsed.ids])));
             setDraft("");
           }}
         >
-          Add sheet
+          {t("appDetail.sheets.add")}
         </Button>
       </div>
       {error && <div className="mt-2 text-xs text-destructive">{error}</div>}
@@ -204,22 +208,23 @@ export function AppLifecycleSection({
   disabled: boolean;
   onToggle: () => void;
 }) {
+  const { t } = useTranslation();
   const enabled = connection.enabled !== false && connection.status !== "disabled";
   return (
     <section className="rounded-xl border border-border bg-card px-5 py-4">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-sm font-bold text-foreground">
-            {enabled ? "Agents can use this app" : "This app is paused"}
+            {enabled ? t("appDetail.lifecycle.enabled") : t("appDetail.lifecycle.paused")}
           </h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {enabled
-              ? "Pause it to stop every agent from using its actions."
-              : "Resume it when agents should be able to use its actions again."}
+              ? t("appDetail.lifecycle.pauseHint")
+              : t("appDetail.lifecycle.resumeHint")}
           </p>
         </div>
         <ToggleSwitch
-          aria-label={enabled ? "Pause this app" : "Resume this app"}
+          aria-label={enabled ? t("appDetail.lifecycle.pause") : t("appDetail.lifecycle.resume")}
           checked={enabled}
           disabled={disabled}
           onCheckedChange={onToggle}
@@ -239,6 +244,7 @@ export function QuarantinedActionsReview({
   disabled: boolean;
   onSubmit: (enabledIds: string[]) => void;
 }) {
+  const { t } = useTranslation();
   const [enabledIds, setEnabledIds] = useState<Set<string>>(new Set());
   const count = entries.length;
   const selectedIds = entries.filter((entry) => enabledIds.has(entry.id)).map((entry) => entry.id);
@@ -247,10 +253,10 @@ export function QuarantinedActionsReview({
       <div className="flex flex-wrap items-start justify-between gap-3 px-4 py-3">
         <div>
           <div className="text-sm font-semibold text-amber-800 dark:text-amber-200">
-            Review {count} new {count === 1 ? "action" : "actions"}
+            {t("appDetail.quarantine.review", { count })}
           </div>
           <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
-            Turn on the actions agents may use. Anything left off stays blocked when you save.
+            {t("appDetail.quarantine.description")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -260,7 +266,7 @@ export function QuarantinedActionsReview({
             disabled={disabled}
             onClick={() => setEnabledIds(new Set(entries.map((entry) => entry.id)))}
           >
-            Turn all on
+            {t("appDetail.quarantine.turnAllOn")}
           </button>
           <button
             type="button"
@@ -268,7 +274,7 @@ export function QuarantinedActionsReview({
             disabled={disabled}
             onClick={() => setEnabledIds(new Set())}
           >
-            Turn all off
+            {t("appDetail.quarantine.turnAllOff")}
           </button>
         </div>
       </div>
@@ -285,7 +291,7 @@ export function QuarantinedActionsReview({
                 )}
               </div>
               <ToggleSwitch
-                aria-label={`${label} allowed`}
+                aria-label={t("appDetail.quarantine.allowed", { label })}
                 checked={enabled}
                 disabled={disabled}
                 onCheckedChange={(next) => {
@@ -303,10 +309,10 @@ export function QuarantinedActionsReview({
       </div>
       <div className="flex items-center justify-between gap-3 px-4 py-3">
         <span className="text-xs text-amber-700 dark:text-amber-300">
-          {selectedIds.length} of {count} will be on
+          {t("appDetail.quarantine.selected", { selected: selectedIds.length, count })}
         </span>
         <Button size="sm" disabled={disabled} onClick={() => onSubmit(selectedIds)}>
-          {disabled ? "Saving…" : "Save choices"}
+          {disabled ? t("appDetail.status.saving") : t("appDetail.actions.saveChoices")}
         </Button>
       </div>
     </section>
