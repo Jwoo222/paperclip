@@ -16,6 +16,7 @@ import { StatusIcon } from "./StatusIcon";
 import { hasAssignedBacklogBlocker } from "../lib/issue-blockers";
 import { ExternalObjectStatusSummary } from "./ExternalObjectStatusSummary";
 import { Badge } from "@/components/ui/badge";
+import { ProjectCodeBadge } from "./ProjectCodeBadge"; // FORK-LOCAL (project badge)
 import { t as translate, useTranslation } from "@/i18n";
 
 type UnreadState = "hidden" | "visible" | "fading";
@@ -288,6 +289,17 @@ export function IssueRow({
               {recoveryIndicator}
             </>
           )}
+          {/* FORK-LOCAL (project badge) — identifiers are company-scoped, so the
+              row carries a short project code. Sits outside the
+              `desktopMetaLeading` fallback on purpose: the main issues list
+              supplies its own meta-leading block, and a badge nested inside the
+              fallback would never render there. Drop this single element to
+              return to upstream behaviour. */}
+          <ProjectCodeBadge
+            companyId={issue.companyId}
+            projectId={issue.projectId}
+            className="hidden shrink-0 px-1.5 py-0 font-mono text-[10px] text-muted-foreground sm:inline-flex"
+          />
           {mobileMeta ? (
             <>
               <span className="text-xs text-muted-foreground sm:hidden" aria-hidden="true">
