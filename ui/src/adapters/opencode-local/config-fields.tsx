@@ -1,3 +1,4 @@
+import { configFieldsForSection } from "../config-sections";
 import type { AdapterConfigFieldsProps } from "../types";
 import {
   Field,
@@ -11,6 +12,7 @@ const inputClass =
   "w-full rounded-md border border-border px-2.5 py-1.5 bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/40";
 
 export function OpenCodeLocalConfigFields({
+  section,
   isCreate,
   values,
   set,
@@ -19,7 +21,7 @@ export function OpenCodeLocalConfigFields({
   mark,
   hideInstructionsFile,
 }: AdapterConfigFieldsProps) {
-  return (
+  return configFieldsForSection(section, (
     <>
       {!hideInstructionsFile && (
         <Field label={t("adapterImport.adapter.instructionsFile")} hint={t("adapterImport.adapter.instructionsHintOpenCode")}>
@@ -66,5 +68,5 @@ export function OpenCodeLocalConfigFields({
         }
       />
     </>
-  );
+  ));
 }

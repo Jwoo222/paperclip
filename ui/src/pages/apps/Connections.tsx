@@ -1,6 +1,8 @@
+import { t as translate, useTranslation } from "@/i18n";
+import { isRetiredComposioConnection, RETIRED_COMPOSIO_MESSAGE } from "@paperclipai/shared";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AppWindow, Loader2, ShieldAlert, ShieldQuestion, Trash2 } from "lucide-react";
+import { AppWindow, Cloud, Loader2, ShieldAlert, ShieldCheck, ShieldQuestion, Trash2 } from "lucide-react";
 import type {
   ToolApplication,
   ToolConnection,
@@ -16,6 +18,8 @@ import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { useToast } from "@/context/ToastContext";
 import { queryKeys } from "@/lib/queryKeys";
 import { toolsApi } from "@/api/tools";
+import { accessApi } from "@/api/access";
+import { buildCompanyUserProfileMap } from "@/lib/company-members";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,33 +35,45 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { timeAgo } from "@/lib/timeAgo";
 import { AppLogo } from "./AppLogo";
+import { ConnectionProvenanceChip } from "./ConnectionProvenanceChip";
 import {
+  appApplicationSourceSlug,
+  appDefinitionDarkLogoUrl,
   appDefinitionLogoUrl,
   appDefinitionName,
   appDefinitionSlug,
   type AppGalleryDisplayEntry,
 } from "./app-definition-display";
 import { useReviewCount } from "./useReviewCount";
-import { AdvancedToolsLink } from "./store-cards";
-import { t as translate, useTranslation } from "@/i18n";
+import { connectionNameForCredentialPolicy, connectionTypeLabel } from "./connection-identity";
+import {
+  ConnectionOwnerIdentity,
+  connectionDisplayNameForOwner,
+  connectionOwnerProfile,
+  type ConnectionOwnerProfile,
+} from "./connection-owner";
 
 const BROWSE_HREF = "/apps";
 
 type StatusFilter = "all" | "attention";
 
 type AppStatus = {
+  label: "Healthy" | "Needs attention" | "Paused" | "Not connected" | "Retired";
   tone: "connected" | "attention" | "paused" | "not_connected";
 };
 
 type AppRow = {
   application: ToolApplication;
-  primaryConnection: ToolConnection | null;
-  connectionCount: number;
-  agentAvailableConnectionCount: number;
+  connection: ToolConnection | null;
+  displayName: string;
+  brandKey: string;
+  owner: ConnectionOwnerProfile | null;
+  remainingAgentAvailableConnectionCount: number;
   status: AppStatus;
   actionCount: number;
   lastUsedAt: Date | string | null;
   logoUrl?: string | null;
+  darkLogoUrl?: string | null;
 };
 
 /**
@@ -66,20 +82,21 @@ type AppRow = {
  * pill's `attention` tone and the row highlight are now the *same* predicate.
  */
 function statusFor(application: ToolApplication, connections: ToolConnection[]): AppStatus {
+  if (connections.some(isRetiredComposioConnection)) return { label: "Retired", tone: "attention" };
   if (connections.length === 0) {
-    return { tone: "not_connected" };
+    return { label: "Not connected", tone: "not_connected" };
   }
   if (
     application.status === "disabled" ||
     application.status === "archived" ||
     connections.every((connection) => connection.enabled === false || connection.status === "disabled")
   ) {
-    return { tone: "paused" };
+    return { label: "Paused", tone: "paused" };
   }
   if (connections.some((connection) => isAttentionHealthStatus(connection.healthStatus))) {
-    return { tone: "attention" };
+    return { label: "Needs attention", tone: "attention" };
   }
-  return { tone: "connected" };
+  return { label: "Healthy", tone: "connected" };
 }
 
 /** The single health-derived predicate that drives highlight, pill, banner, filter (F6). */
@@ -107,16 +124,16 @@ export function Connections() {
     id: string;
     appName: string;
     remainingConnectionCount: number;
+
   } | null>(null);
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? t("integrations.common.company"), href: "/dashboard" },
-      { label: t("integrations.common.apps"), href: "/apps" },
-      { label: t("appsBrowserGateway.connections.title") },
+      { label: "Connectors", href: "/apps" },
+      { label: "Connections" },
     ]);
     return () => setBreadcrumbs([]);
-  }, [setBreadcrumbs, selectedCompany?.name]);
+  }, [setBreadcrumbs]);
 
   const galleryQuery = useQuery({
     queryKey: queryKeys.apps.gallery(selectedCompanyId ?? "__none__"),
@@ -138,9 +155,34 @@ export function Connections() {
     queryFn: () => toolsApi.listProfiles(selectedCompanyId!),
     enabled: !!selectedCompanyId,
   });
+  const userDirectoryQuery = useQuery({
+    queryKey: queryKeys.access.companyUserDirectory(selectedCompanyId ?? "__none__"),
+    queryFn: () => accessApi.listUserDirectory(selectedCompanyId!),
+    enabled: !!selectedCompanyId,
+  });
+  const connectorEnrollmentQuery = useQuery({
+    queryKey: ["cloud-connector", "enrollment"],
+    queryFn: () => toolsApi.getCloudConnectorEnrollment(),
+  });
+  const startConnectorEnrollment = useMutation({
+    mutationFn: () => toolsApi.startCloudConnectorEnrollment(selectedCompanyId!, selectedCompany?.name),
+    onSuccess: (status) => {
+      if (status.verificationUrl) window.location.assign(status.verificationUrl);
+    },
+    onError: (error) => pushToast({
+      title: "Couldn’t reach Paperclip Cloud",
+      body: error instanceof Error ? error.message : "Try again in a moment.",
+      tone: "error",
+    }),
+  });
 
   const deleteConnection = useMutation({
-    mutationFn: (target: { id: string; appName: string; remainingConnectionCount: number }) =>
+    mutationFn: (target: {
+      id: string;
+      appName: string;
+      remainingConnectionCount: number;
+
+    }) =>
       toolsApi.archiveConnection(target.id),
     onSuccess: (_connection, target) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tools.connections(selectedCompanyId!) });
@@ -149,8 +191,8 @@ export function Connections() {
       pushToast({
         title: t("appsBrowserGateway.connections.deleted"),
         body: target.remainingConnectionCount > 0
-          ? t(target.remainingConnectionCount === 1 ? "appsBrowserGateway.connections.deletedWithOthersOne" : "appsBrowserGateway.connections.deletedWithOthers", { name: target.appName, count: target.remainingConnectionCount })
-          : t("appsBrowserGateway.connections.deletedLast", { name: target.appName }),
+          ? `${target.appName} still has ${target.remainingConnectionCount} active ${target.remainingConnectionCount === 1 ? "connection" : "connections"} available to agents.`
+          : `${target.appName} is no longer available to agents and its credentials are deleted. Connecting it again needs a new sign-in or key.`,
         tone: "success",
       });
       setConnectionToDelete(null);
@@ -198,52 +240,91 @@ export function Connections() {
     }
     return map;
   }, [connections]);
+  const userProfileById = useMemo(
+    () => buildCompanyUserProfileMap(userDirectoryQuery.data?.users),
+    [userDirectoryQuery.data],
+  );
 
   const rows = useMemo<AppRow[]>(() => {
-    return applications.map((application) => {
+    return applications.flatMap((application): AppRow[] => {
       const appConnections = connectionsByApplication.get(application.id) ?? [];
-      const primaryConnection = appConnections[0] ?? null;
-      const actionCount = appConnections.reduce(
-        (sum, connection) => sum + (actionCountByConnection.get(`app:${connection.id}`) ?? 0),
-        0,
-      );
-      const lastUsedAt = appConnections.reduce<Date | string | null>((latest, connection) => {
-        if (!connection.lastUsedAt) return latest;
-        if (!latest) return connection.lastUsedAt;
-        return new Date(connection.lastUsedAt).getTime() > new Date(latest).getTime()
-          ? connection.lastUsedAt
-          : latest;
-      }, null);
-      const galleryEntry = application.applicationKey
-        ? logoByKey.get(application.applicationKey)
-        : undefined;
-      return {
-        application,
-        primaryConnection,
-        connectionCount: appConnections.length,
-        agentAvailableConnectionCount: appConnections.filter(
-          (connection) => connection.status === "active" && connection.enabled,
-        ).length,
-        status: statusFor(application, appConnections),
-        actionCount,
-        lastUsedAt,
-        logoUrl: appDefinitionLogoUrl(galleryEntry) ??
-          appDefinitionLogoUrl(logoByName.get(application.name.toLowerCase())),
-      };
+      const appSourceSlug = appApplicationSourceSlug(application);
+      const resolvedGalleryEntry = logoByKey.get(appSourceSlug ?? "") ??
+        logoByName.get(application.name.toLowerCase());
+      const logoUrl = appDefinitionLogoUrl(resolvedGalleryEntry);
+      const brandKey = appSourceSlug ?? application.name;
+      const darkLogoUrl = appDefinitionDarkLogoUrl(resolvedGalleryEntry);
+      const agentAvailableConnectionCount = appConnections.filter(
+        (connection) => connection.status === "active" && connection.enabled,
+      ).length;
+      if (appConnections.length === 0) {
+        return [{
+          application,
+          connection: null,
+          displayName: application.name,
+          brandKey,
+          owner: null,
+          remainingAgentAvailableConnectionCount: 0,
+          status: statusFor(application, []),
+          actionCount: 0,
+          lastUsedAt: null,
+          logoUrl,
+          darkLogoUrl,
+        }];
+      }
+      return appConnections.map((connection) => {
+        const owner = connectionOwnerProfile(connection, userProfileById);
+        const type = connectionTypeLabel(connection.credentialPolicy);
+        const displayName = type === "Organization"
+          ? connectionNameForCredentialPolicy(
+              humanizeConnectionDisplayName(connection),
+              connection.credentialPolicy,
+            )
+          : connectionDisplayNameForOwner(connection, application.name, owner);
+        return {
+          application,
+          connection,
+          displayName,
+          brandKey,
+          owner,
+          remainingAgentAvailableConnectionCount: Math.max(
+            0,
+            agentAvailableConnectionCount -
+              (connection.status === "active" && connection.enabled ? 1 : 0),
+          ),
+          status: statusFor(application, [connection]),
+          actionCount: actionCountByConnection.get(`app:${connection.id}`) ?? 0,
+          lastUsedAt: connection.lastUsedAt ?? null,
+          logoUrl,
+          darkLogoUrl,
+        };
+      });
     });
-  }, [actionCountByConnection, applications, connectionsByApplication, logoByKey, logoByName]);
+  }, [actionCountByConnection, applications, connectionsByApplication, logoByKey, logoByName, userProfileById]);
 
   const rowsNeedingAttention = rows.filter(rowNeedsAttention);
   const visibleRows = filter === "attention" ? rowsNeedingAttention : rows;
 
   if (!selectedCompanyId) {
-    return <div className="p-6 text-sm text-muted-foreground">{t("appsBrowserGateway.connections.selectCompany")}</div>;
+    return <div className="p-6 text-sm text-muted-foreground">Select an organization to manage apps.</div>;
   }
 
   const loading = applicationsQuery.isLoading || connectionsQuery.isLoading || galleryQuery.isLoading;
 
   return (
-    <div className="max-w-5xl">
+    <div className="max-w-5xl space-y-5">
+      {!connectorEnrollmentQuery.isLoading ? (
+        <CloudConnectorEnrollmentBanner
+          status={connectorEnrollmentQuery.data}
+          unavailable={connectorEnrollmentQuery.isError}
+          busy={startConnectorEnrollment.isPending}
+          onEnable={() => {
+            const verificationUrl = connectorEnrollmentQuery.data?.verificationUrl;
+            if (verificationUrl) window.location.assign(verificationUrl);
+            else startConnectorEnrollment.mutate();
+          }}
+        />
+      ) : null}
       {loading ? (
         <div className="space-y-3">
           <Skeleton className="h-8 w-40" />
@@ -305,7 +386,7 @@ export function Connections() {
               <ShieldAlert className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold text-red-900 dark:text-red-100">
-                  {rowsNeedingAttention.length === 1 ? t("appsBrowserGateway.connections.appAttentionOne") : t("appsBrowserGateway.connections.appAttentionMany", { count: rowsNeedingAttention.length })}
+                  {rowsNeedingAttention.length} {rowsNeedingAttention.length === 1 ? "connection needs" : "connections need"} attention
                 </div>
                 <div className="truncate text-xs text-red-700 dark:text-red-300">
                   {floatSummary(rowsNeedingAttention)}
@@ -319,38 +400,44 @@ export function Connections() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/40 text-left text-(length:--text-micro) font-semibold uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-2.5">{t("appsBrowserGateway.connections.app")}</th>
-                  <th className="px-4 py-2.5">{t("appsBrowserGateway.connections.status")}</th>
-                  <th className="px-4 py-2.5">{t("appsBrowserGateway.connections.actions")}</th>
-                  <th className="px-4 py-2.5">{t("appsBrowserGateway.connections.lastUsed")}</th>
+                  <th className="px-4 py-2.5">Connection</th>
+                  <th className="px-4 py-2.5">Type</th>
+                  <th className="px-4 py-2.5">Connected by</th>
+                  <th className="px-4 py-2.5">Status</th>
+                  <th className="px-4 py-2.5">Actions</th>
+                  <th className="px-4 py-2.5">Last used</th>
                   <th className="px-4 py-2.5" />
                 </tr>
               </thead>
               <tbody>
                 {visibleRows.map((row) => {
-                  const { application, primaryConnection, status } = row;
+                  const { application, connection, status } = row;
                   const attention = rowNeedsAttention(row);
                   const hint =
+                    connection && isRetiredComposioConnection(connection) ? RETIRED_COMPOSIO_MESSAGE :
                     status.tone === "attention"
-                      ? primaryConnection?.authKind === "oauth"
-                        ? t("appsBrowserGateway.connections.reconnectOAuth")
-                        : t("appsBrowserGateway.connections.reconnectKey")
+                      ? connection?.authKind === "oauth"
+                        ? "Reconnect required — sign in again to restore access."
+                        : "The key stopped working — reconnect to fix."
                       : status.tone === "paused"
                         ? t("appsBrowserGateway.connections.pausedHint")
                         : status.tone === "not_connected"
-                          ? t("appsBrowserGateway.connections.connectHint")
-                          : row.connectionCount > 1
-                            ? t("appsBrowserGateway.connections.connectionCount", { count: row.connectionCount })
+                          ? "Connect it so agents can use it."
+                          : row.displayName !== application.name
+                            ? application.name
                             : null;
-                  const appHref = `/apps/app/${application.id}/setup`;
-                  const actionLabel = !primaryConnection
-                    ? t("appsBrowserGateway.connections.connect")
+                  const appHref = connection
+                    ? `/apps/${connection.id}/permissions`
+                    : `/apps/app/${application.id}/permissions`;
+                  const actionLabel = !connection
+                    ? "Connect"
+                    : connection && isRetiredComposioConnection(connection) ? "Review"
                     : status.tone === "attention"
-                      ? t("appsBrowserGateway.connections.reconnect")
-                      : t("appsBrowserGateway.connections.open");
+                      ? "Reconnect"
+                      : "Permissions";
                   return (
                     <tr
-                      key={application.id}
+                      key={connection?.id ?? application.id}
                       onClick={() => navigate(appHref)}
                       className={cn(
                         "cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-muted/30",
@@ -360,13 +447,16 @@ export function Connections() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <AppLogo
-                            name={application.name}
+                            name={row.displayName}
+                            brandKey={row.brandKey}
                             logoUrl={row.logoUrl}
+                            darkLogoUrl={row.darkLogoUrl}
                             size={32}
                           />
                           <div className="min-w-0">
-                            <div className="font-medium text-foreground">
-                              {application.name}
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-medium text-foreground">{row.displayName}</span>
+                              <ConnectionProvenanceChip connection={row.connection} />
                             </div>
                             {hint && (
                               <div className="truncate text-xs text-muted-foreground">{hint}</div>
@@ -375,13 +465,23 @@ export function Connections() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
+                        <span className="text-xs font-medium text-foreground">
+                          {connection ? connectionTypeLabel(connection.credentialPolicy) : "—"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <ConnectionOwnerIdentity owner={row.owner} />
+                      </td>
+                      <td className="px-4 py-3">
                         <span
                           className={cn(
                             "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium",
                             STATUS_CLASS[status.tone],
                           )}
                         >
-                          {t(`appsBrowserGateway.connections.${status.tone === "connected" ? "healthy" : status.tone === "attention" ? "needsAttention" : status.tone === "paused" ? "paused" : "notConnected"}`)}
+                          {status.label === "Retired"
+                            ? t("appsBrowserGateway.connections.retired", { defaultValue: "Retired" })
+                            : t(`appsBrowserGateway.connections.${status.tone === "connected" ? "healthy" : status.tone === "attention" ? "needsAttention" : status.tone === "paused" ? "paused" : "notConnected"}`)}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -404,22 +504,19 @@ export function Connections() {
                           >
                             {actionLabel}
                           </Button>
-                          {primaryConnection && (
+                          {connection && (
                             <Button
                               variant="ghost"
                               size="icon-sm"
                               className="text-muted-foreground hover:text-destructive"
-                              aria-label={t("appsBrowserGateway.connections.deleteAria", { name: application.name })}
+                              aria-label={`Delete ${row.displayName} connection`}
                               onClick={(event) => {
                                 event.stopPropagation();
                                 setConnectionToDelete({
-                                  id: primaryConnection.id,
+                                  id: connection.id,
                                   appName: application.name,
-                                  remainingConnectionCount: Math.max(
-                                    0,
-                                    row.agentAvailableConnectionCount -
-                                      (primaryConnection.status === "active" && primaryConnection.enabled ? 1 : 0),
-                                  ),
+                                  remainingConnectionCount: row.remainingAgentAvailableConnectionCount,
+
                                 });
                               }}
                             >
@@ -435,11 +532,10 @@ export function Connections() {
             </table>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <p className="text-xs text-muted-foreground">
               {t("appsBrowserGateway.connections.appsAvailable")}
             </p>
-            <AdvancedToolsLink />
           </div>
         </div>
       )}
@@ -459,8 +555,8 @@ export function Connections() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {connectionToDelete && connectionToDelete.remainingConnectionCount > 0
-                  ? t(connectionToDelete.remainingConnectionCount === 1 ? "appsBrowserGateway.connections.deleteBodyWithOthersOne" : "appsBrowserGateway.connections.deleteBodyWithOthers", { name: connectionToDelete.appName, count: connectionToDelete.remainingConnectionCount })
-                : t("appsBrowserGateway.connections.deleteBody")}
+                ? `This connection's saved credentials are deleted and agents lose access through it immediately. Agents can still use ${connectionToDelete.appName} through ${connectionToDelete.remainingConnectionCount} other active ${connectionToDelete.remainingConnectionCount === 1 ? "connection" : "connections"}.`
+                : "The saved credentials are deleted and agents lose access immediately. Connecting it again later needs a new sign-in or key."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -479,6 +575,57 @@ export function Connections() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+function CloudConnectorEnrollmentBanner({
+  status,
+  unavailable,
+  busy,
+  onEnable,
+}: {
+  status: Awaited<ReturnType<typeof toolsApi.getCloudConnectorEnrollment>> | undefined;
+  unavailable: boolean;
+  busy: boolean;
+  onEnable: () => void;
+}) {
+  if (status?.configured) {
+    return (
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-4 py-3">
+        <ShieldCheck className="h-5 w-5 text-primary" />
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold text-foreground">Paperclip-managed sign-in is ready</div>
+          <div className="truncate text-xs text-muted-foreground">
+            Provider authorization uses {status.brokerBaseUrl}; credentials stay in this instance.
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (unavailable) {
+    return (
+      <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3">
+        <Cloud className="h-5 w-5 text-muted-foreground" />
+        <div className="text-sm text-muted-foreground">Paperclip Cloud enrollment status is unavailable.</div>
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-4 py-3">
+      <Cloud className="h-5 w-5 text-muted-foreground" />
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-semibold text-foreground">
+          {status?.status === "pending" ? "Finish Paperclip Cloud enrollment" : "Enable Paperclip-managed sign-in"}
+        </div>
+        <div className="text-xs text-muted-foreground">
+          Confirm this server’s exact address before Cloud can return encrypted Google credentials to it.
+        </div>
+      </div>
+      <Button variant="outline" size="sm" disabled={busy} onClick={onEnable}>
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+        {status?.status === "pending" ? "Continue enrollment" : "Enable"}
+      </Button>
     </div>
   );
 }

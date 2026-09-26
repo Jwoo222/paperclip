@@ -1,6 +1,7 @@
 {
   "issueRecovery": {
     "headlineMissingDisposition": "이 업무의 실행이 끝났지만 다음 단계가 정해지지 않았습니다. 다시 시도하거나 완료 처리하거나 검토로 보낼 다음 조치를 선택하세요.",
+    "headlineDeliberateWaitWithoutTarget": "이 업무의 마지막 실행은 대기 상태로 멈췄지만, 기다릴 검토자·차단 원인·모니터·승인이 지정되지 않았습니다. Paperclip이 다음 단계를 복구하는 동안 업무 담당자는 유지됩니다.",
     "headlineStrandedAssignedIssue": "Paperclip이 이 업무의 마지막 실행을 다시 시도했지만 대기 실행, 검토자, 차단 원인 또는 다음 담당자가 없습니다. 다시 진행하려면 다시 시도하거나 완료 처리하거나 검토로 보낼 조치를 선택하세요.",
     "headlineWorkspaceValidation": "업무의 Git 워크스페이스를 검증할 수 없어 이 실행을 중지했습니다.",
     "headlineConfigurationValidation": "필수 secret/env 바인딩이 없어 이 실행을 전달하기 전에 중지했습니다.",

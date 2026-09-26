@@ -57,6 +57,7 @@ export function TrustPresetSection({
   projectCandidates = [],
   issueCandidates = [],
   candidatesLoading,
+  allowSingleIssue = true,
 }: {
   permissions: Partial<AgentPermissions> | null | undefined;
   onChange: (permissions: Partial<AgentPermissions>) => void;
@@ -65,6 +66,7 @@ export function TrustPresetSection({
   projectCandidates?: LowTrustBoundaryCandidate[];
   issueCandidates?: LowTrustBoundaryCandidate[];
   candidatesLoading?: boolean;
+  allowSingleIssue?: boolean;
 }) {
   const [policyOpen, setPolicyOpen] = useState(false);
   const preset = getTrustPreset(permissions);
@@ -155,9 +157,9 @@ export function TrustPresetSection({
                         onChange={(event) => setTargetType(event.target.value as LowTrustBoundaryTargetType)}
                         disabled={disabled}
                       >
-                        <option value="project">{t("sharedOperationsExtra.project")}</option>
-                        <option value="root_issue">{t("sharedOperationsExtra.rootIssue")}</option>
-                        <option value="issue">{t("sharedOperationsExtra.issue")}</option>
+                        <option value="project">Project</option>
+                        <option value="root_issue">Root issue</option>
+                        {allowSingleIssue && <option value="issue">Issue</option>}
                       </select>
                     </Field>
                     <Field label={BOUNDARY_TARGET_LABELS[targetType]}>
@@ -184,7 +186,7 @@ export function TrustPresetSection({
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-xs text-muted-foreground">
-                      {t("commonChatTools.ceBoundarySaved")}
+                      CE saves one containment boundary at a time. Saved policies include this organization id.
                     </p>
                     {boundaryTarget ? (
                       <Button

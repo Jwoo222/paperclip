@@ -1,0 +1,133 @@
+import { t as tNewUi } from "@/i18n";
+import { aiConnectionsApi } from "@/api/ai-connections";
+import type { AiProvider } from "@paperclipai/shared";
+import { useQuery } from "@tanstack/react-query";
+import { agentsApi } from "@/api/agents";
+import { ApiError } from "@/api/client";
+import { secretsApi } from "@/api/secrets";
+import { queryKeys } from "@/lib/queryKeys";
+import {
+  savedProviderKeys,
+  savedManagedProviderAccounts,
+  savedCodexSubscriptions,
+  type SavedProviderKey,
+} from "@/lib/saved-provider-credentials";
+
+export function useSavedProviderKeys(
+  companyId: string | null,
+  envKey: string,
+  enabled = true,
+) {
+  const provider = ({ ANTHROPIC_API_KEY: "anthropic", OPENAI_API_KEY: "openai", OPENROUTER_API_KEY: "openrouter", XAI_API_KEY: "xai" } as Record<string, AiProvider>)[envKey];
+  const managed = useQuery({
+    queryKey: ["ai-connections", companyId],
+    queryFn: () => aiConnectionsApi.list(companyId!),
+    enabled: Boolean(companyId && provider) && enabled,
+    retry: false,
+  });
+  const managedAccounts = provider && managed.data ? savedManagedProviderAccounts(companyId!, provider, managed.data.currentUserId, managed.data.connections) : [];
+  const personal = useQuery({
+    queryKey: queryKeys.secrets.myUserSecrets(companyId ?? ""),
+    queryFn: () => secretsApi.listMyUserSecrets(companyId!),
+    enabled: Boolean(companyId) && enabled,
+    retry: false,
+  });
+  const organization = useQuery({
+    queryKey: queryKeys.secrets.list(companyId ?? ""),
+    queryFn: () => secretsApi.list(companyId!),
+    enabled: Boolean(companyId) && enabled,
+    retry: false,
+  });
+  const storedLogin = useQuery({
+    // Disabled queries still return cached data. Keep other providers away
+    // from the shared Claude login cache.
+    queryKey: ["claude-oauth-token-status", envKey === "ANTHROPIC_API_KEY" ? companyId : null],
+    queryFn: async () => {
+      try {
+        return await agentsApi.getClaudeOAuthTokenStatus(companyId!);
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) return null;
+        throw error;
+      }
+    },
+    enabled: Boolean(companyId) && enabled && envKey === "ANTHROPIC_API_KEY",
+    retry: false,
+  });
+  return {
+    storedLogin,
+    options: [...managedAccounts.filter(account => account.aiConnection?.method === "api_key"), ...savedProviderKeys(
+      companyId ?? "",
+      envKey,
+      personal.data ?? [],
+      organization.data ?? [],
+    )],
+    subscriptions: [...managedAccounts.filter(account => account.aiConnection?.method === "subscription"), ...(provider === "openai" ? savedCodexSubscriptions(
+      companyId ?? "",
+      organization.data ?? [],
+    ) : [])],
+    // Background refreshes must not unmount an active login panel sharing this query.
+    loading: personal.isLoading || organization.isLoading || storedLogin.isLoading || managed.isLoading,
+    error: personal.isError || organization.isError || managed.isError,
+  };
+}
+
+export function SavedProviderKeySelect({
+  options,
+  value,
+  onChange,
+  loading,
+  error,
+  disabled,
+  kind = "api",
+}: {
+  options: SavedProviderKey[];
+  value: string;
+  onChange: (id: string) => void;
+  loading: boolean;
+  error: boolean;
+  disabled?: boolean;
+  kind?: "api" | "subscription";
+}) {
+  return (
+    <div className="space-y-2">
+      {options.length > 0 && (
+        <label className="block space-y-2 text-sm">
+          <span>{kind === "api" ? tNewUi("newUi.k16f0ee47f993") : tNewUi("newUi.k4999c6c6c7ba")}</span>
+          <select
+            aria-label={kind === "api" ? tNewUi("newUi.k90acb76dcf19") : tNewUi("newUi.kd4e6deb71120")}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            disabled={disabled}
+          >
+            {options.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+            <option value="">
+              {kind === "api"
+                ? tNewUi("newUi.k9b6cc5e19d07")
+                : tNewUi("newUi.k49077ef2d842")}
+            </option>
+          </select>
+        </label>
+      )}
+      {loading && (
+        <p role="status" className="text-sm text-muted-foreground">
+          {tNewUi("newUi.kb34650f62297")}
+        </p>
+      )}
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {tNewUi("newUi.k1af606f55aab")}
+        </p>
+      )}
+      {value && (
+        <p className="text-sm text-muted-foreground">
+          {tNewUi("newUi.k315bac519ce7")} {kind === "api" ? "key" : "subscription"} {tNewUi("newUi.kc631329586f8")}
+        </p>
+      )}
+    </div>
+  );
+}

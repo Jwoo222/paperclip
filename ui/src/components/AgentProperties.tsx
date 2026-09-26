@@ -1,3 +1,4 @@
+import { AgentIdentity } from "@/components/AgentIdentity";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/lib/router";
 import { AGENT_ROLE_LABELS, type Agent, type AgentRuntimeState } from "@paperclipai/shared";
@@ -98,7 +99,7 @@ export function AgentProperties({ agent, runtimeState }: AgentPropertiesProps) {
         <PropertyRow label={t("agentManagement.properties.reportsTo", { defaultValue: "Reports To" })}>
             {reportsToAgent ? (
               <Link to={agentUrl(reportsToAgent)} className="hover:underline">
-                <Identity name={reportsToAgent.name} size="sm" />
+                <AgentIdentity agent={reportsToAgent} size="sm" />
               </Link>
             ) : (
               <span className="text-sm font-mono">{agent.reportsTo.slice(0, 8)}</span>

@@ -1,10 +1,11 @@
+import { t } from "@/i18n";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Bot, Filter, HardDrive, Search, User, X } from "lucide-react";
+import { Bot, Check, Filter, HardDrive, Search, User, X } from "lucide-react";
 import { PriorityIcon } from "./PriorityIcon";
 import { SHOW_TASK_PRIORITY_UI } from "../lib/ui-flags";
 import { StatusIcon } from "./StatusIcon";
@@ -17,13 +18,15 @@ import {
   issuePriorityOrder,
   issueQuickFilterPresets,
   issueStatusOrder,
+  searchIssueFilterOptions,
   toggleIssueFilterValue,
   type IssueFilterState,
 } from "../lib/issue-filters";
 import { externalObjectIconForCategory } from "../lib/external-objects";
 import { externalObjectStatusIcon } from "../lib/status-colors";
 import { formatAssigneeUserLabel } from "../lib/assignees";
-import { useTranslation } from "@/i18n";
+import type { InboxApprovalFilter, InboxCategoryFilter } from "../lib/inbox";
+import { cn } from "../lib/utils";
 
 type AgentOption = {
   id: string;
@@ -53,6 +56,55 @@ type CreatorOption = {
   searchText?: string;
 };
 
+type InboxScopeFilters = {
+  category: InboxCategoryFilter;
+  approvalStatus: InboxApprovalFilter;
+  showApprovalStatus: boolean;
+  onCategoryChange: (value: InboxCategoryFilter) => void;
+  onApprovalStatusChange: (value: InboxApprovalFilter) => void;
+  onClear: () => void;
+};
+
+const INBOX_CATEGORY_OPTIONS: ReadonlyArray<[InboxCategoryFilter, string]> = [
+  ["everything", "All categories"],
+  ["issues_i_touched", "My recent tasks"],
+  ["join_requests", "Join requests"],
+  ["approvals", "Approvals"],
+  ["failed_runs", "Failed runs"],
+  ["alerts", "Alerts"],
+];
+
+const INBOX_APPROVAL_STATUS_OPTIONS: ReadonlyArray<[InboxApprovalFilter, string]> = [
+  ["all", "All approval statuses"],
+  ["actionable", "Needs action"],
+  ["resolved", "Resolved"],
+];
+
+const SEARCHABLE_FILTER_THRESHOLD = 6;
+
+function FilterOptionSearch({
+  value,
+  onChange,
+  label,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  label: string;
+}) {
+  return (
+    <div className="relative">
+      <Search className="pointer-events-none absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={`Search ${label.toLowerCase()}...`}
+        aria-label={`Search ${label.toLowerCase()}`}
+        className="h-8 pl-7 text-xs"
+      />
+    </div>
+  );
+}
+
 export function IssueFiltersPopover({
   state,
   onChange,
@@ -67,6 +119,8 @@ export function IssueFiltersPopover({
   iconOnly = false,
   workspaces,
   creators,
+  presentation = "legacy",
+  inboxScopeFilters,
 }: {
   state: IssueFilterState;
   onChange: (patch: Partial<IssueFilterState>) => void;
@@ -81,9 +135,31 @@ export function IssueFiltersPopover({
   iconOnly?: boolean;
   workspaces?: WorkspaceOption[];
   creators?: CreatorOption[];
+  presentation?: "legacy" | "streamlined";
+  inboxScopeFilters?: InboxScopeFilters;
 }) {
-  const { t } = useTranslation();
+  const streamlined = presentation === "streamlined";
   const [creatorSearch, setCreatorSearch] = useState("");
+  const [assigneeSearch, setAssigneeSearch] = useState("");
+  const [projectSearch, setProjectSearch] = useState("");
+  const [labelSearch, setLabelSearch] = useState("");
+  const [workspaceSearch, setWorkspaceSearch] = useState("");
+  const visibleAgents = useMemo(
+    () => searchIssueFilterOptions(agents, assigneeSearch, (option) => option.name),
+    [agents, assigneeSearch],
+  );
+  const visibleProjects = useMemo(
+    () => searchIssueFilterOptions(projects, projectSearch, (option) => option.name),
+    [projects, projectSearch],
+  );
+  const visibleLabels = useMemo(
+    () => searchIssueFilterOptions(labels, labelSearch, (option) => option.name),
+    [labels, labelSearch],
+  );
+  const visibleWorkspaces = useMemo(
+    () => searchIssueFilterOptions(workspaces, workspaceSearch, (option) => option.name),
+    [workspaces, workspaceSearch],
+  );
   const creatorOptions = creators ?? [];
   const creatorOptionById = useMemo(
     () => new Map(creatorOptions.map((option) => [option.id, option])),
@@ -113,6 +189,10 @@ export function IssueFiltersPopover({
     }),
     [creatorOptionById, currentUserId, state.creators],
   );
+  const clearFilters = () => {
+    onChange(defaultIssueFilterState);
+    inboxScopeFilters?.onClear();
+  };
 
   return (
     <Popover>
@@ -127,7 +207,7 @@ export function IssueFiltersPopover({
               className="ml-1 hidden h-3 w-3 sm:block"
               onClick={(event) => {
                 event.stopPropagation();
-                onChange(defaultIssueFilterState);
+                clearFilters();
               }}
             />
           ) : null}
@@ -135,7 +215,9 @@ export function IssueFiltersPopover({
       </PopoverTrigger>
       <PopoverContent
         align="end"
-        className="w-(--sz-calc-10) max-h-(--sz-calc-9) overflow-y-auto overscroll-contain p-0"
+        className={streamlined
+          ? "w-(--sz-calc-10) max-h-(--sz-calc-9) overflow-y-auto overscroll-contain p-0"
+          : "w-(--sz-calc-10) p-0"}
       >
         <div className="space-y-3 p-3">
           <div className="flex items-center justify-between">
@@ -144,12 +226,74 @@ export function IssueFiltersPopover({
               <button
                 type="button"
                 className="text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => onChange(defaultIssueFilterState)}
+                onClick={clearFilters}
               >
                 {t("work.filters.clear")}
               </button>
             ) : null}
           </div>
+
+          {inboxScopeFilters ? (
+            <>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-1" data-filter-options="inbox-category">
+                  <span className="text-xs text-muted-foreground">Category</span>
+                  <div className="space-y-0.5">
+                    {INBOX_CATEGORY_OPTIONS.map(([value, label]) => {
+                      const selected = inboxScopeFilters.category === value;
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          aria-pressed={selected}
+                          className={cn(
+                            "flex w-full items-center justify-between rounded-sm px-2 py-1 text-left text-sm",
+                            selected
+                              ? "bg-accent/50 text-foreground"
+                              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                          )}
+                          onClick={() => inboxScopeFilters.onCategoryChange(value)}
+                        >
+                          <span>{label}</span>
+                          {selected ? <Check className="h-3.5 w-3.5" /> : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {inboxScopeFilters.showApprovalStatus ? (
+                  <div className="space-y-1" data-filter-options="inbox-approval-status">
+                    <span className="text-xs text-muted-foreground">Approval status</span>
+                    <div className="space-y-0.5">
+                      {INBOX_APPROVAL_STATUS_OPTIONS.map(([value, label]) => {
+                        const selected = inboxScopeFilters.approvalStatus === value;
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            aria-pressed={selected}
+                            className={cn(
+                              "flex w-full items-center justify-between rounded-sm px-2 py-1 text-left text-sm",
+                              selected
+                                ? "bg-accent/50 text-foreground"
+                                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                            )}
+                            onClick={() => inboxScopeFilters.onApprovalStatusChange(value)}
+                          >
+                            <span>{label}</span>
+                            {selected ? <Check className="h-3.5 w-3.5" /> : null}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="border-t border-border" />
+            </>
+          ) : null}
 
           <div className="space-y-1.5">
             <span className="text-xs text-muted-foreground">{t("work.filters.quickFilters")}</span>
@@ -216,8 +360,11 @@ export function IssueFiltersPopover({
 
             <div className="min-w-0 space-y-3">
               <div className="space-y-1">
-                <span className="text-xs text-muted-foreground">{t("work.filters.responsible")}</span>
-                <div className="max-h-32 space-y-0.5 overflow-y-auto">
+                <span className="text-xs text-muted-foreground">Responsible</span>
+                {streamlined && (agents?.length ?? 0) + (currentUserId ? 2 : 1) > SEARCHABLE_FILTER_THRESHOLD ? (
+                  <FilterOptionSearch value={assigneeSearch} onChange={setAssigneeSearch} label="Responsible" />
+                ) : null}
+                <div data-filter-options="responsible" className={streamlined ? "space-y-0.5" : "max-h-32 space-y-0.5 overflow-y-auto"}>
                   <label className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                     <Checkbox
                       checked={state.assignees.includes("__unassigned")}
@@ -235,7 +382,7 @@ export function IssueFiltersPopover({
                       <span className="text-sm">{t("work.filters.me")}</span>
                     </label>
                   ) : null}
-                  {(agents ?? []).map((agent) => (
+                  {(streamlined ? visibleAgents : agents ?? []).map((agent) => (
                     <label key={agent.id} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                       <Checkbox
                         checked={state.assignees.includes(agent.id)}
@@ -277,7 +424,7 @@ export function IssueFiltersPopover({
                       className="h-8 pl-7 text-xs"
                     />
                   </div>
-                  <div className="max-h-32 space-y-0.5 overflow-y-auto">
+                  <div data-filter-options="creators" className={streamlined ? "space-y-0.5" : "max-h-32 space-y-0.5 overflow-y-auto"}>
                     {visibleCreatorOptions.length > 0 ? visibleCreatorOptions.map((creator) => {
                       const selected = state.creators.includes(creator.id);
                       return (
@@ -303,9 +450,12 @@ export function IssueFiltersPopover({
 
               {projects && projects.length > 0 ? (
                 <div className="space-y-1">
-                  <span className="text-xs text-muted-foreground">{t("work.filters.project")}</span>
-                  <div className="max-h-32 space-y-0.5 overflow-y-auto">
-                    {projects.map((project) => (
+                  <span className="text-xs text-muted-foreground">Project</span>
+                  {streamlined && projects.length > SEARCHABLE_FILTER_THRESHOLD ? (
+                    <FilterOptionSearch value={projectSearch} onChange={setProjectSearch} label="Projects" />
+                  ) : null}
+                  <div data-filter-options="projects" className={streamlined ? "space-y-0.5" : "max-h-32 space-y-0.5 overflow-y-auto"}>
+                    {(streamlined ? visibleProjects : projects).map((project) => (
                       <label key={project.id} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                         <Checkbox
                           checked={state.projects.includes(project.id)}
@@ -322,9 +472,12 @@ export function IssueFiltersPopover({
             <div className="min-w-0 space-y-3">
               {labels && labels.length > 0 ? (
                 <div className="space-y-1">
-                  <span className="text-xs text-muted-foreground">{t("work.filters.labels")}</span>
-                  <div className="max-h-32 space-y-0.5 overflow-y-auto">
-                    {labels.map((label) => (
+                  <span className="text-xs text-muted-foreground">Labels</span>
+                  {streamlined && labels.length > SEARCHABLE_FILTER_THRESHOLD ? (
+                    <FilterOptionSearch value={labelSearch} onChange={setLabelSearch} label="Labels" />
+                  ) : null}
+                  <div data-filter-options="labels" className={streamlined ? "space-y-0.5" : "max-h-32 space-y-0.5 overflow-y-auto"}>
+                    {(streamlined ? visibleLabels : labels).map((label) => (
                       <label key={label.id} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                         <Checkbox
                           checked={state.labels.includes(label.id)}
@@ -340,9 +493,12 @@ export function IssueFiltersPopover({
 
               {workspaces && workspaces.length > 0 ? (
                 <div className="space-y-1">
-                  <span className="text-xs text-muted-foreground">{t("work.filters.workspace")}</span>
-                  <div className="max-h-32 space-y-0.5 overflow-y-auto">
-                    {workspaces.map((workspace) => (
+                  <span className="text-xs text-muted-foreground">Workspace</span>
+                  {streamlined && workspaces.length > SEARCHABLE_FILTER_THRESHOLD ? (
+                    <FilterOptionSearch value={workspaceSearch} onChange={setWorkspaceSearch} label="Workspaces" />
+                  ) : null}
+                  <div data-filter-options="workspaces" className={streamlined ? "space-y-0.5" : "max-h-32 space-y-0.5 overflow-y-auto"}>
+                    {(streamlined ? visibleWorkspaces : workspaces).map((workspace) => (
                       <label key={workspace.id} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                         <Checkbox
                           checked={state.workspaces.includes(workspace.id)}

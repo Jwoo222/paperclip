@@ -101,7 +101,7 @@ export function GoalDetail() {
 
   const uploadImage = useMutation({
     mutationFn: async (file: File) => {
-      if (!resolvedCompanyId) throw new Error(t("targetedUi.goal.noCompany"));
+      if (!resolvedCompanyId) throw new Error("No organization selected");
       return assetsApi.uploadImage(
         resolvedCompanyId,
         file,

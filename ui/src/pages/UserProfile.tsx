@@ -245,7 +245,7 @@ export function UserProfile() {
   );
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={UserRound} message={translate("adminExtra.profile.selectCompany")} />;
+    return <EmptyState icon={UserRound} message="Select an organization to view user profiles." />;
   }
 
   if (isLoading) {
@@ -253,7 +253,7 @@ export function UserProfile() {
   }
 
   if (error || !data) {
-    return <EmptyState icon={AlertCircle} message={translate("adminExtra.profile.notFound")} />;
+    return <EmptyState icon={AlertCircle} message="User profile not found for this organization." />;
   }
 
   const allTimeTokens = allTime ? totalTokens(allTime) : 0;

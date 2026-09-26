@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Shield, ShieldCheck } from "lucide-react";
@@ -7,14 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { Card } from "@/components/ui/card";
-import { useCompany } from "@/context/CompanyContext";
+import { companyDirectoryQueryOptions, useAccountIdentity } from "@/api/companies-query";
 import { useToast } from "@/context/ToastContext";
 import { queryKeys } from "@/lib/queryKeys";
 import { useTranslation } from "@/i18n";
 
 export function InstanceAccess() {
-  const { t } = useTranslation();
-  const { companies } = useCompany();
+  const { userId: accountUserId, settled: accountSettled } = useAccountIdentity();
   const { setBreadcrumbs } = useBreadcrumbs();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
@@ -34,6 +34,12 @@ export function InstanceAccess() {
     queryKey: queryKeys.access.adminUsers(search),
     queryFn: () => accessApi.searchAdminUsers(search),
   });
+
+  const companiesQuery = useQuery({
+    ...companyDirectoryQueryOptions(accountUserId),
+    enabled: accountSettled && usersQuery.isSuccess,
+  });
+  const companies = companiesQuery.data ?? [];
 
   const selectedUser = useMemo(
     () => usersQuery.data?.find((user) => user.id === selectedUserId) ?? null,
@@ -68,7 +74,8 @@ export function InstanceAccess() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.access.userCompanyAccess(selectedUserId!) });
       await queryClient.invalidateQueries({ queryKey: queryKeys.access.adminUsers(search) });
-      pushToast({ title: t("settingsSecurity.companyAccessUpdated", { defaultValue: "Company access updated" }), tone: "success" });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
+      pushToast({ title: "Organization access updated", tone: "success" });
     },
   });
 
@@ -87,8 +94,8 @@ export function InstanceAccess() {
     },
   });
 
-  if (usersQuery.isLoading) {
-    return <div className="text-sm text-muted-foreground">{t("settingsSecurity.loadingInstanceUsers", { defaultValue: "Loading instance users…" })}</div>;
+  if (usersQuery.isLoading || !accountSettled || (usersQuery.isSuccess && companiesQuery.isPending)) {
+    return <div className="text-sm text-muted-foreground">Loading instance access…</div>;
   }
 
   if (usersQuery.error) {
@@ -101,6 +108,15 @@ export function InstanceAccess() {
     return <div className="text-sm text-destructive">{message}</div>;
   }
 
+  if (companiesQuery.error) {
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-destructive">Failed to load organizations. Try again before changing access.</p>
+        <Button onClick={() => void companiesQuery.refetch()}>Try again</Button>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl space-y-6">
       <div className="space-y-3">
@@ -109,7 +125,7 @@ export function InstanceAccess() {
           <h1 className="text-lg font-semibold">{t("settingsSecurity.instanceAccess", { defaultValue: "Instance Access" })}</h1>
         </div>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          {t("settingsSecurity.instanceAccessDescription", { defaultValue: "Search users, manage instance-admin status, and control which companies they can access." })}
+          Search users, manage instance-admin status, and control which organizations they can access.
         </p>
       </div>
 
@@ -146,7 +162,7 @@ export function InstanceAccess() {
                   ) : null}
                 </div>
                 <div className="mt-2 text-xs text-muted-foreground">
-                  {t("settingsSecurity.activeCompanyMemberships", { defaultValue: "{{count}} active company memberships", count: user.activeCompanyMembershipCount })}
+                  {user.activeCompanyMembershipCount} active organization memberships
                 </div>
               </button>
             ))}
@@ -184,9 +200,9 @@ export function InstanceAccess() {
 
               <div className="space-y-3">
                 <div>
-                  <h2 className="text-sm font-semibold">{t("settingsSecurity.companyAccess", { defaultValue: "Company access" })}</h2>
+                  <h2 className="text-sm font-semibold">Organization access</h2>
                   <p className="text-sm text-muted-foreground">
-                    {t("settingsSecurity.companyAccessDescription", { defaultValue: "Toggle company membership for this user. New access defaults to an active operator membership." })}
+                    Toggle organization membership for this user. New access defaults to an active operator membership.
                   </p>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
@@ -218,9 +234,7 @@ export function InstanceAccess() {
                     onClick={() => updateCompanyAccessMutation.mutate()}
                     disabled={updateCompanyAccessMutation.isPending}
                   >
-                    {updateCompanyAccessMutation.isPending
-                      ? t("settingsSecurity.savingCompanyAccess", { defaultValue: "Saving…" })
-                      : t("settingsSecurity.saveCompanyAccess", { defaultValue: "Save company access" })}
+                    {updateCompanyAccessMutation.isPending ? "Saving…" : "Save organization access"}
                   </Button>
                 </div>
               </div>

@@ -1,3 +1,4 @@
+import { configFieldsForSection } from "../config-sections";
 import type { AdapterConfigFieldsProps } from "../types";
 import {
   Field,
@@ -10,6 +11,7 @@ const inputClass =
   "w-full rounded-md border border-border px-2.5 py-1.5 bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/40";
 
 export function CursorLocalConfigFields({
+  section,
   isCreate,
   values,
   set,
@@ -19,7 +21,7 @@ export function CursorLocalConfigFields({
   hideInstructionsFile,
 }: AdapterConfigFieldsProps) {
   if (hideInstructionsFile) return null;
-  return (
+  return configFieldsForSection(section, (
     <Field label={t("adapterImport.adapter.instructionsFile")} hint={t("adapterImport.adapter.instructionsHintCursor")}>
       <div className="flex items-center gap-2">
         <DraftInput
@@ -44,5 +46,5 @@ export function CursorLocalConfigFields({
         <ChoosePathButton />
       </div>
     </Field>
-  );
+  ));
 }

@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { i18n } from "@/i18n";
 import { IssueChatThread } from "./IssueChatThread";
 import type { IssueChatComment } from "../lib/issue-chat-messages";
 import type { LiveRunForIssue } from "../api/heartbeats";
@@ -59,7 +60,8 @@ vi.mock("../hooks/usePaperclipIssueRuntime", () => ({
 let container: HTMLDivElement;
 let root: ReturnType<typeof createRoot>;
 
-beforeEach(() => {
+beforeEach(async () => {
+  await i18n.changeLanguage("en");
   container = document.createElement("div");
   document.body.appendChild(container);
   window.scrollTo = vi.fn();

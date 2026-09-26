@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 import { useEffect, useMemo, useCallback, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "@/lib/router";
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -15,10 +16,18 @@ import { EmptyState } from "../components/EmptyState";
 import { IssuesList } from "../components/IssuesList";
 import { CircleDot } from "lucide-react";
 import type { Issue } from "@paperclipai/shared";
-import { useTranslation } from "@/i18n";
+import { useStreamlinedUiEnabled } from "../hooks/useStreamlinedUiEnabled";
 
 const WORKSPACE_FILTER_ISSUE_LIMIT = 1000;
 const ISSUES_PAGE_SIZE = 100;
+export const ISSUES_ROW_PRESENTATION = "task" as const;
+export const ISSUES_TOOLBAR_PRESENTATION = "collection" as const;
+
+export function resolveIssuesPresentation(streamlinedUiEnabled: boolean) {
+  return streamlinedUiEnabled
+    ? { rowPresentation: ISSUES_ROW_PRESENTATION, toolbarPresentation: ISSUES_TOOLBAR_PRESENTATION }
+    : { rowPresentation: "legacy" as const, toolbarPresentation: "legacy" as const };
+}
 
 export function getNextIssuesPageOffset(
   loadedPageSize: number,
@@ -58,7 +67,8 @@ export function buildIssuesSearchUrl(currentHref: string, search: string): strin
 }
 
 export function Issues() {
-  const { t } = useTranslation();
+  const { enabled: streamlinedUiEnabled } = useStreamlinedUiEnabled();
+  const issuesPresentation = resolveIssuesPresentation(streamlinedUiEnabled);
   const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const location = useLocation();
@@ -189,7 +199,14 @@ export function Issues() {
   });
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={CircleDot} message={t("work.issues.selectCompany")} />;
+    return (
+      <EmptyState
+        icon={CircleDot}
+        message={streamlinedUiEnabled
+          ? "Select an organization to view tasks."
+          : "Select a company to view tasks."}
+      />
+    );
   }
 
   return (
@@ -202,6 +219,8 @@ export function Issues() {
       projects={projects}
       liveIssueIds={liveIssueIds}
       viewStateKey="paperclip:issues-view"
+      rowPresentation={issuesPresentation.rowPresentation}
+      toolbarPresentation={issuesPresentation.toolbarPresentation}
       issueLinkState={issueLinkState}
       initialAssignees={searchParams.get("assignee") ? [searchParams.get("assignee")!] : undefined}
       initialWorkspaces={initialWorkspaces.length > 0 ? initialWorkspaces : undefined}

@@ -79,7 +79,10 @@ export function ProfileDetail({
     enabled: pendingNewTools > 0,
   });
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: queryKeys.tools.profiles(companyId) });
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.tools.profiles(companyId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.tools.testAgentAccesses() });
+  };
   const errorBody = (error: unknown) => String((error as Error)?.message ?? error);
 
   const allowRows = useMemo(
@@ -539,7 +542,7 @@ function Assignments({
         <div key={binding.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
-              {binding.targetType === "company" ? t("toolsProfiles.profiles.companyAbbreviation") : binding.targetType.slice(0, 2).toUpperCase()}
+              {binding.targetType === "company" ? "Or" : binding.targetType.slice(0, 2).toUpperCase()}
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-foreground">{assignmentLabel(binding, companyId, maps)}</p>
@@ -738,8 +741,8 @@ function RemoveAssignmentDialog({
           <DialogTitle>{t("toolsAdvanced.residual.removeAssignment")}</DialogTitle>
           <DialogDescription>
             {binding?.targetType === "company"
-              ? t("toolsAdvanced.residual.removeCompanyDefault")
-              : t("toolsAdvanced.residual.removeFrom", { label })}
+              ? "Removing the organization default changes access for every agent that relies on it."
+              : `Remove this profile from ${label}.`}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -839,18 +842,18 @@ function assignmentLabel(
   companyId: string,
   maps: ReturnType<typeof useProfilesData>["maps"],
 ): string {
-  if (binding.targetType === "company") return translate("toolsProfiles.profiles.companyDefault");
-  if (binding.targetType === "agent") return maps.agentsById.get(binding.targetId) ?? translate("toolsProfiles.profiles.unknownAgent");
-  if (binding.targetType === "project") return maps.projectsById.get(binding.targetId) ?? translate("toolsProfiles.profiles.unknownProject");
-  if (binding.targetType === "routine") return maps.routinesById.get(binding.targetId) ?? translate("toolsProfiles.profiles.unknownRoutine");
-  if (binding.targetId === companyId) return translate("toolsProfiles.profiles.company");
+  if (binding.targetType === "company") return "Organization default";
+  if (binding.targetType === "agent") return maps.agentsById.get(binding.targetId) ?? "Unknown agent";
+  if (binding.targetType === "project") return maps.projectsById.get(binding.targetId) ?? "Unknown project";
+  if (binding.targetType === "routine") return maps.routinesById.get(binding.targetId) ?? "Unknown routine";
+  if (binding.targetId === companyId) return "Organization";
   return binding.targetId;
 }
 
 function assignmentTypeLabel(type: ToolProfileBinding["targetType"]): string {
-  if (type === "company") return translate("toolsProfiles.profiles.companyDefault");
-  if (type === "agent") return translate("toolsProfiles.profiles.targetAgent");
-  if (type === "project") return translate("toolsProfiles.profiles.targetProject");
-  if (type === "routine") return translate("toolsProfiles.profiles.targetRoutine");
-  return translate("toolsProfiles.profiles.scopedAssignment");
+  if (type === "company") return "Organization default";
+  if (type === "agent") return "Agent";
+  if (type === "project") return "Project";
+  if (type === "routine") return "Routine";
+  return "Scoped assignment";
 }

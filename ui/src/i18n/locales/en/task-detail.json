@@ -24,7 +24,7 @@
     "cancel": "Cancel",
     "removeBlocker": "Remove blocker",
     "showLess": "Show less",
-    "showMoreItems": "Show {{count}} more items",
+    "showMoreItems": "Show {{count}} more",
     "confirmFailed": "Couldn't confirm — try again.",
     "sendBackFailed": "Couldn't send that back — try again.",
     "optionalRevision": "Optional: what would you like revised?",

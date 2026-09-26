@@ -132,7 +132,7 @@ export function PluginPage() {
     }
     return (
       <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">{t("appsResidualRound3.selectCompany")}</p>
+        <p className="text-sm text-muted-foreground">Select an organization to view this page.</p>
       </div>
     );
   }

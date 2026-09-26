@@ -137,8 +137,24 @@ describeEmbeddedPostgres("runDatabaseBackup", () => {
             "payload" text NOT NULL,
             "state" "public"."backup_test_state" NOT NULL,
             "metadata" jsonb,
-            "created_at" timestamptz NOT NULL DEFAULT now()
+            "created_at" timestamptz NOT NULL DEFAULT now(),
+            CONSTRAINT "backup_test_title_check" CHECK ("title" <> '')
           );
+        `);
+        await sourceSql.unsafe(`
+          CREATE FUNCTION "public"."backup_test_mark_done"()
+          RETURNS trigger
+          LANGUAGE plpgsql
+          AS $$
+          BEGIN
+            NEW."state" := 'done';
+            RETURN NEW;
+          END;
+          $$;
+          CREATE TRIGGER "backup_test_mark_done_trigger"
+          BEFORE UPDATE OF "title" ON "public"."backup_test_records"
+          FOR EACH ROW
+          EXECUTE FUNCTION "public"."backup_test_mark_done"();
         `);
 
         const payload = "x".repeat(8192);
@@ -184,6 +200,10 @@ describeEmbeddedPostgres("runDatabaseBackup", () => {
           FROM "public"."backup_test_records"
         `);
         expect(counts[0]?.count).toBe(160);
+        const restoredChecks = await restoreSql`
+          SELECT conname FROM pg_constraint WHERE conname = 'backup_test_title_check'
+        `;
+        expect(restoredChecks).toHaveLength(1);
 
         const sampleRows = await restoreSql.unsafe<{
           title: string;
@@ -213,6 +233,18 @@ describeEmbeddedPostgres("runDatabaseBackup", () => {
             metadata: { index: 159, even: false },
           },
         ]);
+
+        await restoreSql.unsafe(`
+          UPDATE "public"."backup_test_records"
+          SET "title" = 'triggered'
+          WHERE "title" = 'row-0'
+        `);
+        const triggeredRows = await restoreSql.unsafe<{ state: string }[]>(`
+          SELECT "state"::text AS "state"
+          FROM "public"."backup_test_records"
+          WHERE "title" = 'triggered'
+        `);
+        expect(triggeredRows).toEqual([{ state: "done" }]);
       } finally {
         await sourceSql.end();
         await restoreSql.end();
@@ -462,7 +494,9 @@ describeEmbeddedPostgres("runDatabaseBackup", () => {
       const sourceSql = postgres(sourceConnectionString, { max: 1, onnotice: () => {} });
       const restoreSql = postgres(restoreConnectionString, { max: 1, onnotice: () => {} });
       const originalPgDumpPath = process.env.PAPERCLIP_PG_DUMP_PATH;
+      const originalPsqlPath = process.env.PAPERCLIP_PSQL_PATH;
       process.env.PAPERCLIP_PG_DUMP_PATH = "/bin/false";
+      process.env.PAPERCLIP_PSQL_PATH = "/bin/false";
 
       try {
         await sourceSql.unsafe(`
@@ -498,6 +532,7 @@ describeEmbeddedPostgres("runDatabaseBackup", () => {
         expect(backupSql.indexOf("-- Data for: public.aaa_child_records")).toBeLessThan(
           backupSql.indexOf("-- Data for: public.zzz_parent_records"),
         );
+        expect(backupSql).not.toContain(" FROM stdin;");
 
         await runDatabaseRestore({
           connectionString: restoreConnectionString,
@@ -515,6 +550,11 @@ describeEmbeddedPostgres("runDatabaseBackup", () => {
           delete process.env.PAPERCLIP_PG_DUMP_PATH;
         } else {
           process.env.PAPERCLIP_PG_DUMP_PATH = originalPgDumpPath;
+        }
+        if (originalPsqlPath === undefined) {
+          delete process.env.PAPERCLIP_PSQL_PATH;
+        } else {
+          process.env.PAPERCLIP_PSQL_PATH = originalPsqlPath;
         }
         await sourceSql.end();
         await restoreSql.end();
@@ -567,4 +607,39 @@ describeEmbeddedPostgres("runDatabaseBackup", () => {
     },
     20_000,
   );
+
+  it("restores COPY data with the JavaScript fallback when psql is unavailable", async () => {
+    const restoreConnectionString = await createTempDatabase();
+    const restoreSql = postgres(restoreConnectionString, { max: 1, onnotice: () => {} });
+    const backupFile = path.join(createTempDir("paperclip-copy-restore-"), "copy.sql");
+    const originalPsqlPath = process.env.PAPERCLIP_PSQL_PATH;
+    process.env.PAPERCLIP_PSQL_PATH = "/bin/false";
+
+    try {
+      await fs.promises.writeFile(backupFile, [
+        "BEGIN;",
+        "-- paperclip statement breakpoint 69f6f3f1-42fd-46a6-bf17-d1d85f8f3900",
+        "CREATE TABLE public.restore_copy_test (id integer primary key, payload text not null);",
+        "-- paperclip statement breakpoint 69f6f3f1-42fd-46a6-bf17-d1d85f8f3900",
+        "-- Data for: public.restore_copy_test (2 rows)",
+        "COPY public.restore_copy_test (id, payload) FROM stdin;",
+        "1\tfirst row",
+        "2\tsecond row",
+        "\\.",
+        "-- paperclip statement breakpoint 69f6f3f1-42fd-46a6-bf17-d1d85f8f3900",
+        "COMMIT;",
+        "-- paperclip statement breakpoint 69f6f3f1-42fd-46a6-bf17-d1d85f8f3900",
+      ].join("\n"), "utf8");
+
+      await runDatabaseRestore({ connectionString: restoreConnectionString, backupFile });
+      const rows = await restoreSql.unsafe<{ payload: string }[]>(
+        "SELECT payload FROM public.restore_copy_test ORDER BY id",
+      );
+      expect(rows).toEqual([{ payload: "first row" }, { payload: "second row" }]);
+    } finally {
+      if (originalPsqlPath === undefined) delete process.env.PAPERCLIP_PSQL_PATH;
+      else process.env.PAPERCLIP_PSQL_PATH = originalPsqlPath;
+      await restoreSql.end();
+    }
+  }, 20_000);
 });

@@ -1,3 +1,5 @@
+import { useWorkspaceIsolationControls } from "@/hooks/useWorkspaceIsolationControls";
+import { AgentAvatar } from "@/components/AgentAvatar";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -61,7 +63,6 @@ import { PageSkeleton } from "../components/PageSkeleton";
 import { MarkdownEditor, type MarkdownEditorRef } from "../components/MarkdownEditor";
 import { RoutineVariablesEditor, RoutineVariablesHint } from "../components/RoutineVariablesEditor";
 import { PipelineStageHistoryPanel } from "../components/PipelineStageHistoryPanel";
-import { AgentIcon } from "../components/AgentIconPicker";
 import { InlineEntitySelector, type InlineEntityOption } from "../components/InlineEntitySelector";
 import { Button } from "@/components/ui/button";
 import {
@@ -1414,7 +1415,7 @@ export function PipelineSettings() {
 
   const createSecret = useMutation({
     mutationFn: (input: { name: string; value: string }) => {
-      if (!selectedCompanyId) throw new Error(t("pipelinesExtra.settingsStates.selectCompany"));
+      if (!selectedCompanyId) throw new Error("Select an organization to create secrets");
       return secretsApi.create(selectedCompanyId, input);
     },
     onSuccess: () => {
@@ -1582,7 +1583,9 @@ export function PipelineSettings() {
       ?? null,
     [selectedAutomationProject, stageProjectWorkspaceId],
   );
+  const { visible: workspaceIsolationControlsVisible } = useWorkspaceIsolationControls();
   const selectedProjectSupportsExecutionWorkspace =
+    workspaceIsolationControlsVisible &&
     experimentalSettingsQuery.data?.enableIsolatedWorkspaces === true
     && Boolean(selectedAutomationProject?.executionWorkspacePolicy?.enabled);
   const reusableExecutionWorkspacesQuery = useQuery({
@@ -1728,11 +1731,12 @@ export function PipelineSettings() {
     if (!stageProjectWorkspaceId) {
       setStageProjectWorkspaceId(defaultProjectWorkspaceIdForProject(selectedAutomationProject));
     }
-    if (!stageExecutionWorkspacePreference) {
+    if (workspaceIsolationControlsVisible && !stageExecutionWorkspacePreference) {
       setStageExecutionWorkspacePreference(defaultExecutionWorkspaceModeForProject(selectedAutomationProject));
     }
   }, [
     selectedAutomationProject,
+    workspaceIsolationControlsVisible,
     stageExecutionWorkspacePreference,
     stageProjectId,
     stageProjectWorkspaceId,
@@ -2105,7 +2109,7 @@ export function PipelineSettings() {
     const nextProject = orderedProjects.find((project) => project.id === nextProjectId);
     setStageProjectId(nextProjectId);
     setStageProjectWorkspaceId(defaultProjectWorkspaceIdForProject(nextProject));
-    setStageExecutionWorkspacePreference(nextProject ? defaultExecutionWorkspaceModeForProject(nextProject) : "");
+    setStageExecutionWorkspacePreference(nextProject && workspaceIsolationControlsVisible ? defaultExecutionWorkspaceModeForProject(nextProject) : "");
     setStageExecutionWorkspaceId("");
     setStageExecutionWorkspaceSettings(null);
   };
@@ -2142,7 +2146,7 @@ export function PipelineSettings() {
   };
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Hexagon} message={t("pipelinesExtra.settingsStates.selectCompany")} />;
+    return <EmptyState icon={Hexagon} message="Select an organization to edit pipeline settings." />;
   }
 
   if (!pipelineId) {
@@ -2870,7 +2874,7 @@ export function PipelineSettings() {
                                 const agent = option.id.startsWith("agent:") ? agentById.get(option.id.slice("agent:".length)) : null;
                                 return (
                                   <>
-                                    {agent ? <AgentIcon icon={agent.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
+                                    {agent ? <AgentAvatar agent={agent} size={16} className="h-3.5 w-3.5 shrink-0 text-muted-foreground"/> : null}
                                     <span className="truncate">{option.label}</span>
                                   </>
                                 );
@@ -2880,7 +2884,7 @@ export function PipelineSettings() {
                                 const agent = option.id.startsWith("agent:") ? agentById.get(option.id.slice("agent:".length)) : null;
                                 return (
                                   <>
-                                    {agent ? <AgentIcon icon={agent.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
+                                    {agent ? <AgentAvatar agent={agent} size={16} className="h-3.5 w-3.5 shrink-0 text-muted-foreground"/> : null}
                                     <span className="truncate">{option.label}</span>
                                   </>
                                 );
@@ -2961,7 +2965,7 @@ export function PipelineSettings() {
                                 : null;
                               return (
                                 <>
-                                  {agent ? <AgentIcon icon={agent.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
+                                  {agent ? <AgentAvatar agent={agent} size={16} className="h-3.5 w-3.5 shrink-0 text-muted-foreground"/> : null}
                                   <span className="truncate">{option.label}</span>
                                 </>
                               );
@@ -2972,7 +2976,7 @@ export function PipelineSettings() {
                               const agent = agentId ? agentById.get(agentId) : null;
                               return (
                                 <>
-                                  {agent ? <AgentIcon icon={agent.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
+                                  {agent ? <AgentAvatar agent={agent} size={16} className="h-3.5 w-3.5 shrink-0 text-muted-foreground"/> : null}
                                   <span className="truncate">{option.label}</span>
                                 </>
                               );
@@ -3101,8 +3105,8 @@ export function PipelineSettings() {
                             ) : null}
                           </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <AgentIcon icon={selectedAutomationAgent.icon} className="h-4 w-4 shrink-0" />
-                            <span>{t("pipelinesExtra.settings.stageRunsAutomatically", { agent: selectedAutomationAgent.name })}</span>
+                            <AgentAvatar agent={selectedAutomationAgent} size={16} className="h-4 w-4 shrink-0"/>
+                            <span>{selectedAutomationAgent.name} runs this step automatically.</span>
                           </div>
                           <FieldRow label={t("pipelinesExtra.settings.issueTitle")}>
                             <Input
@@ -3188,6 +3192,7 @@ export function PipelineSettings() {
                             hasAutomation={Boolean(detail.routineId && detail.assigneeAgentId)}
                             agentName={automationAgent?.name ?? null}
                             agentIcon={automationAgent?.icon ?? null}
+                            agent={automationAgent ?? undefined}
                             secrets={secretsQuery.data ?? []}
                             secretsLoading={secretsQuery.isLoading}
                             value={stageEnv}

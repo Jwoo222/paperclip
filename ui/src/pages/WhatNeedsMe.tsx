@@ -38,7 +38,6 @@ import {
   type AttentionGroupBy,
   type AttentionSortOrder,
 } from "../lib/attention";
-import { decisionTrainingHref } from "../lib/decisionTraining";
 import { hasBlockingShortcutDialog, resolveAttentionQueueKeyAction } from "../lib/keyboardShortcuts";
 import { PageSkeleton } from "../components/PageSkeleton";
 import { AttentionQueueRow } from "../components/AttentionQueueRow";
@@ -47,7 +46,6 @@ import { Curtain, AgingItemRow } from "../components/DecisionShelf";
 import { DecisionQueueRail } from "../components/DecisionQueueRail";
 import { DecisionDateChips, type AttentionCustomRange } from "../components/DecisionDateChips";
 import { DecisionResolver } from "../components/DecisionResolver";
-import { DecisionTrainingDrawer } from "../components/DecisionTrainingDrawer";
 import { IssueGroupHeader } from "../components/IssueGroupHeader";
 import { useTranslation } from "../i18n";
 
@@ -102,9 +100,6 @@ export function WhatNeedsMe() {
   // still follows a click, so keyboard actions target the row you just used.
   const [selectionFromKeyboard, setSelectionFromKeyboard] = useState(false);
   const [autoExpandDone, setAutoExpandDone] = useState(false);
-  // Decision-training drawer target. `null` when closed.
-  const [trainingItem, setTrainingItem] = useState<AttentionItem | null>(null);
-
   // Toolbar preferences (persisted to localStorage, Inbox pattern).
   const [groupBy, setGroupBy] = useState<AttentionGroupBy>(() => loadAttentionGroupBy());
   const [sortOrder, setSortOrder] = useState<AttentionSortOrder>(() => loadAttentionSortOrder());
@@ -468,10 +463,6 @@ export function WhatNeedsMe() {
     setSelectionFromKeyboard(false);
     setExpandedId((prev) => (prev === item.id ? null : item.id));
   }, []);
-  const handleTrain = useCallback((item: AttentionItem) => {
-    setTrainingItem(item);
-  }, []);
-
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const action = resolveAttentionQueueKeyAction({
@@ -518,7 +509,7 @@ export function WhatNeedsMe() {
   }, [handleDismiss, keyboardItems, navigate, selectedAttentionId]);
 
   if (!selectedCompanyId) {
-    return <p className="text-sm text-muted-foreground">{t("coreNavigation.attention.selectCompany", { defaultValue: "Select a company first." })}</p>;
+    return <p className="text-sm text-muted-foreground">Select an organization first.</p>;
   }
 
   if (isLoading) {
@@ -540,7 +531,6 @@ export function WhatNeedsMe() {
           onGroupByChange={updateGroupBy}
           sortOrder={sortOrder}
           onSortOrderChange={updateSortOrder}
-          onOpenTraining={() => navigate(decisionTrainingHref())}
         />
       </div>
 
@@ -623,7 +613,6 @@ export function WhatNeedsMe() {
                                   onToggleExpand={handleToggleExpand}
                                   onDismiss={handleDismiss}
                                   onSnooze={handleSnooze}
-                                  onTrain={handleTrain}
                                   agentMap={agentMap}
                                   agents={agents}
                                   showTriage
@@ -714,7 +703,6 @@ export function WhatNeedsMe() {
                   onToggleExpand={handleToggleExpand}
                   onDismiss={handleDismiss}
                   onSnooze={handleSnooze}
-                  onTrain={handleTrain}
                 />
               ))}
             </Curtain>
@@ -770,16 +758,6 @@ export function WhatNeedsMe() {
           )}
         </Curtain>
       </div>
-
-      <DecisionTrainingDrawer
-        open={trainingItem !== null}
-        onOpenChange={(next) => {
-          if (!next) setTrainingItem(null);
-        }}
-        companyId={selectedCompanyId}
-        item={trainingItem}
-        currentUserId={currentUserId}
-      />
     </div>
   );
 }

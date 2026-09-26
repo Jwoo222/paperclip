@@ -1,3 +1,5 @@
+import { t } from "@/i18n";
+import { useWorkspaceIsolationControls } from "@/hooks/useWorkspaceIsolationControls";
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "@/lib/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,6 +39,7 @@ import {
 import { WorkspaceServiceControlBar } from "../components/WorkspaceServiceControlBar";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { useCompany } from "../context/CompanyContext";
+import { useManagedSandboxOnly } from "../hooks/useManagedSandboxOnly";
 import { useToastActions } from "../context/ToastContext";
 import { collectLiveIssueIds } from "../lib/liveIssueIds";
 import { queryKeys } from "../lib/queryKeys";
@@ -376,7 +379,9 @@ function workspaceOperationPhaseLabel(phase: string) {
     case "workspace_config_freshness":
       return translate("workspaceUi.executionWorkspace.phases.configFreshness");
     case "workspace_provision":
-      return translate("workspaceUi.executionWorkspace.phases.provision");
+      return "Provision";
+    case "workspace_seed":
+      return "Database seed";
     case "workspace_runtime_provision":
       return translate("workspaceUi.executionWorkspace.phases.runtimeProvision");
     case "workspace_teardown":
@@ -399,14 +404,16 @@ export type RuntimeProvisionStatus =
 
 /**
  * Derives the lazy runtime-provisioning state from the configured command and the
- * `workspace_runtime_provision` operation-log entries (most-recent first). Returns
+ * database-seed or runtime-provision operation-log entries (most-recent first). Returns
  * "eager" when no runtime provision command is configured (the legacy path).
  */
 export function resolveRuntimeProvisionStatus(input: {
   runtimeProvisionCommand: string | null | undefined;
   operations: WorkspaceOperation[] | undefined;
 }): RuntimeProvisionStatus {
-  const latest = (input.operations ?? []).find((operation) => operation.phase === "workspace_runtime_provision") ?? null;
+  const latest = (input.operations ?? []).find((operation) => (
+    operation.phase === "workspace_seed" || operation.phase === "workspace_runtime_provision"
+  )) ?? null;
   if (latest) {
     const at = latest.finishedAt ?? latest.startedAt ?? null;
     if (latest.status === "running") return { kind: "provisioning", at };
@@ -790,13 +797,14 @@ function ExecutionWorkspaceRoutinesList({
 }
 
 export function ExecutionWorkspaceDetail() {
-  const { t } = useTranslation();
+  const { visible: workspaceIsolationControlsVisible, loaded: workspaceVisibilityLoaded } = useWorkspaceIsolationControls();
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { setBreadcrumbs } = useBreadcrumbs();
   const { selectedCompanyId, setSelectedCompanyId } = useCompany();
+  const { hideHostPaths } = useManagedSandboxOnly();
   const [form, setForm] = useState<WorkspaceFormState | null>(null);
   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -873,9 +881,11 @@ export function ExecutionWorkspaceDetail() {
     [workspacePluginDetailSlots],
   );
   const workspaceTabItems = useMemo(
-    () => orderExecutionWorkspaceTabItems([...EXECUTION_WORKSPACE_BASE_TAB_ITEMS, ...workspacePluginTabItems])
-      .map((item) => item.value.startsWith("plugin:") ? item : { ...item, label: t(item.label) }),
-    [workspacePluginTabItems, t],
+    () => orderExecutionWorkspaceTabItems([
+      ...EXECUTION_WORKSPACE_BASE_TAB_ITEMS.filter((item) => item.value !== "configuration" || workspaceIsolationControlsVisible),
+      ...workspacePluginTabItems,
+    ]),
+    [workspacePluginTabItems, workspaceIsolationControlsVisible],
   );
   const inheritedRuntimeConfig = linkedProjectWorkspace?.runtimeConfig?.workspaceRuntime ?? null;
   const effectiveRuntimeConfig = workspace?.config?.workspaceRuntime ?? inheritedRuntimeConfig;
@@ -1016,7 +1026,6 @@ export function ExecutionWorkspaceDetail() {
     runtimeServices: workspace.runtimeServices ?? [],
     pendingRequests: pendingRuntimeActions,
   });
-
   const pluginSlotContext = {
     companyId: workspace.companyId,
     projectId: workspace.projectId,
@@ -1024,6 +1033,11 @@ export function ExecutionWorkspaceDetail() {
     entityType: "execution_workspace" as const,
   };
   const activePluginTab = workspacePluginTabItems.find((item) => item.value === activeTab) ?? null;
+
+  if (activeTab === "configuration" && !workspaceVisibilityLoaded) return null;
+  if (workspaceId && activeTab === "configuration" && !workspaceIsolationControlsVisible) {
+    return <LegacyWorkspaceTabRedirect workspaceId={workspaceId} />;
+  }
 
   if (workspaceId && activeTab === null) {
     return <LegacyWorkspaceTabRedirect workspaceId={workspaceId} />;
@@ -1097,7 +1111,12 @@ export function ExecutionWorkspaceDetail() {
 
         <Tabs value={activeTab ?? "issues"} onValueChange={(value) => handleTabChange(value as ExecutionWorkspaceTab)}>
           <PageTabBar
-            items={workspaceTabItems.map((item) => ({ value: item.value, label: item.label }))}
+            items={workspaceTabItems.map((item) => ({
+              value: item.value,
+              label: EXECUTION_WORKSPACE_BASE_TAB_ITEMS.some((base) => base.value === item.value)
+                ? t(item.label)
+                : item.label,
+            }))}
             align="start"
             value={activeTab ?? "issues"}
             onValueChange={(value) => handleTabChange(value as ExecutionWorkspaceTab)}
@@ -1192,72 +1211,94 @@ export function ExecutionWorkspaceDetail() {
 
                 <Separator />
 
-                <div className="space-y-4">
-                  <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">{t("workspaceUi.executionWorkspace.settings.paths")}</div>
-                  <Field label={t("workspaceUi.executionWorkspace.settings.workingDirectory")}>
-                    <Input
-                      className="font-mono"
-                      value={form.cwd}
-                      onChange={(event) => setForm((current) => current ? { ...current, cwd: event.target.value } : current)}
-                      placeholder="/absolute/path/to/workspace"
-                    />
-                  </Field>
+                {/*
+                  Both fields name a path on the execution host. Under the
+                  managed-sandbox-only policy every agent runs in the
+                  platform-managed environment, which owns the paths, so the
+                  whole group and its separator disappear, and stay hidden
+                  until that policy is known.
+                */}
+                {!hideHostPaths && (
+                  <>
+                    <div className="space-y-4">
+                      <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Paths</div>
+                      <Field label="Working directory">
+                        <Input
+                          className="font-mono"
+                          value={form.cwd}
+                          onChange={(event) => setForm((current) => current ? { ...current, cwd: event.target.value } : current)}
+                          placeholder="/absolute/path/to/workspace"
+                        />
+                      </Field>
 
-                  <Field label={t("workspaceUi.executionWorkspace.settings.providerRef")}>
-                    <Input
-                      className="font-mono"
-                      value={form.providerRef}
-                      onChange={(event) => setForm((current) => current ? { ...current, providerRef: event.target.value } : current)}
-                      placeholder={t("workspaceUi.executionWorkspace.settings.workingDirectoryPlaceholder")}
-                    />
-                  </Field>
-                </div>
+                      <Field label="Provider path / ref">
+                        <Input
+                          className="font-mono"
+                          value={form.providerRef}
+                          onChange={(event) => setForm((current) => current ? { ...current, providerRef: event.target.value } : current)}
+                          placeholder="/path/to/worktree or provider ref"
+                        />
+                      </Field>
+                    </div>
 
-                <Separator />
+                    <Separator />
+                  </>
+                )}
 
-                <div className="space-y-4">
-                  <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">{t("workspaceUi.executionWorkspace.settings.lifecycleCommands")}</div>
-                  <Field label={t("workspaceUi.executionWorkspace.settings.provisionCommand")} hint={t("workspaceUi.executionWorkspace.settings.provisionHint")}>
-                    <Textarea
-                      className="min-h-20 font-mono"
-                      value={form.provisionCommand}
-                      onChange={(event) => setForm((current) => current ? { ...current, provisionCommand: event.target.value } : current)}
-                      placeholder="bash ./scripts/provision-worktree.sh"
-                    />
-                  </Field>
+                {/*
+                  Every lifecycle command runs a shell on the execution host and
+                  its placeholder names a host script path. The platform-managed
+                  environment owns that lifecycle, so the managed-sandbox-only
+                  policy hides the group and its separator, and keeps them
+                  hidden until that policy is known.
+                */}
+                {!hideHostPaths && (
+                  <>
+                    <div className="space-y-4">
+                      <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Lifecycle commands</div>
+                      <Field label="Provision command" hint="Runs when Paperclip prepares this execution workspace">
+                        <Textarea
+                          className="min-h-20 font-mono"
+                          value={form.provisionCommand}
+                          onChange={(event) => setForm((current) => current ? { ...current, provisionCommand: event.target.value } : current)}
+                          placeholder="bash ./scripts/provision-worktree.sh"
+                        />
+                      </Field>
 
-                  <Field
-                    label={t("workspaceUi.executionWorkspace.settings.runtimeProvisionCommand")}
-                    hint={t("workspaceUi.executionWorkspace.settings.runtimeProvisionHint")}
-                  >
-                    <Textarea
-                      className="min-h-20 font-mono"
-                      value={form.runtimeProvisionCommand}
-                      onChange={(event) => setForm((current) => current ? { ...current, runtimeProvisionCommand: event.target.value } : current)}
-                      placeholder="bash ./scripts/provision-worktree-runtime.sh"
-                    />
-                  </Field>
+                      <Field
+                        label="Runtime provision command"
+                        hint="Runs once before the first runtime-service start. Leave empty to keep eager provisioning."
+                      >
+                        <Textarea
+                          className="min-h-20 font-mono"
+                          value={form.runtimeProvisionCommand}
+                          onChange={(event) => setForm((current) => current ? { ...current, runtimeProvisionCommand: event.target.value } : current)}
+                          placeholder="bash ./scripts/provision-worktree-runtime.sh"
+                        />
+                      </Field>
 
-                  <Field label={t("workspaceUi.executionWorkspace.settings.teardownCommand")} hint={t("workspaceUi.executionWorkspace.settings.teardownHint")}>
-                    <Textarea
-                      className="min-h-20 font-mono"
-                      value={form.teardownCommand}
-                      onChange={(event) => setForm((current) => current ? { ...current, teardownCommand: event.target.value } : current)}
-                      placeholder="bash ./scripts/teardown-worktree.sh"
-                    />
-                  </Field>
+                      <Field label="Teardown command" hint="Runs when the execution workspace is archived or cleaned up">
+                        <Textarea
+                          className="min-h-20 font-mono"
+                          value={form.teardownCommand}
+                          onChange={(event) => setForm((current) => current ? { ...current, teardownCommand: event.target.value } : current)}
+                          placeholder="bash ./scripts/teardown-worktree.sh"
+                        />
+                      </Field>
 
-                  <Field label={t("workspaceUi.executionWorkspace.settings.cleanupCommand")} hint={t("workspaceUi.executionWorkspace.settings.cleanupHint")}>
-                    <Textarea
-                      className="min-h-16 font-mono"
-                      value={form.cleanupCommand}
-                      onChange={(event) => setForm((current) => current ? { ...current, cleanupCommand: event.target.value } : current)}
-                      placeholder="pkill -f vite || true"
-                    />
-                  </Field>
-                </div>
+                      <Field label="Cleanup command" hint="Workspace-specific cleanup before teardown">
+                        <Textarea
+                          className="min-h-16 font-mono"
+                          value={form.cleanupCommand}
+                          onChange={(event) => setForm((current) => current ? { ...current, cleanupCommand: event.target.value } : current)}
+                          placeholder="pkill -f vite || true"
+                        />
+                      </Field>
+                    </div>
 
-                <Separator />
+                    <Separator />
+                  </>
+                )}
 
                 <div className="space-y-4">
                   <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">{t("workspaceUi.executionWorkspace.settings.runtimeConfig")}</div>
@@ -1437,7 +1478,7 @@ export function ExecutionWorkspaceDetail() {
               </DetailRow>
               <DetailRow label={t("workspaceUi.executionWorkspace.context.derivedFrom")}>
                 {derivedWorkspace ? (
-                  <Link to={executionWorkspaceTabPath(derivedWorkspace.id, "configuration")} className="hover:underline">
+                  <Link to={executionWorkspaceTabPath(derivedWorkspace.id, workspaceIsolationControlsVisible ? "configuration" : "issues")} className="hover:underline">
                     {derivedWorkspace.name}
                   </Link>
                 ) : workspace.derivedFromExecutionWorkspaceId ? (
@@ -1547,15 +1588,13 @@ export function ExecutionWorkspaceDetail() {
           </Card>
         ) : activeTab === "issues" ? (
           <div className="space-y-6">
-            {workspace.projectWorkspaceId ? (
-              <SummarySlotCard
-                companyId={workspace.companyId}
-                scopeKind="project_workspace"
-                scopeId={workspace.projectWorkspaceId}
-                title={t("workspaceUi.common.workspaceSummary")}
-                description={t("workspaceUi.executionWorkspace.summaryDescription")}
-              />
-            ) : null}
+            <SummarySlotCard
+              companyId={workspace.companyId}
+              scopeKind="execution_workspace"
+              scopeId={workspace.id}
+              title="Workspace summary"
+              description="Summarizer keeps the latest workspace status, next step, and operator-needed items here."
+            />
             <ExecutionWorkspaceIssuesList
               companyId={workspace.companyId}
               workspace={workspace}

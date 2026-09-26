@@ -870,6 +870,7 @@ export function FileViewerSheet({
                   selectedPath={state.path}
                   selectedProjectId={state.projectId}
                   selectedWorkspaceId={state.workspaceId}
+                  active={computedOpen}
                   className="min-h-0 flex-1 p-2"
                 />
               </aside>
@@ -920,6 +921,7 @@ export function FileViewerSheet({
               initialFolderPath={viewer.folderPath}
               initialProjectId={viewer.browseProjectId}
               initialWorkspaceId={viewer.browseWorkspaceId}
+              active={computedOpen}
               className="min-h-0 flex-1 p-4"
             />
           ) : null}
@@ -940,7 +942,7 @@ interface FileViewerBodyProps {
   onFallbackToProject: null | (() => void);
 }
 
-function FileViewerBody({
+export function FileViewerBody({
   resolveQuery,
   contentQuery,
   elapsedMs,

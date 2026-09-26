@@ -472,7 +472,7 @@ export function MobileFolderSheet({
             <>
               {model.my ? renderBranch(model.my, t("projectsWorkspaces.folders.mySkills")) : null}
               <div className="px-2 pb-0.5 pt-2 text-(length:--text-micro) font-medium uppercase tracking-wide text-muted-foreground">
-                {t("projectsWorkspaces.folders.company")}
+                Organization
               </div>
               {model.company.map((node) => renderBranch(node))}
               {model.projects ? renderBranch(model.projects, t("projectsWorkspaces.folders.projects")) : null}
@@ -647,7 +647,7 @@ export function FolderFormDialog({
         <DialogHeader>
           <DialogTitle>{isEdit ? t("projectsWorkspaces.folders.editFolder") : t("projectsWorkspaces.folders.createFolder")}</DialogTitle>
           <DialogDescription>
-            {kind === "routine" ? t("projectsWorkspaces.folders.organizeRoutines") : t("projectsWorkspaces.folders.organizeSkills")}
+            {kind === "routine" ? "Organize routines in this organization." : "Organize installed organization skills."}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">

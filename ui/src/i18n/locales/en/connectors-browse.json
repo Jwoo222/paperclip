@@ -1,0 +1,28 @@
+{
+  "connectorsBrowse": {
+    "browse": "Browse",
+    "developer": "Developer",
+    "developerDescription": "Advanced setup for developers.",
+    "retiredComposio": "This legacy Composio connection is no longer supported. Add a new Composio MCP connection from Connectors, then remove this connection. Existing credentials and permissions are not migrated.",
+    "developerTabs": {
+      "gateways": "Gateways",
+      "profiles": "Profiles",
+      "smoke-lab": "Smoke Lab"
+    },
+    "noMatches": "No connectors match “{{query}}”.",
+    "removeTitle": "Remove {{account}} connection?",
+    "thisAccount": "this",
+    "removeChatDescription": "This connection will stop receiving new work from {{provider}}. Existing Paperclip tasks and conversation history remain available. This does not delete the app, bot, or account in {{provider}}.",
+    "removeOtherDescriptionOne": "This connection's saved credentials are deleted and agents lose access through it immediately. They can still use {{provider}} through {{count}} other active connection.",
+    "removeOtherDescriptionMany": "This connection's saved credentials are deleted and agents lose access through it immediately. They can still use {{provider}} through {{count}} other active connections.",
+    "removedChat": "{{provider}} is disconnected. Existing Paperclip tasks remain available.",
+    "removedOtherOne": "{{provider}} still has {{count}} active connection available to agents.",
+    "removedOtherMany": "{{provider}} still has {{count}} active connections available to agents.",
+    "removedOtherNone": "{{provider}} is no longer available to agents through this connection. Its saved credentials were deleted.",
+    "chatThrough": "Chat with agents through {{provider}}.",
+    "manageEndpoint": "Manage {{agent}} {{provider}} connection",
+    "openPermissions": "Open {{account}} permissions",
+    "manageConnection": "Manage {{account}} connection",
+    "actionFor": "{{action}} {{name}}"
+  }
+}

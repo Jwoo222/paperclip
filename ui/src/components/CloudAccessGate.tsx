@@ -14,19 +14,20 @@ function NoBoardAccessPage() {
   return (
     <div className="mx-auto max-w-xl py-10">
       <Card className="block p-6">
-        <h1 className="text-xl font-semibold">{t("systemUi.access.noCompany")}</h1>
+        <h1 className="text-xl font-semibold">No organization access</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {t("systemUi.access.noCompanyDescription")}
+          This account is signed in, but it does not have an active organization membership or instance-admin access on
+          this Paperclip instance.
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
-          {t("systemUi.access.inviteHint")}
+          Use an organization invite or sign in with an account that already belongs to this org.
         </p>
       </Card>
     </div>
   );
 }
 
-export function CloudAccessGate() {
+export function CloudAccessGate({ allowMembershipRequest = false }: { allowMembershipRequest?: boolean } = {}) {
   const location = useLocation();
   const queryClient = useQueryClient();
   const healthQuery = useQuery({
@@ -117,7 +118,10 @@ export function CloudAccessGate() {
     return <Navigate to={`/auth?next=${next}`} replace />;
   }
 
+  // Private invitation pages may let signed-in nonmembers request access.
+  // Their token APIs still enforce membership before granting any authority.
   if (
+    !allowMembershipRequest &&
     isAuthenticatedMode &&
     sessionQuery.data &&
     !boardAccessQuery.data?.isInstanceAdmin &&

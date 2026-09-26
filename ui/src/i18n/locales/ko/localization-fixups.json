@@ -1,0 +1,19 @@
+{
+  "localizationFixups": {
+    "builtInAgentGate": {
+      "viewAgent": "에이전트 보기"
+    },
+    "missingPluginTab": {
+      "notAvailable": "워크스페이스 플러그인 탭을 사용할 수 없습니다."
+    },
+    "smokeLab": {
+      "cardTitle": "통합 스모크"
+    },
+    "projectProperties": {
+      "gitWorktree": "Git 워크트리"
+    },
+    "secrets": {
+      "importFromVault": "볼트에서 가져오기"
+    }
+  }
+}

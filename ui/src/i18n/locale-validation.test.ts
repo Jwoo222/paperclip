@@ -38,7 +38,7 @@ function hasMessageKey(messages: Record<string, unknown>, key: string) {
 describe("locale validation", () => {
   it("resolves English messages with key and default fallbacks", async () => {
     await i18n.changeLanguage("en");
-    expect(t("app.noCompanies.title")).toBe("Create your first company");
+    expect(t("app.noCompanies.title")).toBe("Create your first organization");
     expect(t("app.missing", { defaultValue: "Fallback" })).toBe("Fallback");
     expect(t("app.missing")).toBe("app.missing");
   });

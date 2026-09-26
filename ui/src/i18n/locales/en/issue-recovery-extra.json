@@ -1,6 +1,7 @@
 {
   "issueRecovery": {
     "headlineMissingDisposition": "This task's run finished, but no next step was chosen. Choose what happens next — try the task again, mark it done, or send it for review.",
+    "headlineDeliberateWaitWithoutTarget": "This task's last run stopped to wait, but there is no reviewer, blocker, monitor, or approval to wait for. Paperclip is repairing the next step; the task stays with its owner.",
     "headlineStrandedAssignedIssue": "Paperclip retried this task's last run, but there is still no queued run, reviewer, blocker, or other next owner. To get it moving, choose what happens next — try the task again, mark it done, or send it for review.",
     "headlineWorkspaceValidation": "Paperclip stopped this run because the task's git workspace could not be validated.",
     "headlineConfigurationValidation": "Paperclip stopped before dispatching this run because required secret/env bindings are missing.",

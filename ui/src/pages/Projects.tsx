@@ -121,7 +121,7 @@ export function Projects() {
   const sortLabel = t(PROJECT_SORT_OPTIONS.find((option) => option.field === sortField)?.labelKey ?? "overview.projects.name");
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Hexagon} message={t("overview.projects.selectCompany")} />;
+    return <EmptyState icon={Hexagon} message="Select an organization to view projects." />;
   }
 
   if (isLoading) {

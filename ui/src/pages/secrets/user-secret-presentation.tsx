@@ -64,7 +64,7 @@ export function myValueLabel(state: MyValueState): string {
     case "set":
       return t("secretsSupport.valueSet");
     case "not_set":
-      return t("secretsSupport.notSet");
+      return t("secretsSupport.notSetLabel");
     case "inactive":
       return t("secretsMain.status.disabled");
   }

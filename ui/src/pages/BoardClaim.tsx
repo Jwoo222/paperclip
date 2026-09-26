@@ -106,7 +106,7 @@ export function BoardClaimPage() {
       <Card className="block p-6">
         <h1 className="text-xl font-semibold">{t("entryLegacy.boardClaim.claimTitle", { defaultValue: "Claim Board ownership" })}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {t("entryLegacy.boardClaim.claimDescription", { defaultValue: "This will promote your user to instance admin and migrate company ownership access from local trusted mode." })}
+          This will promote your user to instance admin and migrate organization ownership access from local trusted mode.
         </p>
 
         {claimMutation.error && (

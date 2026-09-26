@@ -1,3 +1,5 @@
+export {};
+
 const storageEntries = new Map<string, string>();
 
 function installStorageMock(target: Record<string, unknown>) {
@@ -30,6 +32,11 @@ if (
 if (typeof window !== "undefined" && window.localStorage !== globalThis.localStorage) {
   installStorageMock(window as unknown as Record<string, unknown>);
 }
+
+// Upstream UI assertions are written against English copy. Keep the product's
+// default locale Korean, but make the test language explicit and deterministic.
+const { i18n } = await import("./src/i18n");
+await i18n.changeLanguage("en");
 
 // jsdom does not implement Element.prototype.scrollIntoView. Several surfaces
 // (e.g. IssueChatThread's auto-scroll-to-latest) call it during normal render,

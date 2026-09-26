@@ -54,7 +54,7 @@ export function CompanySettingsPluginPage() {
     if (hasInvalidCompanyPrefix) {
       return <NotFoundPage scope="invalid_company_prefix" requestedPrefix={routeCompanyPrefix} />;
     }
-    return <div className="text-sm text-muted-foreground">{tr("selectCompanyToView", "Select a company to view this page.")}</div>;
+    return <div className="text-sm text-muted-foreground">Select an organization to view this page.</div>;
   }
 
   if (!settingsRoutePath || isLoading) {
@@ -82,11 +82,13 @@ export function CompanySettingsPluginPage() {
   }
 
   return (
-    <PluginSlotMount
-      slot={pageSlot}
-      context={{ companyId: resolvedCompanyId, companyPrefix }}
-      className="min-h-(--sz-200px)"
-      missingBehavior="placeholder"
-    />
+    <div className="max-w-6xl">
+      <PluginSlotMount
+        slot={pageSlot}
+        context={{ companyId: resolvedCompanyId, companyPrefix }}
+        className="min-h-(--sz-200px)"
+        missingBehavior="placeholder"
+      />
+    </div>
   );
 }

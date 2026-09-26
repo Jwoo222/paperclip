@@ -229,7 +229,7 @@ export function Artifacts() {
   }, [setBreadcrumbs, viewingSelectedStack, selectedGroup, t]);
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Package} message={t("coreNavigation.artifacts.selectCompany", { defaultValue: "Select a company to view artifacts." })} />;
+    return <EmptyState icon={Package} message="Select an organization to view artifacts." />;
   }
 
   const showGroupCards = viewingStackList;

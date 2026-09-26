@@ -49,7 +49,7 @@ import {
 
 /* ── Top-level tab types ── */
 
-type ProjectBaseTab = "overview" | "list" | "plugin-operations" | "workspaces" | "configuration" | "budget";
+type ProjectBaseTab = "list" | "plugin-operations" | "workspaces" | "configuration" | "budget";
 type ProjectPluginTab = `plugin:${string}`;
 type ProjectTab = ProjectBaseTab | ProjectPluginTab;
 
@@ -62,56 +62,13 @@ function resolveProjectTab(pathname: string, projectId: string): ProjectTab | nu
   const projectsIdx = segments.indexOf("projects");
   if (projectsIdx === -1 || segments[projectsIdx + 1] !== projectId) return null;
   const tab = segments[projectsIdx + 2];
-  if (tab === "overview") return "overview";
+  if (tab === "overview") return "configuration";
   if (tab === "configuration") return "configuration";
   if (tab === "budget") return "budget";
   if (tab === "issues") return "list";
   if (tab === "plugin-operations") return "plugin-operations";
   if (tab === "workspaces") return "workspaces";
   return null;
-}
-
-/* ── Overview tab content ── */
-
-function OverviewContent({
-  project,
-  onUpdate,
-  imageUploadHandler,
-}: {
-  project: { description: string | null; status: string; targetDate: string | null };
-  onUpdate: (data: Record<string, unknown>) => void;
-  imageUploadHandler?: (file: File) => Promise<string>;
-}) {
-  const { t } = useTranslation();
-  return (
-    <div className="space-y-6">
-      <InlineEditor
-        value={project.description ?? ""}
-        onSave={(description) => onUpdate({ description })}
-        nullable
-        as="p"
-        className="text-sm text-muted-foreground"
-        placeholder={t("overview.projectDetail.addDescription")}
-        multiline
-        imageUploadHandler={imageUploadHandler}
-      />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-        <div>
-          <span className="text-muted-foreground">{t("overview.projectDetail.status")}</span>
-          <div className="mt-1">
-            <StatusBadge status={project.status} />
-          </div>
-        </div>
-        {project.targetDate && (
-          <div>
-            <span className="text-muted-foreground">{t("overview.projectDetail.targetDate")}</span>
-            <p>{project.targetDate}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
 }
 
 /* ── Combined icon + color picker popover (PAP-72 / PAP-68 part 4) ── */
@@ -434,6 +391,10 @@ export function ProjectDetail() {
     [pluginDetailSlots],
   );
   const activePluginTab = pluginTabItems.find((item) => item.value === activeTab) ?? null;
+  // The slots query is disabled until the project's company resolves, and a
+  // disabled query reports isLoading=false — so "not loading" alone cannot
+  // distinguish "contribution unavailable" from "not asked yet" on cold loads.
+  const pluginTabDecisionLoaded = Boolean(resolvedCompanyId) && !pluginDetailSlotsLoading;
   const isolatedWorkspacesEnabled = experimentalSettingsQuery.data?.enableIsolatedWorkspaces === true;
   const workspaceTabProjectId = project?.id ?? null;
   const { data: workspaceTabIssues = [], isLoading: isWorkspaceTabIssuesLoading, error: workspaceTabIssuesError } = useQuery({
@@ -514,7 +475,7 @@ export function ProjectDetail() {
 
   const uploadImage = useMutation({
     mutationFn: async (file: File) => {
-      if (!resolvedCompanyId) throw new Error(t("overview.projectDetail.noCompany"));
+      if (!resolvedCompanyId) throw new Error("No organization selected");
       return assetsApi.uploadImage(resolvedCompanyId, file, `projects/${projectLookupRef || "draft"}`);
     },
   });
@@ -536,13 +497,9 @@ export function ProjectDetail() {
 
   useEffect(() => {
     if (!project) return;
-    if (routeProjectRef === canonicalProjectRef) return;
+    if (routeProjectRef === canonicalProjectRef && !location.pathname.endsWith("/overview")) return;
     if (isProjectPluginTab(activeTab)) {
       navigate(`/projects/${canonicalProjectRef}?tab=${encodeURIComponent(activeTab)}`, { replace: true });
-      return;
-    }
-    if (activeTab === "overview") {
-      navigate(`/projects/${canonicalProjectRef}/overview`, { replace: true });
       return;
     }
     if (activeTab === "configuration") {
@@ -570,7 +527,7 @@ export function ProjectDetail() {
       return;
     }
     navigate(`/projects/${canonicalProjectRef}`, { replace: true });
-  }, [project, routeProjectRef, canonicalProjectRef, activeTab, filter, navigate]);
+  }, [project, routeProjectRef, canonicalProjectRef, activeTab, filter, navigate, location.pathname]);
 
   useEffect(() => {
     closePanel();
@@ -677,7 +634,10 @@ export function ProjectDetail() {
     },
   });
 
-  if (pluginTabFromSearch && !pluginDetailSlotsLoading && !activePluginTab) {
+  if (pluginTabFromSearch && !activePluginTab && !error) {
+    if (!pluginTabDecisionLoaded) {
+      return <PageSkeleton variant="detail" />;
+    }
     return <Navigate to={`/projects/${canonicalProjectRef}/issues`} replace />;
   }
 
@@ -692,7 +652,7 @@ export function ProjectDetail() {
       try { cachedTab = localStorage.getItem(`paperclip:project-tab:${project.id}`); } catch {}
     }
     if (cachedTab === "overview") {
-      return <Navigate to={`/projects/${canonicalProjectRef}/overview`} replace />;
+      return <Navigate to={`/projects/${canonicalProjectRef}/configuration`} replace />;
     }
     if (cachedTab === "configuration") {
       return <Navigate to={`/projects/${canonicalProjectRef}/configuration`} replace />;
@@ -737,9 +697,7 @@ export function ProjectDetail() {
       navigate(`/projects/${canonicalProjectRef}?tab=${encodeURIComponent(tab)}`);
       return;
     }
-    if (tab === "overview") {
-      navigate(`/projects/${canonicalProjectRef}/overview`);
-    } else if (tab === "workspaces") {
+    if (tab === "workspaces") {
       navigate(`/projects/${canonicalProjectRef}/workspaces`);
     } else if (tab === "budget") {
       navigate(`/projects/${canonicalProjectRef}/budget`);
@@ -877,14 +835,12 @@ export function ProjectDetail() {
       <Tabs value={activeTab ?? "list"} onValueChange={(value) => handleTabChange(value as ProjectTab)}>
         <PageTabBar
           items={[
-            { value: "list", label: t("overview.projects.tasks") },
-            { value: "overview", label: t("overview.projects.title") },
-            ...(project.managedByPlugin
-              ? [{ value: "plugin-operations", label: t("workflowUiResidual.project.pluginOperations") }]
-              : []),
-            ...(showWorkspacesTab ? [{ value: "workspaces", label: t("projectsWorkspaces.workspace.projectWorkspace") }] : []),
-            { value: "configuration", label: t("overview.projectProperties.executionWorkspaces") },
-            { value: "budget", label: t("overview.projectDetail.budget") },
+            { value: "list", label: "Tasks" },
+
+            ...(project.managedByPlugin ? [{ value: "plugin-operations", label: "Plugin operations" }] : []),
+            ...(showWorkspacesTab ? [{ value: "workspaces", label: "Workspaces" }] : []),
+            { value: "configuration", label: "Configuration" },
+            { value: "budget", label: "Budget" },
             ...pluginTabItems.map((item) => ({
               value: item.value,
               label: item.label,
@@ -896,16 +852,7 @@ export function ProjectDetail() {
         />
       </Tabs>
 
-      {activeTab === "overview" && (
-        <OverviewContent
-          project={project}
-          onUpdate={(data) => updateProject.mutate(data)}
-          imageUploadHandler={async (file) => {
-            const asset = await uploadImage.mutateAsync(file);
-            return asset.contentPath;
-          }}
-        />
-      )}
+
 
       {activeTab === "list" && project?.id && resolvedCompanyId && (
         <ProjectIssuesList projectId={project.id} companyId={resolvedCompanyId} />

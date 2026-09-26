@@ -683,7 +683,7 @@ function PickProjectStep({
             <div>{readableErrorMessage(error)}</div>
           </div>
         ) : totalProjects === 0 ? (
-          <EmptyState icon={Layers} message={t("adapterImport.skills.noProjects")} />
+          <EmptyState icon={Layers} message="This organization has no projects yet." />
         ) : projects.length === 0 ? (
           <EmptyState icon={Search} message={skillText(`No projects match "${filter}".`)} />
         ) : (
@@ -952,7 +952,7 @@ function SelectStep({
           </p>
           <p className="mt-1.5 text-sm text-muted-foreground">
             {grant
-              ? t("adapterImport.skills.scanGrantBody")
+              ? "Your account doesn't have permission to add skills to this organization. Ask an owner to grant the skills permission, then try again."
               : readableErrorMessage(scanError)}
           </p>
           {!grant && (

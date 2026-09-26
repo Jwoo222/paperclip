@@ -25,6 +25,7 @@
       "latestRevision": "최신 개정",
       "setupPending": "요약 에이전트 설정이 승인 대기 중입니다",
       "setupSummarizer": "요약 에이전트 설정",
+      "setupSummarizerButton": "요약 에이전트 설정",
       "summarizerPaused": "요약 에이전트가 일시 중지됨",
       "resuming": "재개 중...",
       "resumeAgent": "에이전트 재개",

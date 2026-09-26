@@ -8,10 +8,6 @@ function displayLocale(locale?: string): string {
   return locale ?? i18n.resolvedLanguage ?? i18n.language ?? "en";
 }
 
-function dateLocale(locale?: string): string {
-  return displayLocale(locale).toLowerCase().startsWith("ko") ? "ko-KR" : "en-US";
-}
-
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -56,31 +52,33 @@ export function formatNumber(n: number): string {
  */
 export function formatProjectBudget(budget: { amountCents: number; windowKind: string }): string {
   const amount = formatCents(budget.amountCents);
-  return budget.windowKind === "calendar_month_utc"
-    ? i18n.getFixedT(displayLocale())("commonControls.perMonth", { amount })
-    : amount;
+  return budget.windowKind === "calendar_month_utc" ? `${amount}/mo` : amount;
 }
 
 export function formatDate(date: Date | string, locale?: string): string {
-  return new Date(date).toLocaleDateString(dateLocale(locale), {
+  return new Date(date).toLocaleDateString(displayLocale(locale), {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
 }
 
-export function formatDateTime(date: Date | string, locale?: string): string {
-  return new Date(date).toLocaleString(dateLocale(locale), {
+export function formatDateTime(
+  date: Date | string,
+  options: { includeSeconds?: boolean } = {},
+): string {
+  return new Date(date).toLocaleString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    ...(options.includeSeconds ? { second: "2-digit" as const } : {}),
   });
 }
 
-export function formatShortDate(date: Date | string, locale?: string): string {
-  return new Date(date).toLocaleString(dateLocale(locale), {
+export function formatShortDate(date: Date | string): string {
+  return new Date(date).toLocaleString("en-US", {
     month: "short",
     day: "numeric",
   });

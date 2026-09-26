@@ -1,3 +1,4 @@
+import { configFieldsForSection } from "../config-sections";
 import type { AdapterConfigFieldsProps } from "../types";
 import {
   Field,
@@ -26,6 +27,7 @@ function parseCommaArgs(value: string): string[] {
 }
 
 export function ProcessConfigFields({
+  section,
   isCreate,
   values,
   set,
@@ -33,9 +35,9 @@ export function ProcessConfigFields({
   eff,
   mark,
 }: AdapterConfigFieldsProps) {
-  return (
+  return configFieldsForSection(section, (
     <>
-      <Field label={t("adapterImport.adapter.command")} hint={help.command}>
+      <Field configSection="advanced" label="Command" hint={help.command}>
         <DraftInput
           value={
             isCreate
@@ -52,7 +54,7 @@ export function ProcessConfigFields({
           placeholder={t("adapterImport.adapter.commandPlaceholder")}
         />
       </Field>
-      <Field label={t("adapterImport.adapter.args")} hint={help.args}>
+      <Field configSection="advanced" label="Args (comma-separated)" hint={help.args}>
         <DraftInput
           value={
             isCreate
@@ -74,5 +76,5 @@ export function ProcessConfigFields({
         />
       </Field>
     </>
-  );
+  ));
 }

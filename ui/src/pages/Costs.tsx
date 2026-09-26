@@ -1,3 +1,5 @@
+import { t } from "@/i18n";
+import { AgentIdentity } from "@/components/AgentIdentity";
 import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
@@ -35,6 +37,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTranslation } from "@/i18n";
 
 const NO_COMPANY = "__none__";
+export type CostsMainTab = "overview" | "budgets" | "providers" | "billers" | "finance";
+
+export interface CostsProps {
+  /** Render inside Audit without a second page-level title or breadcrumb. */
+  embedded?: boolean;
+  initialTab?: CostsMainTab;
+  /** Pin the surface to one tab (used by Audit > Budgets). */
+  lockTab?: boolean;
+  /** Budgets is a peer Audit section, so omit it from the Costs sub-navigation. */
+  hideBudgetsTab?: boolean;
+}
 
 function currentWeekRange(): { from: string; to: string } {
   const now = new Date();
@@ -149,15 +162,20 @@ function FinanceSummaryCard({
   );
 }
 
-export function Costs() {
-  const { t } = useTranslation();
+export function Costs({
+  embedded = false,
+  initialTab = "overview",
+  lockTab = false,
+  hideBudgetsTab = false,
+}: CostsProps = {}) {
   const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const queryClient = useQueryClient();
 
-  const [mainTab, setMainTab] = useState<"overview" | "budgets" | "providers" | "billers" | "finance">("overview");
+  const [mainTab, setMainTab] = useState<CostsMainTab>(initialTab);
   const [activeProvider, setActiveProvider] = useState("all");
   const [activeBiller, setActiveBiller] = useState("all");
+  const showSummaryChrome = !(embedded && lockTab && initialTab === "budgets");
 
   const {
     preset,
@@ -172,8 +190,12 @@ export function Costs() {
   } = useDateRange();
 
   useEffect(() => {
-    setBreadcrumbs([{ label: t("overview.costs.title") }]);
-  }, [setBreadcrumbs, t]);
+    if (!embedded) setBreadcrumbs([{ label: "Costs" }]);
+  }, [embedded, setBreadcrumbs]);
+
+  useEffect(() => {
+    setMainTab(initialTab);
+  }, [initialTab]);
 
   const [today, setToday] = useState(() => new Date().toDateString());
   const todayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -244,7 +266,7 @@ export function Costs() {
       ]);
       return { summary, byAgent, byProject, byAgentModel };
     },
-    enabled: !!selectedCompanyId && customReady,
+    enabled: !!selectedCompanyId && customReady && showSummaryChrome,
   });
 
   const { data: financeData, isLoading: financeLoading, error: financeError } = useQuery({
@@ -263,7 +285,7 @@ export function Costs() {
       ]);
       return { summary, byBiller, byKind, events };
     },
-    enabled: !!selectedCompanyId && customReady,
+    enabled: !!selectedCompanyId && customReady && showSummaryChrome,
   });
 
   const [expandedAgents, setExpandedAgents] = useState<Set<string>>(new Set());
@@ -533,22 +555,26 @@ export function Costs() {
   }), [budgetPolicies]);
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={DollarSign} message={t("overview.projects.selectCompany")} />;
+    return <EmptyState icon={DollarSign} message="Select an organization to view costs." />;
   }
 
   const showCustomPrompt = preset === "custom" && !customReady;
   const showOverviewLoading = (spendLoading || financeLoading) && customReady;
   const overviewError = spendError ?? financeError;
-
   return (
     <div className="space-y-6">
-      <div className="space-y-5">
+      {showSummaryChrome ? (
+        <div className="space-y-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-        <h1 className="text-3xl font-semibold tracking-tight">{t("overview.costs.title")}</h1>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                  {t("overview.costs.description")}
-                </p>
+              {embedded ? (
+                <h2 className="text-lg font-semibold text-foreground">Costs</h2>
+              ) : (
+                <h1 className="text-3xl font-semibold tracking-tight">Costs</h1>
+              )}
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                Inference spend, platform fees, credits, and live quota windows.
+              </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -620,16 +646,19 @@ export function Costs() {
               icon={ArrowUpRight}
             />
           </div>
-      </div>
+        </div>
+      ) : null}
 
       <Tabs value={mainTab} onValueChange={(value) => setMainTab(value as typeof mainTab)}>
-        <TabsList variant="line" className="justify-start">
-           <TabsTrigger value="overview">{t("overview.costs.overview")}</TabsTrigger>
-           <TabsTrigger value="budgets">{t("overview.costs.budgets")}</TabsTrigger>
-           <TabsTrigger value="providers">{t("overview.costs.providers")}</TabsTrigger>
-           <TabsTrigger value="billers">{t("overview.costs.billers")}</TabsTrigger>
-           <TabsTrigger value="finance">{t("overview.costs.finance")}</TabsTrigger>
-        </TabsList>
+        {!lockTab ? (
+          <TabsList variant="line" className="justify-start">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            {!hideBudgetsTab ? <TabsTrigger value="budgets">Budgets</TabsTrigger> : null}
+            <TabsTrigger value="providers">Providers</TabsTrigger>
+            <TabsTrigger value="billers">Billers</TabsTrigger>
+            <TabsTrigger value="finance">Finance</TabsTrigger>
+          </TabsList>
+        ) : null}
 
         <TabsContent value="overview" className="mt-4 space-y-4">
           {showCustomPrompt ? (
@@ -746,7 +775,7 @@ export function Costs() {
                                 ) : (
                                   <span className="h-3 w-3 shrink-0" />
                                 )}
-                                <Identity name={row.agentName ?? row.agentId} size="sm" />
+                                <AgentIdentity agent={{ id: row.agentId, name: row.agentName ?? row.agentId, appearance: row.agentAppearance }} size="sm" />
                                 {row.agentStatus === "terminated" ? <StatusBadge status="terminated" /> : null}
                               </div>
                               <div className="text-right text-sm tabular-nums">
@@ -912,10 +941,10 @@ export function Costs() {
                   return (
                     <section key={scopeType} className="space-y-3">
                       <div>
-                        <h2 className="text-lg font-semibold capitalize">{scopeType} budgets</h2>
+                        <h2 className="text-lg font-semibold capitalize">{scopeType === "company" ? "organization" : scopeType} budgets</h2>
                         <p className="text-sm text-muted-foreground">
                           {scopeType === "company"
-                            ? t("overview.costs.companyPolicy")
+                            ? "Organization-wide monthly policy."
                             : scopeType === "agent"
                               ? t("overview.costs.agentPolicy")
                               : t("overview.costs.projectPolicy")}
@@ -944,7 +973,7 @@ export function Costs() {
                 {budgetPolicies.length === 0 ? (
                   <Card>
                     <CardContent className="px-5 py-8 text-sm text-muted-foreground">
-                      {t("overview.costs.noBudgetPolicies")}
+                      No budget policies yet. Set agent and project budgets from their detail pages, or use the existing organization monthly budget control.
                     </CardContent>
                   </Card>
                 ) : null}

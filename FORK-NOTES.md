@@ -55,14 +55,17 @@ identifier change.
 1. Take upstream's `IssueRow.tsx` in full.
 2. Add `import { ProjectCodeBadge } from "./ProjectCodeBadge"; // FORK-LOCAL (project badge)`
    next to the other component imports.
-3. Immediately **after** the whole `{desktopMetaLeading ?? ( … )}` expression —
-   not inside its fallback — insert:
+3. In the latest upstream `IssueRow`, add the same badge to **both** row
+   presentations. In the task presentation, place it immediately before the
+   `task-row-identifier` span and render it only when `showIdentifier` is true.
+   In the legacy presentation, place it immediately after the whole
+   `{desktopMetaLeading ?? ( … )}` expression — not inside its fallback:
 
    ```tsx
    <ProjectCodeBadge
      companyId={issue.companyId}
      projectId={issue.projectId}
-     className="hidden shrink-0 px-1.5 py-0 font-mono text-[10px] text-muted-foreground sm:inline-flex"
+     className="hidden shrink-0 px-1.5 py-0 font-mono text-(length:--text-nano) text-muted-foreground sm:inline-flex"
    />
    ```
 
@@ -96,9 +99,8 @@ identifier change.
 cd ui && npx vitest run src/lib/project-code.test.ts src/components/IssueRow.test.tsx src/components/IssuesList.test.tsx
 ```
 
-Expected: only the pre-existing `IssuesList > collapses multiple workflow blocker
-chips` failure, which is unrelated to FL-001 (it asserts the untranslated string
-`"... and 2 more"` and fails on this fork regardless).
+The old English-only `IssuesList` assertion has been updated to the localized
+label. The focused IssueRow, IssuesList, and project-code tests now pass.
 
 ---
 
@@ -148,14 +150,15 @@ The upstream rule strips non-Latin characters from a company name and takes the
 first three. A Korean-only name yields an empty string and falls back to `CMP`,
 so every Korean company collapsed onto `CMP`, `CMPA`, `CMPAA`, …
 
-`deriveIssuePrefixBaseFromName` now falls back to romanized Hangul initials
+`deriveIssuePrefixBase` now falls back to romanized Hangul initials
 (`셀러의 도구함` → `SRD`), then a stable FNV-1a hash.
 
 ### Files
 
 | File | Type |
 | --- | --- |
-| `server/src/services/companies.ts` | **edited** |
+| `server/src/services/issue-prefix.ts` | **edited**; upstream moved prefix derivation here |
+| `server/src/services/companies.ts` | **edited**; supports an explicit prefix at creation |
 | `packages/shared/src/validators/company.ts` | **edited** |
 | `server/src/__tests__/company-issue-prefix.test.ts` | additive |
 | `server/src/__tests__/companies-service.test.ts` | **edited** |
@@ -166,6 +169,75 @@ Applies to **new companies only**. `updateCompanySchema` deliberately does *not*
 accept `issuePrefix`: the live company `셀러의 도구함` keeps `CMPA`, because its
 existing issue identifiers and every link and comment referencing them must keep
 resolving. Do not "fix" this by adding prefix updates.
+
+The creation form may submit an explicit prefix, which is normalized and validated
+before the first issue is created. Existing company prefixes stay fixed on this
+self-hosted fork.
+
+---
+
+## FL-004 — Korean UI on the current upstream screens
+
+**Status:** active · **Re-applied:** 2026-09-24 on upstream `7b7c4d417`
+
+The upstream UI changed across hundreds of files after this fork's earlier
+localization. Keep the upstream components and behavior first, then re-apply
+Korean display copy with `t()` and matching `en`/`ko` locale keys. New screens
+use `ui/src/i18n/locales/{en,ko}/new-ui.json`. Never translate API payload
+values, persisted names, string-union discriminants, routes, or provider IDs.
+
+`SidePanelLauncher` uses `data-side-panel-search` for its search target so a
+translated accessible label does not break keyboard focus. The source-contract
+test expands `tNewUi` keys before checking the English reference copy.
+
+The 2026-09-24 candidate passed UI typecheck, production UI build, locale
+validation, and 6,672 of 6,673 UI tests on the first stable full run. The sole
+failure was an English locale entry containing JSX indentation in “Loading
+connection options…”. After normalizing that entry, the complete affected test
+file passed (23/23). The remaining English literals found on newly added UI
+screens were product/provider names, `UTC`, and test fixtures.
+
+After the cutover, a Korean Chrome smoke check exposed English copy on the new
+Apps Browse cards, Skills controls, and Audit filters. The follow-up patch
+translates shipped app descriptions at display time, preserving stored app
+definitions and company-authored descriptions. It also translates the visible
+Browse, Skills, Audit, and sidebar controls. Skill instructions and audit event
+identifiers remain source data, so their original text is shown. The patch
+passed 77 focused UI tests, 10 locale validation tests, UI typecheck, a
+production build, and a six-route Korean browser smoke check with no page
+errors before being applied to the live checkout.
+The Audit feed also reuses the existing translated activity verbs for recorded
+actions; raw event codes remain visible as technical identifiers.
+
+## FL-005 — Restorable embedded PostgreSQL backup on Windows
+
+**Status:** active · **Added:** 2026-09-24
+
+The JavaScript backup fallback in `packages/db/src/backup-lib.ts` emitted `COPY`
+data and omitted table `CHECK` constraints, while its restore path ignored the
+`COPY` rows. An isolated restore of a live backup therefore lacked required data
+and failed on migration 0255. The fallback now restores streamed `COPY` data
+and writes `CHECK` constraints. `backup-lib.test.ts` covers both. A fresh live
+backup was restored into an isolated database, then migrations 0212–0283
+completed without changing the live database.
+
+---
+
+## FL-006 — Windows dependency installation on this upstream revision
+
+**Status:** active · **Added:** 2026-09-24
+
+The upstream `package.json` pins newer Codex and Claude adapter dependencies
+than its `pnpm-lock.yaml`. `pnpm install --frozen-lockfile` failed with
+`ERR_PNPM_LOCKFILE_CONFIG_MISMATCH`. The lockfile was regenerated with pnpm
+9.15.4 to match `package.json`, then frozen installation succeeded.
+
+The root postinstall creates local plugin SDK links. On Windows without
+Developer Mode, directory symlinks failed with `EPERM`, so
+`scripts/link-plugin-dev-sdk.mjs` now creates directory junctions on Windows.
+Running it twice confirmed the links are reusable. An optional `cpu-features`
+native install also reported a missing compiler, but the completed dependency
+installation did not depend on that optional module.
 
 ---
 

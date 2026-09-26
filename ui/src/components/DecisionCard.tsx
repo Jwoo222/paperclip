@@ -68,7 +68,7 @@ function humanStatus(status: string | null | undefined): string {
   if (!status) return t("decisionCardResidual.unknownStatus");
   return t(`searchStatus.status.${status}`, {
     defaultValue: status.replaceAll("_", " "),
-  });
+  }).toLocaleLowerCase();
 }
 
 function issueLabel(ref: DecisionIssueRef | null, fallbackId: string): string {

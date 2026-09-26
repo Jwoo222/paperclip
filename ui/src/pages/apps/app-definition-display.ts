@@ -1,4 +1,5 @@
-import type { AppDefinition, ToolApplication } from "@paperclipai/shared";
+import type { AppDefinition, ToolApplication, ToolConnection } from "@paperclipai/shared";
+import { localizeAppCatalogCopy } from "@/lib/app-catalog-i18n";
 
 export type AppGalleryDisplayEntry = AppDefinition & {
   key?: string;
@@ -15,12 +16,16 @@ export function appDefinitionName(entry: AppGalleryDisplayEntry | null | undefin
   return entry?.name ?? appDefinitionSlug(entry) ?? "App";
 }
 
-export function appDefinitionDescription(entry: AppGalleryDisplayEntry | null | undefined): string {
-  return entry?.description ?? entry?.tagline ?? "";
+export function appDefinitionDescription(entry: Pick<AppGalleryDisplayEntry, "description" | "tagline"> | null | undefined): string {
+  return localizeAppCatalogCopy(entry?.description ?? entry?.tagline ?? "");
 }
 
 export function appDefinitionLogoUrl(entry: AppGalleryDisplayEntry | null | undefined): string | undefined {
   return entry?.branding?.logoUrl ?? entry?.logoUrl;
+}
+
+export function appDefinitionDarkLogoUrl(entry: AppGalleryDisplayEntry | null | undefined): string | undefined {
+  return entry?.branding?.darkLogoUrl;
 }
 
 export function appApplicationSourceSlug(application: ToolApplication | null | undefined): string | null {
@@ -31,6 +36,18 @@ export function appApplicationSourceSlug(application: ToolApplication | null | u
   const key = application.applicationKey?.trim();
   if (!key) return null;
   const galleryPrefix = "app-gallery:";
-  if (key.startsWith(galleryPrefix)) return key.slice(galleryPrefix.length).split(":")[0] || null;
+  if (key.startsWith(galleryPrefix)) {
+    const slug = key.slice(galleryPrefix.length).split(":")[0] || null;
+    // Curated apps deliberately group multiple accounts by provider. Generic
+    // URL apps use `link` only as a synthetic key, so grouping on it would make
+    // every unrelated MCP server in the company look like the same app.
+    return slug === "link" ? null : slug;
+  }
   return key;
+}
+
+export function appConnectionSourceSlug(connection: ToolConnection | null | undefined): string | null {
+  if (!connection) return null;
+  const source = connection.config?.sourceTemplateKey ?? connection.transportConfig?.sourceTemplateKey;
+  return typeof source === "string" && source.trim() ? source.trim() : null;
 }

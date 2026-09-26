@@ -10,6 +10,9 @@
  * surface (app names, fallback taglines).
  */
 
+import { t } from "@/i18n";
+import { localizeAppCatalogCopy } from "./app-catalog-i18n";
+
 /** Words that must never appear in prosumer-facing copy on the Apps surface. */
 const BANNED_WORDS = [
   "mcp",
@@ -66,17 +69,53 @@ const APP_COPY: Record<string, AppCopy> = {
     tagline: "Read and update pages in your workspace.",
     short: "Read and update pages in your workspace.",
   },
+  railway: {
+    tagline: "Inspect services, read logs, and manage deployments.",
+    short: "Connect Railway for deployments, logs, and container access.",
+  },
+  posthog: {
+    tagline: "Explore product usage, errors, flags, and experiments.",
+    short: "Sign in with PostHog. Project pinning and access controls are optional.",
+  },
   linear: {
     tagline: "Create, update and read tickets.",
     short: "Create, update and read tickets.",
   },
   "google-sheets": {
     tagline: "Read and update selected spreadsheets.",
-    short: "Share each sheet with the robot email, then paste the links.",
+    short: "Read spreadsheets or update the files you choose.",
   },
   gmail: {
-    tagline: "Read mail and send drafts for your review.",
-    short: "Read mail and send drafts for your review.",
+    tagline: "Read mail and create drafts for your review.",
+    short: "Read mail and create drafts for your review.",
+  },
+  "google-drive": {
+    tagline: "Find, read, and create files in Drive.",
+    short: "Find, read, and create files in Drive.",
+  },
+  "google-docs": {
+    tagline: "Read and update documents.",
+    short: "Read and update documents.",
+  },
+  "google-slides": {
+    tagline: "Read and update presentations.",
+    short: "Read and update presentations.",
+  },
+  "google-calendar": {
+    tagline: "Review calendars and manage events.",
+    short: "Review calendars and manage events.",
+  },
+  "google-chat": {
+    tagline: "Read conversations and send messages.",
+    short: "Read conversations and send messages.",
+  },
+  "google-people": {
+    tagline: "Look up contacts and people in your directory.",
+    short: "Look up contacts and people in your directory.",
+  },
+  "google-workspace-search": {
+    tagline: "Search across your Google workspace.",
+    short: "Search across your Google workspace.",
   },
   hubspot: {
     tagline: "Look up contacts and update deal stages.",
@@ -108,12 +147,16 @@ const GENERIC: AppCopy = {
 /** Curated, gate-safe copy for a gallery app. */
 export function appCopyFor(key: string, fallbackTagline?: string | null): AppCopy {
   const curated = APP_COPY[key];
-  if (curated) return curated;
+  if (curated) return {
+    tagline: localizeAppCatalogCopy(curated.tagline),
+    short: localizeAppCatalogCopy(curated.short),
+  };
   if (fallbackTagline) {
-    const cleaned = sanitizeProsumerCopy(fallbackTagline);
-    if (cleaned) return { tagline: cleaned, short: cleaned };
+    const cleaned = localizeAppCatalogCopy(fallbackTagline);
+    const displayCopy = cleaned === fallbackTagline ? sanitizeProsumerCopy(cleaned) : cleaned;
+    if (displayCopy) return { tagline: displayCopy, short: displayCopy };
   }
-  return GENERIC;
+  return { tagline: localizeAppCatalogCopy(GENERIC.tagline), short: localizeAppCatalogCopy(GENERIC.short) };
 }
 
 /**
@@ -127,7 +170,7 @@ export function credentialFieldLabel(
   rawLabel: string,
   fieldCount: number,
 ): string {
-  if (fieldCount <= 1) return `Your ${appName} key`;
+  if (fieldCount <= 1) return t("appCatalog.yourKey", { appName });
   const cleaned = sanitizeProsumerCopy(rawLabel);
-  return cleaned || `Your ${appName} key`;
+  return localizeAppCatalogCopy(cleaned) || t("appCatalog.yourKey", { appName });
 }

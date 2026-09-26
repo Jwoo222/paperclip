@@ -29,6 +29,7 @@ import {
   CircleDot,
   DollarSign,
   Calendar,
+  ArchiveRestore,
 } from "lucide-react";
 import { useTranslation } from "@/i18n";
 
@@ -76,9 +77,22 @@ export function Companies() {
     },
   });
 
+  // Unarchiving previously had no UI at all: archiving happens in company
+  // settings, but an archived company disappears from the sidebar switcher,
+  // so its settings page — and with it any way back — was only reachable by
+  // hand-typed URL. This list is the one place that still shows archived
+  // companies, so restoration lives here.
+  const unarchiveMutation = useMutation({
+    mutationFn: (id: string) => companiesApi.update(id, { status: "active" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies.stats });
+    },
+  });
+
   useEffect(() => {
-    setBreadcrumbs([{ label: t("overview.companies.title") }]);
-  }, [setBreadcrumbs, t]);
+    setBreadcrumbs([{ label: "Organizations" }]);
+  }, [setBreadcrumbs]);
 
   function startEdit(companyId: string, currentName: string) {
     setEditingId(companyId);
@@ -101,13 +115,13 @@ export function Companies() {
         {isCloud ? null : (
           <Button size="sm" onClick={() => openOnboarding()}>
             <Plus className="h-3.5 w-3.5 mr-1.5" />
-            {t("overview.companies.new")}
+            New Organization
           </Button>
         )}
       </div>
 
       <div className="h-6">
-        {loading && <p className="text-sm text-muted-foreground">{t("overview.companies.loading")}</p>}
+        {loading && <p className="text-sm text-muted-foreground">Loading organizations...</p>}
         {error && <p className="text-sm text-destructive">{error.message}</p>}
       </div>
 
@@ -226,13 +240,22 @@ export function Companies() {
                         <Pencil className="h-3.5 w-3.5" />
                         {t("overview.companies.rename")}
                       </DropdownMenuItem>
+                      {company.status === "archived" && (
+                        <DropdownMenuItem
+                          disabled={unarchiveMutation.isPending}
+                          onClick={() => unarchiveMutation.mutate(company.id)}
+                        >
+                          <ArchiveRestore className="h-3.5 w-3.5" />
+                          Unarchive
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         variant="destructive"
                         onClick={() => setConfirmDeleteId(company.id)}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
-                        {t("overview.companies.deleteCompany")}
+                        Delete Organization
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -275,7 +298,7 @@ export function Companies() {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <p className="text-sm text-destructive font-medium">
-                    {t("overview.companies.deleteWarning")}
+                    Delete this organization and all its data? This cannot be undone.
                   </p>
                   <div className="flex items-center gap-2 ml-4 shrink-0">
                     <Button

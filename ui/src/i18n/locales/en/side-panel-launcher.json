@@ -1,0 +1,8 @@
+{
+  "sidePanelLauncher": {
+    "title": "Open a side panel tab",
+    "description": "Choose a view or resource to open.",
+    "placeholder": "Search tabs and resources…",
+    "emptyMessage": "No matching tabs or resources."
+  }
+}

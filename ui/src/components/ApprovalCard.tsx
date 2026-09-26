@@ -1,3 +1,4 @@
+import { AgentIdentity } from "@/components/AgentIdentity";
 import { CheckCircle2, XCircle, Clock } from "lucide-react";
 import { Link } from "@/lib/router";
 import { Badge } from "@/components/ui/badge";
@@ -81,8 +82,8 @@ export function ApprovalCard({
                 </Badge>
                 {requesterAgent && (
                   <div className="inline-flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-                    <span>{t("work.approval.requestedBy")}</span>
-                    <Identity name={requesterAgent.name} size="sm" className="inline-flex" />
+                    <span>Requested by</span>
+                    <AgentIdentity agent={requesterAgent} size="sm" className="inline-flex" />
                   </div>
                 )}
               </div>

@@ -50,8 +50,8 @@ function displayIdentity(session: AuthSession) {
 function claimErrorCopy(error: BootstrapPendingPageProps["claimError"]) {
   if (error?.status === 409) {
     return {
-      title: t("systemUi.bootstrap.alreadyClaimed"),
-      body: t("systemUi.bootstrap.alreadyClaimedBody"),
+      title: "Someone else has already claimed this instance.",
+      body: "Refresh to sign in, or ask the existing admin to invite you from Settings -> Access.",
     };
   }
   if (error?.status === 401) {
@@ -99,7 +99,7 @@ export function BootstrapPendingPage({
           <div>
             <h1 className="text-xl font-semibold">{t("systemUi.bootstrap.successTitle")}</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              {t("systemUi.bootstrap.successDescription")}
+              Setup is complete. Taking you to onboarding to create your first organization...
             </p>
           </div>
         </div>

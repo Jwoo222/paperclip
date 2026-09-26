@@ -39,9 +39,8 @@ export function ProfileSettings() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: t("settingsSecurity.settings", { defaultValue: "Settings" }), href: "/company/settings" },
-      { label: t("settingsSecurity.instanceSettings", { defaultValue: "Instance settings" }), href: "/company/settings/instance/general" },
-      { label: t("settingsSecurity.profile", { defaultValue: "Profile" }) },
+      { label: "Settings", href: "/company/settings" },
+      { label: "Profile" },
     ]);
   }, [setBreadcrumbs]);
 
@@ -90,7 +89,7 @@ export function ProfileSettings() {
   const uploadAvatarMutation = useMutation({
     mutationFn: async (file: File) => {
       if (!selectedCompanyId) {
-        throw new Error(t("settingsSecurity.selectCompanyBeforeAvatar", { defaultValue: "Select a company before uploading a profile avatar." }));
+        throw new Error("Select an organization before uploading a profile avatar.");
       }
 
       const asset = await assetsApi.uploadImage(
@@ -140,10 +139,10 @@ export function ProfileSettings() {
   const isSavingProfile = updateMutation.isPending || uploadAvatarMutation.isPending || removeAvatarMutation.isPending;
   const uploadHint = selectedCompany
     ? `Stored in Paperclip file storage for ${selectedCompany.name}.`
-    : t("settingsSecurity.selectCompanyAvatarHint", { defaultValue: "Select a company to upload an avatar into Paperclip storage." });
+    : "Select an organization to upload an avatar into Paperclip storage.";
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="max-w-6xl space-y-6">
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <UserRoundPen className="h-5 w-5 text-muted-foreground" />
@@ -273,9 +272,7 @@ export function ProfileSettings() {
           </div>
         </form>
 
-        <Card className="rounded-(--rad-28) border-border/70 p-6">
-          <InboxAgentPolicyControl companyId={selectedCompanyId} />
-        </Card>
+        <InboxAgentPolicyControl companyId={selectedCompanyId} />
       </section>
     </div>
   );

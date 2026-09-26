@@ -1,0 +1,19 @@
+{
+  "localizationFixups": {
+    "builtInAgentGate": {
+      "viewAgent": "View agent"
+    },
+    "missingPluginTab": {
+      "notAvailable": "Workspace plugin tab is not available."
+    },
+    "smokeLab": {
+      "cardTitle": "Integration smoke"
+    },
+    "projectProperties": {
+      "gitWorktree": "Git worktree"
+    },
+    "secrets": {
+      "importFromVault": "Import from vault"
+    }
+  }
+}

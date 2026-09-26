@@ -1,0 +1,43 @@
+import { t as tNewUi } from "@/i18n";
+import { AlertTriangle, ExternalLink } from "lucide-react";
+import type { AgentPermissions } from "@paperclipai/shared";
+import { getTrustPreset } from "@/lib/trust-policy-ui";
+
+export const LOW_TRUST_AGENT_GUIDE =
+  "https://docs.paperclip.ing/administration/trust-and-low-trust-review/";
+
+export function GitHubAgentTrustWarning({
+  agent,
+}: {
+  agent:
+    { name: string; permissions: Partial<AgentPermissions> } | null | undefined;
+}) {
+  if (!agent || getTrustPreset(agent.permissions) === "low_trust_review")
+    return null;
+  return (
+    <div
+      role="alert"
+      className="space-y-2 rounded-lg border border-(--status-task-todo)/30 bg-(--status-task-todo)/10 p-4 text-sm"
+    >
+      <p className="flex items-center gap-2 font-medium">
+        <AlertTriangle className="size-4 shrink-0" />
+        {agent.name} {tNewUi("newUi.k50c5fb1071ac")}
+      </p>
+      <p>
+        {tNewUi("newUi.kf6a6ecffc511")}
+      </p>
+      <p className="text-xs text-muted-foreground">
+        {tNewUi("newUi.k3476e845ad16")}
+      </p>
+      <a
+        className="inline-flex items-center gap-1 underline underline-offset-4"
+        href={LOW_TRUST_AGENT_GUIDE}
+        target="_blank"
+        rel="noreferrer"
+      >
+        {tNewUi("newUi.k3c6aaa9894b1")}
+        <ExternalLink className="size-3.5" />
+      </a>
+    </div>
+  );
+}

@@ -1,3 +1,4 @@
+import { AgentIdentity } from "@/components/AgentIdentity";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -54,6 +55,7 @@ import { companySkillsApi } from "@/api/companySkills";
 import { issuesApi } from "@/api/issues";
 import { queryKeys } from "@/lib/queryKeys";
 import { copyTextToClipboard } from "@/lib/clipboard";
+import { useCopyToast } from "@/lib/use-copy-action";
 import { skillStudioNewRoute, skillStudioRoute } from "@/lib/company-skill-routes";
 import {
   buildBlankSkillDraft,
@@ -330,7 +332,7 @@ export function SkillStudio() {
   }, [skill?.id]);
 
   if (!companyId) {
-    return <StudioMessage message={i18n.t("skillStudio.selectCompany")} />;
+    return <StudioMessage message="Select an organization to open Skill Studio." />;
   }
   if (isCreateMode) {
     return (
@@ -520,7 +522,7 @@ function StudioNewSkillPanel({
           {draft.forkedFromSkillId ? i18n.t("skillStudio.forkSkill") : i18n.t("skillStudio.createNewSkill")}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {i18n.t("skillStudio.createDescription")}
+          Create an editable organization skill and open it directly in Studio.
         </p>
       </div>
 
@@ -659,9 +661,9 @@ function StudioNewSkillPanel({
                 draft.sharingScope === scope ? "border-foreground bg-accent/50" : "border-border",
               )}
             >
-              <span className="block font-medium">{scope === "company" ? i18n.t("skillStudio.company") : i18n.t("skillStudio.private")}</span>
+              <span className="block font-medium">{scope === "company" ? "Organization" : "Private"}</span>
               <span className="mt-1 block text-xs text-muted-foreground">
-                {scope === "company" ? i18n.t("skillStudio.companyVisible") : i18n.t("skillStudio.privateVisible")}
+                {scope === "company" ? "Visible inside this organization." : "Only visible in your library."}
               </span>
             </button>
           ))}
@@ -1907,6 +1909,8 @@ function InputPane({
 }) {
   const queryClient = useQueryClient();
   const onError = useMutationErrorToast();
+  // The row's menu closes on click, so its copy confirmation goes to a toast.
+  const copyWithToast = useCopyToast();
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
   const [savedInputDraft, setSavedInputDraft] = useState<SavedInputDraftState>(
     EMPTY_SAVED_INPUT_DRAFT_STATE,
@@ -2099,7 +2103,7 @@ function InputPane({
                             <DropdownMenuItem
                               onClick={() => {
                                 const input = inputs.find((i) => i.id === id);
-                                if (input) void copyTextToClipboard(input.content).catch(() => {});
+                                if (input) void copyWithToast(input.content, "Input content copied");
                               }}
                             >
                               <Copy className="mr-2 h-4 w-4" /> {i18n.t("skillStudio.copyContent")}
@@ -2957,7 +2961,7 @@ function AgentPicker({
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm">
           {selectedAgent ? (
-            <Identity name={selectedAgent.name} size="xs" />
+            <AgentIdentity agent={selectedAgent} size="xs" />
           ) : (
             <span className="text-muted-foreground">{i18n.t("skillStudio.pickAgent")}</span>
           )}
@@ -2990,7 +2994,7 @@ function AgentPicker({
                       )}
                       aria-hidden
                     />
-                    <Identity name={agent.name} size="xs" />
+                    <AgentIdentity agent={agent} size="xs" />
                     {!selectable && (
                       <Badge variant="secondary" className="ml-auto">
                         {i18n.t("skillStudio.paused")}
@@ -3117,8 +3121,8 @@ function RunDetailView({
       <div className="min-h-0 flex-1 space-y-3 overflow-auto p-3">
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={runBadgeStatus(detail.status)} />
-          <Identity name={agentName} size="xs" />
-          {removed && <Badge variant="secondary">{i18n.t("skillStudio.removed")}</Badge>}
+          <AgentIdentity agent={agent ?? { id: detail.agentId, name: agentName }} size="xs" />
+          {removed && <Badge variant="secondary">removed</Badge>}
           <span className="font-mono text-xs text-muted-foreground">
             v{detail.skillVersion.revisionNumber}
           </span>

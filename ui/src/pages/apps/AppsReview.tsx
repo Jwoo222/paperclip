@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 import { useEffect } from "react";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { useCompany } from "@/context/CompanyContext";
@@ -15,21 +16,19 @@ import { useTranslation } from "@/i18n";
  * "Needs attention"; decisions live here.
  */
 export function AppsReview() {
-  const { t } = useTranslation();
-  const { selectedCompany, selectedCompanyId } = useCompany();
+  const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? t("integrations.common.company"), href: "/dashboard" },
-      { label: t("integrations.common.apps"), href: "/apps" },
-      { label: t("appsBrowserGateway.review.title") },
+      { label: "Connectors", href: "/apps" },
+      { label: "Review" },
     ]);
     return () => setBreadcrumbs([]);
-  }, [setBreadcrumbs, selectedCompany?.name]);
+  }, [setBreadcrumbs]);
 
   if (!selectedCompanyId) {
-    return <div className="p-6 text-sm text-muted-foreground">{t("appsBrowserGateway.review.selectCompany")}</div>;
+    return <div className="p-6 text-sm text-muted-foreground">Select an organization to review approvals.</div>;
   }
 
   return (

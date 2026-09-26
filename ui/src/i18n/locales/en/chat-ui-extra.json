@@ -5,6 +5,7 @@
     "copyLink": "Copy link",
     "copyNoticeText": "Copy notice text",
     "copySystemNotice": "Copy system notice",
+    "copySystemNoticeLink": "Copy link to system notice",
     "copyFailed": "Copy failed",
     "unableToCopyText": "Unable to copy text",
     "unableToCopyMessage": "Unable to copy message",

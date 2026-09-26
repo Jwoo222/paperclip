@@ -5,6 +5,7 @@ import type { PluginLocalFolderDeclaration } from "@paperclipai/shared";
 import { useCompany } from "@/context/CompanyContext";
 import { useTranslation } from "@/i18n";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
+import { useManagedSandboxOnly } from "@/hooks/useManagedSandboxOnly";
 import { Link, Navigate, useParams } from "@/lib/router";
 import { PluginSlotMount, usePluginSlots } from "@/plugins/slots";
 import { pluginsApi, type PluginLocalFolderStatus } from "@/api/plugins";
@@ -67,6 +68,7 @@ export function PluginSettings() {
   const { selectedCompany, selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const { companyPrefix, pluginId } = useParams<{ companyPrefix?: string; pluginId: string }>();
+  const { hideHostPaths } = useManagedSandboxOnly();
   const [activeTab, setActiveTab] = useState<"configuration" | "status">("configuration");
 
   const { data: plugin, isLoading: pluginLoading } = useQuery({
@@ -124,11 +126,10 @@ export function PluginSettings() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? tr("company", "Company"), href: "/dashboard" },
-      { label: tr("settings", "Settings"), href: "/company/settings" },
-      { label: tr("instanceSettings", "Instance settings"), href: "/company/settings/instance/general" },
-      { label: tr("plugins", "Plugins"), href: "/company/settings/instance/plugins" },
-      { label: plugin?.manifestJson?.displayName ?? plugin?.packageName ?? tr("pluginDetails", "Plugin Details") },
+      { label: selectedCompany?.name ?? "Organization", href: "/dashboard" },
+      { label: "Settings", href: "/company/settings" },
+      { label: "Plugins", href: "/company/settings/instance/plugins" },
+      { label: plugin?.manifestJson?.displayName ?? plugin?.packageName ?? "Plugin Details" },
     ]);
   }, [selectedCompany?.name, setBreadcrumbs, companyPrefix, plugin]);
 
@@ -155,14 +156,19 @@ export function PluginSettings() {
   const pluginCapabilities = plugin.manifestJson.capabilities ?? [];
   const environmentDrivers = plugin.manifestJson.environmentDrivers ?? [];
   const localFolderDeclarations = plugin.manifestJson.localFolders ?? [];
-  const hasLocalFolders = localFolderDeclarations.length > 0;
+  // A plugin local folder is an absolute path on the execution host. Under the
+  // managed-sandbox-only policy the platform-managed environment owns the
+  // filesystem, so the whole section disappears and the Settings tab falls back
+  // to whatever else the plugin declares. The section also stays hidden until
+  // the policy is known.
+  const hasLocalFolders = localFolderDeclarations.length > 0 && !hideHostPaths;
   const environmentDriverNames = environmentDrivers
     .map((driver) => driver.displayName?.trim() || driver.driverKey)
     .filter((name, index, values) => values.indexOf(name) === index);
   const driverLabel = environmentDriverNames.join(", ");
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="max-w-6xl space-y-6">
       <div className="flex items-center gap-4">
         <Link to="/company/settings/instance/plugins">
           <Button variant="outline" size="icon" className="h-8 w-8">
@@ -263,9 +269,10 @@ export function PluginSettings() {
                 />
               ) : environmentDrivers.length > 0 ? (
                 <div className="rounded-md border border-border/60 bg-muted/20 px-4 py-3 text-sm">
-                  <p className="font-medium text-foreground">{tr("configureFromEnvironments", "Configure this plugin from Instance Settings → Environments.")}</p>
+                  <p className="font-medium text-foreground">Configure this plugin from Settings → Environments.</p>
                   <p className="mt-1 text-muted-foreground">
-                    {tr("environmentSettingsDescription", "{{driver}} registers environment runtime settings there so the execution target stays instance-scoped while secret bindings still resolve through the selected company context.", { driver: driverLabel || tr("thisPlugin", "This plugin") })}
+                    {driverLabel || "This plugin"} registers environment runtime settings there so the execution target
+                    stays instance-scoped while secret bindings still resolve through the selected organization context.
                   </p>
                   <div className="mt-3">
                     <Link to="/company/settings/instance/environments">
@@ -604,7 +611,7 @@ function PluginLocalFoldersSettings({ pluginId, companyId, declarations }: Plugi
   if (!companyId) {
     return (
       <div className="rounded-md border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
-        {tr("selectCompanyForFolders", "Select a company to configure this plugin's local folders.")}
+        Select an organization to configure this plugin's local folders.
       </div>
     );
   }
@@ -997,7 +1004,7 @@ function PluginConfigForm({ pluginId, companyId, schema, initialValues, isLoadin
   // Save mutation
   const saveMutation = useMutation({
     mutationFn: (configJson: Record<string, unknown>) => {
-      if (!companyId) throw new Error(tr("selectCompanyBeforeSave", "Select a company before saving plugin configuration."));
+      if (!companyId) throw new Error("Select an organization before saving plugin configuration.");
       return pluginsApi.saveConfig(pluginId, companyId, configJson);
     },
     onSuccess: () => {
@@ -1017,7 +1024,7 @@ function PluginConfigForm({ pluginId, companyId, schema, initialValues, isLoadin
   // Test configuration mutation
   const testMutation = useMutation({
     mutationFn: (configJson: Record<string, unknown>) => {
-      if (!companyId) throw new Error(tr("selectCompanyBeforeTest", "Select a company before testing plugin configuration."));
+      if (!companyId) throw new Error("Select an organization before testing plugin configuration.");
       return pluginsApi.testConfig(pluginId, companyId, configJson);
     },
     onSuccess: (result) => {

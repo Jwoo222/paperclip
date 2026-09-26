@@ -1,0 +1,71 @@
+import { t as tNewUi } from "@/i18n";
+import { t } from "@/i18n";
+import { useState, type ReactNode } from "react";
+import { CheckCircle2, RefreshCw, Star, TriangleAlert, Unplug } from "lucide-react";
+import type { ConnectionGrant } from "@paperclipai/shared";
+import { RevokeGrantDialog } from "@/pages/apps/app-detail/IdentitiesSection";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { AI_PROVIDERS, aiMethodLabel, type AiConnectionSummary } from "./model";
+
+/** AI-only account controls; identity, access and navigation belong to AppDetail. */
+export function AiConnectionAccountControls({
+  account, grant, currentUserId, readOnly, onMakeDefault, onReconnect, onRevoke, revocationDetails,
+}: {
+  account: AiConnectionSummary;
+  grant: ConnectionGrant;
+  currentUserId: string;
+  readOnly?: boolean;
+  onMakeDefault: () => void;
+  onReconnect: () => void;
+  onRevoke: () => void | Promise<void>;
+  revocationDetails?: ReactNode;
+}) {
+  const [revoking, setRevoking] = useState(false);
+  const [revokePending, setRevokePending] = useState(false);
+  const [revokeError, setRevokeError] = useState<string>();
+  const ownPersonal = account.ownership === "personal" && account.ownerUserId === currentUserId;
+  const available = account.status === "connected";
+  const activeDefault = account.isDefault && available;
+  return (
+    <section className="space-y-4" aria-label={tNewUi("newUi.kda99238211bc")}>
+      {ownPersonal && (
+        <div className={cn(
+          "flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3",
+          activeDefault && "border-(--status-task-done)/30 bg-(--status-task-done)/5",
+        )}>
+          <div className="flex items-center gap-3">
+            <Star aria-hidden className={cn("size-5 shrink-0", activeDefault ? "fill-current text-(--status-task-icon-done)" : "text-muted-foreground")} />
+            <div>
+              <h3 className="text-sm font-semibold">{tNewUi("newUi.ka74362e5c561")}</h3>
+              <p className="text-xs text-muted-foreground">{tNewUi("newUi.kfffd8c01e219")} {AI_PROVIDERS[account.provider].name} {tNewUi("newUi.k085154084c74")}</p>
+            </div>
+          </div>
+          {account.isDefault ? (
+            <span role="status" className={cn("inline-flex items-center gap-1.5 text-sm font-medium", available ? "text-(--status-task-icon-done)" : "text-destructive")}>
+              {available ? <CheckCircle2 className="size-4" aria-hidden /> : <TriangleAlert className="size-4" aria-hidden />}
+              {available ? tNewUi("newUi.k2b2bd088e54f") : tNewUi("newUi.kf7828b0e1dce")}
+            </span>
+          ) : !readOnly ? (
+            <Button variant="outline" size="sm" disabled={!available} onClick={onMakeDefault}>{t("secretsResidual.makeDefault")}</Button>
+          ) : <span className="text-xs text-muted-foreground">{tNewUi("newUi.k589f9ad8d19d")}</span>}
+        </div>
+      )}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0 text-sm">
+          <p className="font-medium">{aiMethodLabel(account.provider, account.method)}</p>
+          {account.accountLabel && <p className="break-words text-xs text-muted-foreground">{account.accountLabel}</p>}
+        </div>
+        {!readOnly && grant.capabilities?.canRevoke && (
+          <div className="flex flex-wrap items-center gap-2">
+            {<Button variant="outline" size="sm" onClick={onReconnect}><RefreshCw className="size-4" aria-hidden />{t("environmentsExtra.reconnect")}</Button>}
+            {account.status !== "revoked" && <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setRevoking(true)}><Unplug className="size-4" aria-hidden />{tNewUi("newUi.kc8534276405e")}</Button>}
+          </div>
+        )}
+      </div>
+      {revoking && <RevokeGrantDialog grant={grant} providerName={account.name} pending={revokePending} credentialPolicy={account.ownership === "shared" ? "shared" : "per_user"} isOwnIdentity={account.ownerUserId === currentUserId}
+        description={tNewUi("newUi.k103d4019f362")}
+        onCancel={() => setRevoking(false)} onConfirm={async () => { setRevokePending(true); setRevokeError(undefined); try { await onRevoke(); setRevoking(false); } catch (error) { setRevokeError(error instanceof Error ? error.message : tNewUi("newUi.ke7071c1cd1dc")); } finally { setRevokePending(false); } }}>{revokeError && <p role="alert" className="text-sm text-destructive">{revokeError}</p>}{revocationDetails}</RevokeGrantDialog>}
+    </section>
+  );
+}

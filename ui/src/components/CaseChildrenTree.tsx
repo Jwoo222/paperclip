@@ -28,7 +28,7 @@ export function CaseChildrenTree({
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   if (children.length === 0) {
-    return <p className="text-xs text-muted-foreground">{t("casesExtra.detail.children")} {t("casesExtra.detail.noneYet")}</p>;
+    return <p className="text-xs text-muted-foreground">{t("casesExtra.detail.noChildCases")}</p>;
   }
 
   const shouldCap = maxVisible != null && children.length > maxVisible;

@@ -5,6 +5,7 @@
     "copyLink": "링크 복사",
     "copyNoticeText": "알림 내용 복사",
     "copySystemNotice": "시스템 알림 복사",
+    "copySystemNoticeLink": "시스템 알림 링크 복사",
     "copyFailed": "복사하지 못했습니다",
     "unableToCopyText": "텍스트를 복사할 수 없습니다",
     "unableToCopyMessage": "메시지를 복사할 수 없습니다",

@@ -29,7 +29,7 @@
     "copyLink": "Copy link",
     "oneComment": "1 comment",
     "commentCount": "{{count}} comments",
-    "agent": "Agent",
+    "agent": "agent",
     "board": "Board"
   }
 }

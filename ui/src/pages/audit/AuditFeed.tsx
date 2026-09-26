@@ -1,3 +1,4 @@
+import { AgentAvatar } from "@/components/AgentAvatar";
 import { useEffect, useMemo, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Download, ScrollText, ShieldAlert } from "lucide-react";
@@ -15,7 +16,6 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Identity } from "@/components/Identity";
-import { AgentIcon } from "@/components/AgentIconPicker";
 import { cn, relativeTime } from "@/lib/utils";
 import { queryKeys } from "@/lib/queryKeys";
 import { formatActivityVerb } from "@/lib/activity-format";
@@ -31,27 +31,30 @@ const PAGE_SIZE = 50;
 const ALL = "__all";
 
 /** Action-domain prefixes offered in the filter (server does a prefix match). */
-const ACTION_DOMAINS: { value: string; label: string }[] = [
-  { value: ALL, label: "auditRuntime.feed.filters.allActions" },
-  { value: "issue.", label: "auditRuntime.feed.filters.tasks" },
-  { value: "agent.", label: "auditRuntime.feed.filters.agents" },
-  { value: "heartbeat.", label: "auditRuntime.feed.filters.runs" },
-  { value: "approval.", label: "auditRuntime.feed.filters.approvals" },
-  { value: "project.", label: "auditRuntime.feed.filters.projects" },
-  { value: "goal.", label: "auditRuntime.feed.filters.goals" },
-  { value: "tool_gateway.", label: "auditRuntime.feed.filters.tools" },
-  { value: "cost.", label: "auditRuntime.feed.filters.costs" },
-  { value: "company.", label: "auditRuntime.feed.filters.company" },
+const ACTION_DOMAINS: { value: string; labelKey: string }[] = [
+  { value: ALL, labelKey: "allActions" },
+  { value: "issue.", labelKey: "tasks" },
+  { value: "agent.", labelKey: "agents" },
+  { value: "heartbeat.", labelKey: "runs" },
+  { value: "approval.", labelKey: "approvals" },
+  { value: "project.", labelKey: "projects" },
+  { value: "goal.", labelKey: "goals" },
+  { value: "tool_", labelKey: "tools" },
+  { value: "cost.", labelKey: "costs" },
+  { value: "company.", labelKey: "company" },
 ];
 
 /** Entity types offered in the filter (server does an exact match). */
-const ENTITY_TYPES: { value: string; label: string }[] = [
-  { value: ALL, label: "auditRuntime.feed.filters.allEntities" },
-  { value: "issue", label: "auditRuntime.feed.filters.task" },
-  { value: "agent", label: "auditRuntime.feed.filters.agent" },
-  { value: "project", label: "auditRuntime.feed.filters.project" },
-  { value: "goal", label: "auditRuntime.feed.filters.goal" },
-  { value: "company", label: "auditRuntime.feed.filters.entityCompany" },
+const ENTITY_TYPES: { value: string; labelKey: string }[] = [
+  { value: ALL, labelKey: "allEntities" },
+  { value: "issue", labelKey: "task" },
+  { value: "agent", labelKey: "agent" },
+  { value: "heartbeat_run", labelKey: "run" },
+  { value: "routine", labelKey: "routine" },
+  { value: "project", labelKey: "project" },
+  { value: "goal", labelKey: "goal" },
+  { value: "company", labelKey: "entityCompany" },
+  { value: "tool_connection", labelKey: "connection" },
 ];
 
 /**
@@ -68,6 +71,10 @@ export interface AuditFeedProps {
    * agent filter is hidden and every query/export carries this agentId.
    */
   lockedAgentId?: string;
+  /** Pin the feed to one run while preserving the existing run-detail links. */
+  lockedRunId?: string;
+  /** Pin the feed to an entity such as a routine. */
+  lockedEntity?: { type: string; id: string; label?: string };
   /** Hide the section header/description (the AgentDetail tab supplies its own chrome). */
   hideHeader?: boolean;
   /**
@@ -77,6 +84,9 @@ export interface AuditFeedProps {
    */
   mode?: AuditFeedMode;
   onModeChange?: (mode: AuditFeedMode) => void;
+  /** Optional controlled action prefix, used by links from connection testing. */
+  actionDomain?: string;
+  onActionDomainChange?: (actionDomain: string) => void;
 }
 
 function toStartIso(value: string): string | undefined {
@@ -114,7 +124,7 @@ function AuditActor({
     return (
       <span className="inline-flex min-w-0 items-center gap-1.5" title={agent.name}>
         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-          <AgentIcon icon={agent.icon} className="h-3 w-3" />
+          <AgentAvatar agent={agent} size={16} className="h-3 w-3"/>
         </span>
         <span className="truncate font-medium text-foreground">{agent.name}</span>
       </span>
@@ -166,6 +176,18 @@ function AuditEntityNode({ record }: { record: AuditActionRecord }) {
   if (document) {
     return <span className="font-medium text-foreground">{document.key}</span>;
   }
+  const connectionId = record.entityType === "tool_connection"
+    ? record.entityId
+    : typeof record.details?.connectionId === "string"
+      ? record.details.connectionId
+      : null;
+  if (connectionId) {
+    return (
+      <Link to={`/apps/${connectionId}/permissions`} className="font-medium text-primary hover:underline">
+        the connection
+      </Link>
+    );
+  }
   // Non-linkable entities (company, agent, goal, …) — show a plain descriptor.
   return <span className="text-muted-foreground">{record.entityType}</span>;
 }
@@ -180,7 +202,9 @@ function AuditRow({
   userProfileMap: Map<string, CompanyUserProfile>;
 }) {
   const { t } = useTranslation();
-  const verb = formatActivityVerb(record.action, record.details, { agentMap, userProfileMap });
+  const verb = t(`activity.actions.${record.action.replaceAll(".", "_")}`, {
+    defaultValue: formatActivityVerb(record.action, record.details, { agentMap, userProfileMap }),
+  });
   const responsible = record.responsibleUserId ? userProfileMap.get(record.responsibleUserId) : null;
   // Suppress the "on behalf of" chip when the human actor *is* the responsible user.
   const showOnBehalf = Boolean(
@@ -261,15 +285,24 @@ function AuditUpsell() {
 export function AuditFeed({
   companyId,
   lockedAgentId,
+  lockedRunId,
+  lockedEntity,
   hideHeader,
   mode,
   onModeChange,
+  actionDomain: controlledActionDomain,
+  onActionDomainChange,
 }: AuditFeedProps) {
   const { pushToast } = useToastActions();
   const { t } = useTranslation();
   const [agent, setAgent] = useState<string>(ALL);
   const [responsibleUser, setResponsibleUser] = useState<string>(ALL);
-  const [actionDomain, setActionDomain] = useState<string>(ALL);
+  const [localActionDomain, setLocalActionDomain] = useState<string>(ALL);
+  const actionDomain = controlledActionDomain ?? localActionDomain;
+  const setActionDomain = (next: string) => {
+    setLocalActionDomain(next);
+    onActionDomainChange?.(next);
+  };
   const [entityType, setEntityType] = useState<string>(ALL);
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
@@ -298,14 +331,17 @@ export function AuditFeed({
   // The per-agent tab keeps the legacy privileged scope because it always
   // carries an attribution filter and must not silently downgrade to the basic
   // tier. Everywhere else the mode picks the scope, defaulting to all actors.
-  const resolvedMode: AuditFeedMode = lockedAgentId ? "agents" : mode ?? "all";
+  const resolvedMode: AuditFeedMode = lockedAgentId || lockedRunId ? "agents" : mode ?? "all";
+  const hasLockedScope = Boolean(lockedAgentId || lockedRunId || lockedEntity);
 
   const filters: AuditActionFilters = {
     actorScope: resolvedMode,
     agentId: lockedAgentId ?? (agent === ALL ? undefined : agent),
+    runId: lockedRunId,
     responsibleUserId: responsibleUser === ALL ? undefined : responsibleUser,
     action: actionDomain === ALL ? undefined : actionDomain,
-    entityType: entityType === ALL ? undefined : entityType,
+    entityType: lockedEntity?.type ?? (entityType === ALL ? undefined : entityType),
+    entityId: lockedEntity?.id,
     from: toStartIso(dateFrom),
     to: toEndIso(dateTo),
   };
@@ -318,14 +354,19 @@ export function AuditFeed({
       || dateFrom
       || dateTo,
   );
+  const hasPrivilegedFilters = Boolean(
+    !hasLockedScope && (agent !== ALL || responsibleUser !== ALL),
+  );
 
   const feed = useInfiniteQuery({
     queryKey: queryKeys.audit.agentActions(companyId, {
       actorScope: filters.actorScope,
       agentId: filters.agentId,
+      runId: filters.runId,
       responsibleUserId: filters.responsibleUserId,
       action: filters.action,
       entityType: filters.entityType,
+      entityId: filters.entityId,
       from: filters.from,
       to: filters.to,
     }),
@@ -353,7 +394,7 @@ export function AuditFeed({
   // page as authoritative until every cached page has been fetched again.
   const accessTier = hasBasicPage ? "basic" : feed.data?.pages[0]?.accessTier;
   const hasMixedAccessTiers = hasBasicPage && hasFullPage;
-  const canUseAdvancedControls = lockedAgentId
+  const canUseAdvancedControls = lockedAgentId || lockedRunId
     ? true
     : accessTier === "full";
   // The recovery refetch below gets one shot. If it does not clear the mixed
@@ -368,23 +409,22 @@ export function AuditFeed({
     hasMixedAccessTiers && downgradeRecoveryAttempted && !feed.isFetching,
   );
   const recoveringFromAccessDowngrade = Boolean(
-    !lockedAgentId
+    !hasLockedScope
       && !downgradeRecoveryExhausted
-      && ((permissionDenied && hasActiveFilters) || hasMixedAccessTiers),
+      && ((permissionDenied && hasPrivilegedFilters) || hasMixedAccessTiers),
   );
   // A reader without `audit:view_agent_actions` can still land on the
   // agent-actions mode through an old `/audit` deep link. Drop them into the
   // shared all-activity feed instead of blocking the whole page with the upsell.
   const fallingBackToAllActivity = Boolean(
-    permissionDenied && !lockedAgentId && resolvedMode === "agents" && onModeChange,
+    permissionDenied && !hasLockedScope && resolvedMode === "agents" && onModeChange,
   );
-  // The privileged mode is only offered to callers the server already answered
-  // at the full tier — everyone else just gets the basic all-activity feed.
+  // Keep both modes explicit in the Audit IA. Basic readers can see that Agent
+  // Actions exists, but cannot switch into the privileged scope.
   const showModeToggle = Boolean(
-    !lockedAgentId
+    !hasLockedScope
       && onModeChange
       && !fallingBackToAllActivity
-      && (resolvedMode === "agents" || accessTier === "full"),
   );
 
   useEffect(() => {
@@ -392,15 +432,11 @@ export function AuditFeed({
   }, [fallingBackToAllActivity, onModeChange]);
 
   useEffect(() => {
-    if (!lockedAgentId && (accessTier === "basic" || recoveringFromAccessDowngrade)) {
+    if (!hasLockedScope && (accessTier === "basic" || recoveringFromAccessDowngrade)) {
       setAgent(ALL);
       setResponsibleUser(ALL);
-      setActionDomain(ALL);
-      setEntityType(ALL);
-      setDateFrom("");
-      setDateTo("");
     }
-  }, [accessTier, hasMixedAccessTiers, lockedAgentId, recoveringFromAccessDowngrade]);
+  }, [accessTier, hasLockedScope, recoveringFromAccessDowngrade]);
 
   // Recover from a mid-pagination downgrade with exactly one refetch. `feed`
   // gets a new identity on every render, so an unguarded refetch here re-fires
@@ -430,9 +466,11 @@ export function AuditFeed({
       const blob = await auditApi.exportAgentActionsCsv(companyId, {
         actorScope: filters.actorScope,
         agentId: filters.agentId,
+        runId: filters.runId,
         responsibleUserId: filters.responsibleUserId,
         action: filters.action,
         entityType: filters.entityType,
+        entityId: filters.entityId,
         from: filters.from,
         to: filters.to,
       });
@@ -467,7 +505,7 @@ export function AuditFeed({
       {!hideHeader ? (
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-lg font-semibold text-foreground">{t("auditRuntime.feed.activity")}</h1>
+            <h2 className="text-lg font-semibold text-foreground">{t("auditRuntime.feed.activity")}</h2>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
               {resolvedMode === "agents"
                 ? t("auditRuntime.feed.agentDescription")
@@ -481,14 +519,31 @@ export function AuditFeed({
         <Tabs value={resolvedMode} onValueChange={(value) => onModeChange?.(value as AuditFeedMode)}>
           <TabsList aria-label={t("auditRuntime.feed.activityScope")}>
             <TabsTrigger value="all">{t("auditRuntime.feed.allActivity")}</TabsTrigger>
-            <TabsTrigger value="agents">{t("auditRuntime.feed.agentActions")}</TabsTrigger>
+            <TabsTrigger
+              value="agents"
+              disabled={accessTier === "basic"}
+              title={accessTier === "basic" ? t("auditRuntime.feed.agentActionsRequiresAccess") : undefined}
+            >
+              {t("auditRuntime.feed.agentActions")}
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       ) : null}
 
-      {canUseAdvancedControls ? (
-        <div className="flex flex-wrap items-center gap-2">
-          {!lockedAgentId ? (
+      {hasLockedScope ? (
+        <div className="border-y border-border px-1 py-2 text-xs text-muted-foreground">
+          {lockedRunId
+            ? t("auditRuntime.feed.scopedToRun", { id: lockedRunId.slice(0, 8) })
+            : lockedAgentId
+               ? t("auditRuntime.feed.scopedToAgent")
+               : t("auditRuntime.feed.scopedToEntity", { name: lockedEntity?.label ?? lockedEntity?.type ?? t("auditRuntime.feed.filters.entity") })}
+        </div>
+      ) : null}
+
+      <div className="flex flex-wrap items-end gap-3 border-y border-border py-3">
+        {canUseAdvancedControls && !lockedAgentId && !lockedRunId ? (
+          <label className="grid gap-1 text-(length:--text-micro) font-medium text-muted-foreground">
+            <span>{t("auditRuntime.feed.filters.agent")}</span>
             <Select value={agent} onValueChange={setAgent}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder={t("auditRuntime.feed.filters.agent")} />
@@ -502,45 +557,61 @@ export function AuditFeed({
                 ))}
               </SelectContent>
             </Select>
-          ) : null}
-          <Select value={responsibleUser} onValueChange={setResponsibleUser}>
-            {/* Wide enough for "All responsible users" — w-44 truncated it. */}
-            <SelectTrigger className="w-52">
-              <SelectValue placeholder={t("auditRuntime.feed.filters.responsibleUser")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{t("auditRuntime.feed.filters.allResponsibleUsers")}</SelectItem>
-              {(userDirectory.data?.users ?? []).map((u) => (
-                <SelectItem key={u.principalId} value={u.principalId}>
-                  {u.user?.name ?? u.user?.email ?? u.principalId.slice(0, 8)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          </label>
+        ) : null}
+        {canUseAdvancedControls ? (
+          <label className="grid gap-1 text-(length:--text-micro) font-medium text-muted-foreground">
+            <span>{t("auditRuntime.feed.filters.responsibleUser")}</span>
+            <Select value={responsibleUser} onValueChange={setResponsibleUser}>
+              {/* Wide enough for "All responsible users" — w-44 truncated it. */}
+              <SelectTrigger className="w-52">
+                <SelectValue placeholder={t("auditRuntime.feed.filters.responsibleUser")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>{t("auditRuntime.feed.filters.allResponsibleUsers")}</SelectItem>
+                {(userDirectory.data?.users ?? []).map((u) => (
+                  <SelectItem key={u.principalId} value={u.principalId}>
+                    {u.user?.name ?? u.user?.email ?? u.principalId.slice(0, 8)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </label>
+        ) : null}
+        <label className="grid gap-1 text-(length:--text-micro) font-medium text-muted-foreground">
+          <span>{t("auditRuntime.feed.filters.action")}</span>
           <Select value={actionDomain} onValueChange={setActionDomain}>
-            <SelectTrigger className="w-36">
+            <SelectTrigger className="w-40">
               <SelectValue placeholder={t("auditRuntime.feed.filters.action")} />
             </SelectTrigger>
             <SelectContent>
               {ACTION_DOMAINS.map((d) => (
                 <SelectItem key={d.value} value={d.value}>
-                  {t(d.label)}
+                  {t(`auditRuntime.feed.filters.${d.labelKey}`)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Select value={entityType} onValueChange={setEntityType}>
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder={t("auditRuntime.feed.filters.entity")} />
-            </SelectTrigger>
-            <SelectContent>
-              {ENTITY_TYPES.map((e) => (
-                <SelectItem key={e.value} value={e.value}>
-                  {t(e.label)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        </label>
+        {!lockedEntity ? (
+          <label className="grid gap-1 text-(length:--text-micro) font-medium text-muted-foreground">
+            <span>{t("auditRuntime.feed.filters.entity")}</span>
+            <Select value={entityType} onValueChange={setEntityType}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder={t("auditRuntime.feed.filters.entity")} />
+              </SelectTrigger>
+              <SelectContent>
+                {ENTITY_TYPES.map((e) => (
+                  <SelectItem key={e.value} value={e.value}>
+                  {t(`auditRuntime.feed.filters.${e.labelKey}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </label>
+        ) : null}
+        <label className="grid gap-1 text-(length:--text-micro) font-medium text-muted-foreground">
+          <span>{t("auditRuntime.feed.filters.fromDate")}</span>
           <Input
             type="date"
             aria-label={t("auditRuntime.feed.filters.fromDate")}
@@ -549,6 +620,9 @@ export function AuditFeed({
             onChange={(e) => setDateFrom(e.target.value)}
             className="w-36"
           />
+        </label>
+        <label className="grid gap-1 text-(length:--text-micro) font-medium text-muted-foreground">
+          <span>{t("auditRuntime.feed.filters.toDate")}</span>
           <Input
             type="date"
             aria-label={t("auditRuntime.feed.filters.toDate")}
@@ -557,11 +631,13 @@ export function AuditFeed({
             onChange={(e) => setDateTo(e.target.value)}
             className="w-36"
           />
-          {hasActiveFilters ? (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              {t("appsResidualRound3.clearFilters")}
-            </Button>
-          ) : null}
+        </label>
+        {hasActiveFilters ? (
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+            {t("auditRuntime.common.clearFilters")}
+          </Button>
+        ) : null}
+        {canUseAdvancedControls ? (
           <Button
             variant="outline"
             size="sm"
@@ -572,8 +648,8 @@ export function AuditFeed({
             <Download className="mr-1.5 h-4 w-4" />
             {exporting ? t("auditRuntime.common.exporting") : t("auditRuntime.common.exportCsv")}
           </Button>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
       {recoveringFromAccessDowngrade || fallingBackToAllActivity ? (
         <Card>
@@ -608,8 +684,8 @@ export function AuditFeed({
                 {hasActiveFilters
                   ? t("auditRuntime.feed.tryWider")
                   : resolvedMode === "agents"
-                    ? t("auditRuntime.feed.agentsAppear")
-                    : t("auditRuntime.feed.companyAppears")}
+                    ? "As soon as your agents start doing things, their actions show up here."
+                    : "As soon as anyone in your organization does something, it shows up here."}
               </p>
             </div>
             {hasActiveFilters ? (
@@ -620,20 +696,18 @@ export function AuditFeed({
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardContent className="px-0 py-0">
-            <ul className={cn("divide-y divide-border")}>
-              {items.map((record) => (
-                <AuditRow
-                  key={record.id}
-                  record={record}
-                  agentMap={agentMap}
-                  userProfileMap={userProfileMap}
-                />
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        <div className="border-y border-border">
+          <ul className={cn("divide-y divide-border")} aria-label="Audit activity">
+            {items.map((record) => (
+              <AuditRow
+                key={record.id}
+                record={record}
+                agentMap={agentMap}
+                userProfileMap={userProfileMap}
+              />
+            ))}
+          </ul>
+        </div>
       )}
 
       {feed.hasNextPage ? (

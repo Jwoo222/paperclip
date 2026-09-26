@@ -50,9 +50,9 @@ export function ProfileActionDialog({
     delete: {
       title: t("toolsAdvanced.residual.deleteProfile"),
       body: defaultDeleteBlocked
-        ? t("toolsAdvanced.residual.deleteDefaultBody")
-        : t("toolsAdvanced.residual.deleteBody", { count: profile.summary.assignmentCount }),
-      confirm: t("toolsAdvanced.residual.delete"),
+        ? "This profile is the organization default. Reassign the organization default to another profile before deleting it."
+        : `This permanently deletes the profile and removes ${profile.summary.assignmentCount} ${profile.summary.assignmentCount === 1 ? "assignment" : "assignments"}.`,
+      confirm: "Delete",
       action: onDelete,
     },
   }[kind];
@@ -67,7 +67,7 @@ export function ProfileActionDialog({
         {defaultDeleteBlocked ? (
           <div className="flex gap-3 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>{t("toolsAdvanced.residual.companyDefaultRequired")}</span>
+            <span>Choose another access profile and make it the organization default first.</span>
           </div>
         ) : null}
         <DialogFooter>

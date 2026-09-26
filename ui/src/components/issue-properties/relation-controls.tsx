@@ -3,6 +3,12 @@ import type { Issue } from "@paperclipai/shared";
 import { Link } from "@/lib/router";
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Dialog,
   DialogClose,
   DialogContent,
@@ -11,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { X } from "lucide-react";
+import { ArrowUpRight, X } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { StatusIcon } from "../StatusIcon";
 import { useTranslation } from "@/i18n";
@@ -19,9 +25,11 @@ import { useTranslation } from "@/i18n";
 export function RemovableIssueReferencePill({
   issue,
   onRemove,
+  isMobile = false,
 }: {
   issue: NonNullable<Issue["blockedBy"]>[number];
   onRemove: (issueId: string) => void;
+  isMobile?: boolean;
 }) {
   const { t } = useTranslation();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -38,11 +46,12 @@ export function RemovableIssueReferencePill({
       <span className="truncate">{issueLabel}</span>
     </>
   );
-  const removeLabel = t("taskDetail.removeBlockerDescription", { label: issueLabel });
+  const removeLabel = `Remove ${issueLabel} as blocker`;
+  const openRemoveConfirmation = () => setIsConfirmOpen(true);
   const handleRemove = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    setIsConfirmOpen(true);
+    openRemoveConfirmation();
   };
   const confirmRemove = () => {
     onRemove(issue.id);
@@ -52,34 +61,66 @@ export function RemovableIssueReferencePill({
   return (
     <>
       <span className="group relative inline-flex">
-        <button
-          type="button"
-          className="absolute -right-1 -top-1 z-10 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-border bg-background text-muted-foreground opacity-0 shadow-sm transition-colors transition-opacity hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-(length:--rad-2) focus-visible:ring-ring group-hover:opacity-100"
-          aria-label={removeLabel}
-          title={removeLabel}
-          onClick={handleRemove}
-        >
-          <X className="h-3 w-3" />
-        </button>
-        {issue.identifier ? (
-          <Link
-            to={`/issues/${issueLabel}`}
-            data-mention-kind="issue"
-            className={chipClassName}
-            title={issue.title}
-            aria-label={`Task ${issueLabel}: ${issue.title}`}
-          >
-            {content}
-          </Link>
+        {isMobile ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                data-mention-kind="issue"
+                className={chipClassName}
+                title={issue.title}
+                aria-label={`Actions for blocker ${issueLabel}`}
+              >
+                {content}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {issue.identifier ? (
+                <DropdownMenuItem asChild>
+                  <Link to={`/issues/${issue.identifier}`}>
+                    <ArrowUpRight className="h-4 w-4" />
+                    Visit task
+                  </Link>
+                </DropdownMenuItem>
+              ) : null}
+              <DropdownMenuItem variant="destructive" onSelect={openRemoveConfirmation}>
+                <X className="h-4 w-4" />
+                Remove blocker
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : (
-          <span
-            data-mention-kind="issue"
-            className={chipClassName}
-            title={issue.title}
-            aria-label={`Task: ${issue.title}`}
-          >
-            {content}
-          </span>
+          <>
+            <button
+              type="button"
+              className="absolute -right-1 -top-1 z-10 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-border bg-background text-muted-foreground opacity-0 shadow-sm transition-colors transition-opacity hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-(length:--rad-2) focus-visible:ring-ring group-hover:opacity-100"
+              aria-label={removeLabel}
+              title={removeLabel}
+              onClick={handleRemove}
+            >
+              <X className="h-3 w-3" />
+            </button>
+            {issue.identifier ? (
+              <Link
+                to={`/issues/${issue.identifier}`}
+                data-mention-kind="issue"
+                className={chipClassName}
+                title={issue.title}
+                aria-label={`Task ${issueLabel}: ${issue.title}`}
+              >
+                {content}
+              </Link>
+            ) : (
+              <span
+                data-mention-kind="issue"
+                className={chipClassName}
+                title={issue.title}
+                aria-label={`Task: ${issue.title}`}
+              >
+                {content}
+              </span>
+            )}
+          </>
         )}
       </span>
       <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>

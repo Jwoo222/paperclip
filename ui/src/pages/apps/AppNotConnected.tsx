@@ -1,32 +1,24 @@
 import { useEffect, useMemo } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { ToolConnection } from "@paperclipai/shared";
-import {
-  connectionDisplaySecondaryHint,
-  humanizeConnectionDisplayName,
-  isToolConnectionAttentionHealth,
-} from "@paperclipai/shared";
+import { isConnectableAppSlug } from "@paperclipai/shared";
 import { Navigate, useNavigate, useParams } from "@/lib/router";
 import { useCompany } from "@/context/CompanyContext";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
-import { useToast } from "@/context/ToastContext";
 import { queryKeys } from "@/lib/queryKeys";
-import { timeAgo } from "@/lib/timeAgo";
 import { toolsApi } from "@/api/tools";
-import { agentsApi } from "@/api/agents";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppLogo } from "./AppLogo";
 import {
   appApplicationSourceSlug,
+  appDefinitionDarkLogoUrl,
   appDefinitionLogoUrl,
   appDefinitionName,
   appDefinitionSlug,
   type AppGalleryDisplayEntry,
 } from "./app-definition-display";
-import { isMcpDirectOAuthConnectSlug } from "./app-connect-policy";
-import { connectionAddress, connectionTransportLabel, DangerZone } from "./AppDetail";
-import { ActivityPanel } from "./app-detail/ActivityPanel";
+import { connectionAddress } from "./AppDetail";
 import { ReviewPanel } from "./app-detail/ReviewPanel";
 import { appApplicationTabHref, appTabHref, appTabLabel, isAppTabKey, type AppTabKey } from "./app-tabs";
 import { useTranslation } from "@/i18n";
@@ -35,9 +27,7 @@ export function AppNotConnected() {
   const { t } = useTranslation();
   const { applicationId = "", tab } = useParams<{ applicationId: string; tab?: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { pushToast } = useToast();
-  const { selectedCompany, selectedCompanyId } = useCompany();
+  const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const activeTab: AppTabKey | null = isAppTabKey(tab) ? tab : null;
 
@@ -81,54 +71,34 @@ export function AppNotConnected() {
   );
   const activeConnection = activeConnections[0] ?? null;
   const previousConnection = useMemo(() => latestArchivedConnection(appConnections), [appConnections]);
-  const activityQuery = useQuery({
-    queryKey: queryKeys.tools.connectionActivity(previousConnection?.id ?? "__none__"),
-    queryFn: () => toolsApi.listConnectionActivity(previousConnection!.id, 20),
-    enabled: !!previousConnection && activeTab === "activity",
-  });
-  const agentsQuery = useQuery({
-    queryKey: queryKeys.agents.list(selectedCompanyId ?? "__none__"),
-    queryFn: () => agentsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId && activeTab === "activity",
+  const grantsQuery = useQuery({
+    queryKey: queryKeys.tools.connectionGrants(previousConnection?.id ?? "__none__"),
+    queryFn: () => toolsApi.listConnectionGrants(previousConnection!.id),
+    enabled: !!previousConnection && !!activeTab,
   });
 
   const appName = application?.name ?? t("integrations.common.apps");
   useEffect(() => {
     if (!activeTab) return;
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? t("integrations.common.company"), href: "/dashboard" },
-      { label: t("integrations.common.apps"), href: "/apps" },
-      { label: appName, href: appApplicationTabHref(applicationId, "setup") },
+      { label: "Connectors", href: "/apps" },
+      { label: appName, href: appApplicationTabHref(applicationId, "permissions") },
       { label: appTabLabel(activeTab) },
     ]);
     return () => setBreadcrumbs([]);
-  }, [setBreadcrumbs, selectedCompany?.name, appName, applicationId, activeTab]);
+  }, [setBreadcrumbs, appName, applicationId, activeTab]);
 
-  const remove = useMutation({
-    mutationFn: () => toolsApi.updateApplication(applicationId, { status: "archived" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tools.applications(selectedCompanyId ?? "__none__") });
-      pushToast({
-        title: t("appsBrowserGateway.notConnected.removed"),
-        body: t("appsBrowserGateway.notConnected.removedBody", { name: appName }),
-        tone: "success",
-      });
-      navigate("/apps/connections");
-    },
-    onError: (error) => {
-      pushToast({
-        title: t("appsBrowserGateway.notConnected.removeFailed"),
-        body: error instanceof Error ? error.message : t("integrations.common.pleaseTryAgain"),
-        tone: "error",
-      });
-    },
-  });
-
+  if (tab === "activity") {
+    return <Navigate to="/activity?action=tool_" replace />;
+  }
+  if (tab === "setup" || tab === "test") {
+    return <Navigate to={appApplicationTabHref(applicationId, "permissions")} replace />;
+  }
   if (!selectedCompanyId) {
-    return <div className="p-6 text-sm text-muted-foreground">{t("appsBrowserGateway.connections.selectCompany")}</div>;
+    return <div className="p-6 text-sm text-muted-foreground">Select an organization to manage apps.</div>;
   }
   if (!applicationId || !activeTab) {
-    return <Navigate to={applicationId ? appApplicationTabHref(applicationId, "setup") : "/apps/connections"} replace />;
+    return <Navigate to={applicationId ? appApplicationTabHref(applicationId, "permissions") : "/apps"} replace />;
   }
   if (applicationsQuery.isLoading || connectionsQuery.isLoading) {
     return (
@@ -141,30 +111,58 @@ export function AppNotConnected() {
   if (!application) {
     return (
       <div className="max-w-3xl space-y-3 p-6 text-sm text-muted-foreground">
-        <p>{t("appsBrowserGateway.notConnected.appMissing")}</p>
-        <Button variant="outline" size="sm" onClick={() => navigate("/apps/connections")}>{t("appsBrowserGateway.notConnected.back")}</Button>
+        <p>This app doesn’t exist anymore.</p>
+        <Button variant="outline" size="sm" onClick={() => navigate("/apps")}>Back to connectors</Button>
       </div>
     );
   }
-  if (activeConnection && activeTab !== "setup") {
+  if (activeConnection) {
     return <Navigate to={appTabHref(activeConnection.id, activeTab)} replace />;
   }
 
   const gallery = (galleryQuery.data?.apps ?? []) as AppGalleryDisplayEntry[];
-  const logoUrl =
-    (appSourceSlug
-      ? appDefinitionLogoUrl(gallery.find((entry) => appDefinitionSlug(entry) === appSourceSlug))
-      : undefined) ??
-    appDefinitionLogoUrl(
-      gallery.find((entry) => appDefinitionName(entry).toLowerCase() === application.name.toLowerCase()),
+  const logoEntry = (appSourceSlug
+    ? gallery.find((entry) => appDefinitionSlug(entry) === appSourceSlug)
+    : undefined) ?? gallery.find(
+      (entry) => appDefinitionName(entry).toLowerCase() === application.name.toLowerCase(),
     );
+  const logoUrl = appDefinitionLogoUrl(logoEntry);
+  const darkLogoUrl = appDefinitionDarkLogoUrl(logoEntry);
 
   const previousAddress = previousConnection ? connectionAddress(previousConnection) : null;
+  const retainedPersonalGrant = previousConnection?.credentialPolicy === "per_user"
+    ? grantsQuery.data?.grants.find((grant) => (
+      grant.kind === "user" && grant.subjectUserId === previousConnection.createdByUserId
+    ))
+      ?? grantsQuery.data?.grants.find((grant) => grant.kind === "user" && grant.status === "active")
+      ?? grantsQuery.data?.grants.find((grant) => grant.kind === "user")
+      ?? null
+    : null;
+  const retainedPersonalUserId = previousConnection?.credentialPolicy === "per_user"
+    ? previousConnection.createdByUserId ?? retainedPersonalGrant?.subjectUserId ?? null
+    : null;
+  const canReconnect = !previousConnection
+    || (previousConnection.credentialPolicy === "per_user"
+      ? Boolean(
+        retainedPersonalUserId
+        && retainedPersonalUserId === grantsQuery.data?.currentUserId
+        && grantsQuery.data?.capabilities.canConnectAsCurrentUser,
+      )
+      : grantsQuery.data?.capabilities.canConfigure === true);
+  const reconnectUnavailableMessage = grantsQuery.isLoading
+    ? "Checking who can reconnect this identity…"
+    : grantsQuery.isError
+      ? "We couldn't verify who can reconnect this identity. Reload the page to try again."
+      : previousConnection?.credentialPolicy === "per_user"
+        && retainedPersonalUserId !== grantsQuery.data?.currentUserId
+        ? "The person this connection belongs to must reconnect it."
+        : "You don't have permission to reconnect this identity.";
   const connectHref = newConnectionHref({
     applicationId,
     appName: application.name,
     previousAddress,
-    sourceSlug: appSourceSlug,
+    previousConnection,
+    sourceSlug: isConnectableAppSlug(appSourceSlug) ? appSourceSlug : null,
   });
 
   return (
@@ -173,19 +171,17 @@ export function AppNotConnected() {
         applicationName={application.name}
         description={application.description}
         logoUrl={logoUrl}
+        darkLogoUrl={darkLogoUrl}
         connectedCount={activeConnections.length}
       />
 
-      {activeTab === "setup" && (
-        <SetupTab
-          applicationName={application.name}
-          activeConnections={activeConnections}
-          previousConnection={previousConnection}
-          previousAddress={previousAddress}
-          onConnect={() => navigate(connectHref)}
-          onEdit={(connectionId) => navigate(appTabHref(connectionId, "setup"))}
-        />
-      )}
+      <ConnectionCallout
+        applicationName={application.name}
+        previousConnection={previousConnection}
+        canReconnect={canReconnect}
+        reconnectUnavailableMessage={reconnectUnavailableMessage}
+        onConnect={() => navigate(connectHref)}
+      />
       {activeTab === "review" && (
         previousConnection ? (
           <ReviewPanel connectionId={previousConnection.id} />
@@ -199,46 +195,6 @@ export function AppNotConnected() {
       {activeTab === "permissions" && (
         <PermissionsTab previousConnection={previousConnection} />
       )}
-      {activeTab === "test" && (
-        <EmptyTab
-          title={t("appsBrowserGateway.notConnected.reconnectThis")}
-          body={t("appsBrowserGateway.notConnected.detailsBody")}
-        />
-      )}
-      {activeTab === "activity" && (
-        previousConnection ? (
-          <ActivityPanel
-            events={activityQuery.data?.events ?? []}
-            lifecycleEvents={activityQuery.data?.lifecycleEvents ?? []}
-            issues={activityQuery.data?.issues ?? {}}
-            actionRequests={activityQuery.data?.actionRequests ?? {}}
-            loading={activityQuery.isLoading}
-            agents={agentsQuery.data ?? []}
-            connectionId={previousConnection.id}
-            appName={appName}
-          />
-        ) : (
-          <ActivityPanel
-            events={[]}
-            lifecycleEvents={[]}
-            issues={{}}
-            actionRequests={{}}
-            loading={false}
-            agents={[]}
-            connectionId=""
-            appName={appName}
-          />
-        )
-      )}
-      {activeTab === "advanced" && (
-        <AdvancedTab
-          appName={application.name}
-          previousConnection={previousConnection}
-          previousAddress={previousAddress}
-          removing={remove.isPending}
-          onRemove={() => remove.mutate()}
-        />
-      )}
     </div>
   );
 }
@@ -247,17 +203,19 @@ function ApplicationHeader({
   applicationName,
   description,
   logoUrl,
+  darkLogoUrl,
   connectedCount,
 }: {
   applicationName: string;
   description: string | null;
   logoUrl: string | undefined;
+  darkLogoUrl: string | undefined;
   connectedCount: number;
 }) {
   const { t } = useTranslation();
   return (
     <header className="flex flex-wrap items-center gap-4">
-      <AppLogo name={applicationName} logoUrl={logoUrl} size={48} />
+      <AppLogo name={applicationName} logoUrl={logoUrl} darkLogoUrl={darkLogoUrl} size={48} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <h1 className="truncate text-2xl font-bold tracking-tight">{applicationName}</h1>
@@ -273,130 +231,40 @@ function ApplicationHeader({
   );
 }
 
-function SetupTab({
+function ConnectionCallout({
   applicationName,
-  activeConnections,
   previousConnection,
-  previousAddress,
+  canReconnect,
+  reconnectUnavailableMessage,
   onConnect,
-  onEdit,
 }: {
   applicationName: string;
-  activeConnections: ToolConnection[];
   previousConnection: ToolConnection | null;
-  previousAddress: string | null;
+  canReconnect: boolean;
+  reconnectUnavailableMessage: string;
   onConnect: () => void;
-  onEdit: (connectionId: string) => void;
-}) {
-  const { t } = useTranslation();
-  if (activeConnections.length > 0) {
-    return (
-      <div className="space-y-6">
-        <section className="space-y-3">
-          <div>
-            <h2 className="text-sm font-bold text-foreground">{t("appsResidualRound3.alreadyConnected", { name: applicationName })}</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              {t("appsResidualRound3.openConnection")}
-            </p>
-          </div>
-          <div className="overflow-hidden rounded-lg border border-border">
-            {activeConnections.map((connection) => {
-              const secondary = connectionDisplaySecondaryHint(connection) ??
-                (connection.lastUsedAt ? t("appsBrowserGateway.notConnected.lastUsed", { time: timeAgo(connection.lastUsedAt) }) : t("appsBrowserGateway.notConnected.notUsed"));
-              const status = connection.enabled === false || connection.status === "disabled"
-                ? t("appsBrowserGateway.connections.paused")
-                : isToolConnectionAttentionHealth(connection.healthStatus)
-                  ? t("appsBrowserGateway.connections.needsAttention")
-                  : t("appsBrowserGateway.connections.healthy");
-              return (
-                <button
-                  key={connection.id}
-                  type="button"
-                  onClick={() => onEdit(connection.id)}
-                  className="flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors last:border-0 hover:bg-muted/30"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-foreground">
-                      {humanizeConnectionDisplayName(connection)}
-                    </div>
-                    <div className="truncate text-xs text-muted-foreground">{secondary}</div>
-                  </div>
-                  <span className="text-xs text-muted-foreground">{status}</span>
-                  <span className="text-xs font-semibold text-primary">{t("appsBrowserGateway.notConnected.edit")}</span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="rounded-xl border border-border bg-card px-5 py-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-sm font-bold text-foreground">{t("appsBrowserGateway.notConnected.connectAnother")}</h2>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                {t("appsBrowserGateway.notConnected.connectAnotherBody", { name: applicationName })}
-              </p>
-            </div>
-            <Button onClick={onConnect}>{t("appsBrowserGateway.notConnected.connectAnother")}</Button>
-          </div>
-        </section>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <section className="rounded-xl border border-border bg-card px-5 py-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-sm font-bold text-foreground">
-              {previousConnection ? t("appsBrowserGateway.notConnected.reconnectThis") : t("appsBrowserGateway.notConnected.connectThis")}
-            </h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              {previousConnection
-                ? t("appsBrowserGateway.notConnected.keptSetup")
-                : t("appsBrowserGateway.notConnected.cannotUse")}
-            </p>
-          </div>
-          <Button onClick={onConnect}>
-            {previousConnection ? t("appsBrowserGateway.connections.reconnect") : t("appsBrowserGateway.connections.connect")}
-          </Button>
-        </div>
-      </section>
-
-      {previousConnection && (
-        <PreviousSetup connection={previousConnection} previousAddress={previousAddress} />
-      )}
-    </div>
-  );
-}
-
-function PreviousSetup({
-  connection,
-  previousAddress,
-}: {
-  connection: ToolConnection;
-  previousAddress: string | null;
 }) {
   const { t } = useTranslation();
   return (
-    <section className="rounded-xl border border-border bg-card px-5 py-4">
-      <h2 className="text-sm font-bold text-foreground">{t("appsBrowserGateway.notConnected.previousSetup")}</h2>
-      {connection.healthMessage && (
-        <p className="mt-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
-          {t("appsBrowserGateway.notConnected.lastError", { message: connection.healthMessage })}
+    <section className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border px-4 py-3">
+      <div>
+        <h2 className="text-sm font-semibold text-foreground">
+          {previousConnection ? "Needs attention" : "Not connected"}
+        </h2>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          {previousConnection
+            ? previousConnection.authKind === "oauth"
+              ? `Sign in to ${applicationName} again to restore access.`
+              : `Add a working ${applicationName} key to restore access.`
+            : `Connect ${applicationName} so agents can use it.`}
         </p>
-      )}
-      <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-(--gtc-59)">
-        <dt className="text-muted-foreground">{t("appsBrowserGateway.notConnected.address")}</dt>
-        <dd className="break-all font-mono text-foreground">{previousAddress}</dd>
-        <dt className="text-muted-foreground">{t("appsBrowserGateway.notConnected.connectionType")}</dt>
-        <dd className="text-foreground">{connectionTransportLabel(connection.transport)}</dd>
-        <dt className="text-muted-foreground">{t("appsBrowserGateway.connections.lastUsed")}</dt>
-        <dd className="text-foreground">
-          {connection.lastUsedAt ? timeAgo(connection.lastUsedAt) : t("appsBrowserGateway.notConnected.never")}
-        </dd>
-      </dl>
+        {previousConnection && !canReconnect ? (
+          <p className="mt-1 text-sm text-muted-foreground">{reconnectUnavailableMessage}</p>
+        ) : null}
+      </div>
+      {!previousConnection || canReconnect ? (
+        <Button onClick={onConnect}>{previousConnection ? "Reconnect" : "Connect"}</Button>
+      ) : null}
     </section>
   );
 }
@@ -404,8 +272,8 @@ function PreviousSetup({
 function PermissionsTab({ previousConnection }: { previousConnection: ToolConnection | null }) {
   const { t } = useTranslation();
   return (
-    <section className="rounded-xl border border-border bg-card px-5 py-4">
-      <h2 className="text-sm font-bold text-foreground">{t("appsBrowserGateway.notConnected.permissionsPaused")}</h2>
+    <section>
+      <h2 className="text-sm font-bold text-foreground">Permissions paused</h2>
       <p className="mt-1 text-sm text-muted-foreground">
         {t("appsBrowserGateway.notConnected.permissionsBody")}
       </p>
@@ -418,38 +286,9 @@ function PermissionsTab({ previousConnection }: { previousConnection: ToolConnec
   );
 }
 
-function AdvancedTab({
-  appName,
-  previousConnection,
-  previousAddress,
-  removing,
-  onRemove,
-}: {
-  appName: string;
-  previousConnection: ToolConnection | null;
-  previousAddress: string | null;
-  removing: boolean;
-  onRemove: () => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <div className="space-y-6">
-      {previousConnection ? (
-        <PreviousSetup connection={previousConnection} previousAddress={previousAddress} />
-      ) : (
-        <EmptyTab
-          title={t("appsBrowserGateway.notConnected.noDetails")}
-          body={t("appsBrowserGateway.notConnected.detailsBody")}
-        />
-      )}
-      <DangerZone appName={appName} removing={removing} onRemove={onRemove} />
-    </div>
-  );
-}
-
 function EmptyTab({ title, body }: { title: string; body: string }) {
   return (
-    <section className="rounded-xl border border-border bg-card px-5 py-4">
+    <section>
       <h2 className="text-sm font-bold text-foreground">{title}</h2>
       <p className="mt-1 text-sm text-muted-foreground">{body}</p>
     </section>
@@ -470,16 +309,39 @@ function newConnectionHref({
   applicationId,
   appName,
   previousAddress,
+  previousConnection,
   sourceSlug,
 }: {
   applicationId: string;
   appName: string;
   previousAddress: string | null;
+  previousConnection: ToolConnection | null;
   sourceSlug: string | null;
 }): string {
   const params = new URLSearchParams({ applicationId, name: appName, new: "1" });
+  if (previousConnection) {
+    params.set("reconnect", previousConnection.id);
+    params.set("identity",
+      previousConnection.credentialPolicy === "per_user"
+        ? "user"
+        : previousConnection.credentialPolicy === "per_agent"
+          ? "agent"
+          : "organization");
+  }
   if (sourceSlug) params.set("source", sourceSlug);
-  if (!isMcpDirectOAuthConnectSlug(sourceSlug)) params.set("byo", "1");
-  if (previousAddress && /^https?:\/\//i.test(previousAddress)) params.set("link", previousAddress);
-  return `/apps/connect?${params.toString()}`;
+  else params.set("byo", "1");
+  const storedLink = [
+    previousConnection?.config?.url,
+    previousConnection?.config?.endpoint,
+    previousConnection?.config?.remoteUrl,
+    previousConnection?.transportConfig.url,
+    previousConnection?.transportConfig.endpoint,
+    previousConnection?.transportConfig.remoteUrl,
+    previousAddress,
+  ].find((value): value is string => typeof value === "string" && /^https?:\/\//i.test(value));
+  if (storedLink) params.set("link", storedLink);
+  const path = previousConnection?.credentialSource === "vercel_connect"
+    ? "/apps/vercel-connect"
+    : "/apps/connect";
+  return `${path}?${params.toString()}`;
 }

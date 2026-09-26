@@ -23,9 +23,9 @@ export function JoinRequestQueue() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? t("joinRequestQueueResidual.company", { defaultValue: "Company" }), href: "/dashboard" },
-      { label: t("joinRequestQueueResidual.inbox", { defaultValue: "Inbox" }), href: "/inbox" },
-      { label: t("joinRequestQueueResidual.joinRequests", { defaultValue: "Join Requests" }) },
+      { label: selectedCompany?.name ?? "Organization", href: "/dashboard" },
+      { label: "Inbox", href: "/inbox" },
+      { label: "Join Requests" },
     ]);
   }, [selectedCompany?.name, setBreadcrumbs, t]);
 
@@ -59,7 +59,7 @@ export function JoinRequestQueue() {
   });
 
   if (!selectedCompanyId) {
-    return <div className="text-sm text-muted-foreground">{t("settingsSecurity.selectCompanyJoinRequests", { defaultValue: "Select a company to review join requests." })}</div>;
+    return <div className="text-sm text-muted-foreground">Select an organization to review join requests.</div>;
   }
 
   if (requestsQuery.isLoading) {
@@ -69,7 +69,7 @@ export function JoinRequestQueue() {
   if (requestsQuery.error) {
     const message =
       requestsQuery.error instanceof ApiError && requestsQuery.error.status === 403
-        ? t("joinRequestQueueResidual.noPermission", { defaultValue: "You do not have permission to review join requests for this company." })
+        ? "You do not have permission to review join requests for this organization."
         : requestsQuery.error instanceof Error
           ? requestsQuery.error.message
           : t("joinRequestQueueResidual.loadFailed", { defaultValue: "Failed to load join requests." });

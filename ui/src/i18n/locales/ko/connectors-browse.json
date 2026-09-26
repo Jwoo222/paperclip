@@ -1,0 +1,28 @@
+{
+  "connectorsBrowse": {
+    "browse": "찾아보기",
+    "developer": "개발자",
+    "developerDescription": "개발자를 위한 고급 설정입니다.",
+    "retiredComposio": "기존 Composio 연결은 더 이상 지원되지 않습니다. 연결 앱에서 새 Composio 연결을 추가한 뒤 이 연결을 제거하세요. 기존 인증 정보와 권한은 자동으로 옮겨지지 않습니다.",
+    "developerTabs": {
+      "gateways": "게이트웨이",
+      "profiles": "프로필",
+      "smoke-lab": "실험실"
+    },
+    "noMatches": "“{{query}}”와 일치하는 연결 앱이 없습니다.",
+    "removeTitle": "{{account}} 연결을 제거할까요?",
+    "thisAccount": "이 계정",
+    "removeChatDescription": "이 연결로 {{provider}}에서 새 업무를 받지 않습니다. 기존 Paperclip 업무와 대화 기록은 유지됩니다. {{provider}}의 앱, 봇 또는 계정은 삭제되지 않습니다.",
+    "removeOtherDescriptionOne": "저장된 인증 정보가 삭제되어 에이전트가 이 연결을 즉시 사용할 수 없게 됩니다. {{provider}}의 다른 활성 연결 {{count}}개는 계속 사용할 수 있습니다.",
+    "removeOtherDescriptionMany": "저장된 인증 정보가 삭제되어 에이전트가 이 연결을 즉시 사용할 수 없게 됩니다. {{provider}}의 다른 활성 연결 {{count}}개는 계속 사용할 수 있습니다.",
+    "removedChat": "{{provider}} 연결이 해제됐습니다. 기존 Paperclip 업무는 유지됩니다.",
+    "removedOtherOne": "{{provider}}에는 에이전트가 사용할 수 있는 활성 연결이 {{count}}개 남아 있습니다.",
+    "removedOtherMany": "{{provider}}에는 에이전트가 사용할 수 있는 활성 연결이 {{count}}개 남아 있습니다.",
+    "removedOtherNone": "에이전트가 이 연결을 통해 {{provider}}를 더는 사용할 수 없습니다. 저장된 인증 정보가 삭제됐습니다.",
+    "chatThrough": "{{provider}}에서 에이전트와 대화합니다.",
+    "manageEndpoint": "{{agent}}의 {{provider}} 연결 관리",
+    "openPermissions": "{{account}}의 권한 열기",
+    "manageConnection": "{{account}} 연결 관리",
+    "actionFor": "{{name}} {{action}}"
+  }
+}

@@ -206,7 +206,7 @@ export function OutputFeedbackButtons({
               {t("sharedOperationsExtra.shareVoteDescription")}
             </p>
             <p>
-              {t("sharedOperationsExtra.changeLater")}
+              You can change this later in Settings &gt; General.
             </p>
             {termsUrl ? (
               <a

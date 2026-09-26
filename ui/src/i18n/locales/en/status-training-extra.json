@@ -25,6 +25,7 @@
       "latestRevision": "Latest revision",
       "setupPending": "Summarizer setup is pending approval",
       "setupSummarizer": "Set up the Summarizer",
+      "setupSummarizerButton": "Set up Summarizer",
       "summarizerPaused": "Summarizer is paused",
       "resuming": "Resuming...",
       "resumeAgent": "Resume agent",

@@ -1,7 +1,8 @@
+import { requiresExecutionReconciliation } from "@paperclipai/shared";
 import type { ReactNode } from "react";
 import type { ExternalObjectSummary, Issue, IssueRecoveryAction } from "@paperclipai/shared";
 import { Link } from "@/lib/router";
-import { Archive, Eye, Flag } from "lucide-react";
+import { Archive, Flag } from "lucide-react";
 import {
   createIssueDetailPath,
   rememberIssueDetailLocationState,
@@ -11,31 +12,44 @@ import { cn } from "../lib/utils";
 import {
   deriveActiveRecoveryDisplayState,
   RECOVERY_CHIP_DEFAULT_TONE,
+  recoveryChipLabel,
 } from "../lib/recovery-display";
+import {
+  formatRecoveryLineageSummary,
+  readRecoveryRetryLineage,
+  type RecoveryLivenessContext,
+} from "../lib/recovery-lineage";
 import { StatusIcon } from "./StatusIcon";
 import { hasAssignedBacklogBlocker } from "../lib/issue-blockers";
 import { ExternalObjectStatusSummary } from "./ExternalObjectStatusSummary";
 import { Badge } from "@/components/ui/badge";
 import { ProjectCodeBadge } from "./ProjectCodeBadge"; // FORK-LOCAL (project badge)
-import { t as translate, useTranslation } from "@/i18n";
 
-type UnreadState = "hidden" | "visible" | "fading";
+export type IssueRowUnreadState = "hidden" | "visible" | "fading";
+export type IssueRowPresentation = "legacy" | "task";
 
-function localizedProductivityReviewTriggerLabel(trigger: string | null | undefined): string {
-  if (trigger === "no_comment_streak") return translate("coreNavigation.inbox.productivityTriggerNoComment");
-  if (trigger === "long_active_duration") return translate("coreNavigation.inbox.productivityTriggerLongActive");
-  if (trigger === "high_churn") return translate("coreNavigation.inbox.productivityTriggerHighChurn");
-  return translate("coreNavigation.inbox.productivityReviewGeneric");
-}
-
-interface IssueRowProps {
+export interface IssueRowProps {
   issue: Issue;
   issueLinkState?: unknown;
   selected?: boolean;
+  /** Opt-in canonical collection layout. Legacy remains the default until each surface migrates. */
+  presentation?: IssueRowPresentation;
+  /** Interactive disclosure or selection control before the canonical status glyph. */
+  leadingControl?: ReactNode;
+  /** Optional status override; defaults to the task's shared StatusIcon. */
+  statusSlot?: ReactNode;
+  /** Stable metadata slot before the task's optional collection columns. */
+  metadata?: ReactNode;
+  /** Stable interactive action slot before the identifier and timestamp columns. */
+  actions?: ReactNode;
+  /** Controls the canonical trailing identifier without affecting legacy layouts. */
+  showIdentifier?: boolean;
   mobileLeading?: ReactNode;
   desktopMetaLeading?: ReactNode;
   desktopLeadingSpacer?: boolean;
   mobileMeta?: ReactNode;
+  /** Compact mobile timestamp beside the title in canonical task lists. */
+  mobileTitleMeta?: ReactNode;
   desktopTrailing?: ReactNode;
   /**
    * Optional pre-fetched external-object summary. Renders a compact severity
@@ -49,7 +63,7 @@ interface IssueRowProps {
   checklistCurrentStep?: boolean;
   checklistDependencyChips?: ReactNode;
   checklistRowId?: string;
-  unreadState?: UnreadState | null;
+  unreadState?: IssueRowUnreadState | null;
   onMarkRead?: () => void;
   onArchive?: () => void;
   archiveDisabled?: boolean;
@@ -59,23 +73,66 @@ interface IssueRowProps {
   /** Ancestor levels; renders that many vertical tree-guide slots (desktop). */
   treeGuides?: number;
   /**
-   * This row has its own collapse chevron sitting in the innermost guide
-   * column (a nested parent). Breaks the guide line there so the chevron is
-   * not crossed out by it.
+   * This nested row has its own collapse chevron aligned with the innermost
+   * guide. Breaks the guide line there so the chevron is not crossed out.
    */
   chevronInGuide?: boolean;
-  /** Opt in to a bottom divider on this row (default off; used by views that intentionally keep separators). */
+  /** Legacy-only opt in to a bottom divider; canonical task rows stay divider-free. */
   showDivider?: boolean;
+}
+
+export function InboxArchiveButton({
+  onArchive,
+  disabled,
+  compact = false,
+}: {
+  onArchive: () => void;
+  disabled?: boolean;
+  compact?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      data-slot="icon-button"
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onArchive();
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        event.stopPropagation();
+        onArchive();
+      }}
+      disabled={disabled}
+      className={cn(
+        "inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100 disabled:pointer-events-none disabled:opacity-30",
+        compact ? "h-5 py-0" : "py-1",
+      )}
+      aria-label="Archive"
+    >
+      <Archive className="h-3.5 w-3.5" />
+      Archive
+    </button>
+  );
 }
 
 export function IssueRow({
   issue,
   issueLinkState,
   selected = false,
+  presentation = "legacy",
+  leadingControl,
+  statusSlot,
+  metadata,
+  actions,
+  showIdentifier = true,
   mobileLeading,
   desktopMetaLeading,
   desktopLeadingSpacer = false,
   mobileMeta,
+  mobileTitleMeta,
   desktopTrailing,
   externalObjectSummary,
   trailingMeta,
@@ -95,13 +152,11 @@ export function IssueRow({
   chevronInGuide = false,
   showDivider = false,
 }: IssueRowProps) {
-  const { t } = useTranslation();
   const issuePathId = issue.identifier ?? issue.id;
   const identifier = issue.identifier ?? issue.id.slice(0, 8);
-  // A row participates in the unread system whenever `unreadState` is supplied
-  // (inbox rows). It then reserves a fixed leading dot slot on all rows — read
-  // and unread alike — so the mark-read dot sits in the far-left gutter without
-  // shifting content, matching the sibling non-issue inbox rows.
+  // A row participates in the unread system whenever `unreadState` is supplied.
+  // Canonical rows overlay this affordance in their shared gutter, while legacy
+  // inbox rows retain their reserved slot until that presentation is migrated.
   const showUnreadSlot = unreadState != null;
   const showUnreadDot = unreadState === "visible" || unreadState === "fading";
   const unreadDotButton = (
@@ -124,7 +179,7 @@ export function IssueRow({
         "inline-flex h-4 w-4 items-center justify-center rounded-full transition-colors",
         selected ? "hover:bg-muted/80" : "hover:bg-blue-500/20",
       )}
-      aria-label={t("coreNavigation.inbox.markRead")}
+      aria-label="Mark as read"
     >
       <span
         className={cn(
@@ -137,21 +192,6 @@ export function IssueRow({
   );
   const selectedStatusClass = selected ? "!text-muted-foreground !border-muted-foreground" : undefined;
   const detailState = withIssueDetailHeaderSeed(issueLinkState, issue);
-  const productivityReview = issue.productivityReview ?? null;
-  const productivityReviewIndicator = productivityReview ? (
-    <span
-      className={cn(
-        "inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-300",
-        selected ? "border-muted-foreground text-muted-foreground" : null,
-      )}
-      title={t("coreNavigation.inbox.productivityReview", {
-        trigger: localizedProductivityReviewTriggerLabel(productivityReview.trigger),
-      })}
-      aria-label={t("coreNavigation.inbox.productivityReviewOpen")}
-    >
-      <Eye className="h-2.5 w-2.5" aria-hidden />
-    </span>
-  ) : null;
   const hasChecklistStep = checklistStepNumber !== null;
   const checklistStep = hasChecklistStep ? (
     <span className="shrink-0 font-mono text-xs text-muted-foreground" aria-hidden="true">
@@ -159,17 +199,161 @@ export function IssueRow({
     </span>
   ) : null;
   const recoveryAction = issue.activeRecoveryAction ?? null;
-  const recoveryIndicator = recoveryAction ? renderRecoveryChip(recoveryAction, selected) : null;
+  // The row already carries the issue's own scheduled retry, so the chip can tell a retry the
+  // scheduler is actually running from one whose due time simply passed.
+  const recoveryIndicator = recoveryAction && !requiresExecutionReconciliation(recoveryAction.cause)
+    ? renderRecoveryChip(recoveryAction, selected, { scheduledRetry: issue.scheduledRetry ?? null })
+    : null;
   const parkedBlockerIndicator = hasAssignedBacklogBlocker(issue.blockedBy) ? (
     <Badge variant="outline"
       data-testid="issue-row-parked-blocker"
       className="[&>svg]:size-2.5 ml-1.5 gap-0.5 border-amber-500/60 bg-amber-500/15 text-(length:--text-nano) text-amber-700 dark:text-amber-300"
-      title={t("coreNavigation.inbox.parkedWorkDescription")}
+      title="Blocked by parked work — at least one assigned blocker is in backlog and will not wake its assignee."
     >
       <Flag className="h-2.5 w-2.5" aria-hidden />
-      {t("coreNavigation.inbox.blockedByParkedWork")}
+      Blocked by parked work
     </Badge>
   ) : null;
+
+  if (presentation === "task") {
+    const isUnread = unreadState === "visible" || unreadState === "fading";
+    return (
+      <div
+        onMouseEnter={onMouseEnter}
+        data-slot="task-row"
+        data-unread={isUnread ? "true" : undefined}
+        className={cn(
+          "group relative flex min-w-0 items-start gap-2 rounded-lg py-2.5 pr-2 text-sm no-underline text-inherit sm:items-center sm:py-2",
+          showUnreadSlot ? "pl-4" : "pl-2 sm:pl-4",
+          "[&_button]:relative [&_button]:z-10",
+          selected ? "bg-accent/50 hover:bg-accent/50" : "hover:bg-accent/50",
+          checklistCurrentStep && "bg-primary/5",
+          className,
+        )}
+      >
+        <Link
+          to={createIssueDetailPath(issuePathId)}
+          state={detailState}
+          disableIssueQuicklook
+          issuePrefetch={issue}
+          data-inbox-issue-link
+          id={checklistRowId}
+          aria-current={checklistCurrentStep ? "step" : undefined}
+          onClickCapture={() => rememberIssueDetailLocationState(issuePathId, detailState)}
+          className="absolute inset-0 rounded-lg no-underline text-inherit focus-visible:z-10 focus-visible:outline-none focus-visible:ring-(length:--rad-3) focus-visible:ring-ring"
+        >
+          <span className="sr-only">Open {identifier}: {issue.title}</span>
+        </Link>
+
+        {showUnreadSlot ? (
+          <span
+            data-testid="issue-row-unread-slot"
+            className="absolute left-0 top-3 inline-flex h-4 w-4 items-center justify-center sm:top-1/2 sm:-translate-y-1/2"
+          >
+            {showUnreadDot ? unreadDotButton : null}
+          </span>
+        ) : null}
+
+        <span data-slot="task-row-leading" className="flex shrink-0 items-start self-stretch gap-1 pt-px sm:items-center sm:pt-0">
+          {treeGuides > 0
+            ? Array.from({ length: treeGuides }, (_, level) => {
+              const gapForChevron = chevronInGuide && level === treeGuides - 1;
+              return (
+                <span
+                  key={`task-guide-${level}`}
+                  data-slot="task-row-tree-guide"
+                  aria-hidden="true"
+                  className="relative block w-4 shrink-0 self-stretch"
+                >
+                  <span
+                    data-slot="task-row-tree-connector"
+                    className="absolute -inset-y-3 left-7 w-px bg-background"
+                  >
+                    {gapForChevron ? (
+                      <span className="absolute inset-0 flex flex-col">
+                        <span className="flex-1 bg-border" />
+                        <span className="h-3.5 shrink-0" />
+                        <span className="flex-1 bg-border" />
+                      </span>
+                    ) : (
+                      <span className="absolute inset-0 bg-border" />
+                    )}
+                  </span>
+                </span>
+              );
+            })
+            : null}
+          {leadingControl}
+          {statusSlot ?? (
+            <StatusIcon
+              status={issue.status} externalConversationState={issue.externalConversationState}
+              blockerAttention={issue.blockerAttention}
+              size="md"
+              className={selectedStatusClass}
+            />
+          )}
+          {parkedBlockerIndicator}
+        </span>
+
+        <span className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+          <span data-slot="task-row-title-cluster" className="flex min-w-0 flex-1 items-baseline gap-1.5 sm:items-center">
+            <span
+              data-slot="task-row-title"
+              className={cn(
+                "min-w-0 line-clamp-2 text-sm sm:truncate sm:line-clamp-none",
+                isUnread && "font-semibold",
+                titleClassName,
+              )}
+            >
+              {issue.title}{titleSuffix}
+            </span>
+            {recoveryIndicator}
+            {mobileTitleMeta ? (
+              <span className="ml-auto shrink-0 whitespace-nowrap text-right text-xs text-muted-foreground sm:hidden">
+                {mobileTitleMeta}
+              </span>
+            ) : null}
+          </span>
+          {checklistDependencyChips ? (
+            <span className="flex flex-wrap gap-1">{checklistDependencyChips}</span>
+          ) : null}
+          {mobileMeta ? (
+            <span className="text-xs text-muted-foreground sm:hidden">{mobileMeta}</span>
+          ) : null}
+        </span>
+
+        <span
+          data-slot="task-row-trailing"
+          className="ml-auto hidden min-w-0 shrink-0 items-center gap-2 sm:flex"
+        >
+          {externalObjectSummary ? (
+            <ExternalObjectStatusSummary summary={externalObjectSummary} compact />
+          ) : null}
+          {metadata ? <span data-slot="task-row-metadata" className="min-w-0">{metadata}</span> : null}
+          {desktopTrailing}
+          {actions ? <span data-slot="task-row-actions" className="flex shrink-0 items-center gap-1">{actions}</span> : null}
+          {onArchive ? <InboxArchiveButton onArchive={onArchive} disabled={archiveDisabled} compact /> : null}
+          {showIdentifier ? (
+            <ProjectCodeBadge
+              companyId={issue.companyId}
+              projectId={issue.projectId}
+              className="hidden shrink-0 px-1.5 py-0 font-mono text-(length:--text-nano) text-muted-foreground sm:inline-flex"
+            />
+          ) : null}
+          {showIdentifier ? (
+            <span data-slot="task-row-identifier" className="w-20 shrink-0 text-right font-mono text-xs text-muted-foreground">
+              {identifier}
+            </span>
+          ) : null}
+          {trailingMeta ? (
+            <span data-slot="task-row-timestamp" className="w-24 shrink-0 truncate text-right text-xs text-muted-foreground">
+              {trailingMeta}
+            </span>
+          ) : null}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -206,17 +390,21 @@ export function IssueRow({
           "absolute inset-0 rounded-lg no-underline text-inherit focus-visible:z-10 focus-visible:outline-none focus-visible:ring-(length:--rad-3) focus-visible:ring-ring",
         )}
       >
-        <span className="sr-only">{t("coreNavigation.inbox.openTask", { identifier, title: issue.title })}</span>
+        <span className="sr-only">Open {identifier}: {issue.title}</span>
       </Link>
       <span className="flex shrink-0 items-center gap-1 pt-px sm:hidden">
-        {mobileLeading ?? <StatusIcon status={issue.status} blockerAttention={issue.blockerAttention} size="md" className={selectedStatusClass} />}
-        {productivityReviewIndicator}
+        {mobileLeading ?? <StatusIcon status={issue.status} externalConversationState={issue.externalConversationState} blockerAttention={issue.blockerAttention} size="md" className={selectedStatusClass} />}
         {parkedBlockerIndicator}
-        {recoveryIndicator}
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-1 sm:contents">
-        <span className={cn("line-clamp-2 text-sm sm:order-2 sm:min-w-0 sm:flex-1 sm:truncate sm:line-clamp-none", titleClassName)}>
-          {issue.title}{titleSuffix}
+        <span data-slot="task-row-title-cluster" className="flex min-w-0 items-start gap-1.5 sm:order-2 sm:flex-1 sm:items-center">
+          <span
+            data-slot="task-row-title"
+            className={cn("min-w-0 line-clamp-2 text-sm sm:truncate sm:line-clamp-none", titleClassName)}
+          >
+            {issue.title}{titleSuffix}
+          </span>
+          {recoveryIndicator}
         </span>
         {checklistDependencyChips ? (
           <span className="flex flex-wrap gap-1 sm:order-3 sm:ml-(--sz-calc-13)">
@@ -278,27 +466,19 @@ export function IssueRow({
           {desktopMetaLeading ?? (
             <>
               <span className="hidden shrink-0 items-center gap-1 sm:inline-flex">
-                <StatusIcon status={issue.status} blockerAttention={issue.blockerAttention} size="md" className={selectedStatusClass} />
-                {productivityReviewIndicator}
+                <StatusIcon status={issue.status} externalConversationState={issue.externalConversationState} blockerAttention={issue.blockerAttention} size="md" className={selectedStatusClass} />
               </span>
               {checklistStep}
               <span className="shrink-0 font-mono text-xs text-muted-foreground">
                 {identifier}
               </span>
               {parkedBlockerIndicator}
-              {recoveryIndicator}
             </>
           )}
-          {/* FORK-LOCAL (project badge) — identifiers are company-scoped, so the
-              row carries a short project code. Sits outside the
-              `desktopMetaLeading` fallback on purpose: the main issues list
-              supplies its own meta-leading block, and a badge nested inside the
-              fallback would never render there. Drop this single element to
-              return to upstream behaviour. */}
           <ProjectCodeBadge
             companyId={issue.companyId}
             projectId={issue.projectId}
-            className="hidden shrink-0 px-1.5 py-0 font-mono text-[10px] text-muted-foreground sm:inline-flex"
+            className="hidden shrink-0 px-1.5 py-0 font-mono text-(length:--text-nano) text-muted-foreground sm:inline-flex"
           />
           {mobileMeta ? (
             <>
@@ -313,27 +493,7 @@ export function IssueRow({
       {(onArchive || desktopTrailing || trailingMeta || externalObjectSummary) ? (
         <span className="ml-auto hidden shrink-0 items-center gap-2 sm:order-3 sm:flex sm:gap-3">
           {onArchive ? (
-            <button
-              type="button"
-              data-slot="icon-button"
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                onArchive();
-              }}
-              onKeyDown={(event) => {
-                if (event.key !== "Enter" && event.key !== " ") return;
-                event.preventDefault();
-                event.stopPropagation();
-                onArchive();
-              }}
-              disabled={archiveDisabled}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100 disabled:pointer-events-none disabled:opacity-30"
-              aria-label={t("coreNavigation.inbox.archive")}
-            >
-              <Archive className="h-3.5 w-3.5" />
-              {t("coreNavigation.inbox.archive")}
-            </button>
+            <InboxArchiveButton onArchive={onArchive} disabled={archiveDisabled} />
           ) : null}
           {externalObjectSummary ? (
             <ExternalObjectStatusSummary summary={externalObjectSummary} compact />
@@ -356,33 +516,34 @@ export function IssueRow({
   );
 }
 
-function renderRecoveryChip(action: IssueRecoveryAction, selected: boolean): ReactNode {
-  const state = deriveActiveRecoveryDisplayState(action);
+function renderRecoveryChip(
+  action: IssueRecoveryAction,
+  selected: boolean,
+  liveness: RecoveryLivenessContext,
+): ReactNode {
+  const state = deriveActiveRecoveryDisplayState(action, liveness);
   if (!state) return null;
   const tone = RECOVERY_CHIP_DEFAULT_TONE[state];
   const Icon = tone.icon;
-  const label = action.kind === "workspace_validation" && state === "needed"
-    ? translate("coreNavigation.inbox.workspaceRecoveryNeeded")
-    : state === "needed"
-      ? translate("coreNavigation.inbox.recoveryNeeded")
-      : state === "in_progress"
-        ? translate("coreNavigation.inbox.recoveryInProgress")
-        : state === "observe_only"
-          ? translate("coreNavigation.inbox.observingActiveRun")
-          : translate("coreNavigation.inbox.recoveryEscalated");
+  const lineage = readRecoveryRetryLineage(action, liveness);
+  const label = recoveryChipLabel(state, action.kind, lineage);
+  const detail = lineage ? formatRecoveryLineageSummary(lineage) : null;
   return (
     <Badge variant="outline"
       data-testid="issue-row-recovery-indicator"
       data-recovery-state={state}
       data-recovery-kind={action.kind}
+      data-recovery-lane={lineage?.lane}
       role="status"
-      aria-label={label}
+      aria-label={detail ? `${label} — ${detail}` : label}
       className={cn(
-        "ml-1.5 gap-0.5 text-(length:--text-nano)",
+        "shrink-0 gap-0.5 text-(length:--text-nano)",
         tone.className,
         selected ? "!border-muted-foreground !text-muted-foreground" : null,
       )}
-      title={translate("coreNavigation.inbox.openSourceTaskToAct", { label })}
+      title={detail
+        ? `${label} — ${detail}. Open the source task to act.`
+        : `${label} — open the source task to act.`}
     >
       <Icon className="h-2.5 w-2.5" aria-hidden />
       {label}

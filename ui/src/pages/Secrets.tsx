@@ -51,7 +51,9 @@ import type {
   UserSecretCoverageSummary,
   UserSecretDefinition,
 } from "@paperclipai/shared";
+import { hidesCompanySection } from "@paperclipai/shared";
 import { useCompany } from "../context/CompanyContext";
+import { useHiddenSettings } from "../hooks/useHiddenSettings";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { useToastActions } from "../context/ToastContext";
 import {
@@ -108,6 +110,7 @@ import { cn } from "../lib/utils";
 import { t, useTranslation } from "@/i18n";
 import { Trans } from "react-i18next";
 import { copyTextToClipboard } from "../lib/clipboard";
+import { useCopyAction } from "../lib/use-copy-action";
 import { PageTabBar } from "../components/PageTabBar";
 import { AgentSelect } from "../components/AgentMultiSelect";
 import { ImportFromVaultDialog } from "./secrets/ImportFromVaultDialog";
@@ -657,6 +660,15 @@ export function Secrets() {
   const { setBreadcrumbs } = useBreadcrumbs();
   const { pushToast } = useToastActions();
   const [activeTab, setActiveTab] = useState<SecretsTab>("secrets");
+  // Operator-hidden sub-tabs (UI-only; the secrets APIs stay live for agents).
+  const { hidden: hiddenSettings } = useHiddenSettings();
+  const hideVaultsTab = hidesCompanySection(hiddenSettings, "company.secrets.vaults");
+  const hideProposalsTab = hidesCompanySection(hiddenSettings, "company.secrets.proposals");
+  useEffect(() => {
+    if ((activeTab === "vaults" && hideVaultsTab) || (activeTab === "proposals" && hideProposalsTab)) {
+      setActiveTab("secrets");
+    }
+  }, [activeTab, hideVaultsTab, hideProposalsTab]);
   const [secretDetailTab, setSecretDetailTab] = useState("details");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<SecretStatus | "all">("active");
@@ -784,7 +796,7 @@ export function Secrets() {
       ? queryKeys.secrets.proposals(selectedCompanyId, "pending")
       : ["secret-proposals", "__disabled__"],
     queryFn: () => secretsApi.listProposals(selectedCompanyId!, "pending"),
-    enabled: Boolean(selectedCompanyId),
+    enabled: Boolean(selectedCompanyId) && !hideProposalsTab,
   });
 
   const secrets = secretsQuery.data ?? EMPTY_SECRETS;
@@ -1792,13 +1804,13 @@ export function Secrets() {
 
   if (!selectedCompanyId) {
     return (
-      <div className="p-6 text-sm text-muted-foreground">{t("settingsSecurity.selectCompanySecrets", { defaultValue: "Select a company to manage secrets." })}</div>
+      <div className="p-6 text-sm text-muted-foreground">Select an organization to manage secrets.</div>
     );
   }
 
   return (
     <TooltipProvider>
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex max-w-6xl flex-col gap-4">
       <div className="flex items-center gap-2">
         <KeyRound className="h-5 w-5 text-muted-foreground" />
         <h1 className="text-lg font-semibold">{t("settingsSecurity.secrets", { defaultValue: "Secrets" })}</h1>
@@ -1807,36 +1819,40 @@ export function Secrets() {
       <Tabs
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as SecretsTab)}
-        className="flex min-h-0 flex-1 flex-col gap-4"
+        className="flex flex-col gap-4"
       >
         <PageTabBar
           items={[
-            { value: "secrets", label: t("secretsMain.tabs.secrets", { defaultValue: "Secrets" }) },
-            { value: "my-secrets", label: t("secretsMain.tabs.mySecrets", { defaultValue: "My secrets" }) },
-            { value: "vaults", label: t("secretsMain.tabs.providerVaults", { defaultValue: "Provider vaults" }) },
-            {
-              value: "proposals",
-              label: (
-                <span className="inline-flex items-center gap-1.5">
-                  {t("secretsMain.tabs.proposals", { defaultValue: "Proposals" })}
-                  {pendingProposalCount > 0 ? (
-                    <Badge
-                      variant="outline"
-                      className="h-4 min-w-4 justify-center rounded-full border-amber-500/40 bg-amber-500/10 px-1 text-(length:--text-nano) font-medium text-amber-700 dark:text-amber-300"
-                    >
-                      {pendingProposalCount}
-                    </Badge>
-                  ) : null}
-                </span>
-              ),
-            },
+            { value: "secrets", label: "Secrets" },
+            { value: "my-secrets", label: "My secrets" },
+            ...(hideVaultsTab ? [] : [{ value: "vaults", label: "Provider vaults" }]),
+            ...(hideProposalsTab
+              ? []
+              : [
+                  {
+                    value: "proposals",
+                    label: (
+                      <span className="inline-flex items-center gap-1.5">
+                        Proposals
+                        {pendingProposalCount > 0 ? (
+                          <Badge
+                            variant="outline"
+                            className="h-4 min-w-4 justify-center rounded-full border-amber-500/40 bg-amber-500/10 px-1 text-(length:--text-nano) font-medium text-amber-700 dark:text-amber-300"
+                          >
+                            {pendingProposalCount}
+                          </Badge>
+                        ) : null}
+                      </span>
+                    ),
+                  },
+                ]),
           ]}
           align="start"
           value={activeTab}
           onValueChange={(value) => setActiveTab(value as SecretsTab)}
         />
 
-        <TabsContent value="secrets" className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+        <TabsContent value="secrets" className="flex flex-col gap-3">
           <SecretsHowToUse />
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative w-48 sm:w-64 md:w-80">
@@ -1889,7 +1905,7 @@ export function Secrets() {
             <ImportFromVaultButton
               providerConfigs={providerConfigs}
               onClick={() => openImportFromVault()}
-              onManageVaults={() => setActiveTab("vaults")}
+              onManageVaults={hideVaultsTab ? undefined : () => setActiveTab("vaults")}
               className="ml-auto"
             />
             {showFolderView ? (
@@ -1941,7 +1957,7 @@ export function Secrets() {
               </Button>
             </div>
           ) : null}
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div>
             {secretsQuery.isError || userDefinitionsQuery.isError ? (
               <div className="text-sm text-destructive flex items-center gap-2 py-4">
                 <AlertCircle className="h-4 w-4" /> {t("secretsMain.errors.loadFailed", { defaultValue: "Failed to load secrets:" })}{" "}
@@ -1963,8 +1979,8 @@ export function Secrets() {
               !(showFolderView && folderPath) ? (
               <EmptyState
                 icon={KeyRound}
-                message={t("secretsMain.empty.noSecrets", { defaultValue: "No secrets yet. Create a shared company secret or one that each user supplies." })}
-                action={t("secretsMain.actions.newSecret", { defaultValue: "New secret" })}
+                message="No secrets yet. Create a shared organization secret or one that each user supplies."
+                action="New secret"
                 onAction={openCreateSecret}
               />
             ) : (
@@ -2086,7 +2102,7 @@ export function Secrets() {
                             <div className="mt-1">
                               {row.kind === "company" ? (
                                 <MetaChip>
-                                  <ShieldCheck className="h-3 w-3" /> Company
+                                  <ShieldCheck className="h-3 w-3" /> Organization
                                 </MetaChip>
                               ) : (
                                 <UserSecretChip label={t("secretsResidual.eachUserOwnsShort")} />
@@ -2151,7 +2167,7 @@ export function Secrets() {
                           {row.kind === "company" ? (
                             <>
                               <MetaChip>
-                                <ShieldCheck className="h-3 w-3" /> Company
+                                <ShieldCheck className="h-3 w-3" /> Organization
                               </MetaChip>
                               <SecretProviderIndicator
                                 secret={row.secret}
@@ -2193,11 +2209,12 @@ export function Secrets() {
         </TabsContent>
         <TabsContent
           value="my-secrets"
-          className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden"
+          className="flex flex-col gap-3"
         >
           <MyUserSecretsTab companyId={selectedCompanyId} />
         </TabsContent>
-        <TabsContent value="vaults" className="min-h-0 flex-1 overflow-y-auto">
+        {!hideVaultsTab && (
+        <TabsContent value="vaults">
           <ProviderVaultsTab
             providers={providers}
             providerConfigs={providerConfigs}
@@ -2220,11 +2237,14 @@ export function Secrets() {
             }
           />
         </TabsContent>
-        <TabsContent value="proposals" className="min-h-0 flex-1 overflow-y-auto">
+        )}
+        {!hideProposalsTab && (
+        <TabsContent value="proposals">
           {selectedCompanyId ? (
             <ProposalsTab companyId={selectedCompanyId} providerConfigs={providerConfigs} />
           ) : null}
         </TabsContent>
+        )}
       </Tabs>
 
       <Sheet
@@ -2263,7 +2283,7 @@ export function Secrets() {
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   <MetaChip>
-                    <ShieldCheck className="h-3 w-3" /> Company
+                    <ShieldCheck className="h-3 w-3" /> Organization
                   </MetaChip>
                   <MetaChip>{modeLabel(selectedSecret.managedMode)}</MetaChip>
                   <MetaChip>{providerLabel(providers, selectedSecret.provider)}</MetaChip>
@@ -2423,7 +2443,7 @@ export function Secrets() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-52">
                     <DropdownMenuItem onSelect={() => openEditDefinition(selectedDefinition)}>
-                      <Pencil className="h-4 w-4" /> Edit definition
+                      <Pencil className="h-4 w-4" /> {t("secretsMain.actions.editDefinition", { defaultValue: "Edit definition" })}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
@@ -2545,11 +2565,15 @@ export function Secrets() {
           providerConfigs={providerConfigs}
           existingSecrets={secrets}
           initialProviderConfigId={importInitialVaultId}
-          onManageVaults={() => {
-            setImportOpen(false);
-            setImportInitialVaultId(null);
-            setActiveTab("vaults");
-          }}
+          onManageVaults={
+            hideVaultsTab
+              ? undefined
+              : () => {
+                  setImportOpen(false);
+                  setImportInitialVaultId(null);
+                  setActiveTab("vaults");
+                }
+          }
           onImportComplete={() => {
             void secretsQuery.refetch();
           }}
@@ -2591,12 +2615,12 @@ export function Secrets() {
                   }}
                 >
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="company">{t("secretsMain.labels.company", { defaultValue: "Company" })}</TabsTrigger>
-                    <TabsTrigger value="user">{t("secretsMain.labels.eachUser", { defaultValue: "Each user" })}</TabsTrigger>
+                    <TabsTrigger value="company">Organization</TabsTrigger>
+                    <TabsTrigger value="user">Each user</TabsTrigger>
                   </TabsList>
                 </Tabs>
                 <p className="text-(length:--text-micro) text-muted-foreground">
-                  {t("secretsResidual.companyValueDescription")}
+                  Organization stores one shared value. Each user lets every member supply their own value under My secrets.
                 </p>
               </div>
             ) : null}
@@ -3192,8 +3216,8 @@ export function Secrets() {
           <DialogHeader>
             <DialogTitle>{t("secretsMain.confirm.deleteUserSecret", { defaultValue: "Delete user-provided secret" })}</DialogTitle>
             <DialogDescription>
-              {t("secretsResidual.deleteUserBefore")} <strong>{definitionDeleteConfirm?.name}</strong>{" "}
-              {t("secretsResidual.deleteUserAfter")}
+              Permanently removes <strong>{definitionDeleteConfirm?.name}</strong> for the whole organization.
+              Existing member values become unreferenced and active bindings must be remapped.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -3359,9 +3383,9 @@ function SecretsFiltersPopover({
               <span className="text-xs text-muted-foreground">{t("secretsMain.filters.providedBy", { defaultValue: "Provided by" })}</span>
               <div className="space-y-0.5">
                 {[
-                  { value: "all" as const, label: t("secretsMain.filters.allSources", { defaultValue: "All sources" }) },
-                  { value: "company" as const, label: t("secretsMain.labels.company", { defaultValue: "Company" }) },
-                  { value: "user" as const, label: t("secretsMain.labels.eachUser", { defaultValue: "Each user" }) },
+                  { value: "all" as const, label: "All sources" },
+                  { value: "company" as const, label: "Organization" },
+                  { value: "user" as const, label: "Each user" },
                 ].map((option) => (
                   <label key={option.value} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                     <Checkbox
@@ -3454,7 +3478,8 @@ function ProviderVaultInlineWarning({ config }: { config: CompanySecretProviderC
 interface ImportFromVaultButtonProps {
   providerConfigs: CompanySecretProviderConfig[];
   onClick: () => void;
-  onManageVaults: () => void;
+  /** Absent when the operator hides the Provider vaults tab. */
+  onManageVaults?: () => void;
   className?: string;
 }
 
@@ -3474,6 +3499,7 @@ function ImportFromVaultButton({
   if (awsConfigs.length === 0) return null;
 
   if (eligible.length === 0) {
+    if (!onManageVaults) return null;
     return (
       <Button
         variant="ghost"
@@ -3495,7 +3521,7 @@ function ImportFromVaultButton({
       className={className}
       data-testid="import-from-vault-button"
     >
-      <Cloud className="h-3.5 w-3.5 mr-1" /> Import from vault
+      <Cloud className="h-3.5 w-3.5 mr-1" /> {t("localizationFixups.secrets.importFromVault")}
     </Button>
   );
 }
@@ -3593,8 +3619,8 @@ export function ProviderVaultsTab({
             {configs.length === 0 ? (
               <div className="rounded-md border border-dashed border-border bg-muted/20 p-4 text-sm text-muted-foreground">
                 {isComingSoonFamily
-                  ? t("secretsResidual.notYetSupported")
-                  : t("secretsResidual.noCompanyVaults")}
+                  ? "Not yet supported."
+                  : "No organization-specific vaults yet. Secrets can still use the deployment default provider settings."}
               </div>
             ) : (
               <div className="space-y-3">
@@ -3900,6 +3926,19 @@ function AwsProviderVaultDiscoveryPanel({
   );
 }
 
+/**
+ * Copy the safe error payload out of a failure panel. People copy this to paste
+ * into a bug report, so the button has to confirm the clipboard took it.
+ */
+function CopyDetailsButton({ text }: { text: string }) {
+  const { copied, failed, copy } = useCopyAction();
+  return (
+    <Button type="button" variant="ghost" size="sm" onClick={() => void copy(text)}>
+      {copied ? "Copied" : failed ? "Copy failed" : "Copy"}
+    </Button>
+  );
+}
+
 function AwsProviderVaultDiscoveryError({
   form,
   error,
@@ -3924,10 +3963,6 @@ function AwsProviderVaultDiscoveryError({
     safeAlternative: details?.safeAlternative,
   };
   const detailsText = JSON.stringify(safeDetails, null, 2);
-
-  const copyDetails = () => {
-    void copyTextToClipboard(detailsText).catch(() => {});
-  };
 
   return (
     <div
@@ -3975,10 +4010,8 @@ function AwsProviderVaultDiscoveryError({
           </dl>
           <div className="rounded-md border border-destructive/20 bg-background/70 p-2 text-foreground">
             <div className="mb-1 flex items-center justify-between gap-2">
-              <span className="font-medium text-muted-foreground">{t("secretsResidual.safeDetails")}</span>
-              <Button type="button" variant="ghost" size="sm" onClick={copyDetails}>
-                {t("secretsResidual.copy")}
-              </Button>
+              <span className="font-medium text-muted-foreground">Safe request/error details</span>
+              <CopyDetailsButton text={detailsText} />
             </div>
             <pre className="max-h-36 overflow-auto whitespace-pre-wrap break-words font-mono text-(length:--text-micro) leading-relaxed">
               {detailsText}
@@ -4070,15 +4103,8 @@ function SecretCreateError({
           </dl>
           <div className="rounded-md border border-destructive/20 bg-background/70 p-2 text-foreground">
             <div className="mb-1 flex items-center justify-between gap-2">
-              <span className="font-medium text-muted-foreground">{t("secretsResidual.safeDetails")}</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => void copyTextToClipboard(detailsText).catch(() => {})}
-              >
-                {t("secretsResidual.copy")}
-              </Button>
+              <span className="font-medium text-muted-foreground">Safe request/error details</span>
+              <CopyDetailsButton text={detailsText} />
             </div>
             <pre className="max-h-36 overflow-auto whitespace-pre-wrap break-words font-mono text-(length:--text-micro) leading-relaxed">
               {detailsText}
@@ -4631,11 +4657,11 @@ function SecretDetailsTab({
       <DetailRow label={t("secretsMain.labels.description", { defaultValue: "Description" })}>
         <span>{secret.description ?? <span className="text-muted-foreground">—</span>}</span>
       </DetailRow>
-      <DetailRow label={t("secretsMain.labels.providedBy", { defaultValue: "Provided by" })}>{t("secretsMain.labels.company", { defaultValue: "Company" })}</DetailRow>
-      <DetailRow label={t("secretsMain.labels.custody", { defaultValue: "Custody" })}>{modeLabel(secret.managedMode)}</DetailRow>
-      <DetailRow label={t("secretsMain.labels.provider", { defaultValue: "Provider" })}>{providerLabel(providers, secret.provider)}</DetailRow>
-      <DetailRow label={t("secretsMain.labels.providerVault", { defaultValue: "Provider vault" })}>{providerVaultLabel(providerConfigs, secret.providerConfigId)}</DetailRow>
-      <DetailRow label={t("secretsMain.labels.externalArn", { defaultValue: "External ARN" })}>
+      <DetailRow label="Provided by">Organization</DetailRow>
+      <DetailRow label="Custody">{modeLabel(secret.managedMode)}</DetailRow>
+      <DetailRow label="Provider">{providerLabel(providers, secret.provider)}</DetailRow>
+      <DetailRow label="Provider vault">{providerVaultLabel(providerConfigs, secret.providerConfigId)}</DetailRow>
+      <DetailRow label="External ARN">
         {secret.externalRef ? (
           <span className="break-all font-mono">{secret.externalRef}</span>
         ) : (

@@ -122,6 +122,7 @@ export function ProfileWizard({
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.tools.profiles(companyId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.tools.testAgentAccesses() });
   };
 
   const live = useMemo(
@@ -612,7 +613,7 @@ export function StepAssign({
           onChange={(e) => onCompanyDefault(e.target.checked)}
         />
         <span className="flex flex-col gap-0.5">
-          <span className="text-sm font-medium text-foreground">{t("toolsAdvanced.profiles.makeCompanyDefault")}</span>
+          <span className="text-sm font-medium text-foreground">Make this the organization default</span>
           <span className="text-xs text-muted-foreground">
             {t("toolsProfiles.wizard.companyDefaultHint")}
             {defaultProfileName ? ` Replaces “${defaultProfileName}”.` : ""}
@@ -633,8 +634,8 @@ export function StepAssign({
           getDescription={(agent) => {
             const context = contextByAgent.get(agent.id) ?? [];
             const bits = [...context];
-            if (defaultProfileName) bits.push(t("toolsProfiles.wizard.companyDefault"));
-            return bits.length > 0 ? t("toolsProfiles.wizard.alreadyHas", { profiles: bits.join(" · ") }) : t("toolsProfiles.wizard.noProfiles");
+            if (defaultProfileName) bits.push("organization default");
+            return bits.length > 0 ? `already has: ${bits.join(" · ")}` : "no profiles yet";
           }}
         />
         <p className="text-xs text-muted-foreground">

@@ -29,16 +29,11 @@ export function NotFoundPage({ scope = "global", requestedPrefix }: NotFoundPage
   const currentPath = `${location.pathname}${location.search}${location.hash}`;
   const normalizedPrefix = requestedPrefix?.toUpperCase();
 
-  const title = scope === "invalid_company_prefix"
-    ? t("entryLegacy.notFound.companyTitle", { defaultValue: "Company not found" })
-    : t("entryLegacy.notFound.pageTitle", { defaultValue: "Page not found" });
+  const title = scope === "invalid_company_prefix" ? "Organization not found" : "Page not found";
   const description =
     scope === "invalid_company_prefix"
-      ? t("entryLegacy.notFound.companyDescription", {
-          prefix: normalizedPrefix ?? t("entryLegacy.common.unknown", { defaultValue: "unknown" }),
-          defaultValue: "No company matches prefix \"{{prefix}}\".",
-        })
-      : t("entryLegacy.notFound.pageDescription", { defaultValue: "This route does not exist." });
+      ? `No organization matches prefix "${normalizedPrefix ?? "unknown"}".`
+      : "This route does not exist.";
 
   return (
     <div className="mx-auto max-w-2xl py-10">

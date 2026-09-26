@@ -178,7 +178,11 @@ export function SmokeLabTab({ companyId }: { companyId: string }) {
           <FlaskConical className="h-5 w-5 text-muted-foreground" />
           <h2 className="text-base font-semibold">{t("toolsAdvanced.smoke.offTitle")}</h2>
         </div>
-        <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">{t("toolsAdvanced.residual.smokeDescription")}</p>
+        <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
+          The Smoke Lab is an experimental developer surface for exercising the integration paths
+          against deterministic local fixtures. Turn on <code className="rounded bg-muted px-1 py-0.5 text-xs">Smoke Lab</code>{" "}
+          under Settings → Experimental to enable it.
+        </p>
       </div>
     );
   }

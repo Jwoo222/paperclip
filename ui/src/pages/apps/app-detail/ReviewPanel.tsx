@@ -15,7 +15,8 @@ export function ReviewPanel({
   const showsQuarantinedActions = quarantined.length > 0 && !!onReviewQuarantined;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      <h2 className="text-lg font-semibold text-foreground">Review</h2>
       {showsQuarantinedActions ? (
         <QuarantinedActionsReview
           entries={quarantined}
@@ -27,6 +28,7 @@ export function ReviewPanel({
         connectionId={connectionId}
         heading={t("appDetail.review.waitingForApproval")}
         emptyState={showsQuarantinedActions ? "hidden" : "reassure"}
+        plain
       />
     </div>
   );

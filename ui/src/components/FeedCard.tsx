@@ -1,5 +1,5 @@
+import { AgentAvatar } from "@/components/AgentAvatar";
 import { Link } from "@/lib/router";
-import { AgentIcon } from "./AgentIconPicker";
 import { timeAgo } from "../lib/timeAgo";
 import { cn } from "../lib/utils";
 import { deriveProjectUrlKey, type ActivityEvent, type Agent } from "@paperclipai/shared";
@@ -67,7 +67,8 @@ function formatVerb(
       return t("activity.verbs.issueCreated");
     case "issue.updated": {
       const status = details?.status;
-      if (typeof status === "string") return t("activity.verbs.issueStatus", { status: localizedValue(status, t) });
+      if (status === "in_review" && details?.externalConversationState === "waiting") return "moved to idle";
+      if (typeof status === "string") return `moved to ${humanize(status)}`;
       const priority = details?.priority;
       if (typeof priority === "string") return t("activity.verbs.issuePriority", { priority: localizedValue(priority, t) });
       return t("activity.verbs.issueUpdated");
@@ -136,13 +137,13 @@ function formatVerb(
     case "goal.deleted":
       return t("activity.verbs.goalDeleted");
     case "company.created":
-      return t("activity.verbs.companyCreated");
+      return "created organization";
     case "company.updated":
-      return t("activity.verbs.companyUpdated");
+      return "updated organization";
     case "company.archived":
-      return t("activity.verbs.companyArchived");
+      return "archived organization";
     case "company.budget_updated":
-      return t("activity.verbs.companyBudgetUpdated");
+      return "updated organization budget";
 
     default:
       return action.replace(/[._]/g, " ");
@@ -162,6 +163,7 @@ function deriveTaskStatus(
       return "todo";
     case "issue.updated": {
       const status = details?.status;
+      if (status === "in_review" && details?.externalConversationState === "waiting") return "idle";
       return typeof status === "string" ? status : null;
     }
     case "issue.document_created":
@@ -402,10 +404,8 @@ function resolveContent(
 function ActorGlyph({ content }: { content: CardContent }) {
   if (content.actorType === "agent") {
     return (
-      <AgentIcon
-        icon={content.actor?.icon ?? null}
-        className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-      />
+      <AgentAvatar agent={content.actor} size={16}
+        className="h-3.5 w-3.5 shrink-0 text-muted-foreground"/>
     );
   }
   if (content.actorType === "user") {
@@ -460,7 +460,7 @@ export function FeedCard({
     <Card
       data-fc="card"
       className={cn(
-        "flex-row group ml-3 mr-3 md:ml-0 my-2 items-center gap-2 p-(--sz-18px) text-xs",
+        "flex-row group ml-3 mr-3 md:ml-0 my-2 w-(--sz-calc-1) md:w-(--sz-calc-2) items-center gap-2 p-(--sz-18px) text-xs",
         "transition-(--tp-background-color-border-color) duration-150",
         content.link && "cursor-pointer hover:bg-accent hover:border-muted-foreground/30",
         className,
@@ -503,7 +503,8 @@ export function FeedCard({
     return (
       <Link
         to={content.link}
-        className="block no-underline text-inherit"
+        data-fc="link"
+        className="block w-full no-underline text-inherit"
         issueQuicklookSide="left"
       >
         {card}

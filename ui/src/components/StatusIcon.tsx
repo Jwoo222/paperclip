@@ -1,10 +1,10 @@
+import { t } from "@/i18n";
 import { useState } from "react";
 import type { IssueBlockerAttention } from "@paperclipai/shared";
 import { cn } from "../lib/utils";
 import { StatusGlyph, type StatusGlyphSize } from "./StatusGlyph";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { useTranslation } from "@/i18n";
 
 const allStatuses = ["backlog", "todo", "in_progress", "in_review", "done", "cancelled", "blocked"];
 
@@ -14,6 +14,7 @@ function humanize(status: string): string {
 
 interface StatusIconProps {
   status: string;
+  externalConversationState?: "active" | "waiting" | null;
   blockerAttention?: IssueBlockerAttention | null;
   onChange?: (status: string) => void;
   className?: string;
@@ -81,13 +82,13 @@ function blockedAttentionLabel(
  * glyph — the blocked shape recoloured blue — while the full blocked reason
  * still rides on the accessible label.
  */
-export function StatusIcon({ status, blockerAttention, onChange, className, showLabel, size = "md" }: StatusIconProps) {
-  const { t } = useTranslation();
+export function StatusIcon({ status, externalConversationState, blockerAttention, onChange, className, showLabel, size = "md" }: StatusIconProps) {
   const [open, setOpen] = useState(false);
+  const displayStatus = status === "in_review" && externalConversationState === "waiting" ? "idle" : status;
   const isCoveredBlocked = status === "blocked" && blockerAttention?.state === "covered";
-  const statusLabel = t(`searchStatus.status.${status}`, { defaultValue: humanize(status) });
+  const statusLabel = t(`searchStatus.status.${displayStatus}`, { defaultValue: humanize(displayStatus) });
   const ariaLabel = status === "blocked" ? blockedAttentionLabel(blockerAttention, t) : statusLabel;
-  const glyphStatus = isCoveredBlocked ? "in_queue" : status;
+  const glyphStatus = isCoveredBlocked ? "in_queue" : displayStatus;
 
   const glyph = (
     <StatusGlyph

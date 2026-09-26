@@ -1,3 +1,4 @@
+import { useWorkspaceIsolationControls } from "@/hooks/useWorkspaceIsolationControls";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@/lib/router";
 import type { Issue, ExecutionWorkspace } from "@paperclipai/shared";
@@ -10,8 +11,11 @@ import { queryKeys } from "../lib/queryKeys";
 import { copyTextToClipboard } from "../lib/clipboard";
 import {
   defaultExecutionWorkspaceModeForProject,
-  issueExecutionWorkspaceModeForExistingWorkspace,
 } from "../lib/project-workspace-defaults";
+import {
+  buildWorkspaceSelectionUpdate,
+  currentWorkspaceSelection,
+} from "../lib/issue-workspace-selection";
 import { orderReusableExecutionWorkspaces } from "../lib/reusable-execution-workspaces";
 import { cn, projectWorkspaceUrl } from "../lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,22 +34,6 @@ function executionWorkspaceOptions() {
     { value: "isolated_workspace", label: t("taskDetailExtra.newIsolatedWorkspace") },
     { value: "reuse_existing", label: t("taskDetailExtra.reuseExistingWorkspace") },
   ] as const;
-}
-
-function shouldPresentExistingWorkspaceSelection(
-  issue: Pick<
-    Issue,
-    "executionWorkspaceId" | "executionWorkspacePreference" | "executionWorkspaceSettings" | "currentExecutionWorkspace"
-  >,
-) {
-  const persistedMode =
-    issue.currentExecutionWorkspace?.mode
-    ?? issue.executionWorkspaceSettings?.mode
-    ?? issue.executionWorkspacePreference;
-  return Boolean(
-    issue.executionWorkspaceId &&
-    (persistedMode === "isolated_workspace" || persistedMode === "operator_branch"),
-  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -98,11 +86,11 @@ function CopyableInline({ value, label, mono }: { value: string; label?: string;
 
 function workspaceModeLabel(mode: string | null | undefined) {
   switch (mode) {
-    case "isolated_workspace": return t("taskDetailExtra.isolatedWorkspace");
-    case "operator_branch": return t("taskDetailExtra.operatorBranch");
-    case "cloud_sandbox": return t("taskDetailExtra.cloudSandbox");
-    case "adapter_managed": return t("taskDetailExtra.adapterManaged");
-    default: return t("taskDetailExtra.workspace");
+    case "isolated_workspace": return "Isolated workspace";
+    case "operator_branch": return "Operator branch";
+    case "cloud_sandbox": return "Cloud environment";
+    case "adapter_managed": return "Adapter managed";
+    default: return "Workspace";
   }
 }
 
@@ -204,7 +192,7 @@ interface IssueWorkspaceCardProps {
   onUpdate: (data: Record<string, unknown>) => void;
   initialEditing?: boolean;
   livePreview?: boolean;
-  onDraftChange?: (data: Record<string, unknown>, meta: { canSave: boolean; workspaceBranchName?: string | null }) => void;
+  onDraftChange?: (data: Record<string, unknown> | null, meta: { canSave: boolean; workspaceBranchName?: string | null }) => void;
   /** Opens the workspace file browser sheet. When omitted, the browse row is hidden. */
   onBrowseFiles?: () => void;
   /** Opens the same browser sheet focused for path entry. */
@@ -221,7 +209,7 @@ export function IssueWorkspaceCard({
   onBrowseFiles,
   onOpenFileByPath,
 }: IssueWorkspaceCardProps) {
-  useTranslation();
+  const { visible: workspaceIsolationControlsVisible } = useWorkspaceIsolationControls();
   const { selectedCompanyId } = useCompany();
   const companyId = issue.companyId ?? selectedCompanyId;
   const [editing, setEditing] = useState(initialEditing);
@@ -232,6 +220,13 @@ export function IssueWorkspaceCard({
   });
 
   const environmentsEnabled = experimentalSettings?.enableEnvironments === true;
+  // Managed-sandbox-only policy: the workspace path is a host filesystem path,
+  // so the card omits it and keeps branch, repo, and environment. The gate fails
+  // closed whenever the policy is unknown — in flight and also on a failed read
+  // — because an unresolved policy reads as "not managed" and would show the
+  // path the policy exists to hide.
+  const hideHostPaths =
+    experimentalSettings === undefined || experimentalSettings.enableManagedSandboxOnly === true;
   const policyEnabled = experimentalSettings?.enableIsolatedWorkspaces === true
     && Boolean(project?.executionWorkspacePolicy?.enabled);
 
@@ -258,7 +253,7 @@ export function IssueWorkspaceCard({
         projectWorkspaceId: issue.projectWorkspaceId ?? undefined,
         reuseEligible: true,
       }),
-    enabled: Boolean(companyId) && Boolean(issue.projectId) && editing,
+    enabled: Boolean(companyId) && Boolean(issue.projectId) && editing && workspaceIsolationControlsVisible,
   });
 
   const selectableReusableWorkspaces = reusableExecutionWorkspaces ?? [];
@@ -268,13 +263,8 @@ export function IssueWorkspaceCard({
     ?? workspace
     ?? null;
 
-  const currentSelection = shouldPresentExistingWorkspaceSelection(issue)
-    ? "reuse_existing"
-    : (
-        issue.executionWorkspacePreference
-        ?? issue.executionWorkspaceSettings?.mode
-        ?? defaultExecutionWorkspaceModeForProject(project)
-      );
+  const currentSelection = currentWorkspaceSelection(issue, project)
+    ?? defaultExecutionWorkspaceModeForProject(project);
 
   const [draftSelection, setDraftSelection] = useState(currentSelection);
   const [draftExecutionWorkspaceId, setDraftExecutionWorkspaceId] = useState(issue.executionWorkspaceId ?? "");
@@ -322,37 +312,34 @@ export function IssueWorkspaceCard({
       ? configuredReusableWorkspace?.branchName ?? null
       : null;
 
-  const buildWorkspaceDraftUpdate = useCallback(() => ({
-    executionWorkspacePreference: draftSelection,
-    executionWorkspaceId: draftSelection === "reuse_existing" ? draftExecutionWorkspaceId || null : null,
-    executionWorkspaceSettings: {
-      mode:
-        draftSelection === "reuse_existing"
-          ? issueExecutionWorkspaceModeForExistingWorkspace(configuredReusableWorkspace?.mode)
-          : draftSelection,
-      environmentId: null,
-    },
-  }), [
+  const buildWorkspaceDraftUpdate = useCallback(() => buildWorkspaceSelectionUpdate(
+    draftSelection,
+    draftExecutionWorkspaceId || null,
+    configuredReusableWorkspace?.mode,
+  ), [
     configuredReusableWorkspace?.mode,
     draftExecutionWorkspaceId,
     draftSelection,
   ]);
 
   useEffect(() => {
-    if (!onDraftChange) return;
+    if (!onDraftChange || !workspaceIsolationControlsVisible) return;
     onDraftChange(buildWorkspaceDraftUpdate(), {
       canSave: canSaveWorkspaceConfig,
       workspaceBranchName: draftWorkspaceBranchName,
     });
-  }, [buildWorkspaceDraftUpdate, canSaveWorkspaceConfig, draftWorkspaceBranchName, onDraftChange]);
+  }, [buildWorkspaceDraftUpdate, canSaveWorkspaceConfig, draftWorkspaceBranchName, onDraftChange, workspaceIsolationControlsVisible]);
 
   const handleSave = useCallback(() => {
-    if (!canSaveWorkspaceConfig) return;
-    onUpdate(buildWorkspaceDraftUpdate());
+    if (!canSaveWorkspaceConfig || !workspaceIsolationControlsVisible) return;
+    const update = buildWorkspaceDraftUpdate();
+    if (!update) return;
+    onUpdate(update);
     setEditing(false);
   }, [
     buildWorkspaceDraftUpdate,
     canSaveWorkspaceConfig,
+    workspaceIsolationControlsVisible,
     onUpdate,
   ]);
 
@@ -364,7 +351,7 @@ export function IssueWorkspaceCard({
 
   if (!policyEnabled || !project) return null;
 
-  const showEditingControls = livePreview || editing;
+  const showEditingControls = workspaceIsolationControlsVisible && (livePreview || editing);
 
   return (
     <div className="rounded-lg border border-border p-3 space-y-2">
@@ -377,37 +364,39 @@ export function IssueWorkspaceCard({
             : configuredWorkspaceLabel(currentSelection, selectedReusableExecutionWorkspace)}
           {workspace ? statusBadge(workspace.status) : statusBadge("idle")}
         </div>
-        <div className="flex items-center gap-1">
-          {showEditingControls ? (
-            <>
+        {workspaceIsolationControlsVisible && (
+          <div className="flex items-center gap-1">
+            {showEditingControls ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs text-muted-foreground"
+                  onClick={handleCancel}
+                >
+                  <X className="h-3 w-3 mr-1" />Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  onClick={handleSave}
+                  disabled={!canSaveWorkspaceConfig}
+                >
+                  Save
+                </Button>
+              </>
+            ) : (
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-6 px-2 text-xs text-muted-foreground"
-                onClick={handleCancel}
+                onClick={() => setEditing(true)}
               >
-                <X className="h-3 w-3 mr-1" />{t("taskDetailExtra.cancel")}
+                <Pencil className="h-3 w-3 mr-1" />Edit
               </Button>
-              <Button
-                size="sm"
-                className="h-6 px-2 text-xs"
-                onClick={handleSave}
-                disabled={!canSaveWorkspaceConfig}
-              >
-                {t("taskDetailExtra.save")}
-              </Button>
-            </>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 px-2 text-xs text-muted-foreground"
-              onClick={() => setEditing(true)}
-            >
-              <Pencil className="h-3 w-3 mr-1" />{t("taskDetailExtra.edit")}
-            </Button>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Read-only info */}
@@ -419,7 +408,7 @@ export function IssueWorkspaceCard({
               <CopyableInline value={workspace.branchName} mono />
             </div>
           )}
-          {workspace?.cwd && (
+          {workspace?.cwd && !hideHostPaths && (
             <div className="flex items-center gap-1.5">
               <FolderOpen className="h-3 w-3 text-muted-foreground shrink-0" />
               <CopyableInline value={workspace.cwd} mono />
@@ -479,13 +468,13 @@ export function IssueWorkspaceCard({
       )}
 
       {/* Editing controls */}
-      {editing && (
+      {editing && workspaceIsolationControlsVisible && (
         <div className="space-y-2 pt-1">
           <select
             className="w-full rounded border border-border bg-transparent px-2 py-1.5 text-xs outline-none"
             value={draftSelection}
             onChange={(e) => {
-              const nextMode = e.target.value;
+              const nextMode = e.target.value as typeof draftSelection;
               setDraftSelection(nextMode);
               if (nextMode !== "reuse_existing") {
                 setDraftExecutionWorkspaceId("");

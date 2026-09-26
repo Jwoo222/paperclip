@@ -159,7 +159,9 @@ export function ConfigureBuiltInAgentModal({
 
         <div className="space-y-4">
           <InlineBanner tone="info" compact>
-            {t("agentManagement.builtIn.createsRoster", { name: definition.displayName, defaultValue: `Creates ${definition.displayName} in your roster, badged` })} <strong>{t("agentManagement.builtIn.builtIn", { defaultValue: "Built-in" })}</strong>. {t("agentManagement.builtIn.approvalQueue", { defaultValue: "Companies that require hire approval will queue this for the board." })}
+            Creates <strong>{definition.displayName}</strong> in your roster, badged{" "}
+            <strong>Built-in</strong>. Organizations that require hire approval will queue this for the
+            board.
           </InlineBanner>
 
           <Field label={t("agentManagement.form.adapterType", { defaultValue: "Adapter type" })}>

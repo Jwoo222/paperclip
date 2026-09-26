@@ -149,7 +149,7 @@ export function CliAuthPage() {
           </div>
           {challenge.requestedCompanyName && (
             <div>
-              <div className="text-muted-foreground">{t("integrations.cliAuth.requestedCompany")}</div>
+              <div className="text-muted-foreground">Requested organization</div>
               <div className="text-foreground">{challenge.requestedCompanyName}</div>
             </div>
           )}

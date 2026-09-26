@@ -31,6 +31,8 @@
       "approval": "approval"
     },
     "actions": {
+      "instance_settings_experimental_updated": "updated experimental settings",
+      "folder_personal_ensured": "prepared a personal folder",
       "issue_created": "created",
       "issue_updated": "updated",
       "issue_checked_out": "checked out",
