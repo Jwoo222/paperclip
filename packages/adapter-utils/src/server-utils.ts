@@ -4232,7 +4232,17 @@ export async function ensurePaperclipSkillSymlink(
   linkSkill: (source: string, target: string) => Promise<void> = (
     linkSource,
     linkTarget,
-  ) => fs.symlink(linkSource, linkTarget),
+  ) =>
+    // Windows: a directory symlink needs SeCreateSymbolicLinkPrivilege or
+    // Developer Mode, which a non-admin Paperclip install does not have
+    // (EPERM). A junction needs no privilege and behaves the same for
+    // lstat/readlink/readdir, so the reconcile and cleanup paths below keep
+    // working. Skill sources are always directories.
+    fs.symlink(
+      linkSource,
+      linkTarget,
+      process.platform === "win32" ? "junction" : undefined,
+    ),
 ): Promise<"created" | "repaired" | "skipped"> {
   const existing = await fs.lstat(target).catch(() => null);
   if (!existing) {

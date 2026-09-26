@@ -241,6 +241,39 @@ installation did not depend on that optional module.
 
 ---
 
+## FL-007 — Hermes adapter on Windows: junction skill links and file-based prompt
+
+**Status:** active · **Added:** 2026-09-26 · **Issue:** CMPA-178 (decision B), CMPA-176
+
+Two failures stopped every Hermes-adapter run on this machine after the
+2026-09-24 upstream merge:
+
+1. `ensurePaperclipSkillSymlink` (`packages/adapter-utils/src/server-utils.ts`)
+   created directory symlinks. Without Developer Mode or admin rights that is
+   `EPERM` on Windows, and the two Hermes agents share one `~/.hermes/skills`
+   directory, so a hand-made workaround link was deleted by the other agent's
+   reconcile within minutes. The default link function now creates a
+   **junction** on `win32` (`fs.symlink(source, target, "junction")`).
+   Junctions report `isSymbolicLink()` and `readlink()` like symlinks, so the
+   existing reconcile, repair and cleanup logic is unchanged. Callers that pass
+   their own `linkSkill` (Codex, Cursor) are unaffected. Skill sources are
+   always directories, which is what a junction requires.
+2. `packages/adapters/hermes/src/server/execute.ts` passed the whole rendered
+   prompt (instructions bundle + wake payload, 50-100 KB) as a `-q` argument.
+   Since the 2026-09-26 Hermes update the launcher is `hermes.cmd`, which the
+   adapter runs through `cmd.exe`, whose command line is capped at 8191 chars
+   (`The command line is too long.`). The prompt is now written to a private
+   scratch file under `%TEMP%\paperclip-hermes-prompts\` and passed with
+   `--query-file` (Hermes CLI `hermes_cli/_parser.py`, present in the
+   installed build `d0288be5b3`). The file is removed when the process exits.
+
+Agent config on this instance: `위키 총괄` no longer overrides `hermesCommand`
+(`hermes.exe` disappeared with the launcher change); both Hermes agents resolve
+`hermes` from `PATH` (`E:\AX_WORKSPACE\runtime\Hermes\bin`). Backups of the
+pre-change files: `E:\AX_WORKSPACE\backups\paperclip-hermes-adapter-fix-20260926\`.
+
+---
+
 ## Not in this file
 
 `start-paperclip.cmd` is a machine-specific launcher (absolute paths, CP949

@@ -18,7 +18,8 @@
  *   --source           session source tag for filtering
  */
 
-import fs from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 
 import type {
@@ -77,6 +78,22 @@ function cfgStringArray(v: unknown): string[] | undefined {
 
 export function resolveHermesCommand(config: Record<string, unknown>): string {
   return cfgString(config.hermesCommand) || cfgString(config.command) || HERMES_CLI;
+}
+
+/**
+ * Writes the rendered prompt to a private scratch file for `hermes chat
+ * --query-file`. The caller removes it after the process exits.
+ */
+export async function writeHermesPromptFile(
+  runId: string | undefined,
+  prompt: string,
+): Promise<string> {
+  const dir = path.join(os.tmpdir(), "paperclip-hermes-prompts");
+  await mkdir(dir, { recursive: true, mode: 0o700 });
+  const safeRunId = (runId || "run").replace(/[^A-Za-z0-9_-]/g, "_");
+  const file = path.join(dir, `${safeRunId}-${process.pid}-${Date.now()}.md`);
+  await writeFile(file, prompt, { encoding: "utf8", mode: 0o600 });
+  return file;
 }
 
 // ---------------------------------------------------------------------------
@@ -412,7 +429,7 @@ export async function execute(
   let agentInstructions = "";
   if (instructionsFilePath) {
     try {
-      agentInstructions = await fs.readFile(instructionsFilePath, "utf-8");
+      agentInstructions = await readFile(instructionsFilePath, "utf-8");
       const loadedInstructionsLength = agentInstructions.length;
       const instructionsFileDir = path.dirname(instructionsFilePath);
       agentInstructions += `\nThe above agent instructions were loaded from ${instructionsFilePath}. Resolve any relative file references from ${instructionsFileDir}/.`;
@@ -441,7 +458,14 @@ export async function execute(
   // ── Build command args ─────────────────────────────────────────────────
   // Use -Q (quiet) to get clean output: just response + session_id line
   const useQuiet = cfgBoolean(config.quiet) === true; // default false
-  const args: string[] = ["chat", "-q", prompt];
+  // The rendered prompt (instructions bundle + wake payload) is routinely
+  // 50-100 KB. Passing it as an argv value fails on Windows when `hermes`
+  // resolves to the `hermes.cmd` shim: cmd.exe caps the command line at 8191
+  // chars ("The command line is too long."). `--query-file` is the transport
+  // Hermes itself uses for arbitrary message bodies, so hand the prompt over
+  // as a file and remove it once the process has exited.
+  const promptFile = await writeHermesPromptFile(ctx.runId, prompt);
+  const args: string[] = ["chat", "--query-file", promptFile];
   if (useQuiet) args.push("-Q");
 
   if (model) {
@@ -557,14 +581,19 @@ export async function execute(
     return ctx.onLog(stream, chunk);
   };
 
-  const result = await runChildProcess(ctx.runId, hermesCmd, args, {
-    cwd,
-    env,
-    timeoutSec,
-    graceSec,
-    onLog: wrappedOnLog,
-    onSpawn: ctx.onSpawn,
-  });
+  let result: Awaited<ReturnType<typeof runChildProcess>>;
+  try {
+    result = await runChildProcess(ctx.runId, hermesCmd, args, {
+      cwd,
+      env,
+      timeoutSec,
+      graceSec,
+      onLog: wrappedOnLog,
+      onSpawn: ctx.onSpawn,
+    });
+  } finally {
+    await rm(promptFile, { force: true }).catch(() => {});
+  }
 
   // ── Parse output ───────────────────────────────────────────────────────
   const parsed = parseHermesOutput(result.stdout || "", result.stderr || "");

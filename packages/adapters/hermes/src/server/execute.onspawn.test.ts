@@ -38,6 +38,7 @@ vi.mock("node:fs/promises", () => ({
   stat: vi.fn(async () => ({ isFile: () => true, isDirectory: () => false })),
 }));
 
+import { writeFile } from "node:fs/promises";
 import { execute } from "./execute.js";
 import * as serverUtils from "@paperclipai/adapter-utils/server-utils";
 
@@ -110,7 +111,13 @@ describe("hermes-local adapter onSpawn forwarding", () => {
     await execute({ ...ctx, context: { ...ctx.context, paperclipWake: wake } } as any);
     const call = vi.mocked(serverUtils.runChildProcess).mock.calls.at(-1)!;
     expect(call[3].env).not.toHaveProperty("PAPERCLIP_WAKE_PAYLOAD_JSON");
-    expect(call[2]).toContainEqual(expect.stringContaining("Current task brief"));
+    // The prompt travels in a scratch file (`--query-file`), not in argv:
+    // cmd.exe caps the command line at 8191 chars on Windows.
+    const written = vi.mocked(writeFile).mock.calls.at(-1)!;
+    expect(String(written[1])).toContain("Current task brief");
+    expect(call[2]).toContain("--query-file");
+    expect(call[2]).toContain(written[0]);
+    expect(call[2]).not.toContainEqual(expect.stringContaining("Current task brief"));
   });
 
   it("runChildProcess opts type includes onSpawn", () => {
