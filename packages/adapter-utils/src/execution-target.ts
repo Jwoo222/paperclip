@@ -1560,10 +1560,19 @@ export async function cleanupGitHubOperationLaunchers(input: GitHubLauncherLocat
   }
 }
 
+/** Windows reads environment names case-insensitively, so `Path` and `PATH` are one variable. */
+function isWindowsLocalPathKey(key: string): boolean {
+  return /^path$/i.test(key);
+}
+
 async function githubOperationLauncherBasePath(
   target: AdapterCommandCapableExecutionTarget | null,
   env: Record<string, string>,
 ): Promise<string> {
+  if (!target && process.platform === "win32") {
+    const key = "PATH" in env ? "PATH" : Object.keys(env).find(isWindowsLocalPathKey);
+    return (key ? env[key] : undefined) || process.env.PATH || "";
+  }
   if (!target) return env.PATH || process.env.PATH || "/usr/bin:/bin";
   const configuredPath = sanitizeRemoteExecutionEnv(env).PATH;
   if (configuredPath !== undefined) return configuredPath;
@@ -1706,8 +1715,14 @@ export async function prepareGitHubOperationLaunchers(input: {
   const remote = input.target?.kind === "remote" ? input.target : null;
   const directory = githubOperationLauncherDirectory(input);
   const configDirectory = path.posix.join(directory, "gh-config");
+  const windowsLocal = !remote && process.platform === "win32";
   const basePath = await githubOperationLauncherBasePath(remote, input.env);
-  const managedPath = basePath ? `${directory}:${basePath}` : directory;
+  // Windows native callers cannot execute the extensionless launchers: cmd and
+  // CreateProcess skip them, but PowerShell resolves `git` to the file and
+  // never runs git.exe. Keep the native `;` PATH unchanged;
+  // Git Bash gets the launchers from the profile, and native callers run
+  // `node <PAPERCLIP_GITHUB_LAUNCHER_DIR>\git`.
+  const managedPath = windowsLocal ? basePath : basePath ? `${directory}:${basePath}` : directory;
   // Login shells may reorder PATH through /etc/profile or path_helper. Restore
   // the managed launchers after startup without loading a host user's profile.
   // Empty merge overrides clear host identity before launch, but Git treats
@@ -1716,7 +1731,14 @@ export async function prepareGitHubOperationLaunchers(input: {
   const clearEmptyGitIdentity = ["GIT_AUTHOR_NAME", "GIT_AUTHOR_EMAIL", "GIT_COMMITTER_NAME", "GIT_COMMITTER_EMAIL"]
     .map((key) => `if [ -z "\${${key}-}" ]; then unset ${key}; fi\n`)
     .join("");
-  const profile = `export PATH=${shellQuote(managedPath)}\n${clearEmptyGitIdentity}`;
+  // Git Bash (MSYS) already converted the native `;` PATH to POSIX form at
+  // startup and /etc/profile added its own /usr/bin tools. Replacing it with a
+  // Windows-form value would break every lookup, so only move the launchers to
+  // the front. cygpath applies the shell's real mount table (/c/, /cygdrive/c/,
+  // custom fstab), which a hand-written drive-letter conversion cannot know.
+  const profile = windowsLocal
+    ? `if [ -x /usr/bin/cygpath ]; then PATH="$(/usr/bin/cygpath -u -- ${shellQuote(directory)}):$PATH"; export PATH; fi\n${clearEmptyGitIdentity}`
+    : `export PATH=${shellQuote(managedPath)}\n${clearEmptyGitIdentity}`;
   const files: Record<string, string> = Object.fromEntries([
     // Remote launchers live beneath the checkout. Pin their own package scope
     // so an enclosing project's "type": "module" cannot reinterpret require().
@@ -1742,7 +1764,11 @@ export async function prepareGitHubOperationLaunchers(input: {
     await fs.mkdir(configDirectory, { recursive: true, mode: 0o700 });
     for (const [program, body] of Object.entries(files)) await fs.writeFile(path.join(directory, program), body, { mode: 0o700 });
   }
-  return { ...input.env, PATH: managedPath, ZDOTDIR: directory, BASH_ENV: `${directory}/.bashrc`,
+  // A leftover `Path` would be a second, conflicting copy of PATH for Windows children.
+  const env = windowsLocal
+    ? Object.fromEntries(Object.entries(input.env).filter(([key]) => !isWindowsLocalPathKey(key)))
+    : input.env;
+  return { ...env, PATH: managedPath, ZDOTDIR: directory, BASH_ENV: `${directory}/.bashrc`,
     GH_CONFIG_DIR: configDirectory, PAPERCLIP_GITHUB_LAUNCHER_DIR: directory };
 }
 

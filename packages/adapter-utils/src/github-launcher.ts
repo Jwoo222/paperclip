@@ -5,12 +5,17 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const { spawn } = require('node:child_process');
+const windows = process.platform === 'win32';
+// Windows paths compare case-insensitively; a differently cased PATH entry is still this directory.
+const samePath = (a, b) => windows ? a.toLowerCase() === b.toLowerCase() : a === b;
 const directory = path.dirname(fs.realpathSync(process.argv[1]));
 const program = path.basename(process.argv[1]);
 const originalPath = (process.env.PATH || '').split(path.delimiter).filter(p => {
-  try { return fs.realpathSync(p) !== directory; } catch { return true; }
+  try { return !samePath(fs.realpathSync(p), directory); } catch { return true; }
 });
-const executable = originalPath.map(p => path.join(p, program)).find(p => {
+// Windows runs native git.exe/gh.exe directly. Never select .cmd/.bat shims:
+// they require a shell that would reinterpret the forwarded arguments.
+const executable = originalPath.map(p => path.join(p, windows ? program + '.exe' : program)).find(p => {
   try { fs.accessSync(p, fs.constants.X_OK); return fs.statSync(p).isFile(); } catch { return false; }
 });
 if (!['git', 'gh'].includes(program) || !executable) {
@@ -86,6 +91,9 @@ async function main() {
   }
   // Only this invocation and its children inherit the captured credential.
   // Its Git children use the real binary, so steering cannot split a gh operation.
+  // Windows environment names are case-insensitive; keep one PATH entry so a
+  // stale Path cannot shadow the filtered value in the child.
+  if (windows) for (const key of Object.keys(env)) if (/^path$/i.test(key)) delete env[key];
   env.PATH = originalPath.join(path.delimiter);
   // Nested shell aliases must not reload the parent launcher profile and
   // recapture a newer identity. All ordinary descendants stay in this operation.
