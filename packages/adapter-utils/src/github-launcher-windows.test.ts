@@ -28,7 +28,12 @@ function hostGit(): string | null {
 
 const git = process.platform === "win32" ? hostGit() : null;
 // Git for Windows layout: <root>/cmd/git.exe or <root>/bin/git.exe, with <root>/bin/bash.exe.
-const gitBash = git ? path.join(path.dirname(path.dirname(git)), "bin", "bash.exe") : null;
+const gitBash = git ? [
+  path.join(path.dirname(path.dirname(git)), "bin", "bash.exe"),
+  // Git Bash may expose <root>/usr/bin/git.exe rather than cmd/git.exe.
+  path.join(path.dirname(git), "bash.exe"),
+  path.join(path.dirname(git), "..", "..", "usr", "bin", "bash.exe"),
+].find(existsSync) ?? null : null;
 
 async function fixture() {
   const root = await mkdtemp(path.join(os.tmpdir(), "paperclip-launcher-win-"));
@@ -48,7 +53,7 @@ async function fixture() {
   await mkdir(home);
   // Host Git credentials that the managed launcher must never load.
   await writeFile(path.join(home, ".gitconfig"), "[credential]\n\thelper = store\n[user]\n\tname = Host User\n");
-  const nativePath = [tools, path.dirname(git!), path.dirname(process.execPath),
+  const nativePath = [tools, path.dirname(git!), ...(gitBash ? [path.dirname(gitBash)] : []), path.dirname(process.execPath),
     "Z:\\Other Drive\\bin", path.join(process.env.SystemRoot ?? "C:\\Windows", "System32")].join(";");
   const base = {
     SystemRoot: process.env.SystemRoot ?? "C:\\Windows",
@@ -145,7 +150,10 @@ describe.runIf(process.platform === "win32" && git)("managed GitHub launchers on
     expect(result.stdout).toMatch(/^git version /);
   });
 
-  it.runIf(gitBash && existsSync(gitBash))("puts the launchers first in Git Bash with a POSIX PATH", async () => {
+  it.runIf(gitBash && existsSync(gitBash)).each([
+    {} as Record<string, string>,
+    { MSYS_NO_PATHCONV: "1", MSYS2_ARG_CONV_EXCL: "*" },
+  ])("puts the launchers first in Git Bash with a POSIX PATH (%j)", async (conversionEnv) => {
     const { base } = await fixture();
     const env = await launchers(base);
     const profile = await readFile(path.join(env.PAPERCLIP_GITHUB_LAUNCHER_DIR, ".bashrc"), "utf8");
@@ -154,7 +162,7 @@ describe.runIf(process.platform === "win32" && git)("managed GitHub launchers on
     expect(profile).not.toContain("Tools With Space");
     // BASH_ENV sources the staged .bashrc in this non-interactive shell.
     const script = 'command -v git; command -v gh; command -v node; git --version; gh --version; printf "%s" "$PATH"';
-    const result = await run(gitBash!, ["--noprofile", "--norc", "-c", script], env);
+    const result = await run(gitBash!, ["--noprofile", "--norc", "-c", script], { ...env, ...conversionEnv });
     expect(result.code, result.stderr).toBe(0);
     const [gitPath, ghPath, nodePath, gitVersion, ghVersion, shellPath] = result.stdout.split(/\r?\n/);
     const launcherDir = (await run(gitBash!, ["--noprofile", "--norc", "-c",

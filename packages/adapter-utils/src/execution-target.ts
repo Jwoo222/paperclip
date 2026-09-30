@@ -1743,7 +1743,18 @@ export async function prepareGitHubOperationLaunchers(input: {
     // Remote launchers live beneath the checkout. Pin their own package scope
     // so an enclosing project's "type": "module" cannot reinterpret require().
     ["package.json", '{"type":"commonjs"}\n'],
-    ...["git", "gh"].map((name) => [name, githubLauncherSource()] as const),
+    ...["git", "gh"].map((name) => {
+      const source = githubLauncherSource();
+      // Hermes disables MSYS argument conversion. An env-node shebang would
+      // pass /c/... to native Node, which resolves it against the current drive.
+      // This shell/JS polyglot pins only the script path to its native spelling;
+      // user arguments and the managed credential flow stay unchanged. Native
+      // callers can still execute `node <directory>/git` directly.
+      const body = windowsLocal
+        ? source.replace("#!/usr/bin/env node\n", `#!/bin/sh\n':' //; exec node ${shellQuote(path.join(directory, name).replace(/\\/g, "/"))} "$@"\n`)
+        : source;
+      return [name, body] as const;
+    }),
     ...[".zshenv", ".zprofile", ".zshrc", ".bash_profile", ".bashrc", ".profile"].map((name) => [name, profile] as const),
   ]);
   if (remote) {

@@ -35,3 +35,17 @@ The invariant is pinned by the `no-remote-git contract` case in
 remote-only commit propagates to the local worktree through the
 prepare → restore round-trip with no git remote configured at any point. Do
 not regress that test.
+
+## Windows managed GitHub launchers
+
+Local Windows launchers keep the native semicolon-delimited PATH unchanged.
+Git Bash profiles prepend the managed launcher directory after converting it
+with `cygpath`. The extensionless `git` and `gh` files use a shell/JavaScript
+header that passes their own absolute native path to Node, even when Hermes
+sets `MSYS_NO_PATHCONV=1` and `MSYS2_ARG_CONV_EXCL=*`. User arguments are forwarded
+unchanged; credential isolation and the per-operation broker are unchanged.
+Native callers can still run `node <PAPERCLIP_GITHUB_LAUNCHER_DIR>/git ...`.
+SSH and sandbox launchers retain their POSIX Node shebang.
+
+Run `github-launcher-windows.test.ts` on Windows with Git Bash installed. Both
+normal and disabled-MSYS-conversion shell cases must execute, not be skipped.
