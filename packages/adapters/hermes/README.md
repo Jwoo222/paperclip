@@ -253,6 +253,14 @@ Available toolsets: `terminal`, `file`, `web`, `browser`, `code_execution`, `vis
 | `promptTemplate` | string | *(built-in)* | Custom prompt template |
 | `paperclipApiUrl` | string | `http://127.0.0.1:3100/api` | Paperclip API base URL |
 
+Quiet mode is the default for local executions so persisted results and automatic
+issue comments contain the agent's answer, not the multiline `Query:` echo.
+Current Hermes emits its session ID on stderr; older stdout trailers are also
+supported. Response indentation and metadata-looking lines remain intact.
+If `quiet: false` is explicitly configured, a transcript containing a `Query:`
+echo is withheld from the semantic result and automatic comment. Raw run logs
+remain available; restore quiet mode to collect semantic responses.
+
 ### Prompt Template Variables
 
 Use `{{variable}}` syntax in `promptTemplate`:

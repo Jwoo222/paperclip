@@ -239,7 +239,7 @@ export function buildPrompt(
 const SESSION_ID_REGEX = /^session_id:\s*(\S+)/m;
 
 /** Regex for legacy session output format */
-const SESSION_ID_REGEX_LEGACY = /session[_ ](?:id|saved)[:\s]+([a-zA-Z0-9_-]+)/i;
+const SESSION_ID_REGEX_LEGACY = /(?:session[_ ](?:id|saved)|^Session)[:\s]+([a-zA-Z0-9_-]+)/im;
 
 /** Regex to extract token usage from Hermes output. */
 const TOKEN_USAGE_REGEX =
@@ -289,31 +289,36 @@ function cleanResponse(raw: string): string {
 // Output parsing
 // ---------------------------------------------------------------------------
 
-function parseHermesOutput(stdout: string, stderr: string): ParsedOutput {
+function parseHermesOutput(stdout: string, stderr: string, quiet: boolean): ParsedOutput {
   const combined = stdout + "\n" + stderr;
   const result: ParsedOutput = {};
 
-  // In quiet mode, Hermes outputs:
-  //   <response text>
-  //
-  //   session_id: <id>
-  const sessionMatch = stdout.match(SESSION_ID_REGEX);
-  if (sessionMatch?.[1]) {
-    result.sessionId = sessionMatch?.[1] ?? null;
-    // The response is everything before the session_id line
-    const sessionLineIdx = stdout.lastIndexOf("\nsession_id:");
-    if (sessionLineIdx > 0) {
-      result.response = cleanResponse(stdout.slice(0, sessionLineIdx));
-    }
+  // Current Hermes quiet mode writes only the answer to stdout and the
+  // session ID to stderr. Older versions put the trailer on stdout instead.
+  // Only strip a terminal stdout trailer; metadata-looking answer lines
+  // and indentation inside the actual response must remain intact.
+  const terminalStdoutSession = stdout.match(/(?:^|\n)session_id:[ \t]*(\S+)[ \t]*\r?\n?$/);
+  const stderrSession = stderr.match(SESSION_ID_REGEX);
+  if (quiet) {
+    const sessionMatch = stderrSession ?? terminalStdoutSession;
+    if (sessionMatch?.[1]) result.sessionId = sessionMatch[1];
+    result.response = (stderrSession || !terminalStdoutSession
+      ? stdout : stdout.slice(0, terminalStdoutSession.index)).trim();
+    // Defensive fallback for a CLI that ignored --quiet: never publish its
+    // query transcript when there is no quiet-protocol session marker.
+    if (!sessionMatch && /^\s*Query:/m.test(stdout)) result.response = "";
   } else {
     // Legacy format (non-quiet mode)
-    const legacyMatch = combined.match(SESSION_ID_REGEX_LEGACY);
+    const legacyMatch = stdout.match(/^Session:[ \t]*(\S+)/m) ?? combined.match(SESSION_ID_REGEX_LEGACY);
     if (legacyMatch?.[1]) {
       result.sessionId = legacyMatch?.[1] ?? null;
     }
     // In non-quiet mode, extract clean response from stdout by
     // filtering out tool lines, system messages, and noise
-    const cleaned = cleanResponse(stdout);
+    // A non-quiet transcript begins with the entire (multiline, wrapped)
+    // input query. Line filtering cannot distinguish it from agent output.
+    // Fail closed rather than publishing instructions as a semantic result.
+    const cleaned = /^\s*Query:/m.test(stdout) ? "" : cleanResponse(stdout);
     if (cleaned.length > 0) {
       result.response = cleaned;
     }
@@ -457,7 +462,7 @@ export async function execute(
 
   // ── Build command args ─────────────────────────────────────────────────
   // Use -Q (quiet) to get clean output: just response + session_id line
-  const useQuiet = cfgBoolean(config.quiet) === true; // default false
+  const useQuiet = cfgBoolean(config.quiet) !== false; // documented default true
   // The rendered prompt (instructions bundle + wake payload) is routinely
   // 50-100 KB. Passing it as an argv value fails on Windows when `hermes`
   // resolves to the `hermes.cmd` shim: cmd.exe caps the command line at 8191
@@ -596,7 +601,7 @@ export async function execute(
   }
 
   // ── Parse output ───────────────────────────────────────────────────────
-  const parsed = parseHermesOutput(result.stdout || "", result.stderr || "");
+  const parsed = parseHermesOutput(result.stdout || "", result.stderr || "", useQuiet);
 
   await ctx.onLog(
     "stdout",
