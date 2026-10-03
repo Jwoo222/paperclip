@@ -3,6 +3,7 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import { execute } from "../src/server/execute.js";
+import { productionUsagePayload } from "./heartbeat-usage-payload.js";
 import { buildHeartbeatRunIssueComment, mergeHeartbeatRunResultJson } from "../../../../server/src/services/heartbeat-run-summary.js";
 
 const roots: string[] = [];
@@ -53,19 +54,23 @@ process.exit(mode.includes('failure') ? 1 : 0);
   const comment = buildHeartbeatRunIssueComment(persisted);
   expect(JSON.stringify(persisted)).not.toContain("PRIVATE_INPUT_SENTINEL");
   expect(comment ?? "").not.toContain("PRIVATE_INPUT_SENTINEL");
-  expect(result.usage).toMatchObject({ inputTokens: 123, outputTokens: 45 });
-  expect(result.costUsd).toBe(0.01);
+  // Stdout/stderr numbers are answer text, not measured per-run usage.
+  expect(result.usage).toBeUndefined();
+  expect((result.resultJson as any).usage).toBeNull();
+  expect(result.costUsd).toBeUndefined();
+  expect((result.resultJson as any).cost_usd).toBeNull();
+  expect(await productionUsagePayload(result)).toBeNull();
   return { result, persisted, comment };
 }
 
 describe("Hermes semantic response persistence", () => {
-  it("defaults to quiet and stores only the answer on exit 0, preserving session and usage", async () => {
+  it("defaults to quiet and stores only the answer on exit 0, preserving session without fabricated usage", async () => {
     const { result, persisted, comment } = await runFixture("success");
     expect(result.exitCode).toBe(0);
     expect(persisted?.result).toBe("실제 응답입니다.\n\n    들여쓰기를 보존합니다.");
     expect(comment).toBe(result.summary);
     expect(result.sessionParams).toEqual({ sessionId: "next-session" });
-    console.log("exit=0 result=" + JSON.stringify(persisted?.result) + " session=next-session usage=123/45 cost=0.01");
+    console.log("exit=0 result=" + JSON.stringify(persisted?.result) + " session=next-session usage=null cost=null");
   });
   it("retains only an actual failure reply on exit 1", async () => {
     const { result, persisted, comment } = await runFixture("failure", undefined, "제공자 연결에 실패했습니다.");

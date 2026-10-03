@@ -18,14 +18,13 @@
  *   --source           session source tag for filtering
  */
 
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
 import type {
   AdapterExecutionContext,
   AdapterExecutionResult,
-  UsageSummary,
 } from "@paperclipai/adapter-utils";
 
 import {
@@ -56,6 +55,7 @@ import {
   resolveProvider,
 } from "./detect-model.js";
 import { reconcileHermesPaperclipSkills } from "./skills.js";
+import { HERMES_USAGE_FILE_ENV, HERMES_USAGE_RUN_ENV, HERMES_USAGE_SESSION_ENV, readHermesRunUsage } from "./run-usage.js";
 
 // ---------------------------------------------------------------------------
 // Config helpers
@@ -241,18 +241,10 @@ const SESSION_ID_REGEX = /^session_id:\s*(\S+)/m;
 /** Regex for legacy session output format */
 const SESSION_ID_REGEX_LEGACY = /(?:session[_ ](?:id|saved)|^Session)[:\s]+([a-zA-Z0-9_-]+)/im;
 
-/** Regex to extract token usage from Hermes output. */
-const TOKEN_USAGE_REGEX =
-  /tokens?[:\s]+(\d+)\s*(?:input|in)\b.*?(\d+)\s*(?:output|out)\b/i;
-
-/** Regex to extract cost from Hermes output. */
-const COST_REGEX = /(?:cost|spent)[:\s]*\$?([\d.]+)/i;
-
 interface ParsedOutput {
   sessionId?: string;
   response?: string;
-  usage?: UsageSummary;
-  costUsd?: number;
+  usage?: AdapterExecutionResult["usage"];
   errorMessage?: string;
 }
 
@@ -322,21 +314,6 @@ function parseHermesOutput(stdout: string, stderr: string, quiet: boolean): Pars
     if (cleaned.length > 0) {
       result.response = cleaned;
     }
-  }
-
-  // Extract token usage
-  const usageMatch = combined.match(TOKEN_USAGE_REGEX);
-  if (usageMatch) {
-    result.usage = {
-      inputTokens: parseInt(usageMatch[1], 10) || 0,
-      outputTokens: parseInt(usageMatch[2], 10) || 0,
-    };
-  }
-
-  // Extract cost
-  const costMatch = combined.match(COST_REGEX);
-  if (costMatch?.[1]) {
-    result.costUsd = parseFloat(costMatch[1]);
   }
 
   // Check for error patterns in stderr
@@ -524,6 +501,10 @@ export async function execute(
   };
 
   if (ctx.runId) env.PAPERCLIP_RUN_ID = ctx.runId;
+  // These transport values must never come from config or a previous run.
+  delete env[HERMES_USAGE_FILE_ENV];
+  delete env[HERMES_USAGE_RUN_ENV];
+  delete env[HERMES_USAGE_SESSION_ENV];
 
   // PAPERCLIP_API_KEY is never accepted from config — the harness-minted run
   // token is the only source of Paperclip API identity.
@@ -587,7 +568,25 @@ export async function execute(
   };
 
   let result: Awaited<ReturnType<typeof runChildProcess>>;
+  let parsed: ParsedOutput;
+  let usageDir: string | undefined;
   try {
+    // Environment-only opt-in: old Hermes ignores it and runs with unchanged argv.
+    // Setup failure is accounting-only; the reply/session process still runs.
+    if (useQuiet && ctx.runId) {
+      try {
+        const base = env.PAPERCLIP_RUN_SCRATCH_DIR || env.PAPERCLIP_SCRATCH_DIR || env.TMPDIR || os.tmpdir();
+        await mkdir(base, { recursive: true, mode: 0o700 });
+        usageDir = await mkdtemp(path.join(base, "paperclip-hermes-usage-"));
+        env[HERMES_USAGE_FILE_ENV] = path.join(usageDir, "usage.json");
+        env[HERMES_USAGE_RUN_ENV] = ctx.runId;
+        env[HERMES_USAGE_SESSION_ENV] = persistSession && prevSessionId ? prevSessionId : "";
+      } catch {
+        delete env[HERMES_USAGE_FILE_ENV];
+        delete env[HERMES_USAGE_RUN_ENV];
+        delete env[HERMES_USAGE_SESSION_ENV];
+      }
+    }
     result = await runChildProcess(ctx.runId, hermesCmd, args, {
       cwd,
       env,
@@ -596,12 +595,18 @@ export async function execute(
       onLog: wrappedOnLog,
       onSpawn: ctx.onSpawn,
     });
+    parsed = parseHermesOutput(result.stdout || "", result.stderr || "", useQuiet);
+    parsed.usage = await readHermesRunUsage(env[HERMES_USAGE_FILE_ENV], {
+      runId: ctx.runId,
+      requestedSessionId: persistSession && prevSessionId ? prevSessionId : null,
+      finalSessionId: parsed.sessionId || null,
+      exitCode: result.exitCode,
+      timedOut: result.timedOut,
+    });
   } finally {
     await rm(promptFile, { force: true }).catch(() => {});
+    if (usageDir) await rm(usageDir, { recursive: true, force: true }).catch(() => {});
   }
-
-  // ── Parse output ───────────────────────────────────────────────────────
-  const parsed = parseHermesOutput(result.stdout || "", result.stderr || "", useQuiet);
 
   await ctx.onLog(
     "stdout",
@@ -628,10 +633,7 @@ export async function execute(
 
   if (parsed.usage) {
     executionResult.usage = parsed.usage;
-  }
-
-  if (parsed.costUsd !== undefined) {
-    executionResult.costUsd = parsed.costUsd;
+    executionResult.usageBasis = "per_run";
   }
 
   // Summary from agent response
@@ -644,7 +646,7 @@ export async function execute(
     result: parsed.response || "",
     session_id: parsed.sessionId || null,
     usage: parsed.usage || null,
-    cost_usd: parsed.costUsd ?? null,
+    cost_usd: null,
   };
 
   // Store session ID for next run
