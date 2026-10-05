@@ -497,7 +497,9 @@ function ConnectedTaskComposer({
               {tNewUi("newUi.k34e3fb391050")} {providerNames[binding.provider]}
             </p>
             <p className="truncate text-xs text-muted-foreground">
-              {binding.externalLabel} {tNewUi("newUi.k0c4267b89813")}
+              {binding.externalLabel} · {binding.provider === "slack"
+                ? t("upgrade2610Agents.connectedSlackMirrorNotice")
+                : t("upgrade2610Agents.connectedAssignmentFixed")}
             </p>
           </div>
         </div>
@@ -819,7 +821,9 @@ function ConnectedTaskComposer({
           )}
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">
-              {tNewUi("newUi.k9add383460a6")}
+              {binding.provider === "slack"
+                ? t("upgrade2610Agents.connectedSlackPostNotice")
+                : tNewUi("newUi.k9add383460a6")}
             </p>
             <Button
               size="sm"

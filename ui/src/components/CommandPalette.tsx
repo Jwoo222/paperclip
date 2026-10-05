@@ -1,4 +1,5 @@
 import { AgentIdentity } from "@/components/AgentIdentity";
+import { useCombinedInboxTasksEnabled } from "@/hooks/useCombinedInboxTasksEnabled";
 import { useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "@/lib/router";
 import { useQuery } from "@tanstack/react-query";
@@ -105,6 +106,7 @@ export function CommandPalette() {
     queryFn: () => instanceSettingsApi.getExperimental(),
     retry: false,
   });
+  const { enabled: combinedInboxTasksEnabled } = useCombinedInboxTasksEnabled();
   const fileViewerEnabled = experimentalSettings?.enableExperimentalFileViewer === true;
 
   useEffect(() => {
@@ -360,9 +362,9 @@ export function CommandPalette() {
             <LayoutDashboard className="mr-2 h-4 w-4" />
             {t("sharedOperationsExtra.dashboard")}
           </CommandItem>
-          <CommandItem onSelect={() => go("/inbox")}>
+          <CommandItem onSelect={() => go(combinedInboxTasksEnabled ? "/issues?view=mine" : "/inbox")}>
             <Inbox className="mr-2 h-4 w-4" />
-            {t("sharedOperationsExtra.inbox")}
+            {combinedInboxTasksEnabled ? t("upgrade2610Shell.myWork") : t("sharedOperationsExtra.inbox")}
           </CommandItem>
           <CommandItem onSelect={() => go("/issues")}>
             <CircleDot className="mr-2 h-4 w-4" />
@@ -437,7 +439,7 @@ export function CommandPalette() {
         {projects.length > 0 && !showSearchAll && (
           <>
             <CommandSeparator />
-            <CommandGroup heading="Projects">
+            <CommandGroup heading={t("sharedOperationsExtra.projects")}>
               {projects.slice(0, 10).map((project) => (
                 <CommandItem key={project.id} onSelect={() => go(projectUrl(project))}>
                   <Hexagon className="mr-2 h-4 w-4" />

@@ -1,9 +1,4 @@
-import { t as tNewUi } from "@/i18n";
-import { useState } from "react";
-import { Check, Copy } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { copyTextToClipboard } from "@/lib/clipboard";
+import { buildSetupPrompt, SetupPrompt } from "./SetupPrompt";
 
 export const githubSetupPrompt = `Help me set up a GitHub review bot in Paperclip. Use your embedded browser to operate the real Paperclip and GitHub interfaces. Do not use a Chrome extension. If you do not have embedded browser tools, tell me before starting.
 
@@ -44,51 +39,9 @@ Use the following workflow. Work through normal UI controls, inspect the result 
 Finish with links to the Paperclip connection, assigned agent, any test task/run and PR/check, plus a concise summary of enabled repositories, permitted requesters, responsible-user policy, automatic triggers, rating threshold, formal-review permissions, and whether GitHub actually requires the check. Distinguish verified outcomes from anything still awaiting a user action. Leave the setup resumable if a step is blocked.`;
 
 export function buildGitHubSetupPrompt(instanceUrl: string) {
-  let instanceOrigin: string | null = null;
-  try {
-    const url = new URL(instanceUrl);
-    if (url.protocol === "http:" || url.protocol === "https:") instanceOrigin = url.origin;
-  } catch {
-    // A preview can have no configured instance. Do not substitute its own URL.
-  }
-  const context = instanceOrigin
-    ? `Paperclip instance URL: ${instanceOrigin}\nUse this instance for setup. Do not ask me for its URL again unless it is unavailable or I ask to use a different instance.`
-    : "Paperclip instance URL is unavailable. Ask me for it before starting setup.";
-  return `${context}\n\n${githubSetupPrompt}`;
+  return buildSetupPrompt(instanceUrl, githubSetupPrompt);
 }
 
 export function GitHubSetupPrompt({ instanceUrl = window.location.origin }: { instanceUrl?: string }) {
-  const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
-  const prompt = buildGitHubSetupPrompt(instanceUrl);
-  return (
-    <div className="space-y-2">
-      <Button
-        type="button"
-        variant="outline"
-        className="gap-2 border-dashed text-muted-foreground"
-        onClick={async () => {
-          try {
-            await copyTextToClipboard(prompt);
-            setStatus("copied");
-          } catch {
-            setStatus("failed");
-          }
-        }}
-      >
-        <span className="flex -space-x-1" aria-hidden="true">
-          <img src="/brands/claude-color.svg" alt="" className="size-4 rounded-full bg-background ring-2 ring-background" />
-          <img src="/brands/codex-color.svg" alt="" className="size-4 rounded-full bg-background ring-2 ring-background" />
-        </span>
-        {status === "copied" ? tNewUi("newUi.k326f69763529") : tNewUi("newUi.k9a5d81ccb428")}
-        {status === "copied" ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-      </Button>
-      <span className="sr-only" role="status">{status === "copied" ? tNewUi("newUi.k3ea3b2b67f71") : ""}</span>
-      {status === "failed" && (
-        <div className="space-y-2">
-          <p role="alert" className="text-sm text-muted-foreground">{tNewUi("newUi.k8db848e94a7a")}</p>
-          <Textarea aria-label={tNewUi("newUi.kc7b9bbe5f091")} readOnly value={prompt} onFocus={(event) => event.currentTarget.select()} rows={8} />
-        </div>
-      )}
-    </div>
-  );
+  return <SetupPrompt prompt={buildGitHubSetupPrompt(instanceUrl)} description="Paste this into your agent to configure your GitHub review bot." />;
 }

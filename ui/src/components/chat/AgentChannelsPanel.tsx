@@ -1,4 +1,5 @@
 import { t as tNewUi } from "@/i18n";
+import { t } from "@/i18n";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, MessageSquarePlus } from "lucide-react";
 import { chatEndpointsApi, type ChatProvider } from "@/api/chatEndpoints";
@@ -10,7 +11,7 @@ import { useChatConnectorsEnabled } from "@/hooks/useChatConnectorsEnabled";
 
 const providerNames: Record<ChatProvider, string> = {
   slack: "Slack",
-  github: "GitHub",
+  github: "GitHub Code Review Bot",
   discord: "Discord",
   "microsoft-teams": "Microsoft Teams",
   telegram: "Telegram",
@@ -29,12 +30,11 @@ export function AgentChannelsPanel({
   const query = useQuery({
     queryKey: queryKeys.chatEndpoints.list(companyId),
     queryFn: () => chatEndpointsApi.list(companyId),
-    enabled,
+    enabled: Boolean(companyId),
   });
-  if (!enabled) return null;
   const endpoints = (query.data ?? []).filter(
     (endpoint) =>
-      endpoint.assignedAgentId === agentId && endpoint.status !== "archived",
+      endpoint.assignedAgentId === agentId && endpoint.status !== "archived" && (endpoint.provider === "agentmail" || enabled),
   );
   return (
     <section className="max-w-3xl space-y-5">
@@ -58,7 +58,7 @@ export function AgentChannelsPanel({
         <div className="rounded-lg border border-dashed border-border p-5">
           <p className="text-sm font-medium">{tNewUi("newUi.kce30a0411e96")}</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            {tNewUi("newUi.ka9cf7f18bbfd")}
+            {enabled ? "Connect AgentMail, Slack, GitHub Code Review Bot, Discord, Microsoft Teams, or Telegram from Connectors." : t("upgrade2610Agents.channelsEmptyAgentMailOnly")}
           </p>
           <Button asChild className="mt-3" variant="outline" size="sm">
             <Link to="/apps">{tNewUi("newUi.kd985974b1d05")}</Link>

@@ -1,0 +1,32 @@
+{
+  "upgrade2610Shell": {
+    "chat": "채팅",
+    "couldNotLoadOrganizations": "조직을 불러오지 못했습니다",
+    "openCompanySwitcher": "회사 전환 메뉴 열기",
+    "invite": "초대",
+    "inviteDescription": "조직에 사람을 초대합니다.",
+    "viewCommitOnGitHub": "GitHub에서 커밋 {{commit}} 보기",
+    "myWork": "나와 관련된 업무",
+    "sources": "소스",
+    "organizationMembers": "조직 구성원",
+    "searchSurface": "{{surface}} 검색…",
+    "chooseVisibleColumns": "표시할 열 선택",
+    "selectOrganizationToView": "조직을 선택하면 {{surface}}을(를) 볼 수 있습니다.",
+    "surfaceControls": "{{surface}} 제어",
+    "closeSelector": "선택 창 닫기",
+    "taskViews": {
+      "mineHint": "나에게 배정되었거나 내 응답을 기다리는 업무",
+      "unreadHint": "내가 관여한 업무 중 새 활동이 있는 업무",
+      "blockedHint": "차단 원인별로 묶은 차단된 업무",
+      "recentHint": "최근에 관여한 모든 항목",
+      "everything": "모든 항목",
+      "everythingHint": "업무, 승인, 실패한 실행, 참여 요청",
+      "allTasks": "모든 업무",
+      "allTasksHint": "조직의 모든 업무",
+      "active": "활성",
+      "activeHint": "실행 여부와 관계없이 열려 있는 업무",
+      "backlogHint": "아직 시작하지 않은 업무",
+      "doneHint": "완료되었거나 취소된 업무"
+    }
+  }
+}

@@ -229,7 +229,7 @@ export function CompanySettings() {
           {t("settingsSecurity.general", { defaultValue: "General" })}
         </div>
         <div className="space-y-3">
-          <Field label="Organization name" hint="The display name for your organization.">
+          <Field label={t("upgrade2610Residual.organizationName")} hint={t("upgrade2610Residual.organizationNameHint")}>
             <input
               className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
               type="text"
@@ -381,8 +381,7 @@ export function CompanySettings() {
         </div>
         <div className="space-y-3 bg-destructive/5 px-4 py-4">
           <p className="text-sm text-muted-foreground">
-            Archive this organization to hide it from the sidebar. This persists in
-            the database.
+            {t("upgrade2610Residual.archiveDescription")}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -395,7 +394,7 @@ export function CompanySettings() {
               onClick={() => {
                 if (!selectedCompanyId) return;
                 const confirmed = window.confirm(
-                  `Archive organization "${selectedCompany.name}"? It will be hidden from the sidebar.`
+                  t("upgrade2610Residual.archiveConfirm", { name: selectedCompany.name })
                 );
                 if (!confirmed) return;
                 archiveMutation.mutate({ companyId: selectedCompanyId });
@@ -404,8 +403,8 @@ export function CompanySettings() {
               {archiveMutation.isPending
                 ? tr("archiving", "Archiving...")
                 : selectedCompany.status === "archived"
-                ? "Already archived"
-                : "Archive organization"}
+                ? t("upgrade2610Residual.alreadyArchived")
+                : t("upgrade2610Residual.archiveOrganization")}
             </Button>
             {archiveMutation.isError && (
               <span className="text-xs text-destructive">

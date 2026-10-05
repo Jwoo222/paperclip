@@ -127,7 +127,14 @@ opposite ways:
 | `packages/shared/src/validators/text.test.ts` | additive | Unit tests |
 | `skills/paperclip/scripts/paperclip-issue-update.sh` | additive | bash helper |
 | `skills/paperclip/scripts/paperclip-issue-update.ps1` | additive | PowerShell helper |
-| `skills/paperclip/SKILL.md` | **edited** | Per-shell guidance |
+| `skills/paperclip/SKILL.md` | **edited** | Per-shell guidance, appended at the very end of the file |
+
+The SKILL.md paragraph ("Windows and Korean text") must stay **after the last
+upstream heading**. Since upstream `1c07b5903` the runner build checks
+`packages/paperclip-runner` capability inventory ids that embed SKILL.md heading
+line numbers; inserting lines mid-file makes `check:capability-inventory` fail
+with "stale source row". Appending at the end shifts no ids, so no generated
+file has to be regenerated.
 
 `multilineTextSchema` is the single chokepoint used by `addIssueCommentSchema`,
 `updateIssueSchema.comment`, and `upsertIssueDocumentSchema.body`, so one edit
@@ -178,7 +185,8 @@ self-hosted fork.
 
 ## FL-004 — Korean UI on the current upstream screens
 
-**Status:** active · **Re-applied:** 2026-09-24 on upstream `7b7c4d417`
+**Status:** active · **Re-applied:** 2026-09-24 on upstream `7b7c4d417`;
+2026-10-05 on upstream `1c07b5903`
 
 The upstream UI changed across hundreds of files after this fork's earlier
 localization. Keep the upstream components and behavior first, then re-apply
@@ -208,6 +216,43 @@ production build, and a six-route Korean browser smoke check with no page
 errors before being applied to the live checkout.
 The Audit feed also reuses the existing translated activity verbs for recorded
 actions; raw event codes remain visible as technical identifiers.
+
+### 2026-10-05 merge of `1c07b5903` (209 upstream commits)
+
+- 52 UI files conflicted (121 hunks). Each hunk kept upstream structure and
+  behavior, then reused the existing key when ours had already translated the
+  same English. Hunk-level resolution kept far more translation than taking
+  upstream wholesale would have.
+- New strings live in per-area fragments
+  `ui/src/i18n/locales/{en,ko}/upgrade-2610-{shell,task,agents,skills,apps}.json`
+  (top-level `upgrade2610<Area>`). Future merges should add a new dated
+  fragment set the same way instead of editing older fragments, so parallel
+  workers never touch the same locale file.
+- Owner decision: translate **used screens only** for now. Left English on
+  purpose (still resolved, just not localized): Slack/Email/GitHub chat endpoint
+  setup, Remote MCP setup, MCP action test dialog, MCP config help, Cloud gates
+  and sign-in, Browser Use Cloud task browser panels, AgentMail setup,
+  workspace export recovery, the dev-only Design Guide.
+- Literals asserted by source-contract tests stay English (e.g. "Run retry
+  failed", "Retry queued", the AgentChannelsPanel connector list).
+- `InstanceExperimentalSettings` cards now use
+  `adminExtra.experimental.flags.<card>.<prop>` inside `admin-extra.json`,
+  because that page's test mocks `@/i18n` with only that file.
+- Fixed old ko copy: `newUi.k314ae71b8c8d` Artifacts → 산출물 (was 유물),
+  `newUi.k73adffe32a9a`/`k14eb4b2e20d3` 에이전트와 채팅 (particle).
+- Preview smoke (Korean, seeded copy) found English that predates this merge on
+  everyday screens. Fixed in `upgrade-2610-dashboard.json` (dashboard banners,
+  run cards, "N more runs"), `upgrade-2610-residual.json` (routines, company
+  settings, mode badge, settings sidebar) and `upgrade2610Task.mobilePlaceholder`.
+- Shipped app-definition copy: 32 new or changed strings from
+  `packages/shared/src/app-definitions/*.json` were added to
+  `app-catalog.json` (key = `k` + first 12 hex of SHA-256 of the English text).
+  `ConnectionSetupFlow` now passes capability-profile descriptions through
+  `localizeAppCatalogCopy`. After each merge, rerun the comparison of
+  definition `description`/`tagline` strings against `en/app-catalog.json`.
+- Still English, deliberately deferred: activity-feed verbs in
+  `ui/src/lib/activity-format.ts` (English word order is baked into sentence
+  assembly), skill descriptions and app connection names (stored data).
 
 ## FL-005 — Restorable embedded PostgreSQL backup on Windows
 
@@ -271,6 +316,72 @@ Agent config on this instance: `위키 총괄` no longer overrides `hermesComman
 (`hermes.exe` disappeared with the launcher change); both Hermes agents resolve
 `hermes` from `PATH` (`E:\AX_WORKSPACE\runtime\Hermes\bin`). Backups of the
 pre-change files: `E:\AX_WORKSPACE\backups\paperclip-hermes-adapter-fix-20260926\`.
+
+---
+
+## FL-008 — Upstream files that the 2026-09-26 reimport dropped
+
+**Status:** fixed · **Added:** 2026-10-05
+
+The 2026-09-26 reconstruction commit `3e8645713` copied the execution tree
+through a `.gitignore`-respecting path, so 49 files that upstream **tracks but
+also matches its own ignore rules** vanished from the fork tree: `.agents/skills/**`
+(40 maintainer skill files), `packages/plugins/plugin-llm-wiki/tests/screenshots/*`
+and `server/src/types/express.d.ts`. The live checkout still had them on disk
+as ignored files, which hid the loss. In the 2026-10-05 merge the deletion side
+won and the server typecheck reported 1,325 errors (`Property 'actor' does not
+exist on type 'Request'`). They were restored from upstream `1c07b5903`.
+
+Check after any tree reconstruction or merge:
+
+```
+comm -23 <(git ls-tree -r --name-only <upstream> | sort) <(git ls-tree -r --name-only HEAD | sort)
+```
+
+Every listed path must be an intentional fork deletion; today there are none.
+
+---
+
+## Merging on this machine (Windows) — practical notes
+
+1. **Commit the live checkout first.** Agents and desk sessions apply patches
+   to the execution checkout without committing. On 2026-10-05 nineteen files
+   (CMPA-487 heartbeat/adapter-override work, the account-router plugin, skill
+   helper scripts) were committed as `ad590ee08` and `b46be8c4c` before
+   branching. Files edited after the server started are on disk but not
+   running until the next restart.
+2. **Merge in a new worktree, never in the execution checkout.** The server
+   runs from source through `tsx`; cut over by changing `PAPERCLIP_REPO` in
+   `E:\AX_WORKSPACE\runtime\launchers\start-paperclip.cmd` and restarting.
+3. **Runner build:** `build:binary` needs Rust `cargo`, which this machine does
+   not have and the local adapters do not need. `pnpm --filter … typecheck`
+   from the repo root also fails here with `ERR_UNSUPPORTED_ESM_URL_SCHEME`.
+   Verify the server with `cd server && node ../node_modules/typescript/bin/tsc --noEmit`
+   after `node ../../../scripts/ensure-plugin-build-deps.mjs` in
+   `packages/plugins/sdk`.
+4. **Run tests from the repo root.** Several server tests read
+   `skills/paperclip/*` by relative path, and `locale-validation.test.ts` needs
+   `npx vitest run --root ui …` from the root.
+5. **Known environment-only failures** (not merge regressions):
+   - Hermes `command-resolution.test.ts` (uses a `#!/bin/sh` fake CLI) and the
+     symlink-conflict test in `src/index.test.ts` (needs Developer Mode).
+   - `companies-service.test.ts` "does not auto-provision bundled built-in
+     agents": the test uses the default home `C:\Users\03jwo\.paperclip`, which
+     is a junction to `E:\AX_WORKSPACE\runtime\paperclip-user-profile`, and the
+     upstream instruction-path guard (#14420) rejects any link in the path. The
+     production instance uses `--data-dir E:\AX_WORKSPACE\runtime\Paperclip-KO`,
+     whose path has no links, and all 22 agents use managed instruction
+     bundles, so production is not affected.
+6. **Preview before cutover.** `paperclipai worktree init` fails on Windows
+   with `EPERM` renaming its port-reservation lock owner file. Instead restore
+   the latest hourly backup into an isolated embedded Postgres, run
+   `applyPendingMigrations`, `quarantineSeededWorktreeExecutionState` and
+   `pauseSeededScheduledRoutines` from `cli/src/commands/worktree.ts`, then
+   pause agents and disable plugins in that copy before starting it with
+   `HEARTBEAT_SCHEDULER_ENABLED=false`. Do not copy the production secrets key.
+7. Claude prompt-cache directories under the instance hold junctions to
+   `<execution checkout>/skills/*`; keep the previous checkout on disk after a
+   cutover.
 
 ---
 

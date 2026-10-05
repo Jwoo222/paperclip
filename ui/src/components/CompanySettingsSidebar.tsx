@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { t } from "@/i18n";
 import {
   ArrowLeft,
   Cpu,
@@ -93,7 +94,7 @@ export function CompanySettingsSidebar() {
         className="flex h-(--sz-60px) shrink-0 items-center px-3"
       >
         <div data-slot="settings-back-group" className={`${primarySidebarStyles.group} w-full`}>
-          <SidebarNavItem to="/dashboard" label="Back to app" icon={ArrowLeft} />
+          <SidebarNavItem to="/dashboard" label={t("upgrade2610Residual.backToApp")} icon={ArrowLeft} />
         </div>
       </div>
       <nav

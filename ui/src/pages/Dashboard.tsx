@@ -330,7 +330,7 @@ export function Dashboard() {
         <InlineBanner
           tone="warning"
           icon={PauseCircle}
-          title={`${pausedImportedCount} imported agent${pausedImportedCount === 1 ? " is" : "s are"} paused and will not run.`}
+          title={t("upgrade2610Dashboard.importedPausedTitle", { count: pausedImportedCount })}
           actions={
             <Button
               size="sm"
@@ -338,24 +338,24 @@ export function Dashboard() {
               disabled={resumeImportedAgents.isPending}
               data-testid="dashboard-resume-imported-agents"
             >
-              {resumeImportedAgents.isPending ? "Resuming…" : "Resume all"}
+              {resumeImportedAgents.isPending ? t("upgrade2610Dashboard.resuming") : t("upgrade2610Dashboard.resumeAll")}
             </Button>
           }
         >
-          Agents from an organization import arrive paused as a safety default. Resume them so assigned tasks can start.
+          {t("upgrade2610Dashboard.importedPausedBody")}
         </InlineBanner>
       ) : pausedBanner?.kind === "all-paused" ? (
         <InlineBanner
           tone="warning"
           icon={PauseCircle}
-          title="All agents in this organization are paused — nothing will run."
+          title={t("upgrade2610Dashboard.allPausedTitle")}
           actions={
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/agents">Review agents</Link>
+              <Link to="/agents">{t("upgrade2610Dashboard.reviewAgents")}</Link>
             </Button>
           }
         >
-          Resume at least one agent to let assigned tasks start.
+          {t("upgrade2610Dashboard.allPausedBody")}
         </InlineBanner>
       ) : null}
 
@@ -376,7 +376,7 @@ export function Dashboard() {
         </div>
       )}
 
-      <ActiveAgentsPanel companyId={selectedCompanyId!} />
+      <ActiveAgentsPanel companyId={selectedCompanyId!} dedupeLinkedTasks />
 
       {data && (
         <>
@@ -453,7 +453,7 @@ export function Dashboard() {
           <SmokeLabDashboardCard companyId={selectedCompanyId!} />
 
           <div className={cn("grid grid-cols-2 gap-4", SHOW_TASK_PRIORITY_UI ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
-            <ChartCard title="Run Activity" subtitle="Last 14 days">
+            <ChartCard title={t("overview.dashboard.runActivity")} subtitle={t("overview.dashboard.last14Days")}>
               <RunActivityChart activity={data.runActivity} />
             </ChartCard>
             {/* PAP-411: "Tasks by Priority" chart hidden behind SHOW_TASK_PRIORITY_UI. */}

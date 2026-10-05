@@ -127,7 +127,7 @@ export function GitHubChatSetup() {
   useEffect(() => {
     setBreadcrumbs([
       { label: tNewUi("newUi.kc3d2e79ebdd0"), href: "/apps" },
-      { label: tNewUi("newUi.kbb04a7251ca1") },
+      { label: "GitHub Code Review Bot" },
     ]);
     return () => setBreadcrumbs([]);
   }, [setBreadcrumbs]);

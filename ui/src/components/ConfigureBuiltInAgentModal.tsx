@@ -23,6 +23,7 @@ import {
   type BuiltInAgentState,
 } from "@/api/builtInAgents";
 import { useTranslation } from "@/i18n";
+import { adapterCuratesModelOrder } from "../lib/model-utils";
 
 /** Adapters whose config completeness is keyed on a non-empty `model`. */
 function isModelBasedAdapter(adapterType: string): boolean {
@@ -186,6 +187,7 @@ export function ConfigureBuiltInAgentModal({
               allowDefault={adapterType !== "opencode_local"}
               required
               groupByProvider={false}
+              preserveOrder={adapterCuratesModelOrder(adapterType)}
               creatable
             />
           )}

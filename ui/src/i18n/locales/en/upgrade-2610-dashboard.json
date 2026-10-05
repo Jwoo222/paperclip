@@ -1,0 +1,20 @@
+{
+  "upgrade2610Dashboard": {
+    "importedPausedTitle_one": "{{count}} imported agent is paused and will not run.",
+    "importedPausedTitle_other": "{{count}} imported agents are paused and will not run.",
+    "importedPausedBody": "Agents from an organization import arrive paused as a safety default. Resume them so assigned tasks can start.",
+    "resumeAll": "Resume all",
+    "resuming": "Resuming…",
+    "allPausedTitle": "All agents in this organization are paused — nothing will run.",
+    "allPausedBody": "Resume at least one agent to let assigned tasks start.",
+    "reviewAgents": "Review agents",
+    "moreRuns_one": "{{count}} more active/recent run",
+    "moreRuns_other": "{{count}} more active/recent runs",
+    "viewAllRuns": "View all runs",
+    "finishedAgo": "Finished {{time}}",
+    "startedAgo": "Started {{time}}",
+    "queuedAgo": "Queued {{time}}",
+    "taskUnavailable": "Task unavailable",
+    "loadingTask": "Loading task…"
+  }
+}

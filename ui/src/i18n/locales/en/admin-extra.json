@@ -156,7 +156,168 @@
       "togglePlanDecomposition": "Toggle task plan decomposition panel experimental setting",
       "watchdogs": "Task Watchdogs",
       "watchdogsDescription": "Show task detail controls for configuring watchdog agents that verify stopped task subtrees and restore live paths when work should continue.",
-      "toggleWatchdogs": "Toggle task watchdogs experimental setting"
+      "toggleWatchdogs": "Toggle task watchdogs experimental setting",
+      "flags": {
+        "agentChat": {
+          "title": "Agent Chat",
+          "description": "Talk to each agent in one ongoing conversation. Clarify goals and create tasks for execution. Chat leads the Work group and opens an agent rail beside the nav, and each chat's side panel shows the agent's tasks and artifacts as cards.",
+          "footnote": "Turning this off preserves conversations and lets active runs finish, but prevents new messages.",
+          "ariaLabel": "Toggle agent chat experimental setting"
+        },
+        "betaSkills": {
+          "title": "Beta skills",
+          "description": "Allow agents to pin beta releases of the Paperclip core skill. Disabling this returns every agent to the default live skill without removing saved pins.",
+          "ariaLabel": "Toggle beta skills experimental setting"
+        },
+        "builtInAgents": {
+          "title": "Built-in Agents",
+          "description": "Show Paperclip-managed built-in agent surfaces, including built-in roster badges, the Built-in agents tab, and built-in agent setup controls.",
+          "ariaLabel": "Toggle built-in agents experimental setting"
+        },
+        "cases": {
+          "title": "Cases",
+          "description": "Durable work products (blog posts, tweet storms…) that tasks create and iterate on. Adds the Cases tab and the agent case API.",
+          "footnote": "Turning Cases off hides the tab and blocks the case API; existing case data is kept.",
+          "ariaLabel": "Toggle cases experimental setting"
+        },
+        "chatConnectors": {
+          "title": "Chat connectors",
+          "description": "Connect agents to Slack, GitHub, Discord, Microsoft Teams, and Telegram conversations.",
+          "footnote": "Turning this off hides experimental chat setup and connected-task controls. Existing chat connections keep running. AgentMail, GitHub tools, and other tool connectors stay available.",
+          "ariaLabel": "Toggle chat connectors experimental setting"
+        },
+        "combinedInboxTaskList": {
+          "title": "Combined Inbox + Task List",
+          "description": "Fold Inbox into Tasks. One Tasks row carries the unread badge, and a Views menu reaches every inbox view (Mine, Unread, Blocked, Recent, Everything) and every task view.",
+          "footnote": "Old Inbox links redirect to the matching view. Turning this off restores the separate Inbox; no data changes.",
+          "ariaLabel": "Toggle combined inbox and task list experimental setting"
+        },
+        "conferenceRoomChat": {
+          "title": "Conference Room Chat",
+          "description": "Adds a Conference Room — one chat where you and your whole team work together — plus the live activity feed and the redesigned onboarding. Also restyles task threads as chat bubbles. Turn off anytime to restore the classic UI.",
+          "ariaLabel": "Toggle conference room chat experimental setting"
+        },
+        "decisions": {
+          "title": "Decisions",
+          "description": "Show the Decisions item in the main sidebar — the attention home that surfaces the tasks awaiting your input — while the surface is still being evaluated.",
+          "ariaLabel": "Toggle decisions experimental setting"
+        },
+        "enableEnvironments": {
+          "title": "Enable Environments",
+          "description": "Show environment management in company settings and allow project and agent environment assignment controls.",
+          "ariaLabel": "Toggle environments experimental setting"
+        },
+        "enableExternalObjects": {
+          "title": "Enable External Objects",
+          "description": "Detect external URLs in issues and show resolved status for pull requests, tickets, and other referenced work objects.",
+          "ariaLabel": "Toggle external objects experimental setting"
+        },
+        "enableIsolatedWorkspaces": {
+          "title": "Enable Isolated Workspaces",
+          "description": "Show execution workspace controls in project configuration and allow isolated workspace behavior for new and existing task runs.",
+          "ariaLabel": "Toggle isolated workspaces experimental setting"
+        },
+        "experimentalFileViewer": {
+          "title": "Experimental File Viewer",
+          "description": "Show task detail controls for browsing and previewing workspace files relative to a task.",
+          "ariaLabel": "Toggle experimental file viewer setting"
+        },
+        "firstTaskProposeWithAPlanDocument": {
+          "title": "First task: propose with a plan document",
+          "description": "When the user's first request is a single task, the chief of staff writes a short plan document and a checkbox card instead of a one-card confirmation. Applies to organizations created after the toggle is flipped.",
+          "ariaLabel": "Toggle first task plan proposal experimental setting"
+        },
+        "memoryConnectors": {
+          "title": "Memory connectors",
+          "description": "Connect Mem0, Zep, Supermemory, Cognee, and Honcho for long-term memory and context.",
+          "footnote": "Turning this off hides setup for these connectors. Existing connections keep running.",
+          "ariaLabel": "Toggle memory connectors experimental setting"
+        },
+        "paperclipRunner": {
+          "title": "Paperclip Runner",
+          "description": "Allow new Codex agents to select the experimental Rust Paperclip Runner, including authenticated runner ingress when a sandbox requires it. Onboarding continues to use legacy adapters. Turning this off hides the choice without affecting existing native runs.",
+          "ariaLabel": "Toggle Paperclip Runner experimental setting"
+        },
+        "simplifiedEnglishInteractions": {
+          "title": "Simplified English Interactions",
+          "description": "Instruct agents to write user interactions (plan confirmations, questions, suggested tasks, checkbox prompts) in ASD-STE100 Simplified Technical English, with brief context on what information the decision needs and what happens for each choice.",
+          "ariaLabel": "Toggle simplified english interactions experimental setting"
+        },
+        "statusCards": {
+          "title": "Status Cards",
+          "description": "Enable the experimental shared status-card board and its gated API. Existing card data is kept when this is disabled.",
+          "footnote": "Enabling Status Cards also enables Summaries.",
+          "ariaLabel": "Toggle status cards experimental setting"
+        },
+        "streamlinedUI": {
+          "title": "Streamlined UI",
+          "description": "Use the simplified main sidebar, shared Tasks and Inbox presentation, focused task detail layout, and contextual navigation across Agents, Routines, Skills, and Settings.",
+          "footnote": "Turning this off restores the legacy shell and navigation. Task and page data are unchanged.",
+          "ariaLabel": "Toggle Streamlined UI experimental setting"
+        },
+        "summaries": {
+          "title": "Summaries",
+          "description": "Show Summarizer-generated status slots on project and workspace pages, with on-demand refresh and revision history. Existing summary data is kept when this is disabled.",
+          "footnote": "Status Cards requires Summaries. Disabling Summaries also disables Status Cards.",
+          "ariaLabel": "Toggle summaries experimental setting"
+        },
+        "useIsolatedWorkspacesByDefault": {
+          "title": "Use Isolated Workspaces By Default",
+          "description": "Treat a project that has no execution workspace policy of its own as if it selected isolated workspaces, so its tasks get a per-task worktree instead of sharing the project checkout. A project that carries its own policy keeps it.",
+          "ariaLabel": "Toggle isolated workspaces by default experimental setting"
+        },
+        "autoRestartDevServerWhenIdle": {
+          "title": "Auto-Restart Dev Server When Idle",
+          "description": "In `pnpm dev:once`, wait for all queued and running local agent runs to finish, then restart the server automatically when backend changes or migrations make the current boot stale.",
+          "ariaLabel": "Toggle guarded dev-server auto-restart"
+        },
+        "managedEnvironmentOnly": {
+          "title": "Managed Environment Only",
+          "description": "Hide the local environment and run all agents in the platform-managed environment.",
+          "ariaLabel": "Toggle managed environment only experimental setting"
+        },
+        "paperclipDeveloperMode": {
+          "title": "Paperclip Developer Mode",
+          "description": "Show internal Paperclip maintainer tools and observability links, including Honeycomb trace queries on run pages.",
+          "ariaLabel": "Toggle Paperclip developer mode experimental setting"
+        },
+        "serverInfoDebugView": {
+          "title": "Server Info Debug View",
+          "ariaLabel": "Toggle server info debug view experimental setting",
+          "description": "Show a \"Server\" section in the account drawer with the current server restart time and running commit."
+        },
+        "smokeLab": {
+          "title": "Smoke Lab",
+          "ariaLabel": "Toggle smoke lab experimental setting",
+          "description": "Add a \"Smoke Lab\" tab under Apps → Developer and an \"Integration smoke\" card on the dashboard for exercising every integration path against deterministic local fixtures (fake OAuth provider + loopback MCP servers). Private (non-public) deployments only."
+        },
+        "taskPlanDecomposition": {
+          "title": "Task Plan Decomposition",
+          "description": "Show accepted-plan decomposition history on task detail pages. Intended for debugging and validating subtask creation behavior while the presentation is still being refined.",
+          "ariaLabel": "Toggle task plan decomposition panel experimental setting"
+        },
+        "classicTaskInterface": {
+          "title": "Classic Task Interface",
+          "description": "Restores the previous task detail page: the page-level header with inline description editing, the plain comment thread, and the fixed Properties sidebar. Chat-only features — streaming activity folding, inline plan and question cards, the three-mode composer — are unavailable in the classic view.",
+          "footnote": "Switching takes effect immediately. No task data is affected.",
+          "ariaLabel": "Toggle classic task interface experimental setting"
+        },
+        "goalsSidebarLink": {
+          "title": "Goals Sidebar Link",
+          "description": "Restore the Goals item in the main sidebar while the goals surface is being evaluated.",
+          "ariaLabel": "Toggle goals sidebar link experimental setting"
+        }
+      },
+      "page": {
+        "settingsCrumb": "Settings",
+        "experimentalCrumb": "Experimental",
+        "featuresHeading": "Experimental features",
+        "featuresDescription": "Optional product features that are still being evaluated.",
+        "developerHeading": "Paperclip Developer Mode",
+        "developerDescription": "Internal tools for developing, testing, and debugging Paperclip.",
+        "legacyHeading": "Legacy",
+        "legacyDescription": "These features are going to be removed."
+      }
     },
     "profile": {
       "users": "Users",

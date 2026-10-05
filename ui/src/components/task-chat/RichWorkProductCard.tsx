@@ -1,4 +1,7 @@
 import { t as tNewUi } from "@/i18n";
+import { TextAttachmentContext } from "@/context/TextAttachmentContext";
+import { isTextAttachment } from "@/lib/issue-attachments";
+import { getAttachmentArtifactWorkProductMetadata } from "@paperclipai/shared";
 import { useContext, useState, type CSSProperties } from "react";
 import { IssueGalleryContext } from "@/context/IssueGalleryContext";
 import { ArtifactPreview } from "@/components/artifacts/ArtifactCard";
@@ -8,6 +11,7 @@ import { isImageLikeOutput, isVideoLikeOutput } from "@/lib/issue-output";
 import { attachmentDownloadPath } from "@/lib/issue-attachments";
 import type { IssueWorkProduct } from "@paperclipai/shared";
 import {
+  ChevronDown,
   ExternalLink,
   Maximize2,
   File,
@@ -21,7 +25,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { GithubIcon } from "@/components/icons/github-icon";
-import { cn } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
 
 type StateChip = {
   label: string;
@@ -133,6 +137,7 @@ export interface RichWorkProductCardProps {
 export function RichWorkProductCard({ workProduct, href, variant = "card" }: RichWorkProductCardProps) {
   const openIssueGallery = useContext(IssueGalleryContext);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const metadata = workProduct.metadata;
   const contentType = stringMeta(metadata, "contentType") ?? "";
   const isImage = isImageLikeOutput(contentType, stringMeta(metadata, "originalFilename") ?? workProduct.title);
@@ -159,7 +164,7 @@ export function RichWorkProductCard({ workProduct, href, variant = "card" }: Ric
       break;
     case "branch":
       Icon = GitBranch;
-      meta = [stringMeta(metadata, "repository", "repo", "repositoryName"), stringMeta(metadata, "branch", "branchName") ?? workProduct.externalId, urlLabel(workProduct.url)];
+      meta = [href ? tNewUi("issueProperties.branch") : tNewUi("upgrade2610Task.branchNoRemoteLink"), stringMeta(metadata, "repository", "repo", "repositoryName"), stringMeta(metadata, "branch", "branchName") ?? workProduct.externalId, urlLabel(workProduct.url)];
       action = tNewUi("newUi.k03f69885814b");
       break;
     case "artifact": {
@@ -186,6 +191,9 @@ export function RichWorkProductCard({ workProduct, href, variant = "card" }: Ric
       break;
   }
 
+  const openText = useContext(TextAttachmentContext);
+  const textMetadata = getAttachmentArtifactWorkProductMetadata(workProduct);
+  const canOpenText = Boolean(openText && textMetadata && isTextAttachment(textMetadata));
   const additions = numberMeta(metadata, "additions");
   const deletions = numberMeta(metadata, "deletions");
   const files = numberMeta(metadata, "files", "changedFiles");
@@ -227,6 +235,9 @@ export function RichWorkProductCard({ workProduct, href, variant = "card" }: Ric
       ? attachmentDownloadPath({ contentPath: artifactContentPath })
       : href)
     : href;
+  const expandable = !compact && !mediaPath && !actionHref;
+  const summary = workProduct.summary?.trim();
+  const linklessBranch = workProduct.type === "branch" && !href;
   const openGallery = () => {
     if (mediaPath && !openIssueGallery?.(mediaPath)) setGalleryOpen(true);
   };
@@ -267,20 +278,54 @@ export function RichWorkProductCard({ workProduct, href, variant = "card" }: Ric
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <strong className="block truncate text-sm font-medium text-foreground">{workProduct.title}</strong>
+        <strong className={cn("block text-sm font-medium text-foreground", expandable ? detailsOpen ? "break-words" : "line-clamp-2 break-words" : "truncate")}>{workProduct.title}</strong>
         {visibleMeta.length > 0 ? <p className="mt-1 truncate text-xs text-muted-foreground">{visibleMeta.join(" · ")}</p> : null}
         {statsLabel ? <p className="mt-1 whitespace-nowrap text-xs text-muted-foreground">{statsLabel}</p> : null}
+        {!compact && summary && !linklessBranch ? <p className={cn("mt-1 text-xs text-muted-foreground", detailsOpen ? "whitespace-pre-wrap break-words" : "line-clamp-2")}>{summary}</p> : null}
+        {expandable && detailsOpen ? (
+          <div className="mt-2 flex flex-col gap-1 text-xs text-muted-foreground">
+            {workProduct.type !== "branch" ? <p>{tNewUi("upgrade2610Task.noLinkForWorkProduct")}</p> : null}
+            <p>{workProduct.provider} · {workProduct.status.replaceAll("_", " ")} · {tNewUi("commonControls.artifact.updated", { date: formatDateTime(workProduct.updatedAt) })}</p>
+            {linklessBranch && summary ? (
+              <details className="relative z-10 mt-1">
+                <summary className="w-fit cursor-pointer font-medium text-foreground">{tNewUi("upgrade2610Task.savedDescription")}</summary>
+                <p className="mt-1 whitespace-pre-wrap break-words">{summary}</p>
+              </details>
+            ) : null}
+          </div>
+        ) : null}
       </div>
       <div className={cn("flex shrink-0 items-center", compact ? "gap-1.5" : "gap-2")}>
         {chip ? <Chip chip={chip} /> : null}
+        {canOpenText ? (
+          <button
+            type="button"
+            onClick={() => openText!(textMetadata!.attachmentId, textMetadata!.originalFilename ?? workProduct.title)}
+            aria-label={tNewUi("upgrade2610Task.openInTabFor", { title: workProduct.title })}
+            className="inline-flex items-center gap-1 text-xs font-medium text-foreground after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
+          >
+            {compact ? null : <span className="hidden @sm:inline">{tNewUi("upgrade2610Task.openInTab")}</span>}<FileText aria-hidden className="h-3 w-3" />
+          </button>
+        ) : null}
         {mediaPath ? (
           <button type="button" onClick={openGallery} aria-label={`${action}: ${workProduct.title}`} className="inline-flex items-center gap-1 text-xs font-medium text-foreground after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring">
             {compact ? null : <span className="hidden @sm:inline">{action}</span>}<Maximize2 aria-hidden className="h-3 w-3" />
           </button>
         ) : actionHref ? (
-          <a href={actionHref} aria-label={`${action}: ${workProduct.title}`} className="inline-flex items-center gap-1 text-xs font-medium text-foreground after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring" target={actionHref.startsWith("http") ? "_blank" : undefined} rel={actionHref.startsWith("http") ? "noreferrer" : undefined}>
+          <a href={actionHref} aria-label={`${action}: ${workProduct.title}`} className={cn("inline-flex items-center gap-1 text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", canOpenText ? "relative z-10" : "after:absolute after:inset-0 after:rounded-md focus-visible:after:ring-2 focus-visible:after:ring-ring")} target={actionHref.startsWith("http") ? "_blank" : undefined} rel={actionHref.startsWith("http") ? "noreferrer" : undefined}>
             {compact ? null : <span className="hidden @sm:inline">{action}</span>}<ExternalLink aria-hidden className="h-3 w-3" />
           </a>
+        ) : expandable ? (
+          <button
+            type="button"
+            onClick={() => setDetailsOpen((open) => !open)}
+            aria-label={detailsOpen ? tNewUi("upgrade2610Task.hideDetailsFor", { title: workProduct.title }) : tNewUi("upgrade2610Task.showDetailsFor", { title: workProduct.title })}
+            aria-expanded={detailsOpen}
+            className="inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-foreground after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
+          >
+            <span>{detailsOpen ? tNewUi("upgrade2610Task.hideDetails") : tNewUi("upgrade2610Task.showDetails")}</span>
+            <ChevronDown aria-hidden className={cn("h-4 w-4", detailsOpen && "rotate-180")} />
+          </button>
         ) : null}
       </div>
       {galleryOpen && mediaPath ? (

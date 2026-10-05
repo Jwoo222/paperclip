@@ -1,9 +1,11 @@
 import { t as tNewUi } from "@/i18n";
+import { t } from "@/i18n";
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { copyTextToClipboard } from "@/lib/clipboard";
+import { AgentSetupPrompt } from "@/components/AgentSetupPrompt";
 
 export function CopyField({
   label,
@@ -65,8 +67,6 @@ export function CopyField({
 }
 
 export function AgentInstructions({ value }: { value: string }) {
-  const [copied, setCopied] = useState(false);
-  const [error, setError] = useState(false);
   return (
     <section
       aria-label={tNewUi("newUi.kdc390e1824d4")}
@@ -78,41 +78,12 @@ export function AgentInstructions({ value }: { value: string }) {
           {tNewUi("newUi.k3267cc0bd1cf")}
         </p>
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        aria-label={tNewUi("newUi.k64d2d48d463c")}
-        onClick={async () => {
-          try {
-            await copyTextToClipboard(value);
-            setCopied(true);
-            setError(false);
-          } catch {
-            setError(true);
-          }
-        }}
-      >
-        {copied ? (
-          <Check className="h-3.5 w-3.5" />
-        ) : (
-          <Copy className="h-3.5 w-3.5" />
-        )}
-        {copied ? tNewUi("newUi.k28a8073555c8") : tNewUi("newUi.k64d2d48d463c")}
-      </Button>
-      {error && (
-        <div className="space-y-2">
-          <p role="alert" className="text-xs text-destructive">
-            {tNewUi("newUi.ka143bf113374")}
-          </p>
-          <textarea
-            readOnly
-            aria-label={tNewUi("newUi.kfe12d6fe32bb")}
-            value={value}
-            rows={5}
-            className="w-full rounded-md border border-input bg-background p-3 text-sm"
-          />
-        </div>
-      )}
+      <AgentSetupPrompt
+        prompt={value}
+        label={tNewUi("newUi.k64d2d48d463c")}
+        title={t("upgrade2610Agents.webhookSetupTitle")}
+        description={t("upgrade2610Agents.webhookSetupDescription")}
+      />
     </section>
   );
 }

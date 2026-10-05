@@ -1,6 +1,6 @@
 import { t as tNewUi } from "@/i18n";
 import { t } from "@/i18n";
-import { useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Agent } from "@paperclipai/shared";
 import { AgentIcon } from "@/components/AgentIconPicker";
 import { Button } from "@/components/ui/button";
@@ -11,10 +11,12 @@ export interface AgentChatPickerProps {
   agents: Agent[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (agent: Agent) => void;
+  onSelect: (agent: Agent, signal?: AbortSignal) => void | Promise<void>;
   loading?: boolean;
   error?: Error | null;
   onRetry?: () => void;
+  existingChatAgentIds?: readonly string[];
+  renderAgentIcon?: (agent: Agent) => ReactNode;
 }
 
 export function AgentChatPicker({ open, onOpenChange, ...props }: AgentChatPickerProps) {
@@ -23,19 +25,40 @@ export function AgentChatPicker({ open, onOpenChange, ...props }: AgentChatPicke
       <DialogContent aria-describedby={undefined} className="gap-0 overflow-hidden p-0 sm:max-w-md">
         <div className="px-4 pt-4 pb-3">
           <DialogTitle>{tNewUi("newUi.k73adffe32a9a")}</DialogTitle>
+          {props.existingChatAgentIds && <p className="mt-2 text-sm text-muted-foreground">{t("upgrade2610Agents.chatPickerIntro")}</p>}
         </div>
         {/* The dialog unmounts its content on close, so each search starts empty. */}
-        <AgentChatPickerResults {...props} onSelect={(agent) => {
-          onOpenChange(false);
-          props.onSelect(agent);
-        }} />
+        <AgentChatPickerResults key={String(open)} {...props} onComplete={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );
 }
 
-function AgentChatPickerResults({ agents, onSelect, loading, error, onRetry }: Omit<AgentChatPickerProps, "open" | "onOpenChange">) {
+function AgentChatPickerResults({ agents, onSelect, onComplete, loading, error, onRetry, existingChatAgentIds, renderAgentIcon }: Omit<AgentChatPickerProps, "open" | "onOpenChange"> & { onComplete: () => void }) {
+  const mounted = useRef(false);
+  const selection = useRef<AbortController | null>(null);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; selection.current?.abort(); };
+  }, []);
   const [search, setSearch] = useState("");
+  const [openingId, setOpeningId] = useState<string | null>(null);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
+  async function selectAgent(agent: Agent) {
+    if (openingId) return;
+    setOpeningId(agent.id);
+    setSelectionError(null);
+    const request = new AbortController();
+    selection.current = request;
+    try {
+      await onSelect(agent, request.signal);
+      if (mounted.current) onComplete();
+    } catch (error) {
+      setSelectionError(error instanceof Error ? error.message : t("upgrade2610Agents.chatOpenFailed"));
+    } finally {
+      setOpeningId(null);
+    }
+  }
   return (
     <Command>
       <CommandInput
@@ -44,6 +67,8 @@ function AgentChatPickerResults({ agents, onSelect, loading, error, onRetry }: O
         value={search}
         onValueChange={setSearch}
       />
+      {selectionError && <p role="alert" className="px-4 py-3 text-sm text-destructive">{selectionError}</p>}
+      {openingId && <p role="status" className="sr-only">{t("upgrade2610Agents.chatPickerOpening")}</p>}
       {error ? (
         <div role="alert" className="flex flex-col items-start gap-2 p-4 text-sm">
           <p>{tNewUi("newUi.k3ca8c8512207")}</p>
@@ -68,14 +93,16 @@ function AgentChatPickerResults({ agents, onSelect, loading, error, onRetry }: O
                 key={agent.id}
                 value={agent.id}
                 keywords={[agent.name, agent.title ?? "", agent.role]}
-                onSelect={() => onSelect(agent)}
+                onSelect={() => { void selectAgent(agent); }}
+                disabled={openingId !== null}
                 className="gap-3 px-3 py-3"
               >
-                <AgentIcon icon={agent.icon} className="size-4 shrink-0" />
+                {renderAgentIcon ? renderAgentIcon(agent) : <AgentIcon icon={agent.icon} className="size-4 shrink-0" />}
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="truncate font-medium">{agent.name}</span>
                   <span className="truncate text-xs text-muted-foreground">{agent.title ?? agent.role}</span>
                 </span>
+                {existingChatAgentIds && <span className="shrink-0 text-xs text-muted-foreground">{existingChatAgentIds.includes(agent.id) ? t("upgrade2610Agents.chatPickerOpenChat") : t("upgrade2610Agents.chatPickerNewChat")}</span>}
                 {agent.status === "paused" && <span className="text-xs text-(--status-agent-paused)">{tNewUi("newUi.ke159b06187d3")}</span>}
                 {agent.status === "terminated" && <span className="text-xs text-muted-foreground">{t("statusResidualRound3.status.terminated")}</span>}
                 {agent.status === "pending_approval" && <span className="text-xs text-muted-foreground">{t("commonChatTools.awaitingApproval")}</span>}

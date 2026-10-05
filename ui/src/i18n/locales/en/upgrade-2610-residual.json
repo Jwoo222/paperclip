@@ -1,0 +1,16 @@
+{
+  "upgrade2610Residual": {
+    "unknownAgent": "Unknown agent",
+    "noDefaultAgent": "No default agent",
+    "backToApp": "Back to app",
+    "localTrusted": "Local trusted",
+    "authenticatedExposure": "Authenticated {{exposure}}",
+    "organizationName": "Organization name",
+    "organizationNameHint": "The display name for your organization.",
+    "archiveDescription": "Archive this organization to hide it from the sidebar. This persists in the database.",
+    "archiveConfirm": "Archive organization \"{{name}}\"? It will be hidden from the sidebar.",
+    "alreadyArchived": "Already archived",
+    "archiveOrganization": "Archive organization",
+    "feedbackNoDefault": "No default is saved yet. The next thumbs up or thumbs down choice will ask once and then save the answer here."
+  }
+}

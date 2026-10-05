@@ -3,6 +3,7 @@ import { t } from "@/i18n";
 import { SLACK_BOT_TOOL_SCOPES } from "@paperclipai/shared";
 import { defaultSlackAppName, slackBotNameForAgent } from "./slack-app-name";
 import { GitHubChatSetup } from "./GitHubChatSetup";
+import { SlackSetupPrompt } from "./SlackSetupPrompt";
 import { GitHubAgentTrustWarning } from "@/components/GitHubAgentTrustWarning";
 import { SetupWizardFooter } from "@/components/SetupWizard";
 import { ChatSetupNavigation } from "@/components/chat/ChatSetupNavigation";
@@ -156,16 +157,8 @@ function ChatConnectionPurpose({ provider, onChat, onTools }: {
 }
 
 export function ChatEndpointSetup() {
-  const [params, setParams] = useSearchParams();
-  const navigate = useNavigate();
-  if (params.get("provider") === "github") {
-    if (params.get("purpose") === "chat" || params.get("resume")) return <GitHubChatSetup />;
-    return <ChatConnectionPurpose provider="github" onChat={() => {
-      const next = new URLSearchParams(params);
-      next.set("purpose", "chat");
-      setParams(next);
-    }} onTools={() => navigate(params.get("toolHref") || "/apps/connect?source=github")} />;
-  }
+  const [params] = useSearchParams();
+  if (params.get("provider") === "github") return <GitHubChatSetup />;
   return params.get("provider") === "agentmail" ? <EmailEndpointSetup /> : <ChatSdkEndpointSetup />;
 }
 
@@ -496,6 +489,7 @@ function ChatSdkEndpointSetup() {
                 {tNewUi("newUi.kd2b7d9fb6f69")}
               </p>
             </div>
+            {isSlack && <SlackSetupPrompt />}
             {endpoint ? (
               <Input aria-label={tNewUi("newUi.kf96135acf40c")} value={endpoint.assignedAgentName ?? selectedAgent?.name ?? agentId} readOnly />
             ) : <AgentSelect

@@ -27,6 +27,7 @@ export interface AiConnectionPickerProps {
   readOnly?: boolean;
   onChange: (binding: AiConnectionBinding) => void;
   onConnect: () => void;
+  onReconnect?: () => void;
   onRetry?: () => void;
 }
 
@@ -41,6 +42,7 @@ export function AiConnectionPicker({
   readOnly,
   onChange,
   onConnect,
+  onReconnect,
   onRetry,
 }: AiConnectionPickerProps) {
   const compatible = connections.filter((connection) =>
@@ -129,14 +131,16 @@ export function AiConnectionPicker({
             </p>
           )}
           {!readOnly && (
-            <Button
-              type="button"
-              variant="outline"
-              className="self-end"
-              onClick={onConnect}
-            >
-              {tNewUi("newUi.k261b28a3c6bf")}
-            </Button>
+            <div className="flex justify-end gap-2">
+              {onReconnect && <Button type="button" variant="outline" onClick={onReconnect}>{tNewUi("newUi.k8e44ffb1e313")}</Button>}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onConnect}
+              >
+                {tNewUi("newUi.k261b28a3c6bf")}
+              </Button>
+            </div>
           )}
         </>
       )}

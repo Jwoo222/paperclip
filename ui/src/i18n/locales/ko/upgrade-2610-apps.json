@@ -1,0 +1,128 @@
+{
+  "upgrade2610Apps": {
+    "accountControls": {
+      "notDefault": "기본값 아님",
+      "subscription": "구독"
+    },
+    "credentialStep": {
+      "connecting": "연결 중…"
+    },
+    "connectionField": {
+      "reconnectDescription": "다시 로그인해 현재 기본 계정을 복구하세요. 에이전트 접근 권한은 그대로 유지됩니다.",
+      "connectDescription": "이 계정이 이 제공자의 기본 계정이 됩니다. 내 업무에서 이 계정을 사용하며, 다른 사용자는 각자의 기본 계정을 계속 사용합니다.",
+      "allowAllAgents": "이 회사의 모든 에이전트가 내 업무에 이 계정을 사용하도록 허용",
+      "retryDefaultSelection": "기본 계정 선택 다시 시도",
+      "selectingDefault": "기본 계정을 선택하는 중…"
+    },
+    "usage": {
+      "weekly": "주간",
+      "cap": "한도 {{amount}}",
+      "usedOfLimit": "{{used}} / {{limit}} 사용",
+      "percentUsed": "{{percent}}% 사용",
+      "amountUsed": "{{amount}} 사용",
+      "percentLeft": "{{percent}}% 남음",
+      "amountLeft": "{{amount}} 남음",
+      "notReported": "보고되지 않음",
+      "blocked": "차단됨",
+      "limitReached": "한도 도달",
+      "usageAllowed": "사용 허용됨",
+      "resets": "{{time}}에 초기화",
+      "available": "사용 가능",
+      "off": "꺼짐",
+      "onUnavailable": "켜짐 · 사용할 수 없음",
+      "unavailable": "사용할 수 없음",
+      "onAvailabilityUnknown": "켜짐 · 사용 가능 여부 알 수 없음",
+      "unlimited": "무제한",
+      "errors": {
+        "authenticationRequired": "사용량을 확인하려면 다시 로그인하세요.",
+        "permissionDenied": "사용량 조회 권한이 거부되었습니다.",
+        "rateLimited": "확인 요청이 너무 많습니다. 나중에 다시 시도하세요.",
+        "providerUnavailable": "제공자를 사용할 수 없습니다. 다시 시도하세요.",
+        "invalidResponse": "사용량을 읽지 못했습니다. 다시 시도하세요.",
+        "connectionUnavailable": "사용량을 확인하려면 다시 연결하세요.",
+        "unsupported": "사용량을 확인할 수 없습니다."
+      },
+      "ariaLabel": "계정 사용 한도",
+      "title": "사용량",
+      "checkUsage": "사용량 확인",
+      "unsupportedMethod": "이 로그인 방식에서는 사용할 수 없습니다.",
+      "usageNotReported": "보고된 사용량이 없습니다.",
+      "overage": "초과 사용",
+      "updated": "확인 시각"
+    },
+    "apiKeyField": {
+      "checkingSavedKey": "저장된 API 키 확인 중…",
+      "previouslySelectedUnavailable": "이전에 선택한 키 · 사용할 수 없음",
+      "newApiKey": "새 API 키",
+      "pastePlaceholder": "{{providerName}} API 키를 붙여넣으세요",
+      "loadFailed": "저장된 API 키를 불러오지 못했습니다.",
+      "getKeyLink": "{{providerName}} API 키 받기 ↗"
+    },
+    "appDetail": {
+      "connectedToastTitle": "{{appName}} 연결됨",
+      "chooseSkillRepository": "스킬을 가져올 저장소를 선택하세요.",
+      "connectionReady": "연결이 준비되었습니다. 아래에서 권한을 검토하거나 작업을 테스트하세요.",
+      "remoteMcpAccessNote": "여기에 표시된 도구에 대한 접근은 Paperclip이 관리합니다. 이 도구 안의 앱 및 작업 권한은 {{appName}}에서 관리합니다.",
+      "oauthPermissionsNote": "제공자 권한은 마지막 로그인 기준입니다. 다시 연결해 부족한 쓰기 권한을 부여한 뒤, 필요한 작업을 여기에서 켜세요.",
+      "reconnectToUpdatePermissions": "다시 연결해 권한 업데이트"
+    },
+    "permissions": {
+      "setEveryAction": "{{title}}의 모든 작업 설정",
+      "mixed": "혼합",
+      "setAll": "모두 설정: {{label}}",
+      "classifiedAs": "Paperclip이 분류한 이 작업의 위험 수준: {{riskLevel}}"
+    },
+    "intent": {
+      "externalProviderConnected": "외부 제공자 연결됨",
+      "serviceConnected": "{{serviceName}} 연결됨",
+      "upstreamConnectedBody": "이제 {{agentName}} 에이전트가 이 제공자를 통해 {{upstreamName}} 앱을 확인하고 승인할 수 있습니다. 이 앱은 아직 확인되지 않았습니다.",
+      "continuationRunBody": "{{agentName}} 에이전트가 이어지는 실행에서 이 연결을 사용할 수 있습니다.",
+      "authenticationRequired": "{{serviceName}} 인증 필요",
+      "agentNeedsService": "{{agentName}} 에이전트에 {{serviceName}} 연결 필요",
+      "connectAgentMail": "AgentMail을 연결해 이 에이전트의 이메일 주소를 만드세요.",
+      "agentConnectionChanged": "에이전트의 AI 연결이 변경되었습니다. 업무를 다시 불러온 뒤 다시 시도하세요.",
+      "adoptPrompt": "{{agentName}} 에이전트에 연결 기능을 사용할까요? 에이전트의 기존 인증이 담당자의 {{serviceName}} 연결로 바뀝니다. 모델은 그대로 유지됩니다.",
+      "checkingConnection": "연결 확인 중…",
+      "useConnectionAndContinue": "연결 사용 후 계속",
+      "continuing": "계속하는 중…",
+      "retryUsingConnection": "이 연결로 다시 시도"
+    },
+    "browse": {
+      "addKey": "키 추가",
+      "githubCodeReviewBotDescription": "에이전트가 풀 리퀘스트를 검토하고 GitHub 멘션에 응답하게 하세요.",
+      "codeReviewBot": "코드 검토 봇"
+    },
+    "setupFlow": {
+      "enableMemoryConnectors": "이 연결을 설정하려면 설정 → 실험에서 메모리 연결 앱을 활성화하세요.",
+      "connectNowHint": "지금 연결하세요. 권한과 접근 범위는 나중에 언제든 바꿀 수 있습니다.",
+      "useOwnOAuthApp": "나만의 {{provider}} OAuth 앱 사용",
+      "needsOwnOAuthApp": "{{appName}} 전용 OAuth 앱 필요",
+      "oauthAppRequiredGuidance": "{{appName}}에서는 Paperclip이 자동으로 등록할 수 없으므로 이 연결 앱에는 직접 만든 OAuth 앱이 필요합니다. 아래 콜백 URL을 {{appName}}에 추가한 다음 클라이언트 세부 정보를 여기에 붙여넣으세요.",
+      "registerCallbackGuidance": "{{appName}}에 Paperclip의 콜백 URI를 등록한 다음 고객 소유 클라이언트 세부 정보를 입력하세요.",
+      "onlyManagerCanShare": "연결 관리자만 이 자격 증명을 조직과 공유할 수 있습니다.",
+      "onlyConfigurerCanGrantAll": "이 연결을 설정할 수 있는 사람만 모든 에이전트에 접근 권한을 줄 수 있습니다.",
+      "taskGrantsRequestingAgentOnly": "이 업무는 요청한 에이전트에게만 접근 권한을 줍니다.",
+      "loadingAppSetup": "{{appKey}} 설정 불러오는 중",
+      "grantKeyAccessHint": "에이전트에 필요한 리소스에 대해 이 키에 읽기 및 쓰기 권한을 부여하세요. Paperclip은 키의 권한을 늘릴 수 없습니다.",
+      "asanaSignInHint": "Asana로 로그인해 작업공간을 선택하고 Paperclip에 연결하세요.",
+      "createKeyHint": "에이전트에 필요한 리소스에 대한 읽기 및 쓰기 권한이 있는 키를 만드세요. Paperclip은 기존 키에 권한을 추가할 수 없습니다.",
+      "summary": {
+        "noSignInNeeded": "로그인 필요 없음",
+        "connectsAsYou": "내 계정으로 연결",
+        "connectsAsAgentAccount": "전용 에이전트 계정으로 연결",
+        "connectsForOrganization": "조직 전체 공용으로 연결",
+        "agentAccessUnchanged": "에이전트 접근 권한은 그대로 유지",
+        "availableToRequestingAgent": "요청한 에이전트만 사용 가능",
+        "availableToAllAgents": "모든 에이전트가 사용 가능",
+        "noAgentsSelected": "아직 선택한 에이전트 없음",
+        "availableToSelectedAgents_one": "선택한 에이전트 {{count}}명이 사용 가능",
+        "availableToSelectedAgents_other": "선택한 에이전트 {{count}}명이 사용 가능",
+        "sentence": "{{identity}}, {{reach}}"
+      }
+    },
+    "actionTest": {
+      "workedRows_one": "완료됨. {{count}}개 행이 반환되었습니다.",
+      "workedRows_other": "완료됨. {{count}}개 행이 반환되었습니다."
+    }
+  }
+}

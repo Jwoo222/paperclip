@@ -1,4 +1,4 @@
-import { AgentAvatar } from "@/components/AgentAvatar";
+import { AgentAvatar, type AvatarAgent } from "@/components/AgentAvatar";
 import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n";
 
-export interface AgentMultiSelectOption {
+export interface AgentMultiSelectOption extends AvatarAgent {
   id: string;
   name: string;
   title?: string | null;
@@ -67,8 +67,9 @@ export function AgentSelect({
           className={cn("w-full justify-between", triggerClassName)}
           disabled={disabled}
         >
-          <span className={cn("min-w-0 truncate", !selectedAgent && "text-muted-foreground")}>
-            {selectedAgent?.name ?? resolvedPlaceholder}
+          <span className={cn("flex min-w-0 items-center gap-2", !selectedAgent && "text-muted-foreground")}>
+            {selectedAgent && <AgentAvatar agent={selectedAgent} size={20} />}
+            <span className="truncate">{selectedAgent?.name ?? resolvedPlaceholder}</span>
           </span>
           <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
         </Button>
@@ -98,7 +99,7 @@ export function AgentSelect({
                   setOpen(false);
                 }}
               >
-                <AgentAvatar agent={agent} size={16} className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"/>
+                <AgentAvatar agent={agent} size={20} className="shrink-0" />
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate text-sm font-medium text-foreground">{agent.name}</span>
                   {agent.title ? <span className="truncate text-xs text-muted-foreground">{agent.title}</span> : null}

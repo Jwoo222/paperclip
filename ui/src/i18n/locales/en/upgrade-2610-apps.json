@@ -1,0 +1,128 @@
+{
+  "upgrade2610Apps": {
+    "accountControls": {
+      "notDefault": "Not default",
+      "subscription": "Subscription"
+    },
+    "credentialStep": {
+      "connecting": "Connecting…"
+    },
+    "connectionField": {
+      "reconnectDescription": "Sign in again to repair your current default account. Its agent access stays the same.",
+      "connectDescription": "This account will become your default for this provider. Your tasks will use it; other users keep their own default.",
+      "allowAllAgents": "Allow all agents in this company to use this account for my tasks",
+      "retryDefaultSelection": "Retry default selection",
+      "selectingDefault": "Selecting your default account…"
+    },
+    "usage": {
+      "weekly": "Weekly",
+      "cap": "{{amount}} cap",
+      "usedOfLimit": "{{used}} / {{limit}} used",
+      "percentUsed": "{{percent}}% used",
+      "amountUsed": "{{amount}} used",
+      "percentLeft": "{{percent}}% left",
+      "amountLeft": "{{amount}} left",
+      "notReported": "Not reported",
+      "blocked": "Blocked",
+      "limitReached": "Limit reached",
+      "usageAllowed": "Usage allowed",
+      "resets": "Resets {{time}}",
+      "available": "Available",
+      "off": "Off",
+      "onUnavailable": "On · Unavailable",
+      "unavailable": "Unavailable",
+      "onAvailabilityUnknown": "On · Availability unknown",
+      "unlimited": "Unlimited",
+      "errors": {
+        "authenticationRequired": "Sign in again to check usage.",
+        "permissionDenied": "Usage access denied.",
+        "rateLimited": "Too many checks. Try again later.",
+        "providerUnavailable": "Provider unavailable. Try again.",
+        "invalidResponse": "Couldn’t read usage. Try again.",
+        "connectionUnavailable": "Reconnect to check usage.",
+        "unsupported": "Usage unavailable."
+      },
+      "ariaLabel": "Account usage limits",
+      "title": "Usage",
+      "checkUsage": "Check usage",
+      "unsupportedMethod": "Unavailable for this sign-in method.",
+      "usageNotReported": "Usage not reported.",
+      "overage": "Overage",
+      "updated": "Updated"
+    },
+    "apiKeyField": {
+      "checkingSavedKey": "Checking saved API key…",
+      "previouslySelectedUnavailable": "Previously selected key · unavailable",
+      "newApiKey": "New API key",
+      "pastePlaceholder": "Paste your {{providerName}} API key",
+      "loadFailed": "Could not load saved API keys.",
+      "getKeyLink": "Get an {{providerName}} API key ↗"
+    },
+    "appDetail": {
+      "connectedToastTitle": "{{appName}} connected",
+      "chooseSkillRepository": "Choose a repository to import your skills.",
+      "connectionReady": "The connection is ready. Review permissions or test an action below.",
+      "remoteMcpAccessNote": "Paperclip controls access to the tools listed here. App and action permissions inside these tools are managed in {{appName}}.",
+      "oauthPermissionsNote": "Provider permissions come from your last sign-in. Reconnect to grant missing write access, then enable the actions you need here.",
+      "reconnectToUpdatePermissions": "Reconnect to update permissions"
+    },
+    "permissions": {
+      "setEveryAction": "Set every action in {{title}}",
+      "mixed": "Mixed",
+      "setAll": "Set all: {{label}}",
+      "classifiedAs": "Paperclip classified this action as {{riskLevel}}"
+    },
+    "intent": {
+      "externalProviderConnected": "External provider connected",
+      "serviceConnected": "{{serviceName}} connected",
+      "upstreamConnectedBody": "{{agentName}} can now verify and authorize {{upstreamName}} through this provider. The app is not yet verified.",
+      "continuationRunBody": "{{agentName}} can use this connection on the continuation run.",
+      "authenticationRequired": "{{serviceName}} authentication required",
+      "agentNeedsService": "{{agentName}} needs {{serviceName}}",
+      "connectAgentMail": "Connect AgentMail to create an email address for this agent.",
+      "agentConnectionChanged": "The agent’s AI connection changed. Reload the task and try again.",
+      "adoptPrompt": "Use Connections for {{agentName}}? This replaces the agent’s existing authentication with the responsible person’s {{serviceName}} connection. The model stays the same.",
+      "checkingConnection": "Checking connection…",
+      "useConnectionAndContinue": "Use connection and continue",
+      "continuing": "Continuing…",
+      "retryUsingConnection": "Retry using this connection"
+    },
+    "browse": {
+      "addKey": "Add key",
+      "githubCodeReviewBotDescription": "Have an agent review pull requests and respond to GitHub mentions.",
+      "codeReviewBot": "Code review bot"
+    },
+    "setupFlow": {
+      "enableMemoryConnectors": "Enable memory connectors in Settings → Experimental to set up this connection.",
+      "connectNowHint": "Connect now — permissions and access are yours to change afterwards.",
+      "useOwnOAuthApp": "Use your own {{provider}} OAuth app",
+      "needsOwnOAuthApp": "{{appName}} needs its own OAuth app",
+      "oauthAppRequiredGuidance": "{{appName}} does not let Paperclip register itself automatically, so this connector needs an OAuth app you create. Add the callback URL below in {{appName}}, then paste the client details back here.",
+      "registerCallbackGuidance": "Register Paperclip's callback URI in {{appName}}, then enter the customer-owned client details.",
+      "onlyManagerCanShare": "Only a connection manager can share this credential with the organization.",
+      "onlyConfigurerCanGrantAll": "Only someone who can configure this connection can give every agent access.",
+      "taskGrantsRequestingAgentOnly": "This task grants access only to the agent that asked for it.",
+      "loadingAppSetup": "Loading {{appKey}} setup",
+      "grantKeyAccessHint": "Grant this key read and write access to the resources your agents need. Paperclip cannot increase its permissions.",
+      "asanaSignInHint": "Sign in with Asana to choose your workspace and connect it to Paperclip.",
+      "createKeyHint": "Create a key with read and write permissions for the resources your agents need. Paperclip cannot add permissions to an existing key.",
+      "summary": {
+        "noSignInNeeded": "No sign-in needed",
+        "connectsAsYou": "Connects as you",
+        "connectsAsAgentAccount": "Connects as a dedicated agent account",
+        "connectsForOrganization": "Connects for everyone in your organization",
+        "agentAccessUnchanged": "agent access stays as it is",
+        "availableToRequestingAgent": "available to the agent that asked for it",
+        "availableToAllAgents": "available to all agents",
+        "noAgentsSelected": "no agents selected yet",
+        "availableToSelectedAgents_one": "available to {{count}} selected agent",
+        "availableToSelectedAgents_other": "available to {{count}} selected agents",
+        "sentence": "{{identity}}, {{reach}}."
+      }
+    },
+    "actionTest": {
+      "workedRows_one": "Worked. {{count}} row came back.",
+      "workedRows_other": "Worked. {{count}} rows came back."
+    }
+  }
+}

@@ -156,7 +156,168 @@
       "togglePlanDecomposition": "업무 계획 분해 패널 실험 기능 전환",
       "watchdogs": "업무 감시자",
       "watchdogsDescription": "중단된 업무 하위 트리를 검증하고 계속 진행해야 할 작업 경로를 복구하는 감시 에이전트 설정을 업무 상세 화면에 표시합니다.",
-      "toggleWatchdogs": "업무 감시자 실험 기능 전환"
+      "toggleWatchdogs": "업무 감시자 실험 기능 전환",
+      "flags": {
+        "agentChat": {
+          "title": "에이전트 채팅",
+          "description": "에이전트마다 하나의 이어지는 대화로 이야기합니다. 목표를 분명히 하고 실행할 업무를 만듭니다. 채팅이 업무 그룹 맨 위에 오고 탐색 메뉴 옆에 에이전트 목록이 열리며, 각 채팅의 사이드 패널에 그 에이전트의 업무와 산출물이 카드로 표시됩니다.",
+          "footnote": "끄면 대화는 보존되고 진행 중인 실행은 끝까지 돌지만, 새 메시지는 보낼 수 없습니다.",
+          "ariaLabel": "에이전트 채팅 실험 설정 전환"
+        },
+        "betaSkills": {
+          "title": "베타 스킬",
+          "description": "에이전트가 Paperclip 핵심 스킬의 베타 버전을 고정해 쓸 수 있게 합니다. 끄면 저장된 고정 설정은 지우지 않고 모든 에이전트를 기본 정식 스킬로 되돌립니다.",
+          "ariaLabel": "베타 스킬 실험 설정 전환"
+        },
+        "builtInAgents": {
+          "title": "내장 에이전트",
+          "description": "Paperclip이 관리하는 내장 에이전트 화면을 표시합니다. 명단의 내장 배지, 내장 에이전트 탭, 내장 에이전트 설정 도구가 포함됩니다.",
+          "ariaLabel": "내장 에이전트 실험 설정 전환"
+        },
+        "cases": {
+          "title": "케이스",
+          "description": "업무가 만들고 계속 다듬는 오래 남는 작업물(블로그 글, 연속 트윗 등)입니다. 케이스 탭과 에이전트용 케이스 API를 추가합니다.",
+          "footnote": "케이스를 끄면 탭이 숨겨지고 케이스 API가 막히며, 기존 케이스 데이터는 유지됩니다.",
+          "ariaLabel": "케이스 실험 설정 전환"
+        },
+        "chatConnectors": {
+          "title": "채팅 연결",
+          "description": "에이전트를 Slack, GitHub, Discord, Microsoft Teams, Telegram 대화에 연결합니다.",
+          "footnote": "끄면 실험용 채팅 설정과 연결된 업무 제어가 숨겨집니다. 기존 채팅 연결은 계속 동작합니다. AgentMail, GitHub 도구와 그 밖의 도구 연결은 계속 쓸 수 있습니다.",
+          "ariaLabel": "채팅 연결 실험 설정 전환"
+        },
+        "combinedInboxTaskList": {
+          "title": "받은 편지함 + 업무 목록 합치기",
+          "description": "받은 편지함을 업무 목록 안으로 합칩니다. 업무 목록 한 줄에 읽지 않음 배지가 붙고, 보기 메뉴에서 모든 받은 편지함 보기(내 업무, 읽지 않음, 막힘, 최근, 전체)와 모든 업무 보기로 갈 수 있습니다.",
+          "footnote": "예전 받은 편지함 링크는 해당 보기로 연결됩니다. 끄면 별도의 받은 편지함이 돌아오며, 데이터는 바뀌지 않습니다.",
+          "ariaLabel": "받은 편지함과 업무 목록 합치기 실험 설정 전환"
+        },
+        "conferenceRoomChat": {
+          "title": "회의실 채팅",
+          "description": "회의실(사용자와 팀 전체가 함께 일하는 하나의 채팅)과 실시간 활동 피드, 새로 설계한 시작 안내를 추가합니다. 업무 스레드도 채팅 말풍선 모양으로 바뀝니다. 언제든 끄면 기존 화면으로 돌아갑니다.",
+          "ariaLabel": "회의실 채팅 실험 설정 전환"
+        },
+        "decisions": {
+          "title": "의사결정",
+          "description": "기본 사이드바에 의사결정 항목을 표시합니다. 입력을 기다리는 업무를 모아 보여 주는 화면이며, 아직 평가 중인 기능입니다.",
+          "ariaLabel": "의사결정 실험 설정 전환"
+        },
+        "enableEnvironments": {
+          "title": "실행 환경 사용",
+          "description": "회사 설정에 실행 환경 관리를 표시하고, 프로젝트와 에이전트에 실행 환경을 지정하는 도구를 허용합니다.",
+          "ariaLabel": "실행 환경 실험 설정 전환"
+        },
+        "enableExternalObjects": {
+          "title": "외부 항목 사용",
+          "description": "업무 안의 외부 URL을 감지하고, 풀 리퀘스트·티켓 등 참조된 작업 항목의 확인된 상태를 표시합니다.",
+          "ariaLabel": "외부 항목 실험 설정 전환"
+        },
+        "enableIsolatedWorkspaces": {
+          "title": "격리 작업공간 사용",
+          "description": "프로젝트 설정에 실행 작업공간 제어를 표시하고, 새 업무 실행과 기존 업무 실행에 격리 작업공간 동작을 허용합니다.",
+          "ariaLabel": "격리 작업공간 실험 설정 전환"
+        },
+        "experimentalFileViewer": {
+          "title": "실험용 파일 보기",
+          "description": "업무 상세 화면에 그 업무와 관련된 작업공간 파일을 둘러보고 미리 보는 도구를 표시합니다.",
+          "ariaLabel": "실험용 파일 보기 설정 전환"
+        },
+        "firstTaskProposeWithAPlanDocument": {
+          "title": "첫 업무: 계획 문서로 제안",
+          "description": "사용자의 첫 요청이 업무 하나일 때, 비서실장 에이전트가 카드 한 장짜리 확인 대신 짧은 계획 문서와 체크박스 카드를 작성합니다. 이 설정을 바꾼 뒤 만든 조직에만 적용됩니다.",
+          "ariaLabel": "첫 업무 계획 제안 실험 설정 전환"
+        },
+        "memoryConnectors": {
+          "title": "기억 연결",
+          "description": "장기 기억과 맥락을 위해 Mem0, Zep, Supermemory, Cognee, Honcho를 연결합니다.",
+          "footnote": "끄면 이 연결들의 설정 화면이 숨겨집니다. 기존 연결은 계속 동작합니다.",
+          "ariaLabel": "기억 연결 실험 설정 전환"
+        },
+        "paperclipRunner": {
+          "title": "Paperclip Runner",
+          "description": "새 Codex 에이전트가 실험용 Rust Paperclip Runner를 고를 수 있게 하며, 샌드박스가 요구하면 인증된 러너 진입도 포함합니다. 시작 안내는 계속 기존 어댑터를 씁니다. 끄면 선택지만 숨겨지고 기존 네이티브 실행에는 영향이 없습니다.",
+          "ariaLabel": "Paperclip Runner 실험 설정 전환"
+        },
+        "simplifiedEnglishInteractions": {
+          "title": "간이 영어 상호작용",
+          "description": "에이전트가 사용자 상호작용(계획 확인, 질문, 제안 업무, 체크박스 요청)을 ASD-STE100 간이 기술 영어로 쓰게 하고, 결정에 필요한 정보와 선택지별 결과를 짧게 덧붙이게 합니다.",
+          "ariaLabel": "간이 영어 상호작용 실험 설정 전환"
+        },
+        "statusCards": {
+          "title": "업무 현황 카드",
+          "description": "실험용 공유 업무 현황 카드 보드와 그 전용 API를 켭니다. 끄더라도 기존 카드 데이터는 유지됩니다.",
+          "footnote": "업무 현황 카드를 켜면 요약도 함께 켜집니다.",
+          "ariaLabel": "업무 현황 카드 실험 설정 전환"
+        },
+        "streamlinedUI": {
+          "title": "간소화된 화면",
+          "description": "간소화된 기본 사이드바, 업무 목록과 받은 편지함의 공통 표시, 집중형 업무 상세 배치, 에이전트·루틴·스킬·설정 사이의 상황별 탐색을 사용합니다.",
+          "footnote": "끄면 기존 화면 틀과 탐색으로 돌아갑니다. 업무와 페이지 데이터는 바뀌지 않습니다.",
+          "ariaLabel": "간소화된 화면 실험 설정 전환"
+        },
+        "summaries": {
+          "title": "요약",
+          "description": "프로젝트와 작업공간 페이지에 요약 에이전트가 만든 현황 칸을 표시하고, 필요할 때 새로 고침과 변경 기록을 제공합니다. 끄더라도 기존 요약 데이터는 유지됩니다.",
+          "footnote": "업무 현황 카드는 요약이 있어야 동작합니다. 요약을 끄면 업무 현황 카드도 꺼집니다.",
+          "ariaLabel": "요약 실험 설정 전환"
+        },
+        "useIsolatedWorkspacesByDefault": {
+          "title": "격리 작업공간을 기본으로 사용",
+          "description": "자체 실행 작업공간 정책이 없는 프로젝트를 격리 작업공간을 고른 것처럼 다룹니다. 그래서 그 프로젝트의 업무는 프로젝트 체크아웃을 함께 쓰지 않고 업무마다 워크트리를 받습니다. 자체 정책이 있는 프로젝트는 그 정책을 유지합니다.",
+          "ariaLabel": "격리 작업공간 기본 사용 실험 설정 전환"
+        },
+        "autoRestartDevServerWhenIdle": {
+          "title": "유휴 시 개발 서버 자동 재시작",
+          "description": "`pnpm dev:once`에서 대기 중이거나 실행 중인 로컬 에이전트 실행이 모두 끝나기를 기다린 뒤, 백엔드 변경이나 마이그레이션으로 현재 실행이 낡으면 서버를 자동으로 다시 시작합니다.",
+          "ariaLabel": "보호된 개발 서버 자동 재시작 전환"
+        },
+        "managedEnvironmentOnly": {
+          "title": "관리형 실행 환경만 사용",
+          "description": "로컬 실행 환경을 숨기고 모든 에이전트를 플랫폼이 관리하는 실행 환경에서 실행합니다.",
+          "ariaLabel": "관리형 실행 환경만 사용 실험 설정 전환"
+        },
+        "paperclipDeveloperMode": {
+          "title": "Paperclip 개발자 모드",
+          "description": "Paperclip 관리자용 내부 도구와 관측 링크를 표시합니다. 실행 페이지의 Honeycomb 추적 조회도 포함됩니다.",
+          "ariaLabel": "Paperclip 개발자 모드 실험 설정 전환"
+        },
+        "serverInfoDebugView": {
+          "title": "서버 정보 디버그 보기",
+          "ariaLabel": "서버 정보 디버그 보기 실험 설정 전환",
+          "description": "계정 메뉴에 현재 서버 재시작 시각과 실행 중인 커밋을 보여 주는 \"서버\" 항목을 표시합니다."
+        },
+        "smokeLab": {
+          "title": "스모크 랩",
+          "ariaLabel": "스모크 랩 실험 설정 전환",
+          "description": "앱 → 개발자 아래에 \"스모크 랩\" 탭을, 대시보드에 \"통합 스모크\" 카드를 추가해 결정적인 로컬 고정 데이터(가짜 OAuth 제공자 + 루프백 MCP 서버)로 모든 통합 경로를 점검합니다. 비공개 배포에서만 쓸 수 있습니다."
+        },
+        "taskPlanDecomposition": {
+          "title": "업무 계획 분해",
+          "description": "업무 상세 페이지에 승인된 계획의 분해 기록을 표시합니다. 표시 방식을 다듬는 동안 하위 업무 생성 동작을 점검하고 검증하는 용도입니다.",
+          "ariaLabel": "업무 계획 분해 패널 실험 설정 전환"
+        },
+        "classicTaskInterface": {
+          "title": "기존 업무 화면",
+          "description": "이전 업무 상세 페이지로 돌아갑니다. 설명을 바로 고칠 수 있는 페이지 머리글, 단순 댓글 스레드, 고정된 속성 사이드바가 나옵니다. 채팅 전용 기능(실시간 활동 접기, 계획·질문 카드, 세 가지 모드 작성창)은 기존 화면에서 쓸 수 없습니다.",
+          "footnote": "바꾸면 바로 적용됩니다. 업무 데이터에는 영향이 없습니다.",
+          "ariaLabel": "기존 업무 화면 실험 설정 전환"
+        },
+        "goalsSidebarLink": {
+          "title": "목표 사이드바 링크",
+          "description": "목표 화면을 평가하는 동안 기본 사이드바에 목표 항목을 다시 표시합니다.",
+          "ariaLabel": "목표 사이드바 링크 실험 설정 전환"
+        }
+      },
+      "page": {
+        "settingsCrumb": "설정",
+        "experimentalCrumb": "실험 기능",
+        "featuresHeading": "실험 기능",
+        "featuresDescription": "아직 평가 중인 선택형 제품 기능입니다.",
+        "developerHeading": "Paperclip 개발자 모드",
+        "developerDescription": "Paperclip을 개발·시험·디버깅하는 내부 도구입니다.",
+        "legacyHeading": "이전 기능",
+        "legacyDescription": "곧 제거될 기능입니다."
+      }
     },
     "profile": {
       "users": "사용자",

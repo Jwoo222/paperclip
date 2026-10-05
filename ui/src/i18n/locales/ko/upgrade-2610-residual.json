@@ -1,0 +1,16 @@
+{
+  "upgrade2610Residual": {
+    "unknownAgent": "알 수 없는 에이전트",
+    "noDefaultAgent": "기본 에이전트 없음",
+    "backToApp": "앱으로 돌아가기",
+    "localTrusted": "로컬 신뢰",
+    "authenticatedExposure": "인증 필요 ({{exposure}})",
+    "organizationName": "조직 이름",
+    "organizationNameHint": "조직에 표시되는 이름입니다.",
+    "archiveDescription": "이 조직을 보관하면 사이드바에서 숨겨집니다. 이 설정은 데이터베이스에 저장됩니다.",
+    "archiveConfirm": "\"{{name}}\" 조직을 보관할까요? 사이드바에서 숨겨집니다.",
+    "alreadyArchived": "이미 보관됨",
+    "archiveOrganization": "조직 보관",
+    "feedbackNoDefault": "아직 저장된 기본값이 없습니다. 다음에 좋아요나 싫어요를 누르면 한 번 물어본 뒤 그 답을 여기에 저장합니다."
+  }
+}

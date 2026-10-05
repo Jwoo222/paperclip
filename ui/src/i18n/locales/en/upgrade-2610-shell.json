@@ -1,0 +1,32 @@
+{
+  "upgrade2610Shell": {
+    "chat": "Chat",
+    "couldNotLoadOrganizations": "Couldn't load organizations",
+    "openCompanySwitcher": "Open company switcher",
+    "invite": "Invite",
+    "inviteDescription": "Invite people to your organization.",
+    "viewCommitOnGitHub": "View commit {{commit}} on GitHub",
+    "myWork": "My work",
+    "sources": "Sources",
+    "organizationMembers": "Organization Members",
+    "searchSurface": "Search {{surface}}…",
+    "chooseVisibleColumns": "Choose which columns stay visible",
+    "selectOrganizationToView": "Select an organization to view {{surface}}.",
+    "surfaceControls": "{{surface}} controls",
+    "closeSelector": "Close selector",
+    "taskViews": {
+      "mineHint": "Assigned to you or waiting on you",
+      "unreadHint": "Tasks you touched with new activity",
+      "blockedHint": "Blocked tasks, grouped by blocker",
+      "recentHint": "Everything you touched lately",
+      "everything": "Everything",
+      "everythingHint": "Tasks, approvals, failed runs and join requests",
+      "allTasks": "All tasks",
+      "allTasksHint": "Every task in the organization",
+      "active": "Active",
+      "activeHint": "Open tasks, running or not",
+      "backlogHint": "Not started yet",
+      "doneHint": "Completed and cancelled"
+    }
+  }
+}

@@ -276,6 +276,7 @@ export function AgentBasicsDialog({
                     >
                       <option value="codex">{tNewUi("newUi.kd64fe2f5ed15")}</option>
                       <option value="claude">{tNewUi("newUi.k60a5ff321287")}</option>
+                      <option value="grok">Grok Build (ACPX)</option>
                       <option value="opencode">{tNewUi("newUi.k3af0e55ccc96")}</option>
                     </select>
                   </label>

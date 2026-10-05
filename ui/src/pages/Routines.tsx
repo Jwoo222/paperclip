@@ -807,14 +807,14 @@ export function Routines() {
       <div className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight">Routines</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{t("shell.routines")}</h1>
             <p className="text-sm text-muted-foreground">
-              Recurring work definitions that materialize into auditable execution tasks.
+              {t("routinesRound2.page.description")}
             </p>
           </div>
           <Button onClick={openCreateRoutine}>
             <Plus className="mr-2 h-4 w-4" />
-            Create routine
+            {t("routinesExtra.general.createRoutine", { defaultValue: "Create routine" })}
           </Button>
         </div>
         <Tabs value={activeTab} onValueChange={handleLegacyTabChange}>
@@ -855,12 +855,12 @@ export function Routines() {
         <div className="flex items-center gap-2">
           {streamlinedUiEnabled ? (
             <Button variant="outline" asChild>
-              <Link to={auditSectionHref("runs", {})}>View all runs</Link>
+              <Link to={auditSectionHref("runs", {})}>{t("upgrade2610Dashboard.viewAllRuns")}</Link>
             </Button>
           ) : null}
           <Button onClick={openCreateRoutine}>
             <Plus className="mr-2 h-4 w-4" />
-            Create routine
+            {t("routinesExtra.general.createRoutine", { defaultValue: "Create routine" })}
           </Button>
         </div>
       </div>
@@ -975,7 +975,7 @@ export function Routines() {
             <FolderChip
               result={railFolderResult}
               selection={folderSelection}
-              allLabel="All routines"
+              allLabel={t("routinesExtra.general.allRoutines", { defaultValue: "All routines" })}
               onClick={() => setMobileFoldersOpen(true)}
             />
           </div>

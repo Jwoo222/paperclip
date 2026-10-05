@@ -1,12 +1,12 @@
 import { t as tNewUi } from "@/i18n";
 import { t } from "@/i18n";
 import { useState, type ReactNode } from "react";
-import { CheckCircle2, RefreshCw, Star, TriangleAlert, Unplug } from "lucide-react";
+import { RefreshCw, Star, Unplug } from "lucide-react";
 import type { ConnectionGrant } from "@paperclipai/shared";
 import { RevokeGrantDialog } from "@/pages/apps/app-detail/IdentitiesSection";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { AI_PROVIDERS, aiMethodLabel, type AiConnectionSummary } from "./model";
+import type { AiConnectionSummary } from "./model";
 
 /** AI-only account controls; identity, access and navigation belong to AppDetail. */
 export function AiConnectionAccountControls({
@@ -36,25 +36,16 @@ export function AiConnectionAccountControls({
         )}>
           <div className="flex items-center gap-3">
             <Star aria-hidden className={cn("size-5 shrink-0", activeDefault ? "fill-current text-(--status-task-icon-done)" : "text-muted-foreground")} />
-            <div>
-              <h3 className="text-sm font-semibold">{tNewUi("newUi.ka74362e5c561")}</h3>
-              <p className="text-xs text-muted-foreground">{tNewUi("newUi.kfffd8c01e219")} {AI_PROVIDERS[account.provider].name} {tNewUi("newUi.k085154084c74")}</p>
-            </div>
+            <h3 role={account.isDefault ? "status" : undefined} className={cn("text-sm font-semibold", account.isDefault && !available && "text-destructive")}>{account.isDefault && !available ? tNewUi("newUi.kf7828b0e1dce") : tNewUi("newUi.ka74362e5c561")}</h3>
           </div>
-          {account.isDefault ? (
-            <span role="status" className={cn("inline-flex items-center gap-1.5 text-sm font-medium", available ? "text-(--status-task-icon-done)" : "text-destructive")}>
-              {available ? <CheckCircle2 className="size-4" aria-hidden /> : <TriangleAlert className="size-4" aria-hidden />}
-              {available ? tNewUi("newUi.k2b2bd088e54f") : tNewUi("newUi.kf7828b0e1dce")}
-            </span>
-          ) : !readOnly ? (
+          {!account.isDefault && (!readOnly ? (
             <Button variant="outline" size="sm" disabled={!available} onClick={onMakeDefault}>{t("secretsResidual.makeDefault")}</Button>
-          ) : <span className="text-xs text-muted-foreground">{tNewUi("newUi.k589f9ad8d19d")}</span>}
+          ) : <span className="text-xs text-muted-foreground">{t("upgrade2610Apps.accountControls.notDefault")}</span>)}
         </div>
       )}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0 text-sm">
-          <p className="font-medium">{aiMethodLabel(account.provider, account.method)}</p>
-          {account.accountLabel && <p className="break-words text-xs text-muted-foreground">{account.accountLabel}</p>}
+          <p className="break-words text-xs text-muted-foreground">{account.method === "subscription" ? t("upgrade2610Apps.accountControls.subscription") : tNewUi("newUi.k16f0ee47f993")}{account.accountLabel ? ` · ${account.accountLabel}` : ""}</p>
         </div>
         {!readOnly && grant.capabilities?.canRevoke && (
           <div className="flex flex-wrap items-center gap-2">

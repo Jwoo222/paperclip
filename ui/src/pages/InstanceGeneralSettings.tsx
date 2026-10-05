@@ -78,19 +78,16 @@ export function InstanceGeneralSettings({ embedded = false }: { embedded?: boole
   }
 
   const censorUsernameInLogs = generalQuery.data?.censorUsernameInLogs === true;
-  const keyboardShortcuts = generalQuery.data?.keyboardShortcuts === true;
   const feedbackDataSharingPreference = generalQuery.data?.feedbackDataSharingPreference ?? "prompt";
   const backupRetention: BackupRetentionPolicy = generalQuery.data?.backupRetention ?? DEFAULT_BACKUP_RETENTION;
   const hiddenSettings = new Set(healthQuery.data?.hiddenSettings ?? []);
   const showDeploymentStatus = !hiddenSettings.has("instance.general.deploymentStatus");
   const showCensorUsernameInLogs = !hiddenSettings.has("instance.general.censorUsernameInLogs");
-  const showKeyboardShortcuts = !hiddenSettings.has("instance.general.keyboardShortcuts");
   const showBackupRetention = !hiddenSettings.has("instance.general.backupRetention");
   const showFeedbackDataSharing = !hiddenSettings.has("instance.general.feedbackDataSharingPreference");
   const showSignOut = !hiddenSettings.has("instance.general.signOut");
   const visibleTopics = [
     ...(showCensorUsernameInLogs ? ["log display"] : []),
-    ...(showKeyboardShortcuts ? ["keyboard shortcuts"] : []),
     ...(showBackupRetention ? ["backup retention"] : []),
     ...(showFeedbackDataSharing ? ["data sharing"] : []),
   ];
@@ -173,25 +170,6 @@ export function InstanceGeneralSettings({ embedded = false }: { embedded?: boole
             onCheckedChange={() => updateGeneralMutation.mutate({ censorUsernameInLogs: !censorUsernameInLogs })}
             disabled={updateGeneralMutation.isPending || signOutMutation.isPending}
             aria-label={t("adminExtra.general.toggleUsernameCensoring")}
-          />
-        </div>
-      </section>
-      )}
-
-      {showKeyboardShortcuts && (
-      <section>
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1.5">
-            <h2 className="text-sm font-semibold">{t("adminExtra.general.keyboardShortcuts")}</h2>
-            <p className="max-w-2xl text-sm text-muted-foreground">
-              {t("adminExtra.general.keyboardShortcutsDescription")}
-            </p>
-          </div>
-          <ToggleSwitch
-            checked={keyboardShortcuts}
-            onCheckedChange={() => updateGeneralMutation.mutate({ keyboardShortcuts: !keyboardShortcuts })}
-            disabled={updateGeneralMutation.isPending || signOutMutation.isPending}
-            aria-label={t("adminExtra.general.toggleKeyboardShortcuts")}
           />
         </div>
       </section>
@@ -320,8 +298,7 @@ export function InstanceGeneralSettings({ embedded = false }: { embedded?: boole
           </div>
           {feedbackDataSharingPreference === "prompt" ? (
             <div className="rounded-lg bg-accent/20 px-3 py-2 text-sm text-muted-foreground">
-              No default is saved yet. The next thumbs up or thumbs down choice will ask once and
-              then save the answer here.
+              {t("upgrade2610Residual.feedbackNoDefault")}
             </div>
           ) : null}
           <div className="flex flex-wrap gap-2">

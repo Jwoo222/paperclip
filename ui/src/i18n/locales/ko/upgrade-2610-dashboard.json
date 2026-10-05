@@ -1,0 +1,20 @@
+{
+  "upgrade2610Dashboard": {
+    "importedPausedTitle_one": "가져온 에이전트 {{count}}개가 일시정지되어 실행되지 않습니다.",
+    "importedPausedTitle_other": "가져온 에이전트 {{count}}개가 일시정지되어 실행되지 않습니다.",
+    "importedPausedBody": "조직 가져오기로 들어온 에이전트는 안전을 위해 일시정지 상태로 시작합니다. 배정된 업무가 시작되도록 다시 실행하세요.",
+    "resumeAll": "모두 다시 실행",
+    "resuming": "다시 실행하는 중…",
+    "allPausedTitle": "이 조직의 모든 에이전트가 일시정지되어 아무것도 실행되지 않습니다.",
+    "allPausedBody": "배정된 업무가 시작되도록 에이전트를 하나 이상 다시 실행하세요.",
+    "reviewAgents": "에이전트 확인",
+    "moreRuns_one": "진행 중·최근 실행 {{count}}개 더 보기",
+    "moreRuns_other": "진행 중·최근 실행 {{count}}개 더 보기",
+    "viewAllRuns": "모든 실행 보기",
+    "finishedAgo": "{{time}} 종료",
+    "startedAgo": "{{time}} 시작",
+    "queuedAgo": "{{time}} 대기열 등록",
+    "taskUnavailable": "업무를 불러올 수 없음",
+    "loadingTask": "업무 불러오는 중…"
+  }
+}

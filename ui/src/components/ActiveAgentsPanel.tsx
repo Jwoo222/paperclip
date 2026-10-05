@@ -45,6 +45,7 @@ interface ActiveAgentsPanelProps {
   queryScope?: string;
   showMoreLink?: boolean;
   showTranscripts?: boolean;
+  dedupeLinkedTasks?: boolean;
 }
 
 export function ActiveAgentsPanel({
@@ -59,28 +60,47 @@ export function ActiveAgentsPanel({
   queryScope = "dashboard",
   showMoreLink = true,
   showTranscripts = false,
+  dedupeLinkedTasks = false,
 }: ActiveAgentsPanelProps) {
   const { t } = useTranslation();
   const resolvedTitle = title ?? t("shell.agents");
   const resolvedEmptyMessage = emptyMessage ?? t("overview.live.emptyDefault");
-  const liveRunsQueryKey = [...queryKeys.liveRuns(companyId), queryScope, { minRunCount, fetchLimit }] as const;
+  const effectiveFetchLimit = fetchLimit;
+  const liveRunsQueryKey = [...queryKeys.liveRuns(companyId), queryScope, { minRunCount, fetchLimit: effectiveFetchLimit, dedupeLinkedTasks }] as const;
   const sharedLiveRuns = useSharedPollingQuery({
     companyId,
-    resourceKey: `live-runs:${queryScope}:${minRunCount}:${fetchLimit ?? "default"}`,
+    resourceKey: `live-runs:${queryScope}:${minRunCount}:${effectiveFetchLimit ?? "default"}:${dedupeLinkedTasks}`,
     queryKey: liveRunsQueryKey,
     enabled: !!companyId,
     leaderOnly: true,
   });
   const { data: liveRuns, dataUpdatedAt: liveRunsUpdatedAt } = useQuery({
     queryKey: liveRunsQueryKey,
-    queryFn: () => heartbeatsApi.liveRunsForCompany(companyId, { minCount: minRunCount, limit: fetchLimit }),
+    queryFn: () => heartbeatsApi.liveRunsForCompany(companyId, {
+      minCount: minRunCount,
+      limit: effectiveFetchLimit,
+      distinctTasks: dedupeLinkedTasks,
+    }),
     enabled: sharedLiveRuns.enabled,
   });
   usePublishSharedQueryData(sharedLiveRuns, liveRuns, liveRunsUpdatedAt);
 
   const runs = liveRuns ?? [];
-  const visibleRuns = useMemo(() => runs.slice(0, cardLimit), [cardLimit, runs]);
-  const hiddenRunCount = Math.max(0, runs.length - visibleRuns.length);
+  const cardRuns = useMemo(() => {
+    if (!dedupeLinkedTasks) return runs;
+
+    // The endpoint orders active runs first, then recent completed runs. Keep
+    // the first run for each task so an active attempt wins over its history.
+    const seenIssueIds = new Set<string>();
+    return runs.filter((run) => {
+      if (!run.issueId) return true;
+      if (seenIssueIds.has(run.issueId)) return false;
+      seenIssueIds.add(run.issueId);
+      return true;
+    });
+  }, [dedupeLinkedTasks, runs]);
+  const visibleRuns = useMemo(() => cardRuns.slice(0, cardLimit), [cardLimit, cardRuns]);
+  const hiddenRunCount = Math.max(0, cardRuns.length - visibleRuns.length);
   const visibleIssueIds = useMemo(
     () => [...new Set(visibleRuns.map((run) => run.issueId).filter((issueId): issueId is string => Boolean(issueId)))],
     [visibleRuns],
@@ -143,8 +163,8 @@ export function ActiveAgentsPanel({
         <div className="mt-3 flex justify-end text-xs text-muted-foreground">
           <Link to="/dashboard/live" className="hover:text-foreground hover:underline">
             {hiddenRunCount > 0
-              ? `${hiddenRunCount} more active/recent run${hiddenRunCount === 1 ? "" : "s"}`
-              : "View all runs"}
+              ? t("upgrade2610Dashboard.moreRuns", { count: hiddenRunCount })
+              : t("upgrade2610Dashboard.viewAllRuns")}
           </Link>
         </div>
       )}
@@ -171,13 +191,16 @@ export const AgentRunCard = memo(function AgentRunCard({
   issueLoadFailed?: boolean;
   className?: string;
 }) {
+  const { t } = useTranslation();
   const statusLabel = runStatusLabels[run.status] ?? run.status.replace(/[_-]/g, " ");
   const runUrl = `/agents/${run.agentId}/runs/${run.id}`;
   const timestamp = run.finishedAt
-    ? `Finished ${relativeTime(run.finishedAt)}`
-    : run.startedAt ? `Started ${relativeTime(run.startedAt)}` : `Queued ${relativeTime(run.createdAt)}`;
+    ? t("upgrade2610Dashboard.finishedAgo", { time: relativeTime(run.finishedAt) })
+    : run.startedAt
+      ? t("upgrade2610Dashboard.startedAgo", { time: relativeTime(run.startedAt) })
+      : t("upgrade2610Dashboard.queuedAgo", { time: relativeTime(run.createdAt) });
   const taskStatus = issue?.status === "in_review" && issue.externalConversationState === "waiting" ? "idle" : issue?.status ?? "backlog";
-  const taskTitle = issue?.title ?? (issueLoadFailed ? "Task unavailable" : "Loading task…");
+  const taskTitle = issue?.title ?? (issueLoadFailed ? t("upgrade2610Dashboard.taskUnavailable") : t("upgrade2610Dashboard.loadingTask"));
 
   return (
     <div className={cn(
