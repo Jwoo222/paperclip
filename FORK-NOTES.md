@@ -382,6 +382,23 @@ Every listed path must be an intentional fork deletion; today there are none.
 7. Claude prompt-cache directories under the instance hold junctions to
    `<execution checkout>/skills/*`; keep the previous checkout on disk after a
    cutover.
+8. **Hermes skill junction after a cutover.** `ensurePaperclipSkillSymlink`
+   leaves a link alone when it points at another directory that still exists,
+   and `reconcileHermesPaperclipSkills` then fails with "is occupied by another
+   installation". Because the previous checkout is kept on disk, the junction
+   `C:\Users\03jwo\.hermes\skills\paperclip` kept pointing at it and the first
+   Hermes run after the 2026-10-05 cutover failed. Remove only the junctions in
+   that folder whose target is under the previous checkout's `skills\`; the
+   next Hermes run recreates them against the new checkout.
+9. **Graceful restart and PostgreSQL 18 on Windows.** On 2026-10-05 the
+   Ctrl+C from `restart-paperclip-graceful.ps1` ended the server and plugin
+   workers without a logged shutdown; the postmaster exited but an orphaned
+   `postgres.exe --forkchild="io_worker"` kept the inherited listen socket, so
+   port 54329 stayed "LISTENING" under the dead postmaster PID and
+   `postmaster.pid` said `stopping`. Check the parent PID before assuming the
+   database is still running. A second orphaned io_worker from an older
+   embedded cluster under the previous checkout path also made the script's
+   leftover-process check stop the restart.
 
 ---
 
