@@ -1,0 +1,6 @@
+dist
+node_modules
+.paperclip-sdk
+# Local Python install accidentally created here by the Windows Python
+# install manager (empty LOCALAPPDATA in an agent shell). Never commit it.
+/Python/
