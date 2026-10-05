@@ -318,6 +318,55 @@ describeEmbeddedPostgres("wake-queue postgres adapter", () => {
     });
   }
 
+  it.each(["issue_assigned", "issue_comment_mentioned"])("drains confirmed legacy reassignment for the successor (%s)", async (reason) => {
+    const companyId = await seedCompany();
+    const outgoingId = await seedAgent({ companyId, name: "Outgoing" });
+    const successorId = await seedAgent({ companyId, name: "Successor" });
+    const recipientId = await seedAgent({ companyId, name: "Recipient" });
+    const issueId = await seedIssue({ companyId, assigneeAgentId: successorId });
+    const runId = await seedRun({ companyId, agentId: outgoingId, status: "cancelled", errorCode: "issue_reassigned", contextSnapshot: { issueId } });
+    await db.update(heartbeatRuns).set({ runtimeMode: "legacy", resultJson: {
+      conversationContinuation: "continue_conversation_v1",
+      reassignmentStopConfirmed: true, executionCancellation: { state: "acknowledged" },
+    } }).where(eq(heartbeatRuns.id, runId));
+    await db.update(issues).set({ executionRunId: runId, checkoutRunId: runId }).where(eq(issues.id, issueId));
+    const wakeId = await seedDeferredWake({ companyId, agentId: reason === "issue_assigned" ? successorId : recipientId, issueId });
+    await db.update(agentWakeupRequests).set({ reason }).where(eq(agentWakeupRequests.id, wakeId));
+    const release = createReleaseIssueExecution({
+      issueLock: createPostgresWakeQueueAdapter(db, stubDeps),
+      recovery: {
+        escalateStrandedAssignedIssue: async () => { throw new Error("unexpected escalation"); },
+        escalateStrandedRecoveryIssueInPlace: async () => { throw new Error("unexpected escalation"); },
+      },
+    });
+    const result = await release({ companyId, runId, now: new Date() });
+    expect(result.outcome.kind).toBe("promoted");
+    const [wake] = await db.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.id, wakeId));
+    expect(wake.runId).not.toBeNull();
+    expect(wake.status).toBe("queued");
+    expect((await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, wake.runId!)))[0].agentId)
+      .toBe(reason === "issue_assigned" ? successorId : recipientId);
+  });
+
+  it.each(["operator_stop", "unconfirmed", "same_owner", "unsettled"])("does not drain unsafe legacy handoff (%s)", async (scenario) => {
+    const companyId = await seedCompany();
+    const outgoingId = await seedAgent({ companyId });
+    const successorId = await seedAgent({ companyId });
+    const issueId = await seedIssue({ companyId, assigneeAgentId: scenario === "same_owner" ? outgoingId : successorId });
+    const runId = await seedRun({ companyId, agentId: outgoingId, status: "cancelled",
+      errorCode: scenario === "operator_stop" ? "cancelled" : "issue_reassigned", contextSnapshot: { issueId } });
+    await db.update(heartbeatRuns).set({ runtimeMode: "legacy", resultJson: {
+      ...(scenario === "unsettled" ? {} : { conversationContinuation: "continue_conversation_v1" }),
+      reassignmentStopConfirmed: scenario !== "unconfirmed", executionCancellation: { state: "acknowledged" },
+    } }).where(eq(heartbeatRuns.id, runId));
+    const wakeId = await seedDeferredWake({ companyId, agentId: successorId, issueId });
+    const adapter = createPostgresWakeQueueAdapter(db, stubDeps);
+    const result = await adapter.withIssueExecutionLock({ companyId, runId, now: new Date() }, async () => { throw new Error("unsafe drain"); });
+    expect(result.outcome.kind).toBe("released");
+    expect((await db.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.id, wakeId)))[0])
+      .toMatchObject({ status: "deferred_issue_execution", runId: null });
+  });
+
   it("releases an acknowledged native handoff without blocking or restarting the old owner", async () => {
     const companyId = await seedCompany();
     const agentId = await seedAgent({ companyId });

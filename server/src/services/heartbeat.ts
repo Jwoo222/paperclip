@@ -1,4 +1,5 @@
 import { externalConversationStateSql, nonIdleSlackIssueCondition } from "./slack-conversation-state.js";
+import { resolveIssueAdapterConfigOverride } from "./issue-adapter-override-compatibility.js";
 import { settleSlackConversation } from "./slack-conversation-lifecycle.js";
 import { publicChatTaskUrl } from "./chat-task-url.js";
 import { toolActionDeliveryService } from "./tool-action-delivery.js";
@@ -17128,6 +17129,27 @@ export function heartbeatService(
     }
   }
 
+  async function isPendingCardRecipient(
+    dbOrTx: Db,
+    companyId: string,
+    issueId: string,
+    agentId: string,
+    context: Record<string, unknown>,
+  ) {
+    const interactionId = context.wakeReason === "interaction_pending"
+      ? readNonEmptyString(context.interactionId)
+      : null;
+    if (!interactionId) return false;
+    return dbOrTx.select({ id: issueThreadInteractions.id }).from(issueThreadInteractions)
+      .where(and(
+        eq(issueThreadInteractions.id, interactionId),
+        eq(issueThreadInteractions.companyId, companyId),
+        eq(issueThreadInteractions.issueId, issueId),
+        eq(issueThreadInteractions.addresseeAgentId, agentId),
+        eq(issueThreadInteractions.status, "pending"),
+      )).limit(1).then((rows) => Boolean(rows[0]));
+  }
+
   async function claimQueuedRun(
     run: typeof heartbeatRuns.$inferSelect,
     companyAgents?: AgentOrgRow[],
@@ -17249,8 +17271,21 @@ export function heartbeatService(
       );
       const readiness = dependencyReadiness.get(issueId);
       const unresolvedBlockerCount = readiness?.unresolvedBlockerCount ?? 0;
+      // Card decisions are bounded coordination, not permission to start the
+      // blocked deliverable. Recheck stored recipient evidence at claim time.
+      const pendingCardRecipient = unresolvedBlockerCount > 0 &&
+        await isPendingCardRecipient(db, run.companyId, issueId, run.agentId, context);
+      if (pendingCardRecipient) {
+        context.dependencyBlockedInteraction = true;
+        context.unresolvedBlockerIssueIds = readiness?.unresolvedBlockerIssueIds ?? [];
+        context.unresolvedBlockerCount = unresolvedBlockerCount;
+        context.unresolvedBlockerSummaries = await listUnresolvedBlockerSummaries(
+          db, run.companyId, issueId, readiness?.unresolvedBlockerIssueIds ?? [],
+        );
+      }
       if (
         unresolvedBlockerCount > 0 &&
+        !pendingCardRecipient &&
         !allowsIssueInteractionWake(
           context,
           ISSUE_TREE_CONTROL_INTERACTION_WAKE_REASONS,
@@ -17627,6 +17662,7 @@ export function heartbeatService(
       : await withChatControlRecoveryGate(run, "claim", async (tx) => {
           const claimValues = {
             status: "running",
+            contextSnapshot: context,
             runnerProfileJson: sql`(case when jsonb_typeof(${heartbeatRuns.runnerProfileJson}) = 'object' then ${heartbeatRuns.runnerProfileJson} else '{}'::jsonb end) || ${JSON.stringify({ adapterDispatch: { adapterType: agent.adapterType } })}::jsonb`,
             ...legacyControllerClaim(run.runtimeMode),
             responsibleUserId,
@@ -21133,9 +21169,24 @@ export function heartbeatService(
         legacyUseProjectWorkspace:
           issueAssigneeOverrides?.useProjectWorkspace ?? null,
       });
+      const compatibleIssueOverride = resolveIssueAdapterConfigOverride(
+        issueAssigneeOverrides?.adapterConfig ?? null,
+        agent.adapterType,
+      );
+      for (const reason of compatibleIssueOverride.skippedReasons) {
+        await appendRunEvent(run, {
+          eventType: "issue_adapter_override_skipped",
+          stream: "system",
+          level: "warn",
+          message: reason === "obsolete_model_profile"
+            ? "Issue modelProfile ignored: obsolete_model_profile; using explicit model or agent configuration"
+            : `Issue adapter override skipped: ${reason}; using agent configuration`,
+          payload: { issueId, adapterType: agent.adapterType, reason },
+        });
+      }
       const mergedConfig = {
         ...workspaceManagedConfig,
-        ...(issueAssigneeOverrides?.adapterConfig ?? {}),
+        ...(compatibleIssueOverride.adapterConfig ?? {}),
       };
       const configSnapshot = buildExecutionWorkspaceConfigSnapshot(
         mergedConfig,
@@ -27226,8 +27277,37 @@ export function heartbeatService(
             activeExecutionRun = null;
           }
 
-          // A queued/scheduled run holding the lock for an agent that is
-          // no longer the issue's assignee is stale by design — the issue
+          const holderContext = parseObject(activeExecutionRun?.contextSnapshot);
+          const holderNeedsOwnershipCheck = Boolean(
+            activeExecutionRun &&
+            activeExecutionRun.status !== "running" &&
+            issue.assigneeAgentId &&
+            activeExecutionRun.agentId !== issue.assigneeAgentId,
+          );
+          // Match queued-run dispatch's exemption for server-recorded comment
+          // recipients, who intentionally need not be the issue's assignee.
+          let holderIsInteractionRecipient = holderNeedsOwnershipCheck &&
+            allowsIssueInteractionWake(holderContext, ISSUE_TREE_CONTROL_INTERACTION_WAKE_REASONS);
+          const holderInteractionId = holderContext.wakeReason === "interaction_pending"
+            ? readNonEmptyString(holderContext.interactionId)
+            : null;
+          if (holderNeedsOwnershipCheck && !holderIsInteractionRecipient && holderInteractionId && activeExecutionRun) {
+            holderIsInteractionRecipient = await tx
+              .select({ id: issueThreadInteractions.id })
+              .from(issueThreadInteractions)
+              .where(and(
+                eq(issueThreadInteractions.id, holderInteractionId),
+                eq(issueThreadInteractions.companyId, issue.companyId),
+                eq(issueThreadInteractions.issueId, issue.id),
+                eq(issueThreadInteractions.addresseeAgentId, activeExecutionRun.agentId),
+                eq(issueThreadInteractions.status, "pending"),
+              ))
+              .limit(1)
+              .then((rows) => Boolean(rows[0]));
+          }
+
+          // A queued/scheduled assignment run holding the lock for an agent
+          // no longer assigned to the issue is stale — the issue
           // has been re-routed (e.g. blocked → in_review with a different
           // assignee). Cancel it and release the lock; otherwise the new
           // assignee's wake gets parked in `deferred_issue_execution`
@@ -27245,7 +27325,8 @@ export function heartbeatService(
             activeExecutionRun &&
             activeExecutionRun.status !== "running" &&
             issue.assigneeAgentId &&
-            activeExecutionRun.agentId !== issue.assigneeAgentId
+            activeExecutionRun.agentId !== issue.assigneeAgentId &&
+            !holderIsInteractionRecipient
           ) {
             const cancelled = await tx
               .update(heartbeatRuns)
@@ -27354,10 +27435,12 @@ export function heartbeatService(
           const blockedInteractionWake =
             dependencyReadiness &&
             !dependencyReadiness.isDependencyReady &&
-            allowsIssueInteractionWake(
+            (allowsIssueInteractionWake(
               enrichedContextSnapshot,
               ISSUE_TREE_CONTROL_INTERACTION_WAKE_REASONS,
-            );
+            ) || await isPendingCardRecipient(
+              tx as unknown as Db, issue.companyId, issue.id, agentId, enrichedContextSnapshot,
+            ));
 
           if (blockedInteractionWake) {
             enrichedContextSnapshot.dependencyBlockedInteraction = true;

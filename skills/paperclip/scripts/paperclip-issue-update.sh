@@ -92,9 +92,19 @@ if [[ -n "$status" ]]; then
   esac
 fi
 
-body_file="$(mktemp)"
-json_file="$(mktemp)"
-response_file="$(mktemp)"
+native_temp_file() {
+  local temp_path
+  temp_path="$(mktemp)"
+  if command -v cygpath >/dev/null 2>&1; then
+    cygpath -m "$temp_path"
+  else
+    printf '%s' "$temp_path"
+  fi
+}
+
+body_file="$(native_temp_file)"
+json_file="$(native_temp_file)"
+response_file="$(native_temp_file)"
 trap 'rm -f "$body_file" "$json_file" "$response_file"' EXIT
 
 # Raw bytes from stdin land in the file untouched (UTF-8 in, UTF-8 out).

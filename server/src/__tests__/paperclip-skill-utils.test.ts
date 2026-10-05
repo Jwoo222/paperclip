@@ -82,36 +82,31 @@ attachment_json() {
   if [[ -f "$FAKE_CURL_STATE_DIR/originating-run-id" ]]; then
     originating_run_id="$(<"$FAKE_CURL_STATE_DIR/originating-run-id")"
   fi
-  jq -nc \
-    --arg runId "$originating_run_id" \
-    --arg sha256 "$FAKE_ATTACHMENT_SHA" \
-    '{
+  node -e 'console.log(JSON.stringify({
       id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       companyId: "company-1",
       issueId: "issue-1",
-      originatingRunId: $runId,
+      originatingRunId: process.argv[1],
       contentType: "text/plain",
       byteSize: 24,
-      sha256: $sha256,
+      sha256: process.argv[2],
       originalFilename: "result.txt",
       contentPath: "/api/attachments/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/content",
       downloadPath: "/api/attachments/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/content?download=1"
-    }'
+    }))' "$originating_run_id" "$FAKE_ATTACHMENT_SHA"
 }
 
 if [[ "$method" == "GET" && "$url" == */work-products ]]; then
   if [[ -f "$FAKE_CURL_STATE_DIR/upload-committed" ]]; then
     work_product_json="$(
-      jq -nc \
-        --arg runId "$PAPERCLIP_RUN_ID" \
-        '{
+      node -e 'console.log(JSON.stringify({
           id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
           type: "artifact",
           provider: "paperclip",
-          createdByRunId: $runId,
+          createdByRunId: process.argv[1],
           externalId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
           metadata: { attachmentId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" }
-        }'
+        }))' "$PAPERCLIP_RUN_ID"
     )"
     respond "[$work_product_json]" 200
   else
@@ -171,7 +166,7 @@ if [[ "$method" == "POST" && "$url" == */attachments ]]; then
 fi
 
 if [[ "$method" == "POST" && "$url" == */work-products ]]; then
-  respond "$(jq -nc --arg runId "$PAPERCLIP_RUN_ID" '{ id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", createdByRunId: $runId }')" 201
+  respond "$(node -e 'console.log(JSON.stringify({ id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", createdByRunId: process.argv[1] }))' "$PAPERCLIP_RUN_ID")" 201
   exit 0
 fi
 
@@ -287,7 +282,9 @@ describe("paperclip skill utils", () => {
     expect(helperBody).toContain("--chat-comment TEXT");
     expect(helperBody).toContain("--retry-unknown-upload");
     expect(helperBody).toContain('"$api_base/issues/$issue_id/comments"');
-    expect(helperBody).toContain("attachmentIds: [$attachmentId]");
+    expect(helperBody).toContain("attachmentIds: [args[1]]");
+    expect(helperBody).not.toContain("require_command jq");
+    expect(helperBody).toContain("require_command node");
     await expect(
       fs.access(path.resolve("skills/paperclip/scripts/paperclip-upload-artifact.sh")),
     ).resolves.toBeUndefined();
@@ -461,7 +458,7 @@ describe("paperclip skill utils", () => {
       .digest("hex");
     const staleLockPath = path.join(harness.lockDir, `${operationKey}.lock`);
     await fs.mkdir(harness.lockDir, { recursive: true });
-    await fs.symlink("2147483647|stale process", staleLockPath);
+    await fs.writeFile(staleLockPath, "2147483647|stale process", "utf8");
 
     const results = await Promise.all([harness.run(), harness.run()]);
 
@@ -570,9 +567,10 @@ describe("paperclip skill utils", () => {
     await fs.mkdir(runtimeSkill, { recursive: true });
     await fs.mkdir(customSkill, { recursive: true });
 
-    await fs.symlink(runtimeSkill, path.join(skillsHome, "paperclip"));
-    await fs.symlink(customSkill, path.join(skillsHome, "release-notes"));
-    await fs.symlink(staleMaintainerSkill, path.join(skillsHome, "release"));
+    const linkType = process.platform === "win32" ? "junction" : "dir";
+    await fs.symlink(runtimeSkill, path.join(skillsHome, "paperclip"), linkType);
+    await fs.symlink(customSkill, path.join(skillsHome, "release-notes"), linkType);
+    await fs.symlink(staleMaintainerSkill, path.join(skillsHome, "release"), linkType);
 
     const removed = await removeMaintainerOnlySkillSymlinks(skillsHome, ["paperclip"]);
 

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import {
+  activityLog,
   agents,
   agentRuntimeState,
   agentWakeupRequests,
@@ -9,6 +10,8 @@ import {
   createDb,
   heartbeatRunEvents,
   heartbeatRuns,
+  issueComments,
+  issueThreadInteractions,
   issues,
 } from "@paperclipai/db";
 import {
@@ -58,9 +61,12 @@ describeEmbeddedPostgres("heartbeat lock release on cross-agent reassignment", (
 
   afterEach(async () => {
     await drainHeartbeatRunsToQuiescence(db, heartbeat);
+    await db.delete(activityLog);
     await db.delete(heartbeatRunEvents);
     await db.delete(heartbeatRuns);
     await db.delete(agentWakeupRequests);
+    await db.delete(issueThreadInteractions);
+    await db.delete(issueComments);
     await db.delete(issues);
     await db.delete(agentRuntimeState);
     await db.delete(agents);
@@ -156,6 +162,101 @@ describeEmbeddedPostgres("heartbeat lock release on cross-agent reassignment", (
       wakeupRequestId,
     };
   }
+
+  it.each(["ceo", "engineer", "mention"])(
+    "preserves a queued %s recipient when the issue owner wakes", async (scenario) => {
+      const { companyId, coderAgentId, reviewerAgentId, issueId, holderRunId, wakeupRequestId } =
+        await seedCrossAgentScenario({ holderStatus: "queued" });
+      const interactionId = randomUUID();
+      const commentId = randomUUID();
+      if (scenario === "mention") {
+        await db.insert(issueComments).values({
+          id: commentId, companyId, issueId, authorAgentId: reviewerAgentId,
+          body: `[@Coder](agent://${coderAgentId}) Please review the decision.`,
+        });
+      } else {
+        await db.update(agents).set({ role: scenario }).where(eq(agents.id, coderAgentId));
+        await db.insert(issueThreadInteractions).values({
+          id: interactionId, companyId, issueId, kind: "ask_user_questions",
+          status: "pending", addresseeAgentId: coderAgentId,
+          payload: { version: 1, questions: [] },
+        });
+      }
+      await db.update(heartbeatRuns).set({ contextSnapshot: {
+        issueId, taskId: issueId,
+        wakeReason: scenario === "mention" ? "issue_comment_mentioned" : "interaction_pending",
+        ...(scenario === "mention" ? { wakeCommentId: commentId } : { interactionId }),
+      } }).where(eq(heartbeatRuns.id, holderRunId));
+      // A same-issue status update and the owner's subsequent wake must not
+      // mistake this intentionally non-assignee recipient for a former owner.
+      await db.update(issues).set({ status: "in_progress" }).where(eq(issues.id, issueId));
+      const followup = await heartbeat.wakeup(reviewerAgentId, {
+        source: "automation", triggerDetail: "system", reason: "issue_assigned",
+        payload: { issueId },
+        contextSnapshot: { issueId, taskId: issueId, wakeReason: "issue_assigned" },
+        requestedByActorType: "user", requestedByActorId: "local-board",
+      });
+      expect(followup).toBeNull();
+      const [holder] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, holderRunId));
+      expect(holder.status).toBe("queued");
+      expect(holder.errorCode).toBeNull();
+      const [wake] = await db.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.id, wakeupRequestId));
+      expect(wake.status).toBe("queued");
+      const [issue] = await db.select().from(issues).where(eq(issues.id, issueId));
+      expect(issue.executionRunId).toBe(holderRunId);
+      expect(issue.assigneeAgentId).toBe(reviewerAgentId);
+      const deferred = await db.select().from(agentWakeupRequests).where(and(
+        eq(agentWakeupRequests.agentId, reviewerAgentId),
+        eq(agentWakeupRequests.status, "deferred_issue_execution"),
+      ));
+      expect(deferred).toHaveLength(1);
+    },
+  );
+
+  it.each(["missing", "answered", "wrong_addressee", "wrong_issue", "wrong_company", "mention_without_comment"])(
+    "still cancels a queued holder with %s recipient evidence", async (scenario) => {
+      const { companyId, coderAgentId, reviewerAgentId, issueId, holderRunId } =
+        await seedCrossAgentScenario({ holderStatus: "queued" });
+      const interactionId = randomUUID();
+      const otherIssueId = randomUUID();
+      const otherCompanyId = randomUUID();
+      if (scenario === "wrong_issue") {
+        await db.insert(issues).values({ id: otherIssueId, companyId, title: "Other test issue" });
+      }
+      if (scenario === "wrong_company") {
+        await db.insert(companies).values({ id: otherCompanyId, name: "Other isolated test company" });
+      }
+      if (!["missing", "mention_without_comment"].includes(scenario)) {
+        await db.insert(issueThreadInteractions).values({
+          id: interactionId, companyId: scenario === "wrong_company" ? otherCompanyId : companyId,
+          issueId: scenario === "wrong_issue" ? otherIssueId : issueId,
+          kind: "ask_user_questions", status: scenario === "answered" ? "answered" : "pending",
+          addresseeAgentId: scenario === "wrong_addressee" ? reviewerAgentId : coderAgentId,
+          payload: { version: 1, questions: [] },
+        });
+      }
+      await db.update(heartbeatRuns).set({ contextSnapshot: {
+        issueId, taskId: issueId, interactionId,
+        wakeReason: scenario === "mention_without_comment" ? "issue_comment_mentioned" : "interaction_pending",
+      } }).where(eq(heartbeatRuns.id, holderRunId));
+      await db.update(agents).set({ runtimeConfig: {
+        heartbeat: { wakeOnDemand: true, maxConcurrentRuns: 1 },
+      } }).where(eq(agents.id, reviewerAgentId));
+      await db.insert(heartbeatRuns).values({
+        id: randomUUID(), companyId, agentId: reviewerAgentId,
+        invocationSource: "automation", triggerDetail: "system", status: "running",
+        contextSnapshot: { wakeReason: "test_busy_slot" }, startedAt: new Date(),
+      });
+      await heartbeat.wakeup(reviewerAgentId, {
+        source: "automation", triggerDetail: "system", reason: "issue_assigned",
+        payload: { issueId }, contextSnapshot: { issueId, taskId: issueId, wakeReason: "issue_assigned" },
+        requestedByActorType: "user", requestedByActorId: "local-board",
+      });
+      const [holder] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, holderRunId));
+      expect(holder.status).toBe("cancelled");
+      expect(holder.errorCode).toBe("lock_released_on_reassignment");
+    },
+  );
 
   it("defers a cross-agent wake while the holder is still running and leaves the holder alone", async () => {
     const { coderAgentId, reviewerAgentId, issueId, holderRunId, wakeupRequestId } =

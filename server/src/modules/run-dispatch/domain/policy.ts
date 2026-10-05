@@ -146,6 +146,8 @@ export type QueuedRunFacts = {
   /** A connection resolution or tool refresh can resume an agent waiting in review. */
   isConnectionContinuation?: boolean;
   isInteractionWake: boolean;
+  /** Persisted pending card belongs to this issue/company and names the run agent. */
+  isPendingInteractionAddressee?: boolean;
   isAuthorizedSourceScopedRecovery: boolean;
   isNonAssigneeWorkspaceBusyRetry: boolean;
 
@@ -563,7 +565,7 @@ export function decideQueuedRunStaleness(
     runAgentId: facts.runAgentId,
     issueAssigneeAgentId: facts.issueAssigneeAgentId,
     isNonAssigneeWorkspaceBusyRetry: facts.isNonAssigneeWorkspaceBusyRetry,
-    isInteractionWake: facts.isInteractionWake,
+    isInteractionWake: facts.isInteractionWake || facts.isPendingInteractionAddressee === true,
     isCurrentReviewParticipant:
       facts.reviewParticipant.isInReview &&
       facts.reviewParticipant.participantIsAgent &&

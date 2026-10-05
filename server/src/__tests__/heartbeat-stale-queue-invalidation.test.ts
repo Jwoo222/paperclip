@@ -27,6 +27,7 @@ import {
 } from "../services/heartbeat.ts";
 import { runningProcesses } from "../adapters/index.ts";
 import { recoveryService } from "../services/recovery/service.ts";
+import { issueThreadInteractionService } from "../services/issue-thread-interactions.ts";
 
 const mockAdapterExecute = vi.hoisted(() =>
   vi.fn(async () => ({
@@ -532,6 +533,99 @@ describeEmbeddedPostgres("heartbeat stale queued-run invalidation", () => {
     expect(issue?.status).toBe("backlog");
     expect(countExecuteCallsForRun(runId)).toBe(0);
   });
+
+  it.each(["ceo", "engineer"])("starts a pending card's %s addressee after an issue status change", async (role) => {
+    const { companyId, agentId } = await seedCompanyAndAgent({ agentRole: role });
+    const ownerId = randomUUID();
+    await db.insert(agents).values({
+      id: ownerId, companyId, name: "IssueOwner", role: "engineer",
+      status: "active", adapterType: "codex_local", adapterConfig: {},
+      runtimeConfig: {}, permissions: {},
+    });
+    const issueId = randomUUID();
+    await db.insert(issues).values({
+      id: issueId, companyId, title: "Addressed decision", status: "in_progress",
+      priority: "high", assigneeAgentId: ownerId,
+    });
+    const interaction = await issueThreadInteractionService(db).create({ id: issueId, companyId }, {
+      kind: "ask_user_questions", addresseeAgentId: agentId,
+      payload: { version: 1, questions: [{
+        id: "scope", prompt: "Which scope?", selectionMode: "single",
+        options: [{ id: "current", label: "Current scope" }],
+      }] },
+    }, { agentId: ownerId, userId: null });
+    const { runId } = await seedQueuedRun({
+      companyId, agentId, issueId, wakeReason: "interaction_pending",
+      invocationSource: "automation",
+      contextExtras: { interactionId: interaction.id, sourceCommentId: null },
+    });
+    await db.update(issues).set({ status: "in_review" }).where(eq(issues.id, issueId));
+
+    await heartbeat.resumeQueuedRuns();
+    await waitForCondition(async () => countExecuteCallsForRun(runId) > 0);
+    await waitForCondition(async () => {
+      const [finished] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, runId));
+      return finished?.status === "succeeded" || finished?.status === "failed";
+    });
+    const [run] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, runId));
+    expect(run?.errorCode).not.toBe("issue_assignee_changed");
+    expect(countExecuteCallsForRun(runId)).toBe(1);
+    const [issue] = await db.select().from(issues).where(eq(issues.id, issueId));
+    expect(issue?.assigneeAgentId).toBe(ownerId);
+    const [card] = await db.select().from(issueThreadInteractions)
+      .where(eq(issueThreadInteractions.id, interaction.id));
+    expect(card?.status).toBe("pending");
+  });
+
+  it.each(["missing", "resolved", "wrong_addressee", "wrong_issue", "wrong_company"])(
+    "does not exempt a %s interaction_pending wake from assignee validation", async (scenario) => {
+      const { companyId, agentId } = await seedCompanyAndAgent();
+      const ownerId = randomUUID();
+      await db.insert(agents).values({
+        id: ownerId, companyId, name: "IssueOwner", role: "engineer",
+        status: "active", adapterType: "codex_local", adapterConfig: {},
+        runtimeConfig: {}, permissions: {},
+      });
+      const issueId = randomUUID();
+      await db.insert(issues).values({
+        id: issueId, companyId, title: "Invalid addressed wake", status: "in_progress",
+        priority: "high", assigneeAgentId: ownerId,
+      });
+      const otherIssueId = randomUUID();
+      await db.insert(issues).values({
+        id: otherIssueId, companyId, title: "Other issue", status: "in_progress",
+        priority: "high", assigneeAgentId: ownerId,
+      });
+      const otherCompanyId = randomUUID();
+      if (scenario === "wrong_company") {
+        await db.insert(companies).values({ id: otherCompanyId, name: "Other test company" });
+      }
+      const interactionId = randomUUID();
+      if (scenario !== "missing") {
+        await db.insert(issueThreadInteractions).values({
+          id: interactionId,
+          companyId: scenario === "wrong_company" ? otherCompanyId : companyId,
+          issueId: scenario === "wrong_issue" ? otherIssueId : issueId,
+          kind: "ask_user_questions",
+          status: scenario === "resolved" ? "answered" : "pending",
+          addresseeAgentId: scenario === "wrong_addressee" ? ownerId : agentId,
+          payload: { version: 1, questions: [] },
+        });
+      }
+      const { runId } = await seedQueuedRun({
+        companyId, agentId, issueId, wakeReason: "interaction_pending",
+        invocationSource: "automation", contextExtras: { interactionId },
+      });
+      await heartbeat.resumeQueuedRuns();
+      await waitForCondition(async () => {
+        const [run] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, runId));
+        return run?.status === "cancelled";
+      });
+      const [run] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, runId));
+      expect(run?.errorCode).toBe("issue_assignee_changed");
+      expect(countExecuteCallsForRun(runId)).toBe(0);
+    },
+  );
 
   it("does not re-open a resolved connection-intent issue parked after claim", async () => {
     const { companyId, agentId } = await seedCompanyAndAgent();

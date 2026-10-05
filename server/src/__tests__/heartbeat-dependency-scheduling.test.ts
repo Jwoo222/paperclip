@@ -20,6 +20,7 @@ import {
   issueDocuments,
   issueRelations,
   issueRecoveryActions,
+  issueThreadInteractions,
   issueTreeHolds,
   issues,
   workspaceOperations,
@@ -135,6 +136,7 @@ describeEmbeddedPostgres("heartbeat dependency-aware queued run selection", () =
     await db.delete(activityLog);
     await db.delete(companySkills);
     await db.delete(issueComments);
+    await db.delete(issueThreadInteractions);
     await db.delete(issueDocuments);
     await db.delete(documentRevisions);
     await db.delete(documents);
@@ -359,6 +361,71 @@ describeEmbeddedPostgres("heartbeat dependency-aware queued run selection", () =
       .from(agentWakeupRequests).where(eq(agentWakeupRequests.id, intent!.id))
       .then((result) => result[0]);
     expect(recoveredIntent).toMatchObject({ status: "coalesced" });
+  });
+
+  it.each(["admission", "claim"])("runs a verified card recipient in bounded mode at %s while dependencies remain blocked", async (stage) => {
+    const companyId = randomUUID();
+    const ownerId = randomUUID();
+    const recipientId = randomUUID();
+    const issueId = randomUUID();
+    const blockerId = randomUUID();
+    const interactionId = randomUUID();
+    await db.insert(companies).values({
+      id: companyId, name: "Card dependency fixture",
+      issuePrefix: `C${companyId.replace(/-/g, "").slice(0, 6).toUpperCase()}`,
+      defaultResponsibleUserId: "responsible-user",
+    });
+    await db.insert(agents).values([ownerId, recipientId].map((id) => ({
+      id, companyId, name: id === ownerId ? "Owner" : "Card recipient",
+      role: "engineer", status: "active", adapterType: "codex_local",
+      adapterConfig: {}, permissions: {},
+      runtimeConfig: { heartbeat: { wakeOnDemand: true, maxConcurrentRuns: 1 } },
+    })));
+    await db.insert(issues).values([
+      { id: blockerId, companyId, title: "Unresolved blocker", status: "todo", responsibleUserId: "responsible-user" },
+      { id: issueId, companyId, title: "Blocked decision", status: "blocked", assigneeAgentId: ownerId, responsibleUserId: "responsible-user" },
+    ]);
+    await db.insert(issueRelations).values({ companyId, issueId: blockerId, relatedIssueId: issueId, type: "blocks" });
+    await db.insert(issueThreadInteractions).values({
+      id: interactionId, companyId, issueId, kind: "ask_user_questions",
+      status: "pending", addresseeAgentId: recipientId,
+      payload: { version: 1, questions: [] },
+    });
+    const contextSnapshot = { issueId, taskId: issueId, interactionId, wakeReason: "interaction_pending" };
+    let runId: string;
+    if (stage === "admission") {
+      const run = await heartbeat.wakeup(recipientId, {
+        source: "automation", triggerDetail: "system", reason: "interaction_pending",
+        payload: { issueId, interactionId, mutation: "interaction" }, contextSnapshot,
+      });
+      expect(run).not.toBeNull();
+      runId = run!.id;
+    } else {
+      runId = randomUUID();
+      const wakeId = randomUUID();
+      await db.insert(agentWakeupRequests).values({
+        id: wakeId, companyId, agentId: recipientId, source: "automation",
+        reason: "interaction_pending", status: "queued", payload: { issueId, interactionId },
+      });
+      await db.insert(heartbeatRuns).values({
+        id: runId, companyId, agentId: recipientId, invocationSource: "automation",
+        triggerDetail: "system", status: "queued", wakeupRequestId: wakeId, contextSnapshot,
+      });
+      await db.update(issues).set({ executionRunId: runId }).where(eq(issues.id, issueId));
+      await heartbeat.resumeQueuedRuns();
+    }
+    expect(await waitForCondition(async () => {
+      const [run] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, runId));
+      return run?.status === "succeeded" || run?.status === "cancelled";
+    })).toBe(true);
+    const [run] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, runId));
+    expect(run.errorCode).not.toBe("issue_dependencies_blocked");
+    expect(run.startedAt).not.toBeNull();
+    expect(run.contextSnapshot).toMatchObject({ dependencyBlockedInteraction: true, unresolvedBlockerIssueIds: [blockerId] });
+    const [issue] = await db.select().from(issues).where(eq(issues.id, issueId));
+    expect(issue.status).toBe("blocked");
+    expect(issue.assigneeAgentId).toBe(ownerId);
+    expect(await db.select().from(issueRelations).where(eq(issueRelations.relatedIssueId, issueId))).toHaveLength(1);
   });
 
   it("keeps blocked descendants idle until their blockers resolve", async () => {

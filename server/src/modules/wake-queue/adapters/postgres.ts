@@ -1107,7 +1107,13 @@ export function createPostgresWakeQueueAdapter(db: Db, deps: WakeQueuePostgresAd
             isAcknowledgedNativeReassignmentStop(run) ||
             (run.status === "cancelled" &&
             (parseObject(run.resultJson?.executionCancellation).state === "acknowledged" || isAcknowledgedNativeStop(run)) &&
-            !interruptedQueue),
+            !interruptedQueue &&
+            // A confirmed legacy reassignment is a handoff, not an operator
+            // Stop. Drain its existing recipients only after the old provider
+            // acknowledged cancellation and the task has a different owner.
+            !(run.runtimeMode === "legacy" && run.errorCode === "issue_reassigned" &&
+              run.resultJson?.reassignmentStopConfirmed === true &&
+              Boolean(issueRow?.assigneeAgentId) && issueRow?.assigneeAgentId !== run.agentId)),
         };
         const preDrain = decidePreDrain(preDrainFacts);
 

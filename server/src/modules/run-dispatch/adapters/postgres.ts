@@ -514,6 +514,25 @@ export function createPostgresRunDispatchAdapter(
     );
     const resumeIntent = context.resumeIntent === true || context.followUpRequested === true;
     const wakeReason = readNonEmptyString(context.wakeReason);
+    // The named card responder need not own the issue. Verify the saved card
+    // at dispatch time; a wake reason or context field alone grants no exemption.
+    const pendingInteractionId = wakeReason === "interaction_pending"
+      ? readNonEmptyString(context.interactionId)
+      : null;
+    const isPendingInteractionAddressee = issue && pendingInteractionId
+      ? await dbOrTx
+          .select({ id: issueThreadInteractions.id })
+          .from(issueThreadInteractions)
+          .where(and(
+            eq(issueThreadInteractions.id, pendingInteractionId),
+            eq(issueThreadInteractions.companyId, input.companyId),
+            eq(issueThreadInteractions.issueId, issueId),
+            eq(issueThreadInteractions.addresseeAgentId, input.agentId),
+            eq(issueThreadInteractions.status, "pending"),
+          ))
+          .limit(1)
+          .then((rows) => Boolean(rows[0]))
+      : false;
     const retryReason =
       readNonEmptyString(context.retryReason) ?? input.scheduledRetryReason ?? null;
     const interactionResolvedAt = readNonEmptyString(context.interactionResolvedAt);
@@ -585,6 +604,7 @@ export function createPostgresRunDispatchAdapter(
       isConnectionContinuation: (isResolvedInteractionContinuation && context.interactionKind === "connection_intent")
         || context.source === "connection_tools.refreshed",
       isInteractionWake,
+      isPendingInteractionAddressee,
       isAuthorizedSourceScopedRecovery,
       isNonAssigneeWorkspaceBusyRetry: isNonAssigneeWorkspaceBusyRetry(retryReason, context),
       resumeIntent,

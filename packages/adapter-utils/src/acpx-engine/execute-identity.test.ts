@@ -177,6 +177,51 @@ describe("acpx identity split and launch environment", () => {
     });
   });
 
+  describe.each(["claude", "codex"])("Windows app-data inheritance for %s", (acpxAgent) => {
+    const appData = {
+      LOCALAPPDATA: "C:\\Users\\example\\AppData\\Local",
+      APPDATA: "C:\\Users\\example\\AppData\\Roaming",
+    };
+
+    it("preserves app-data paths without inheriting unrelated authority", () => {
+      expect(projectAcpxInheritedHostEnvironment({
+        ...appData,
+        UNRELATED_SECRET: "unrelated-host-secret",
+        PAPERCLIP_NATIVE_MCP_TOKEN: "native-host-secret",
+      }, acpxAgent, true)).toEqual(appData);
+    });
+
+    it("does not inherit app-data paths across a remote boundary", () => {
+      expect(projectAcpxInheritedHostEnvironment(appData, acpxAgent, false)).toEqual({});
+    });
+
+    it("recognizes differently-cased Windows app-data keys", () => {
+      const inherited = { LocalAppData: appData.LOCALAPPDATA, appdata: appData.APPDATA };
+      expect(projectAcpxInheritedHostEnvironment(inherited, acpxAgent, true)).toEqual(inherited);
+    });
+
+    it("does not invent missing app-data paths", () => {
+      expect(projectAcpxInheritedHostEnvironment({
+        USERPROFILE: "C:\\Users\\example",
+        LOCALAPPDATA: undefined,
+        APPDATA: undefined,
+      }, acpxAgent, true)).toEqual({ USERPROFILE: "C:\\Users\\example" });
+    });
+
+    it("keeps explicit overrides including empty app-data values", () => {
+      const launchEnvironment = finalizeLaunchEnvironment(
+        { PATH: "C:\\explicit\\bin", localappdata: "", AppData: "D:\\explicit\\Roaming" },
+        [],
+        { acpxAgent, inheritHostEnvironment: true, inheritedEnv: appData, platform: "win32" },
+      );
+      expect(launchEnvironment.env).toEqual({
+        PATH: "C:\\explicit\\bin",
+        localappdata: "",
+        AppData: "D:\\explicit\\Roaming",
+      });
+    });
+  });
+
   it("does not project any ambient host environment across a remote boundary", () => {
     const inherited = {
       PATH: "/host/bin",

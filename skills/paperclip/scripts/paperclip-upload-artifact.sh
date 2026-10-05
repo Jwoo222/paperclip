@@ -50,6 +50,46 @@ require_command() {
   fi
 }
 
+# Node is present in Paperclip local runtimes; jq is not guaranteed.
+# Escape non-ASCII JSON output so Windows curl does not corrupt body arguments.
+artifact_json() {
+  node -e '
+const fs = require("node:fs");
+const [action, ...args] = process.argv.slice(1);
+const input = () => JSON.parse(fs.readFileSync(0, "utf8"));
+const emit = value => process.stdout.write(JSON.stringify(value).replace(/[\u007f-\uffff]/g, c => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0")) + "\n");
+switch (action) {
+  case "indeterminate": process.exit(input().outcome === "indeterminate" ? 0 : 1); break;
+  case "field": {
+    const value = input();
+    const [key] = args;
+    const result = key === "downloadPath" ? (value?.downloadPath ?? (value?.contentPath ? value.contentPath + "?download=1" : ""))
+      : key === "openPath" ? (value?.openPath ?? value?.contentPath ?? "")
+      : value?.[key] ?? (key === "byteSize" ? 0 : "");
+    process.stdout.write(String(result)); break;
+  }
+  case "dry-run": {
+    const [file, issueId, companyId, title, summary, contentType, status, chatComment, createWorkProduct, isPrimary] = args;
+    emit({file, issueId, companyId, title, summary, contentType, status, chatComment: chatComment || null, createWorkProduct: createWorkProduct === "true", isPrimary: isPrimary === "true"}); break;
+  }
+  case "find": {
+    const [runId, sha256, originalFilename, contentType] = args;
+    const match = input().find(a => a.originatingRunId === runId && (a.sha256 ?? "").toLowerCase() === sha256.toLowerCase() && (a.originalFilename ?? "") === originalFilename && (a.contentType ?? "").toLowerCase() === contentType.toLowerCase());
+    if (match) emit(match); break;
+  }
+  case "work-product": {
+    const [title, summary, status, runId, contentType, isPrimary] = args;
+    const a = input();
+    emit({type: "artifact", provider: "paperclip", title, summary: summary || null, status, reviewState: "none", isPrimary: isPrimary === "true", healthStatus: "unknown", createdByRunId: runId,
+      metadata: {attachmentId: a.id, contentType, byteSize: a.byteSize ?? 0, contentPath: a.contentPath, openPath: a.openPath ?? a.contentPath, downloadPath: a.downloadPath ?? (a.contentPath + "?download=1"), originalFilename: a.originalFilename || null}}); break;
+  }
+  case "comment": emit({body: args[0], attachmentIds: [args[1]]}); break;
+  case "result": emit({attachment: JSON.parse(args[0]), workProduct: JSON.parse(args[1]), chatComment: JSON.parse(args[2])}); break;
+  default: throw new Error("Unknown artifact JSON action");
+}
+' "$@"
+}
+
 json_bool() {
   if [[ "${1:-0}" == "1" ]]; then
     printf 'true'
@@ -113,6 +153,17 @@ sha256_text() {
   fi
 }
 
+# Native curl cannot open MSYS /c/... paths with path conversion disabled.
+response_temp_file() {
+  local temp_path
+  temp_path="$(mktemp)"
+  if command -v cygpath >/dev/null 2>&1; then
+    cygpath -m "$temp_path"
+  else
+    printf '%s' "$temp_path"
+  fi
+}
+
 request_json() {
   local method="$1"
   local url="$2"
@@ -120,7 +171,7 @@ request_json() {
   local response_file
   local status_code
 
-  response_file="$(mktemp)"
+  response_file="$(response_temp_file)"
   if [[ -n "$body" ]]; then
     status_code="$(
       curl -sS -X "$method" -w '%{http_code}' -o "$response_file" \
@@ -129,14 +180,14 @@ request_json() {
         -H "X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID" \
         -H 'Content-Type: application/json' \
         --data-binary "$body"
-    )"
+    )" || { rm -f "$response_file"; return 1; }
   else
     status_code="$(
       curl -sS -X "$method" -w '%{http_code}' -o "$response_file" \
         "$url" \
         -H "Authorization: Bearer $PAPERCLIP_API_KEY" \
         -H "X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID"
-    )"
+    )" || { rm -f "$response_file"; return 1; }
   fi
 
   if [[ "$status_code" -lt 200 || "$status_code" -ge 300 ]]; then
@@ -163,7 +214,7 @@ upload_file() {
 
   escaped_path="${path//\\/\\\\}"
   escaped_path="${escaped_path//\"/\\\"}"
-  response_file="$(mktemp)"
+  response_file="$(response_temp_file)"
   status_code="$(
     curl -sS -X POST -w '%{http_code}' -o "$response_file" \
       "$url" \
@@ -183,7 +234,7 @@ upload_file() {
     printf '\n' >&2
     # The bridge uses a structured 409 outcome after a possibly committed
     # mutation. Keep the marker so the next invocation reconciles by listing.
-    if [[ "$status_code" == "409" ]] && jq -e '.outcome == "indeterminate"' "$response_file" >/dev/null 2>&1; then
+    if [[ "$status_code" == "409" ]] && artifact_json indeterminate <"$response_file" >/dev/null 2>&1; then
       indeterminate=1
     fi
     rm -f "$response_file"
@@ -199,6 +250,7 @@ upload_file() {
 
 operation_lock_path=""
 operation_lock_owner=""
+operation_lock_owner_file=""
 operation_lock_held=0
 operation_state_root=""
 
@@ -210,11 +262,14 @@ process_start_identity() {
 release_operation_lock() {
   if [[ "$operation_lock_held" == "1" && -n "$operation_lock_path" ]]; then
     local current_owner=""
-    current_owner="$(readlink "$operation_lock_path" 2>/dev/null || true)"
+    current_owner="$(cat "$operation_lock_path" 2>/dev/null || true)"
     if [[ "$current_owner" == "$operation_lock_owner" ]]; then
       rm -f "$operation_lock_path"
     fi
     operation_lock_held=0
+  fi
+  if [[ -n "$operation_lock_owner_file" ]]; then
+    rm -f "$operation_lock_owner_file"
   fi
 }
 
@@ -227,11 +282,16 @@ acquire_operation_lock() {
   mkdir -p "$operation_state_root"
   operation_lock_path="$operation_state_root/$operation_key.lock"
   operation_lock_owner="$$|$(process_start_identity "$$" || true)"
-  while ! ln -s "$operation_lock_owner" "$operation_lock_path" 2>/dev/null; do
+  # A hard link publishes the complete owner atomically without Windows symlink
+  # privileges. Keep the owner file on the same filesystem as the lock.
+  operation_lock_owner_file="$(mktemp "$operation_state_root/$operation_key.owner.XXXXXX")"
+  printf '%s' "$operation_lock_owner" >"$operation_lock_owner_file"
+  trap release_operation_lock EXIT
+  while ! ln "$operation_lock_owner_file" "$operation_lock_path" 2>/dev/null; do
     local owner_pid=""
     local owner_start=""
     local current_lock_owner=""
-    current_lock_owner="$(readlink "$operation_lock_path" 2>/dev/null || true)"
+    current_lock_owner="$(cat "$operation_lock_path" 2>/dev/null || true)"
     IFS='|' read -r owner_pid owner_start <<<"$current_lock_owner"
     if [[ "$owner_pid" =~ ^[0-9]+$ ]]; then
       local current_owner_start=""
@@ -244,7 +304,7 @@ acquire_operation_lock() {
         local reclaim_lock_path="$operation_lock_path.reclaim"
         if mkdir "$reclaim_lock_path" 2>/dev/null; then
           local guarded_owner=""
-          guarded_owner="$(readlink "$operation_lock_path" 2>/dev/null || true)"
+          guarded_owner="$(cat "$operation_lock_path" 2>/dev/null || true)"
           if [[ "$guarded_owner" == "$current_lock_owner" ]]; then
             rm -f "$operation_lock_path"
           fi
@@ -359,6 +419,12 @@ if [[ ! -f "$file_path" ]]; then
   exit 1
 fi
 
+# Normalize native backslashes before basename/hash/upload. Otherwise basename
+# treats the whole Windows path as a filename and sha256sum escapes its digest.
+if command -v cygpath >/dev/null 2>&1; then
+  file_path="$(cygpath -m "$file_path")"
+fi
+
 if [[ "$output_format" != "markdown" && "$output_format" != "json" ]]; then
   printf 'Unsupported output format: %s\n' "$output_format" >&2
   exit 1
@@ -370,7 +436,7 @@ if [[ -n "$chat_comment" && "$create_work_product" != "1" ]]; then
 fi
 
 require_command curl
-require_command jq
+require_command node
 
 if [[ -z "$title" ]]; then
   title="$(basename "$file_path")"
@@ -383,18 +449,7 @@ fi
 if [[ "$dry_run" == "1" ]]; then
   create_work_product_json="$(json_bool "$create_work_product")"
   is_primary_json="$(json_bool "$is_primary")"
-  jq -n \
-    --arg file "$file_path" \
-    --arg issueId "$issue_id" \
-    --arg companyId "$company_id" \
-    --arg title "$title" \
-    --arg summary "$summary" \
-    --arg contentType "$content_type" \
-    --arg status "$status" \
-    --arg chatComment "$chat_comment" \
-    --argjson createWorkProduct "$create_work_product_json" \
-    --argjson isPrimary "$is_primary_json" \
-    '{file: $file, issueId: $issueId, companyId: $companyId, title: $title, summary: $summary, contentType: $contentType, status: $status, chatComment: (if $chatComment == "" then null else $chatComment end), createWorkProduct: $createWorkProduct, isPrimary: $isPrimary}'
+  artifact_json dry-run "$file_path" "$issue_id" "$company_id" "$title" "$summary" "$content_type" "$status" "$chat_comment" "$create_work_product_json" "$is_primary_json"
   exit 0
 fi
 
@@ -431,21 +486,7 @@ fi
 for ((lookup_attempt = 1; lookup_attempt <= lookup_attempts; lookup_attempt++)); do
   existing_attachments="$(request_json GET "$api_base/issues/$issue_id/attachments")"
   attachment="$(
-    jq -nc \
-      --argjson attachments "$existing_attachments" \
-      --arg runId "$PAPERCLIP_RUN_ID" \
-      --arg sha256 "$file_sha256" \
-      --arg originalFilename "$original_filename" \
-      --arg contentType "$content_type" \
-      'first(
-        $attachments[]
-        | select(
-            .originatingRunId == $runId
-            and ((.sha256 // "") | ascii_downcase) == ($sha256 | ascii_downcase)
-            and (.originalFilename // "") == $originalFilename
-            and ((.contentType // "") | ascii_downcase) == ($contentType | ascii_downcase)
-          )
-      ) // empty'
+    artifact_json find "$PAPERCLIP_RUN_ID" "$file_sha256" "$original_filename" "$content_type" <<<"$existing_attachments"
   )"
   if [[ -n "$attachment" ]]; then
     reused_attachment=1
@@ -481,9 +522,9 @@ if [[ -z "$attachment" ]]; then
   fi
 fi
 
-attachment_id="$(jq -r '.id // empty' <<<"$attachment")"
-content_path="$(jq -r '.contentPath // empty' <<<"$attachment")"
-download_path="$(jq -r '.downloadPath // (if .contentPath then (.contentPath + "?download=1") else "" end)' <<<"$attachment")"
+attachment_id="$(artifact_json field id <<<"$attachment")"
+content_path="$(artifact_json field contentPath <<<"$attachment")"
+download_path="$(artifact_json field downloadPath <<<"$attachment")"
 if [[ -z "$attachment_id" || -z "$content_path" || -z "$download_path" ]]; then
   printf 'Upload response did not include attachment path metadata.\n' >&2
   printf '%s\n' "$attachment" >&2
@@ -494,44 +535,8 @@ rm -f "$unknown_upload_marker"
 work_product="null"
 if [[ "$create_work_product" == "1" ]]; then
   is_primary_json="$(json_bool "$is_primary")"
-  byte_size="$(jq -r '.byteSize // 0' <<<"$attachment")"
-  open_path="$(jq -r '.openPath // .contentPath // empty' <<<"$attachment")"
-  original_filename="$(jq -r '.originalFilename // empty' <<<"$attachment")"
-
   work_product_payload="$(
-    jq -nc \
-      --arg title "$title" \
-      --arg summary "$summary" \
-      --arg status "$status" \
-      --arg runId "$PAPERCLIP_RUN_ID" \
-      --arg attachmentId "$attachment_id" \
-      --arg contentType "$content_type" \
-      --argjson byteSize "$byte_size" \
-      --arg contentPath "$content_path" \
-      --arg openPath "$open_path" \
-      --arg downloadPath "$download_path" \
-      --arg originalFilename "$original_filename" \
-      --argjson isPrimary "$is_primary_json" \
-      '{
-        type: "artifact",
-        provider: "paperclip",
-        title: $title,
-        status: $status,
-        reviewState: "none",
-        isPrimary: $isPrimary,
-        healthStatus: "unknown",
-        summary: (if $summary == "" then null else $summary end),
-        createdByRunId: $runId,
-        metadata: {
-          attachmentId: $attachmentId,
-          contentType: $contentType,
-          byteSize: $byteSize,
-          contentPath: $contentPath,
-          openPath: $openPath,
-          downloadPath: $downloadPath,
-          originalFilename: (if $originalFilename == "" then null else $originalFilename end)
-        }
-      }'
+    artifact_json work-product "$title" "$summary" "$status" "$PAPERCLIP_RUN_ID" "$content_type" "$is_primary_json" <<<"$attachment"
   )"
 
   work_product="$(
@@ -545,10 +550,7 @@ fi
 chat_response="null"
 if [[ -n "$chat_comment" ]]; then
   chat_comment_payload="$(
-    jq -nc \
-      --arg body "$chat_comment" \
-      --arg attachmentId "$attachment_id" \
-      '{body: $body, attachmentIds: [$attachmentId]}'
+    artifact_json comment "$chat_comment" "$attachment_id"
   )"
   chat_response="$(
     request_json \
@@ -556,7 +558,7 @@ if [[ -n "$chat_comment" ]]; then
       "$api_base/issues/$issue_id/comments" \
       "$chat_comment_payload"
   )"
-  chat_comment_id="$(jq -r '.id // empty' <<<"$chat_response")"
+  chat_comment_id="$(artifact_json field id <<<"$chat_response")"
   if [[ -z "$chat_comment_id" ]]; then
     printf 'Chat attachment response did not include a comment id.\n' >&2
     exit 1
@@ -564,15 +566,11 @@ if [[ -n "$chat_comment" ]]; then
 fi
 
 if [[ "$output_format" == "json" ]]; then
-  jq -n \
-    --argjson attachment "$attachment" \
-    --argjson workProduct "$work_product" \
-    --argjson chatComment "$chat_response" \
-    '{attachment: $attachment, workProduct: $workProduct, chatComment: $chatComment}'
+  artifact_json result "$attachment" "$work_product" "$chat_response"
   exit 0
 fi
 
-work_product_id="$(jq -r '.id // empty' <<<"$work_product")"
+work_product_id="$(artifact_json field id <<<"$work_product")"
 
 if [[ "$reused_attachment" == "1" ]]; then
   printf 'Reused matching artifact from this run\n\n'
