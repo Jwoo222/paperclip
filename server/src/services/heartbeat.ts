@@ -3380,35 +3380,26 @@ const heartbeatRunSummaryListColumns = {
   resultJson: sql<Record<string, unknown> | null>`NULL`.as("resultJson"),
 } as const;
 
+// FORK-LOCAL (heartbeat run list speed, 2026-10-29): backport of upstream
+// `server/src/services/heartbeat/run-state.ts`. Each `->>` decompressed the whole
+// context_snapshot again (up to ~1.4 MB per run here); one jsonb_to_record per row
+// reads it once. On merge, take upstream's version.
+const heartbeatRunListContextRecord = sql`lateral jsonb_to_record(
+  case when jsonb_typeof(${heartbeatRuns.contextSnapshot}) = 'object'
+    then ${heartbeatRuns.contextSnapshot} else '{}'::jsonb end
+) as run_context("issueId" text, "taskId" text, "taskKey" text,
+  "commentId" text, "wakeCommentId" text, "wakeReason" text,
+  "wakeSource" text, "wakeTriggerDetail" text)`;
+
 const heartbeatRunListContextColumns = {
-  contextIssueId: sql<
-    string | null
-  >`${heartbeatRuns.contextSnapshot} ->> 'issueId'`.as("contextIssueId"),
-  contextTaskId: sql<
-    string | null
-  >`${heartbeatRuns.contextSnapshot} ->> 'taskId'`.as("contextTaskId"),
-  contextTaskKey: sql<
-    string | null
-  >`${heartbeatRuns.contextSnapshot} ->> 'taskKey'`.as("contextTaskKey"),
-  contextCommentId: sql<
-    string | null
-  >`${heartbeatRuns.contextSnapshot} ->> 'commentId'`.as("contextCommentId"),
-  contextWakeCommentId: sql<
-    string | null
-  >`${heartbeatRuns.contextSnapshot} ->> 'wakeCommentId'`.as(
-    "contextWakeCommentId",
-  ),
-  contextWakeReason: sql<
-    string | null
-  >`${heartbeatRuns.contextSnapshot} ->> 'wakeReason'`.as("contextWakeReason"),
-  contextWakeSource: sql<
-    string | null
-  >`${heartbeatRuns.contextSnapshot} ->> 'wakeSource'`.as("contextWakeSource"),
-  contextWakeTriggerDetail: sql<
-    string | null
-  >`${heartbeatRuns.contextSnapshot} ->> 'wakeTriggerDetail'`.as(
-    "contextWakeTriggerDetail",
-  ),
+  contextIssueId: sql<string | null>`run_context."issueId"`.as("contextIssueId"),
+  contextTaskId: sql<string | null>`run_context."taskId"`.as("contextTaskId"),
+  contextTaskKey: sql<string | null>`run_context."taskKey"`.as("contextTaskKey"),
+  contextCommentId: sql<string | null>`run_context."commentId"`.as("contextCommentId"),
+  contextWakeCommentId: sql<string | null>`run_context."wakeCommentId"`.as("contextWakeCommentId"),
+  contextWakeReason: sql<string | null>`run_context."wakeReason"`.as("contextWakeReason"),
+  contextWakeSource: sql<string | null>`run_context."wakeSource"`.as("contextWakeSource"),
+  contextWakeTriggerDetail: sql<string | null>`run_context."wakeTriggerDetail"`.as("contextWakeTriggerDetail"),
 } as const;
 
 const heartbeatRunListResultColumns = {
@@ -30078,6 +30069,7 @@ export function heartbeatService(
                 },
         )
         .from(heartbeatRuns)
+        .leftJoin(heartbeatRunListContextRecord, sql`true`) // FORK-LOCAL (heartbeat run list speed)
         .where(
           agentId
             ? and(
@@ -30088,7 +30080,8 @@ export function heartbeatService(
         )
         .orderBy(desc(heartbeatRuns.createdAt));
 
-      const rows = limit ? await query.limit(limit) : await query;
+      // FORK-LOCAL (heartbeat run list speed): upstream bounds an omitted limit to 200.
+      const rows = await query.limit(limit ?? 200);
       return rows.map((row) => {
         const {
           contextIssueId,
