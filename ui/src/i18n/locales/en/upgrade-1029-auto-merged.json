@@ -1,0 +1,89 @@
+{
+  "upgrade1029AutoMerged": {
+    "appErrorBoundary": {
+      "reloading": "Reloading Paperclip…"
+    },
+    "appsConnect": {
+      "checkingSavedComposio": "Checking saved Composio accounts…",
+      "composioLoadFailed": "Couldn’t load your Composio accounts.",
+      "loadingSavedSignIn": "Loading saved sign-in…",
+      "signInUnavailable": "This sign-in is unavailable.",
+      "accountConnected": "This account is connected.",
+      "connectionLoadFailed": "Could not load this connection. Refresh to try again.",
+      "connectionUnavailable": "This connection is unavailable. Return to Connectors to choose an account.",
+      "loadingConnector": "Loading connector…",
+      "poolPluginUnavailable": "This connection pool plugin is unavailable. Enable it in Plugins."
+    },
+    "caseFields": {
+      "tableLabel": "Case fields"
+    },
+    "executionParticipantPicker": {
+      "policyUnavailable": "Execution policy unavailable. Refresh to try again."
+    },
+    "managedAiConnection": {
+      "providerSettings": "Provider settings",
+      "destination": "Destination",
+      "apiFormat": "API format",
+      "selectedByHarness": "Selected by harness",
+      "enterModelId": "Enter a model ID on the agent"
+    },
+    "pageSkeleton": {
+      "loadingTasks": "Loading tasks"
+    },
+    "relationControls": {
+      "privateTask": "Private task",
+      "thisPrivateTask": "this private task"
+    },
+    "runtimeTestCard": {
+      "runtimeMissing": "Runtime missing",
+      "metadataOnlyIdle": "Verify your saved token, runtime installation, and selected model without sending a model prompt.",
+      "metadataOnlyRunning": "Checking the saved token, runtime, and selected model…",
+      "checkAgain": "Check again",
+      "prerequisites": {
+        "idleTitle": "Check prerequisites",
+        "idleDescription": "Check instance settings and public connection configuration.",
+        "idleAction": "Check setup",
+        "runningTitle": "Checking prerequisites",
+        "runningDescription": "Checking instance settings and public connection configuration…",
+        "passTitle": "Setup checks passed",
+        "passDescription": "Review the setup details before assigning work.",
+        "warnTitle": "Pairing required",
+        "warnDescription": "Create this agent, then pair it and verify event delivery.",
+        "failTitle": "Prerequisite check failed",
+        "failDescription": "Review the setup details and retry.",
+        "failAction": "Retry check"
+      }
+    },
+    "sidebar": {
+      "privateProject": "Private project"
+    },
+    "taskChatBubbleActions": {
+      "messageDetails": "Message details",
+      "fastResponseNotice": "Platform-generated acknowledgement. The agent’s substantive response follows separately."
+    },
+    "taskChatComposer": {
+      "contextBarLabel": "Task project and worktrees"
+    },
+    "taskChatInteraction": {
+      "openRequest": "Open request: {{label}}"
+    },
+    "taskChatMarker": {
+      "credentialCouldNotStart": "{{agentName}} couldn’t start",
+      "credentialFallbackName": "an AI credential",
+      "credentialDeniedYou": "{{agentName}} is configured to use {{credentialName}}, but you don’t have access to that credential.",
+      "credentialDeniedUser": "{{agentName}} is configured to use {{credentialName}}, but {{deniedUser}} doesn’t have access to that credential.",
+      "chooseConnectionYou": "Choose an AI connection you can use, or ask an administrator to update {{agentName}}’s connection. Then try again.",
+      "chooseConnectionUser": "Choose an AI connection {{deniedUser}} can use, or ask an administrator to update {{agentName}}’s connection. Then try again.",
+      "changeAiConnection": "Change AI connection"
+    },
+    "taskTreeControls": {
+      "restoreDescription_one": "{{count}} task will be restored.",
+      "restoreDescription_other": "{{count}} tasks will be restored.",
+      "resumeDescription_one": "The pause will be removed from {{count}} task.",
+      "resumeDescription_other": "The pause will be removed from {{count}} tasks."
+    },
+    "workspaces": {
+      "taskWorkspaces": "Task workspaces"
+    }
+  }
+}

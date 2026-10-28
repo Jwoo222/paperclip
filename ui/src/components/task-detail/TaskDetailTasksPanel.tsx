@@ -9,6 +9,7 @@ import { issueStatusOrder } from "@/lib/issue-filters";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { RelationNavigationList, TaskDetailSubtasksPanel, TaskDetailTaskList } from "./TaskDetailRelationsPanel";
+import { IssueCreatedFromNote } from "./IssueCreatedFromNote";
 
 function TaskGroup({ name, projectPath, children }: { name: string; projectPath?: string; children: ReactNode }) {
   return (
@@ -38,6 +39,8 @@ function TaskGroup({ name, projectPath, children }: { name: string; projectPath?
 export interface TaskDetailTasksPanelProps {
   /** API order: immediate parent first. Displayed root first. */
   ancestors?: NonNullable<Issue["ancestors"]>;
+  /** Access-checked creation provenance; shown even when the source is not the parent. */
+  createdFrom?: Issue["createdFrom"];
   subtasks: Issue[];
   createdTasks: Issue[];
   projects: Project[];
@@ -47,7 +50,7 @@ export interface TaskDetailTasksPanelProps {
   issueLinkState?: unknown;
 }
 
-export function TaskDetailTasksPanel({ ancestors = [], subtasks, createdTasks, projects, isLoading, hasError, onRetry, issueLinkState }: TaskDetailTasksPanelProps) {
+export function TaskDetailTasksPanel({ ancestors = [], createdFrom = null, subtasks, createdTasks, projects, isLoading, hasError, onRetry, issueLinkState }: TaskDetailTasksPanelProps) {
   const sortedSubtasks = sortTasks(subtasks);
   const groups = new Map<string, { name: string; path?: string; tasks: Issue[] }>();
   for (const item of sortTasks(createdTasks)) {
@@ -65,6 +68,11 @@ export function TaskDetailTasksPanel({ ancestors = [], subtasks, createdTasks, p
   }
   return (
     <section className="flex flex-col gap-6" aria-label={t("taskDetail.relatedTasks")}>
+      {createdFrom && (
+        <TaskGroup name={t("upgrade1029ConflictsC.createdFrom")}>
+          <IssueCreatedFromNote createdFrom={createdFrom} issueLinkState={issueLinkState} className="px-2 text-sm" />
+        </TaskGroup>
+      )}
       {ancestors.length > 0 && (
         <TaskGroup name="Ancestors">
           <RelationNavigationList
@@ -92,7 +100,7 @@ export function TaskDetailTasksPanel({ ancestors = [], subtasks, createdTasks, p
           {onRetry && <Button variant="ghost" size="sm" onClick={onRetry}>{tNewUi("newUi.k942087cc2d41")}</Button>}
         </div>
       )}
-      {!isLoading && !hasError && ancestors.length === 0 && subtasks.length === 0 && createdTasks.length === 0 && (
+      {!isLoading && !hasError && !createdFrom && ancestors.length === 0 && subtasks.length === 0 && createdTasks.length === 0 && (
         <p className="py-6 text-center text-sm text-muted-foreground">{t("overview.dashboard.noTasksYet")}</p>
       )}
     </section>

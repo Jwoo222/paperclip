@@ -1,5 +1,5 @@
 import { t as translate, useTranslation } from "@/i18n";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, FlaskConical, Lock, Play } from "lucide-react";
 import type {
@@ -19,6 +19,7 @@ import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Link } from "@/lib/router";
 
 type WorktreeRunExecutionDisplayState =
   | { kind: "off" }
@@ -82,7 +83,7 @@ function ExperimentalToggleCard({
 }: {
   title: string;
   description: string;
-  footnote?: string;
+  footnote?: ReactNode;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   disabled: boolean;
@@ -307,6 +308,30 @@ export function InstanceExperimentalSettings() {
         />
 
         <ExperimentalToggleCard
+          title={t("upgrade1029ConflictsD.experimental.artifactsV1.title")}
+          description={t("upgrade1029ConflictsD.experimental.artifactsV1.description")}
+          footnote={t("upgrade1029ConflictsD.experimental.artifactsV1.footnote")}
+          checked={experimentalQuery.data?.enableArtifactsV1 ?? false}
+          onCheckedChange={(checked) => toggleMutation.mutate({ enableArtifactsV1: checked })}
+          disabled={toggleMutation.isPending}
+          settingKey="enableArtifactsV1"
+          managed={managedKeys.enableArtifactsV1}
+          ariaLabel={t("upgrade1029ConflictsD.experimental.artifactsV1.ariaLabel")}
+        />
+
+        <ExperimentalToggleCard
+          title={t("upgrade1029ConflictsD.experimental.assistantConnections.title")}
+          description={t("upgrade1029ConflictsD.experimental.assistantConnections.description")}
+          footnote={<>{t("upgrade1029ConflictsD.experimental.assistantConnections.footnote")}{experimentalQuery.data?.enablePublicMcp && <> <Link className="underline" to="/apps/assistant-connection">{t("upgrade1029ConflictsD.experimental.assistantConnections.setupLink")}</Link></>}</>}
+          checked={experimentalQuery.data?.enablePublicMcp === true}
+          onCheckedChange={(checked) => toggleMutation.mutate({ enablePublicMcp: checked })}
+          disabled={toggleMutation.isPending}
+          settingKey="enablePublicMcp"
+          managed={managedKeys.enablePublicMcp}
+          ariaLabel={t("upgrade1029ConflictsD.experimental.assistantConnections.ariaLabel")}
+        />
+
+        <ExperimentalToggleCard
           title={t("adminExtra.experimental.flags.betaSkills.title")}
           description={t("adminExtra.experimental.flags.betaSkills.description")}
           checked={enableBetaSkills}
@@ -342,8 +367,8 @@ export function InstanceExperimentalSettings() {
 
         <ExperimentalToggleCard
           title={t("adminExtra.experimental.flags.chatConnectors.title")}
-          description={t("adminExtra.experimental.flags.chatConnectors.description")}
-          footnote={t("adminExtra.experimental.flags.chatConnectors.footnote")}
+          description={t("upgrade1029ConflictsD.experimental.chatConnectors.description")}
+          footnote={t("upgrade1029ConflictsD.experimental.chatConnectors.footnote")}
           checked={enableChatConnectors}
           onCheckedChange={(checked) => toggleMutation.mutate({ enableChatConnectors: checked })}
           disabled={toggleMutation.isPending}
@@ -422,6 +447,17 @@ export function InstanceExperimentalSettings() {
         />
 
         <ExperimentalToggleCard
+          title={t("upgrade1029ConflictsD.experimental.fastResponses.title")}
+          description={t("upgrade1029ConflictsD.experimental.fastResponses.description")}
+          checked={experimentalQuery.data?.enableFastResponses ?? false}
+          onCheckedChange={(checked) => toggleMutation.mutate({ enableFastResponses: checked })}
+          disabled={toggleMutation.isPending}
+          settingKey="enableFastResponses"
+          managed={managedKeys.enableFastResponses}
+          ariaLabel={t("upgrade1029ConflictsD.experimental.fastResponses.ariaLabel")}
+        />
+
+        <ExperimentalToggleCard
           title={t("adminExtra.experimental.flags.experimentalFileViewer.title")}
           description={t("adminExtra.experimental.flags.experimentalFileViewer.description")}
           checked={enableExperimentalFileViewer}
@@ -446,6 +482,30 @@ export function InstanceExperimentalSettings() {
         />
 
         <ExperimentalToggleCard
+          title={t("upgrade1029ConflictsD.experimental.githubReviewBots.title")}
+          description={t("upgrade1029ConflictsD.experimental.githubReviewBots.description")}
+          footnote={t("upgrade1029ConflictsD.experimental.githubReviewBots.footnote")}
+          checked={experimentalQuery.data?.enableGitHubReviewBots === true}
+          onCheckedChange={(checked) => toggleMutation.mutate({ enableGitHubReviewBots: checked })}
+          disabled={toggleMutation.isPending}
+          settingKey="enableGitHubReviewBots"
+          managed={managedKeys.enableGitHubReviewBots}
+          ariaLabel={t("upgrade1029ConflictsD.experimental.githubReviewBots.ariaLabel")}
+        />
+
+        <ExperimentalToggleCard
+          title={t("upgrade1029ConflictsD.experimental.grokBot.title")}
+          description={t("upgrade1029ConflictsD.experimental.grokBot.description")}
+          footnote={t("upgrade1029ConflictsD.experimental.grokBot.footnote")}
+          checked={experimentalQuery.data?.enableGrokBot === true}
+          onCheckedChange={checked => toggleMutation.mutate({ enableGrokBot: checked })}
+          disabled={toggleMutation.isPending}
+          settingKey="enableGrokBot" managed={managedKeys.enableGrokBot}
+          ariaLabel={t("upgrade1029ConflictsD.experimental.grokBot.ariaLabel")}
+        />
+
+
+        <ExperimentalToggleCard
           title={t("adminExtra.experimental.flags.memoryConnectors.title")}
           description={t("adminExtra.experimental.flags.memoryConnectors.description")}
           footnote={t("adminExtra.experimental.flags.memoryConnectors.footnote")}
@@ -458,8 +518,33 @@ export function InstanceExperimentalSettings() {
         />
 
         <ExperimentalToggleCard
+          title={t("upgrade1029ConflictsD.experimental.muse.title")}
+          description={t("upgrade1029ConflictsD.experimental.muse.description")}
+          footnote={t("upgrade1029ConflictsD.experimental.muse.footnote")}
+          checked={experimentalQuery.data?.enableMuse === true}
+          onCheckedChange={(checked) => toggleMutation.mutate({ enableMuse: checked })}
+          disabled={toggleMutation.isPending}
+          settingKey="enableMuse"
+          managed={managedKeys.enableMuse}
+          ariaLabel={t("upgrade1029ConflictsD.experimental.muse.ariaLabel")}
+        />
+
+        <ExperimentalToggleCard
+          title={t("upgrade1029ConflictsD.experimental.openAiDot.title")}
+          description={t("upgrade1029ConflictsD.experimental.openAiDot.description")}
+          footnote={t("upgrade1029ConflictsD.experimental.openAiDot.footnote")}
+          checked={experimentalQuery.data?.enableOpenAiDot === true}
+          onCheckedChange={(checked) => toggleMutation.mutate({ enableOpenAiDot: checked })}
+          disabled={toggleMutation.isPending}
+          settingKey="enableOpenAiDot"
+          managed={managedKeys.enableOpenAiDot}
+          ariaLabel={t("upgrade1029ConflictsD.experimental.openAiDot.ariaLabel")}
+        />
+
+
+        <ExperimentalToggleCard
           title={t("adminExtra.experimental.flags.paperclipRunner.title")}
-          description={t("adminExtra.experimental.flags.paperclipRunner.description")}
+          description={t("upgrade1029ConflictsD.experimental.paperclipRunner.description")}
           checked={enableNativeRunner}
           onCheckedChange={(checked) =>
             toggleMutation.mutate({ enableNativeRunner: checked })

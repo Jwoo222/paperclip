@@ -1,0 +1,176 @@
+{
+  "upgrade1029ConflictsA": {
+    "codex": {
+      "harnessHint": "업무를 실행할 에이전트 하네스를 선택합니다.",
+      "unknownProvider": "{{provider}} (알 수 없는 제공자)",
+      "dotConnection": "Dot 연결",
+      "dotConnectionHint": "업무를 배정하기 전에 이벤트 왕복 확인이 끝나야 합니다.",
+      "readTaskAttachments": "업무 첨부 파일 읽기",
+      "readTaskAttachmentsHint": "Dot이 현재 배정된 업무의 첨부 파일을 읽게 합니다. 파일 내용은 OpenAI로 전송됩니다. 작업 공간 명령 권한은 필요하지 않으며, 기본값은 꺼짐입니다.",
+      "workspaceFilesAndCommands": "작업 공간 파일과 명령",
+      "workspaceFilesAndCommandsHint": "Dot이 배정된 작업 공간을 읽고 쓰며 파일을 게시하게 합니다. 로컬 Runner가 필요합니다. 명령은 bubblewrap이 있는 Linux에서만 쓸 수 있으며, 홈 디렉터리를 읽거나 주입된 자격 증명을 쓸 수 없습니다.",
+      "allowExternallyBilledProvider": "외부 과금 제공자 허용",
+      "dotUnmeteredHint": "Dot은 토큰 사용량이나 비용을 보고하지 않습니다. Paperclip은 제공자 지출 상한을 강제할 수 없지만, 알려진 조직·에이전트 예산 한도는 그대로 적용됩니다.",
+      "museConnection": "Muse 연결",
+      "museConnectionHint": "페어링, 수신 연락처, 백그라운드 응답, 에이전트 설정은 각각 따로 확인합니다.",
+      "museUnmeteredHint": "Muse는 사용량이나 비용을 보고하지 않습니다. Paperclip은 Muse 지출 상한을 강제할 수 없지만, 알려진 조직·에이전트 예산 한도는 그대로 적용됩니다.",
+      "acpAgentHint": "Cursor는 Paperclip 질문을 사용하며 실행별 비용은 알 수 없습니다. Pi는 모든 제공자/모델 ID를 받습니다. GitHub Copilot은 검증을 기다리고 있습니다.",
+      "cursorMode": "Cursor 모드",
+      "cursorModeHint": "Cursor의 세션 모드를 선택합니다. 권한과 조직 승인 규칙은 그대로 적용됩니다.",
+      "unsupportedSavedMode": "지원하지 않는 저장된 모드 — 에이전트, 계획, 질문 중에서 선택하세요",
+      "cursorModeAgent": "에이전트",
+      "piThinkingLevel": "Pi 사고 수준",
+      "piThinkingLevelHint": "러너는 각 세션이 프롬프트를 보내기 전에 이 수준을 정확히 확인합니다. 바꾸면 새 세션이 시작됩니다.",
+      "unsupportedThinkingLevel": "지원하지 않는 저장된 사고 수준",
+      "thinkingOff": "끔",
+      "unknownProviderPreserved": "알 수 없는 제공자 설정은 그대로 보존됩니다."
+    },
+    "login": {
+      "preparingBrowserSignIn": "브라우저 로그인 준비 중…"
+    },
+    "harness": "하네스",
+    "runnerUpgrade": {
+      "unknownEnvironment": "확인할 환경을 판단하지 못했습니다. 업그레이드를 다시 시도하세요.",
+      "settingsChanged": "확인하는 동안 에이전트 설정이 바뀌었습니다. 현재 설정으로 업그레이드를 다시 시도하세요.",
+      "unsupportedEnvironment": "이 환경은 Paperclip Runner를 지원하지 않습니다. 에이전트는 계속 레거시 러너를 사용합니다.",
+      "failed": "이 에이전트를 업그레이드하지 못했습니다. 다시 시도하세요.",
+      "title": "Paperclip Runner로 업그레이드",
+      "description": "하네스, 모델, 계정과 호환되는 설정은 그대로 유지됩니다. 새 세션은 처음부터 시작하며, 지난 실행 기록은 계속 볼 수 있습니다.",
+      "verifyFirst": "업그레이드 전에 먼저 컴퓨터를 확인합니다. 몇 분 걸릴 수 있습니다.",
+      "saveComputerFirst": "러너를 업그레이드하기 전에 컴퓨터 변경 사항을 저장하세요.",
+      "unsavedIncluded": "저장하지 않은 변경 사항도 함께 반영됩니다.",
+      "upgrading": "업그레이드 중…",
+      "upgrade": "러너 업그레이드",
+      "upgraded": "Paperclip Runner로 업그레이드했습니다."
+    },
+    "museOption": "Muse — 개인 에이전트",
+    "model": {
+      "enterCustom": "직접 모델 입력…",
+      "modelId": "모델 ID",
+      "modelIdPlaceholder": "모델 ID 또는 별칭 입력"
+    },
+    "runnerTest": {
+      "settingsChanged": "테스트하는 동안 에이전트 설정이 바뀌었습니다. 테스트를 다시 실행하세요.",
+      "verifyFailed": "저장된 컴퓨터를 확인하지 못했습니다. 테스트를 다시 실행하세요."
+    },
+    "setupPrompt": {
+      "readyFor": "{{name}}에 붙여 넣을 수 있습니다.",
+      "giveTo": "이 프롬프트를 {{name}}에 전달하세요.",
+      "copiedFor": "설정 프롬프트를 복사했습니다. {{name}}에 붙여 넣을 수 있습니다."
+    },
+    "budget": {
+      "scopeWarning": "{{scope}} 예산 경고",
+      "scopeHardStop": "{{scope}} 강제 중지",
+      "accountingIncomplete": "비용 집계가 끝나지 않았습니다. 확인된 지출은 {{amount}}입니다. 예산 정책에서 대기 중이거나 가격이 정해지지 않은 사용량을 확인하세요.",
+      "spendingReached": "지출이 한도 {{limit}} 중 {{observed}}에 도달했습니다.",
+      "warningThreshold": "지출이 경고 기준을 넘었습니다. 이 경고로 작업이 일시 중지되지는 않습니다.",
+      "raiseBudget": "예산 증액",
+      "dismissWarning": "경고 닫기",
+      "executionPausedProject": "예산 차단이 해결될 때까지 이 프로젝트의 실행이 일시 중지됩니다.",
+      "heartbeatsPausedScope": "예산 차단이 해결될 때까지 이 범위의 하트비트가 일시 중지됩니다.",
+      "percentOfCompanyBudget": "조직 예산의 {{percent}}%",
+      "reservePerRun": "실행당 예약액 (USD)",
+      "reserveInvalid": "0 이상의 올바른 금액을 입력하세요.",
+      "reserveHint": "각 실행이 시작되기 전에 잡아 두는 추정액입니다. 0이면 추정을 쓰지 않습니다. 실제 제공자 요금은 이보다 클 수 있습니다.",
+      "updateReservation": "예약액 업데이트",
+      "advancedSettings": "고급 설정",
+      "blockUnpriced": "사용량의 가격을 확실히 알 수 없으면 새 작업 막기",
+      "pendingRuns": "완료된 실행 {{count}}건이 비용 집계를 기다리고 있습니다.",
+      "unpricedEvents": "가격이 정해지지 않은 사용 이벤트가 {{count}}건 있습니다. 확인된 지출에는 이 알 수 없는 비용이 빠져 있습니다."
+    },
+    "caseActivity": {
+      "handoffRequested": "인계 요청됨",
+      "handoffApplied": "업무 인계됨",
+      "handoffDelivered": "에이전트 깨우기 대기",
+      "handoffCompleted": "케이스 완료",
+      "handoffCancelled": "인계 취소됨"
+    },
+    "caseRevision": {
+      "agent": "에이전트",
+      "oldRevision": "이전 리비전",
+      "newRevision": "새 리비전",
+      "loadRevisions": "리비전 불러오기"
+    },
+    "subscriptions": {
+      "claudeDescription": "이 서버에 연결된 Claude 구독의 사용 한도입니다.",
+      "codexDescription": "이 서버에 연결된 Codex 구독의 사용 한도입니다."
+    },
+    "decisions": {
+      "controls": "의사결정 도구 모음",
+      "search": "의사결정 검색",
+      "searchPlaceholder": "의사결정 검색…"
+    },
+    "blocker": {
+      "takingLonger": "평소보다 오래 걸리고 있습니다…",
+      "taskStatus": "업무 상태",
+      "retryInMinutes": "{{minutes}}분 후 다시 시도합니다…",
+      "retryInSeconds": "{{seconds}}초 후 다시 시도합니다…",
+      "attemptFailed": "이번 시도를 마치지 못했습니다. 메시지는 저장되어 있습니다."
+    },
+    "fileViewer": {
+      "previewMode": "{{format}} 미리보기 모드",
+      "showRendered": "렌더링된 {{format}} 보기",
+      "rendered": "렌더링된 {{format}}",
+      "showRaw": "원본 {{format}} 보기",
+      "raw": "원본 {{format}}",
+      "htmlView": "HTML 보기"
+    },
+    "finance": {
+      "recentEventsDescription": "제공자 요금, 구독, 수수료, 크레딧입니다. 실행 비용 추정과는 따로 집계합니다.",
+      "noEvents": "이 기간에 기록된 재무 이벤트가 없습니다. API, CLI 또는 지원되는 연동으로 보고되면 여기에 표시됩니다.",
+      "providerCostReport": "제공자 비용 보고"
+    },
+    "issueCases": {
+      "workflow": "워크플로"
+    },
+    "blocked": {
+      "unavailable": "접근 불가",
+      "privateNoAccess": "비공개 — 접근 권한이 없습니다"
+    },
+    "chat": {
+      "fastResponseNote": "플랫폼이 자동으로 보낸 접수 확인입니다. 에이전트의 실제 응답은 따로 이어집니다."
+    },
+    "issueFilters": {
+      "showAgentCreatedTasks": "에이전트가 만든 업무 표시"
+    },
+    "monitor": {
+      "checkStatus": "상태 확인",
+      "waitingForWorkspace": "작업 공간 대기 중",
+      "workspaceBusy": "다른 업무가 이 작업 공간을 쓰고 있습니다. 사용할 수 있게 되면 작업이 자동으로 시작됩니다.",
+      "workspaceStartsAutomatically": "작업 공간을 사용할 수 있게 되면 작업이 자동으로 시작됩니다.",
+      "prReviewRequested": "풀 리퀘스트 리뷰 요청됨",
+      "nextCheckYourTime": "다음 확인 {{eta}} · {{time}} (내 시간대)",
+      "nextCheck": "다음 확인 {{eta}} · {{time}}",
+      "poolExhausted": "풀 소진",
+      "usageRecheckYourTime": "사용량 재확인 {{eta}} · {{time}} (내 시간대)",
+      "usageRecheck": "사용량 재확인 {{eta}} · {{time}}",
+      "poolKeepAccountResumes": "계정을 선택한 업무는 기다리는 동안 그 계정을 유지합니다. 사용량이 허용되면 작업을 다시 시작합니다.",
+      "poolKeepAccount": "계정을 선택한 업무는 기다리는 동안 그 계정을 유지합니다.",
+      "cancelFailed": "모니터를 취소하지 못했습니다. 다시 시도하세요.",
+      "cancel": "모니터 취소",
+      "cancelTitle": "모니터를 취소할까요?",
+      "cancelDescription": "예약된 모니터 확인을 삭제합니다. 에이전트는 더 이상 이 모니터에서 재개하지 않습니다. 업무를 이어 가려면 메시지를 보내세요.",
+      "keep": "모니터 유지",
+      "reviewOnGitHub": "GitHub에서 리뷰한 뒤 상태를 확인하면 에이전트가 결과를 검증합니다.",
+      "keepSendingInstructions": "에이전트가 기다리는 동안에도 지시를 계속 보낼 수 있습니다."
+    },
+    "issueRow": {
+      "tryingAgainSoon": "곧 다시 시도합니다",
+      "retryAvailable": "다시 시도 가능",
+      "openTaskWithStatus": "업무 {{identifier}} 열기 ({{status}})",
+      "recoveryStatus": "업무 복구 상태"
+    },
+    "retry": {
+      "lastAttemptFailed": "마지막 시도 실패: {{error}} Paperclip이 자동으로 재시도합니다."
+    },
+    "issuesList": {
+      "subTasksParen": "(하위 업무)",
+      "externalFilterFailed": "외부 상태로 업무를 거르지 못했습니다: {{message}}",
+      "retryExternalStatuses": "외부 상태 다시 불러오기",
+      "hierarchyFailed": "업무 계층을 불러오지 못했습니다: {{message}}"
+    },
+    "kanban": {
+      "columns": "업무 보드 열"
+    }
+  }
+}

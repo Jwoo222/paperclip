@@ -1,101 +1,243 @@
+import { ProjectSkillRepositoryRow } from "@/components/skill-studio/ProjectSkillRepositoryRow";
+import { SkillSourceConnectionRepair } from "@/components/skill-studio/SkillSourceConnectionRepair";
+import { SkillSourceBranchRepair } from "@/components/skill-studio/SkillSourceBranchRepair";
+import { SkillSourceSyncControls } from "@/components/skill-studio/SkillSourceSyncControls";
+import { SkillsPageNavigation } from "@/components/skill-studio/SkillsNavigationTabs";
 import { GithubIcon } from "@/components/icons/github-icon";
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { RefreshCw, Plus, ExternalLink, Check, Lock, GitBranch, FileText, MoreVertical } from 'lucide-react';
-import { parseGitHubSkillRepositoryUrl, type SkillSource, type SkillSourceDiscovery, type SkillSourceRefreshResult, type SkillSourceScanProgress } from '@paperclipai/shared';
+import { RefreshCw, Plus, ExternalLink, Check, Lock, GitBranch, FileText, MoreVertical, CircleAlert } from 'lucide-react';
+import { parseGitHubSkillRepositoryUrl, type SkillSourceDisconnectRequest, type SkillSource, type SkillSourceDiscovery, type SkillSourceRefreshResult, type SkillSourceScanProgress } from '@paperclipai/shared';
 import { Link, useNavigate, useParams } from '@/lib/router';
 import { useCompany } from '@/context/CompanyContext';
 import { useBreadcrumbs } from '@/context/BreadcrumbContext';
 import { queryKeys } from '@/lib/queryKeys';
 import { skillSourcesApi } from '@/api/skillSources';
+import { ApiError } from '@/api/client';
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import { appSourceConnectHref } from './apps/app-connect-policy';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RadioCardGroup } from '@/components/ui/radio-card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuCheckboxItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { SkillImportProgress, type FoundSkill } from './skills/SkillImportProgress';
 import { SkillPackagePreview } from './skills/SkillPackagePreview';
 import { SkillSourceTree, type SkillTreeCandidate } from './skills/SkillSourceTree';
+import { SkillImportWarnings, skillImportWarnings } from './skills/SkillImportWarnings';
 import { timeAgo } from '@/lib/timeAgo';
 import { skillRoute } from '@/lib/company-skill-routes';
 import { consumeSkillSourceReturn, rememberSkillSourceReturn } from '@/lib/skill-source-connect-return';
+import { groupProjectSkillRepositories } from '@/lib/project-skill-repositories';
 import { t } from '@/i18n';
 
 const sourceKey = (companyId: string) => queryKeys.skillSources.all(companyId);
 export function SkillSources() {
+  const sourceActionButtons = useRef<Record<string, HTMLButtonElement | null>>({});
   const { selectedCompanyId, selectedCompany } = useCompany();
   const { sourceId } = useParams<{ sourceId: string }>();
   const navigate = useNavigate();
   const client = useQueryClient();
   const { setBreadcrumbs } = useBreadcrumbs();
-  const [results, setResults] = useState<Record<string, string>>({});
+  const [results, setResults] = useState<Record<string, { message: string; failedAt: number; operation: 'refresh' | 'settings' } | null>>({});
+  const [repairSourceId, setRepairSourceId] = useState<string | null>(null);
+  const [branchSourceId, setBranchSourceId] = useState<string | null>(null);
+  const [disconnectSource, setDisconnectSource] = useState<SkillSource | null>(null);
   const companyId = selectedCompanyId ?? '';
   useEffect(() => { setBreadcrumbs([{ label: t('upgrade2610Skills.sourcesPage.breadcrumbSkills'), href: '/skills' }, { label: t('upgrade2610Skills.sourcesPage.breadcrumbSources') }]); }, [setBreadcrumbs]);
-  const query = useQuery({ queryKey: sourceKey(companyId), queryFn: () => skillSourcesApi.list(companyId), enabled: Boolean(companyId) });
+  const query = useQuery({ queryKey: sourceKey(companyId), queryFn: () => skillSourcesApi.list(companyId), enabled: Boolean(companyId), refetchInterval: 5000 });
+  const repairSource = query.data?.find(source => source.id === repairSourceId);
+  const branchSource = query.data?.find(source => source.id === branchSourceId);
+  const projectRepositories = useQuery({ queryKey: queryKeys.skillSources.projects(companyId), queryFn: () => skillSourcesApi.projectRepositories(companyId), enabled: Boolean(companyId), refetchInterval: 5000 });
   async function invalidate() {
-    await Promise.all([client.invalidateQueries({ queryKey: sourceKey(companyId) }), client.invalidateQueries({ queryKey: queryKeys.companySkills.list(companyId) })]);
+    await Promise.all([client.invalidateQueries({ queryKey: queryKeys.skillSources.projects(companyId) }), client.invalidateQueries({ queryKey: sourceKey(companyId) }), client.invalidateQueries({ queryKey: queryKeys.companySkills.list(companyId) })]);
   }
   const refresh = useMutation({ mutationFn: (id: string) => skillSourcesApi.refresh(companyId, id), onSuccess: async result => {
-    setResults(prev => ({ ...prev, [result.source.id]: result.warnings.join(' · ') })); await invalidate();
-  }, onError: (error, id) => { setResults(prev => ({ ...prev, [id]: error.message })); void invalidate(); } });
-  const disconnect = useMutation({ mutationFn: (id: string) => skillSourcesApi.disconnect(companyId, id), onSuccess: invalidate });
+    setResults(prev => ({ ...prev, [result.source.id]: null })); await invalidate();
+  }, onError: (error, id) => { setResults(prev => ({ ...prev, [id]: { message: error.message, failedAt: Date.now(), operation: 'refresh' } })); void invalidate(); } });
+  const adopt = useMutation({ mutationFn: async (group: ReturnType<typeof groupProjectSkillRepositories>[number]) => {
+    for (const workspace of group.importableWorkspaces) await skillSourcesApi.adoptProject(companyId, workspace.workspaceId);
+  }, onSuccess: invalidate, onError: () => { void invalidate(); } });
+  const settings = useMutation({ mutationFn: ({ source, enabled }: { source: SkillSource; enabled: boolean }) => skillSourcesApi.settings(companyId, source.id, { revision: source.revision, automaticUpdates: enabled }),
+    onSuccess: async (_result, variables) => { setResults(prev => ({ ...prev, [variables.source.id]: null })); await invalidate(); },
+    onError: (error, variables) => setResults(prev => ({ ...prev, [variables.source.id]: { message: error.message, failedAt: Date.now(), operation: 'settings' } })) });
+  const availableProjects = groupProjectSkillRepositories(Array.isArray(projectRepositories.data) ? projectRepositories.data.filter(repo => !repo.sourceId) : []);
+  const groupSource = (group: typeof availableProjects[number]) => query.data?.find(source => source.repositoryUrl.toLowerCase() === group.repository.repositoryUrl.toLowerCase() && source.trackingRef === group.repository.trackingRef);
+  const uninstalledProjects = availableProjects.filter(group => !groupSource(group));
+  const disconnect = useMutation({
+    mutationFn: ({ source, skills }: { source: SkillSource; skills: SkillSourceDisconnectRequest['skills'] }) =>
+      skillSourcesApi.disconnect(companyId, source.id, { revision: source.revision, skills }),
+    onSuccess: async result => {
+      client.setQueryData<SkillSource[]>(sourceKey(companyId), previous => previous?.filter(source => source.id !== result.id));
+      await invalidate();
+      await client.invalidateQueries({ queryKey: queryKeys.folders.list(companyId, 'skill') });
+      setDisconnectSource(null);
+    },
+  });
+  const reloadRemoval = useMutation({
+    mutationFn: async () => {
+      const result = await query.refetch({ throwOnError: true });
+      return result.data?.find(source => source.id === disconnectSource?.id) ?? null;
+    },
+    onSuccess: source => { setDisconnectSource(source); disconnect.reset(); },
+  });
+  const staleRemoval = disconnect.error instanceof ApiError && disconnect.error.status === 409;
   const activeSource = query.data?.find(source => source.id === sourceId);
   if (!companyId) return <p className="p-6 text-sm text-muted-foreground">{t('upgrade2610Skills.sourcesPage.selectCompany')}</p>;
   return <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 md:p-6">
     <header className="flex flex-wrap items-start justify-between gap-4">
-      <div><h1 className="text-xl font-semibold">{t('upgrade2610Skills.sourcesPage.title')}</h1><p className="mt-1 text-sm text-muted-foreground">{t('upgrade2610Skills.sourcesPage.description')}</p></div>
-      <Button onClick={() => navigate('/skills/sources/new')}><Plus className="size-4" />{t('upgrade2610Skills.importFromGithub')}</Button>
+      <div><h1 className="text-xl font-semibold">{t('upgrade2610Skills.sourcesPage.title')}</h1><p className="mt-1 text-sm text-muted-foreground">{t('upgrade1029ConflictsD.skillSources.description')}</p></div>
+      <div className="flex items-center gap-2">
+        <Button onClick={() => navigate('/skills/sources/new')}><Plus className="size-4" />{t('upgrade2610Skills.importFromGithub')}</Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" aria-label={t('upgrade1029ConflictsD.skillSources.moreSourceActions')}><MoreVertical className="size-4" /></Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild><Link to="/apps">{t('upgrade2610Skills.sourcesPage.manageGithubConnection')}</Link></DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </header>
-    <Link to="/skills" className="text-sm text-muted-foreground hover:text-foreground">{t('upgrade2610Skills.sourcesPage.installedSkills')}</Link>
+    <SkillsPageNavigation activeView="sources" />
     {query.isPending && <p role="status" className="text-sm text-muted-foreground">{t('upgrade2610Skills.sourcesPage.loading')}</p>}
     {query.error && <p role="alert" className="text-sm text-destructive">{query.error.message} <Button variant="ghost" size="sm" onClick={() => void query.refetch()}>{t('upgrade2610Skills.sourcesPage.tryAgain')}</Button></p>}
-    {disconnect.error && <p role="alert" className="text-sm text-destructive">{disconnect.error.message}</p>}
-    {query.data?.length === 0 && <div className="flex flex-col items-start gap-3 py-8"><p className="text-sm text-muted-foreground">{t('upgrade2610Skills.sourcesPage.empty', { company: selectedCompany?.name ?? t('upgrade2610Skills.sourcesPage.thisCompany') })}</p><Button variant="outline" onClick={() => navigate('/skills/sources/new')}>{t('upgrade2610Skills.importFromGithub')}</Button></div>}
+    {query.data?.length === 0 && availableProjects.length === 0 && <div className="flex flex-col items-start gap-3 py-8"><p className="text-sm text-muted-foreground">{t('upgrade2610Skills.sourcesPage.empty', { company: selectedCompany?.name ?? t('upgrade2610Skills.sourcesPage.thisCompany') })}</p><Button variant="outline" onClick={() => navigate('/skills/sources/new')}>{t('upgrade2610Skills.importFromGithub')}</Button></div>}
+    {projectRepositories.error && <p role="alert" className="text-sm text-destructive">{projectRepositories.error.message} <Button variant="ghost" size="sm" onClick={() => void projectRepositories.refetch()}>{t('upgrade2610Skills.sourcesPage.tryAgain')}</Button></p>}
+    {adopt.error && <p role="alert" className="text-sm text-destructive">{adopt.error.message}</p>}
+    {uninstalledProjects.length > 0 && <div className="divide-y divide-border" aria-label={t('upgrade1029ConflictsD.skillSources.projectRepositories')}>
+      {uninstalledProjects.map(group => <ProjectSkillRepositoryRow key={group.key} repository={group.repository} backgroundPending={group.hasPending} disabled={adopt.isPending}
+        pending={adopt.isPending && adopt.variables?.key === group.key} onImport={() => adopt.mutate(group)} />)}
+    </div>}
     <div className="divide-y divide-border">
       {query.data?.map(source => {
         const installed = source.entries.filter(entry => entry.skillId);
         const newCount = source.entries.filter(entry => entry.selection === 'new' && entry.present).length;
+        const result = results[source.id];
+        const projectGroup = availableProjects.find(group => groupSource(group)?.id === source.id);
+        const importingProjectSkills = projectGroup && (projectGroup.hasPending || (adopt.isPending && adopt.variables?.key === projectGroup.key));
+        const localError = result && result.message !== source.lastError
+          && (result.operation === 'settings' || !source.lastSuccessAt || new Date(source.lastSuccessAt).getTime() < result.failedAt)
+          ? result.message : null;
         return <section key={source.id} className="flex flex-col gap-3 py-4" aria-label={source.fullName}>
-          <div className="flex items-center gap-3">
-            <div className="flex min-w-0 flex-1 items-center gap-3"><GithubIcon className="size-5 shrink-0 text-muted-foreground" /><div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex min-w-0 basis-full items-start gap-3 sm:flex-1 sm:basis-auto"><GithubIcon className="size-5 shrink-0 text-muted-foreground" /><div className="min-w-0 flex-1">
               <a href={source.repositoryUrl} target="_blank" rel="noreferrer" title={source.fullName} className="block truncate rounded-sm text-sm font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{source.fullName}</a>
+              <p className="truncate text-xs text-muted-foreground">{source.trackingRef === 'HEAD' ? t('upgrade2610Skills.sourceDialog.defaultBranch') : source.trackingRef}{source.lastSuccessAt ? t('upgrade1029ConflictsD.skillSources.updatedAgo', { time: timeAgo(source.lastSuccessAt) }) : ''}{source.accessScope === 'projects' ? t('upgrade1029ConflictsD.skillSources.projectAccess') : ''}{importingProjectSkills && <span role="status">{t('upgrade1029ConflictsD.skillSources.importingSkills')}</span>}</p>
+              {source.enabled && source.automaticUpdates === false && <p className="text-xs text-muted-foreground">{t('upgrade1029ConflictsD.skillSources.automaticUpdatesPaused')}</p>}
+              {source.trackingActive === false && <p className="text-xs text-muted-foreground">{t('upgrade1029ConflictsD.skillSources.trackingStopped')}</p>}
               {!source.enabled && <p className="text-xs text-muted-foreground">{t('upgrade2610Skills.sourcesPage.disconnected')}</p>}
               {refresh.isPending && refresh.variables === source.id && <p role="status" className="text-xs text-muted-foreground">{t('upgrade2610Skills.sourcesPage.refreshing')}</p>}
               {newCount > 0 && <Link to={`/skills/sources/${source.id}`} className="text-xs underline">{t('upgrade2610Skills.sourcesPage.newSkillsAvailable', { count: newCount })}</Link>}
             </div></div>
+            <SkillSourceSyncControls showPreference={false} automaticUpdates={source.automaticUpdates ?? true}
+              refreshing={source.syncState === 'refreshing' || (refresh.isPending && refresh.variables === source.id)}
+              disabled={!source.enabled || settings.isPending} onRefresh={() => refresh.mutate(source.id)}
+              onAutomaticUpdates={enabled => settings.mutate({ source, enabled })} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="icon-sm" variant="ghost" className="shrink-0" aria-label={t('upgrade2610Skills.sourcesPage.moreActions', { name: source.fullName })}><MoreVertical className="size-4" /></Button>
+                <Button ref={button => { sourceActionButtons.current[source.id] = button; }} size="icon-sm" variant="ghost" className="shrink-0" aria-label={t('upgrade2610Skills.sourcesPage.moreActions', { name: source.fullName })}><MoreVertical className="size-4" /></Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem disabled={!source.enabled || refresh.isPending} onSelect={() => refresh.mutate(source.id)}>{refresh.isPending && refresh.variables === source.id ? t('upgrade2610Skills.sourcesPage.refreshing') : t('upgrade2610Skills.sourcesPage.refresh')}</DropdownMenuItem>
+                <DropdownMenuCheckboxItem checked={source.automaticUpdates ?? true} disabled={!source.enabled || settings.isPending}
+                  onCheckedChange={enabled => settings.mutate({ source, enabled })}>{t('upgrade1029ConflictsD.skillSources.automaticUpdates')}</DropdownMenuCheckboxItem>
                 <DropdownMenuItem onSelect={() => navigate(`/skills/sources/${source.id}`)}>{t('upgrade2610Skills.sourcesPage.selectSkills')}</DropdownMenuItem>
-                <DropdownMenuItem variant="destructive" disabled={!source.enabled || disconnect.isPending} onSelect={() => disconnect.mutate(source.id)}>{t('upgrade2610Skills.sourcesPage.disconnectSource')}</DropdownMenuItem>
+                {projectGroup && projectGroup.importableWorkspaces.length > 0 && <DropdownMenuItem disabled={adopt.isPending} onSelect={() => adopt.mutate(projectGroup)}>
+                  {projectGroup.repository.status === 'error' ? t('upgrade1029ConflictsD.skillSources.retryProjectImport') : projectGroup.hasPending ? t('upgrade1029ConflictsD.skillSources.importRemainingProjectSkills') : t('upgrade1029ConflictsD.skillSources.importProjectSkills')}
+                </DropdownMenuItem>}
+                <DropdownMenuItem onSelect={() => setRepairSourceId(source.id)}>{t('newUi.ke9bd8aedc06c')}</DropdownMenuItem>
+                {source.accessScope !== 'projects' && !source.projects?.some(project => project.active) && <DropdownMenuItem onSelect={() => setBranchSourceId(source.id)}>{t('upgrade1029ConflictsD.skillSources.chooseNewBranch')}</DropdownMenuItem>}
+                <DropdownMenuItem variant="destructive" disabled={disconnect.isPending} onSelect={() => { disconnect.reset(); reloadRemoval.reset(); setDisconnectSource(source); }}>{source.enabled ? t('upgrade2610Skills.sourcesPage.disconnectSource') : t('upgrade1029ConflictsD.skillSources.removeSource')}</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+          {projectGroup?.repository.lastError && <SourceErrorNotice message={projectGroup.repository.lastError} />}
           {installed.length > 0 && <ul className="ml-8 min-w-0" aria-label={t('upgrade2610Skills.sourcesPage.installedFrom', { name: source.fullName })}>
             {installed.map(entry => <li key={entry.id}>
               <Link to={skillRoute(entry.skillId!)} title={entry.path} className="group flex min-w-0 items-center gap-2 rounded-sm py-1 text-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 <FileText className="size-3.5 shrink-0 text-muted-foreground" />
                 <span className="truncate font-medium group-hover:underline">{entry.name}</span>
                 {entry.description && <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{entry.description}</span>}
+                {!entry.present && <span className="text-xs text-muted-foreground">{t('upgrade1029ConflictsD.skillSources.removedFromSource')}</span>}
               </Link>
             </li>)}
           </ul>}
-          {results[source.id] && <p role="status" className="text-xs text-muted-foreground">{results[source.id]}</p>}
-          {source.lastError && source.lastAttemptAt && <p className="text-xs text-muted-foreground">{t('upgrade2610Skills.sourcesPage.lastAttempt', { time: timeAgo(source.lastAttemptAt) })}</p>}
-          {source.lastError && <p role="alert" className="text-sm text-destructive">{source.lastError} <Link to={`/skills/sources/${source.id}`} className="underline">{t('upgrade2610Skills.sourcesPage.reviewSource')}</Link></p>}
-          {source.connectionId && <Link to={`/apps/${source.connectionId}/permissions`} className="text-xs text-muted-foreground hover:text-foreground">{t('upgrade2610Skills.sourcesPage.manageGithubConnection')}</Link>}
+          {installed.length === 0 && source.entries.length === 0 && source.syncState !== 'refreshing' && !source.lastError && <p className="ml-8 text-sm text-muted-foreground">
+            {t('upgrade1029ConflictsD.skillSources.noSkillsFound')}{source.enabled && source.automaticUpdates && source.importNewSkills ? t('upgrade1029ConflictsD.skillSources.newSkillsAutoImport') : ''}
+          </p>}
+          {localError && <SourceErrorNotice message={localError} />}
+          <SkillImportWarnings warnings={skillImportWarnings(source.entries.filter(entry => entry.selection === 'selected'), source.repositoryPackage)} />
+          {source.lastError && <SourceErrorNotice message={source.lastError}
+            detail={source.lastAttemptAt ? t('upgrade2610Skills.sourcesPage.lastAttempt', { time: timeAgo(source.lastAttemptAt) }) : undefined}
+            action={<Link to={`/skills/sources/${source.id}`} className="font-medium text-destructive underline underline-offset-2">{t('upgrade2610Skills.sourcesPage.reviewSource')}</Link>} />}
+          {source.lastError && (source.repairAction === 'connection' || (!source.repairAction && !source.connectionId)) && <Button variant="outline" size="sm" className="self-start" onClick={() => setRepairSourceId(source.id)}>{t('newUi.ke9bd8aedc06c')}</Button>}
+          {source.lastError && source.repairAction === 'branch' && (source.accessScope === 'projects' || source.projects?.some(project => project.active)
+            ? <div className="flex flex-wrap gap-3">{source.projects?.filter(project => project.active).map(project => <Link key={project.id} to={`/projects/${project.id}`} className="text-sm underline">{t('upgrade1029ConflictsD.skillSources.updateProjectRepository', { name: project.name })}</Link>)}</div>
+            : <Button variant="outline" size="sm" className="self-start" onClick={() => setBranchSourceId(source.id)}>{t('upgrade1029ConflictsD.skillSources.chooseNewBranch')}</Button>)}
         </section>;
       })}
     </div>
+    {branchSource && <SkillSourceBranchRepair companyId={companyId} source={branchSource} onClose={() => setBranchSourceId(null)}
+      onReturnFocus={() => sourceActionButtons.current[branchSource.id]?.focus()} onSaved={async () => { setResults(prev => ({ ...prev, [branchSource.id]: null })); await invalidate(); }} />}
+    {repairSource && <SkillSourceConnectionRepair companyId={companyId} source={repairSource} onClose={() => setRepairSourceId(null)} onReturnFocus={() => sourceActionButtons.current[repairSource.id]?.focus()} onSaved={async () => {
+      setResults(prev => ({ ...prev, [repairSource.id]: null })); await invalidate();
+    }} />}
+    {disconnectSource && <DisconnectSourceDialog key={`${disconnectSource.id}:${disconnectSource.revision}`} source={disconnectSource}
+      pending={disconnect.isPending || reloadRemoval.isPending} error={reloadRemoval.error?.message ?? disconnect.error?.message}
+      stale={staleRemoval} onReload={() => reloadRemoval.mutate()} onChoiceChange={() => { if (!staleRemoval) disconnect.reset(); }}
+      onClose={() => setDisconnectSource(null)}
+      onConfirm={skills => disconnect.mutate({ source: disconnectSource, skills })} />}
     {sourceId && (sourceId === 'new' || activeSource) && <SourceDialog key={`${companyId}:${sourceId}`} companyId={companyId} source={activeSource} onClose={() => navigate('/skills/sources')} onSaved={async result => {
-      setResults(prev => ({ ...prev, [result.source.id]: result.warnings.join(' · ') })); await invalidate(); navigate('/skills/sources');
+      setResults(prev => ({ ...prev, [result.source.id]: null })); await invalidate(); navigate('/skills/sources');
     }} />}
     {sourceId && sourceId !== 'new' && query.isSuccess && !activeSource && <p role="alert" className="text-sm text-destructive">{t('upgrade2610Skills.sourcesPage.notFound')}</p>}
   </div>;
+}
+
+function SourceErrorNotice({ message, detail, action }: { message: string; detail?: string; action?: ReactNode }) {
+  return <div role="alert" className="ml-8 flex min-w-0 items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm">
+    <CircleAlert className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden="true" />
+    <div className="min-w-0 flex-1">
+      <p className="break-words text-foreground">{message}</p>
+      {(detail || action) && <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+        {detail && <span className="text-muted-foreground">{detail}</span>}
+        {action}
+      </div>}
+    </div>
+  </div>;
+}
+
+function DisconnectSourceDialog({ source, pending, error, stale, onReload, onClose, onConfirm, onChoiceChange }: {
+  source: SkillSource; pending: boolean; error?: string; stale: boolean; onReload: () => void; onClose: () => void;
+  onConfirm: (skills: SkillSourceDisconnectRequest['skills']) => void; onChoiceChange: () => void;
+}) {
+  const count = new Set(source.entries.flatMap(entry => entry.skillId ? [entry.skillId] : [])).size;
+  const [choice, setChoice] = useState<SkillSourceDisconnectRequest['skills'] | ''>('');
+  const action = source.enabled ? t('upgrade2610Skills.sourcesPage.disconnectSource') : t('upgrade1029ConflictsD.skillSources.removeSource');
+  return <Dialog open onOpenChange={open => { if (!open && !pending) onClose(); }}>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>{source.enabled ? t('upgrade1029ConflictsD.skillSources.disconnectTitle', { name: source.fullName }) : t('upgrade1029ConflictsD.skillSources.removeTitle', { name: source.fullName })}</DialogTitle>
+        <DialogDescription>{count ? t(count === 1 ? 'upgrade1029ConflictsD.skillSources.removeWithSkillsOne' : 'upgrade1029ConflictsD.skillSources.removeWithSkillsMany', { count }) : t('upgrade1029ConflictsD.skillSources.removeDescription')}</DialogDescription>
+      </DialogHeader>
+      {count > 0 && <RadioCardGroup ariaLabel={t('upgrade1029ConflictsD.skillSources.importedSkills')} value={choice}
+        onValueChange={value => { setChoice(value as SkillSourceDisconnectRequest['skills']); onChoiceChange(); }} disabled={pending}
+        options={[
+          { value: 'copy', title: t('upgrade1029ConflictsD.skillSources.keepCopies'), description: source.accessScope === 'projects' ? t('upgrade1029ConflictsD.skillSources.keepCopiesProjects') : t('upgrade1029ConflictsD.skillSources.keepCopiesDescription') },
+          { value: 'delete', title: t('upgrade1029ConflictsD.skillSources.deleteSkills'), description: t('upgrade1029ConflictsD.skillSources.deleteSkillsDescription') },
+        ]} />}
+
+      {error && <div role="alert" className="text-sm text-destructive">{error}
+        {stale && <Button variant="ghost" size="sm" disabled={pending} onClick={onReload}>{t('upgrade1029ConflictsD.skillSources.reloadSource')}</Button>}
+      </div>}
+      <div className="flex items-center justify-between gap-3">
+        <Button variant="outline" disabled={pending} onClick={onClose}>{t('upgrade2610Skills.sourceDialog.cancel')}</Button>
+        <Button variant={choice === 'delete' ? 'destructive' : 'default'} disabled={pending || stale || Boolean(count && !choice)} onClick={() => onConfirm(choice || 'copy')}>
+          {pending ? t('issueProperties.removing') : action}
+        </Button>
+      </div>
+    </DialogContent>
+  </Dialog>;
 }
 
 function SourceDialog({ companyId, source, onClose, onSaved }: {
@@ -107,8 +249,9 @@ function SourceDialog({ companyId, source, onClose, onSaved }: {
   const [repositoryUrl, setRepositoryUrl] = useState<string>(draft.repositoryUrl ?? source?.repositoryUrl ?? '');
   const [showRepositoryUrl, setShowRepositoryUrl] = useState<boolean>(draft.showRepositoryUrl ?? Boolean(draft.repositoryUrl));
   const [connectionId, setConnectionId] = useState<string | null>('connectionId' in draft ? draft.connectionId : source?.connectionId ?? null);
-  const [preview, setPreview] = useState<{ skill: SkillTreeCandidate; filePath?: string } | null>(null);
-  const [discovery, setDiscovery] = useState<SkillSourceDiscovery | null>(draft.discovery ?? null);
+  const [preview, setPreview] = useState<{ skill: SkillTreeCandidate; filePath?: string; repository?: boolean } | null>(null);
+  const [packageMode, setPackageMode] = useState<'skills' | 'repository'>(source ? draft.packageMode ?? source.packageMode : 'repository');
+  const [discovery, setDiscovery] = useState<SkillSourceDiscovery | null>(!source && draft.packageMode === 'skills' ? null : draft.discovery ?? null);
   const [selected, setSelected] = useState<Set<string>>(() => new Set(draft.selectedPaths ?? (source ? source.entries.filter(entry => entry.selection !== 'excluded').map(entry => entry.path) : [])));
   const [excludedFolders, setExcludedFolders] = useState<string[]>(draft.excludedFolders ?? source?.excludedFolders ?? []);
   const repositories = useQuery({ queryKey: queryKeys.skillSources.repositories(companyId), queryFn: () => skillSourcesApi.repositories(companyId), refetchOnMount: 'always', retry: false });
@@ -123,44 +266,57 @@ function SourceDialog({ companyId, source, onClose, onSaved }: {
   const connectHref = appSourceConnectHref('github');
   const rememberReturn = () => rememberSkillSourceReturn(companyId, source?.id ?? 'new');
   useEffect(() => { consumeSkillSourceReturn(companyId); }, [companyId]);
-  useEffect(() => { sessionStorage.setItem(draftKey, JSON.stringify({ revision: selectionRevision, repositoryUrl, showRepositoryUrl, connectionId, discovery, selectedPaths: [...selected], excludedFolders })); }, [draftKey, selectionRevision, repositoryUrl, showRepositoryUrl, connectionId, discovery, selected, excludedFolders]);
+  useEffect(() => { sessionStorage.setItem(draftKey, JSON.stringify({ revision: selectionRevision, packageMode, repositoryUrl, showRepositoryUrl, connectionId, discovery, selectedPaths: [...selected], excludedFolders })); }, [draftKey, selectionRevision, packageMode, repositoryUrl, showRepositoryUrl, connectionId, discovery, selected, excludedFolders]);
   const scanController = useRef<AbortController | null>(null);
   const [progress, setProgress] = useState<SkillSourceScanProgress | null>(null);
   const [found, setFound] = useState<FoundSkill[]>([]);
   useEffect(() => () => { scanController.current?.abort(); }, []);
-  const scan = useMutation({ mutationFn: async () => {
+  const scan = useMutation({ mutationFn: async (nextMode: 'skills' | 'repository' = packageMode) => {
     const controller = new AbortController();
     scanController.current?.abort();
     scanController.current = controller;
     setProgress(null); setFound([]);
-    const result = await skillSourcesApi.discoverStream(companyId, { repositoryUrl, connectionId: availableConnectionId }, event => {
+    const discover = (mode: 'skills' | 'repository') => skillSourcesApi.discoverStream(companyId, { repositoryUrl, trackingRef: source?.trackingRef, packageMode: mode, connectionId: source ? sourceConnectionId : availableConnectionId }, event => {
       if (controller.signal.aborted || scanController.current !== controller) return;
       if (event.type === 'progress') setProgress(event);
       else setFound(previous => [...previous.filter(skill => skill.path !== event.candidate.path), event.candidate].slice(-5));
     }, controller.signal);
+    let result = await discover(nextMode);
+    // Shared dependencies need their original repository layout. Include that
+    // layout automatically instead of asking the person to repair the package.
+    if (nextMode === 'skills' && result.candidates.some(candidate => candidate.inspection?.references.some(reference => reference.kind === 'outside_package'))) {
+      setFound([]);
+      result = await discover('repository');
+    }
     return { discovery: result, connectionId: result.connectionId === undefined ? availableConnectionId : result.connectionId, controller };
   }, onSuccess: result => {
     if (result.controller.signal.aborted || scanController.current !== result.controller) return;
-    setDiscovery(result.discovery); setConnectionId(result.connectionId); setSelected(new Set(result.discovery.candidates.map(candidate => candidate.path))); setExcludedFolders([]);
+    setDiscovery(result.discovery); setPackageMode(result.discovery.packageMode ?? packageMode); setConnectionId(result.connectionId);
+    if (!source) { setSelected(new Set(result.discovery.candidates.map(candidate => candidate.path))); setExcludedFolders([]); }
   } });
   const save = useMutation({ mutationFn: () => source
-    ? skillSourcesApi.select(companyId, source.id, { revision: selectionRevision!, selectedPaths: [...selected], excludedFolders, connectionId: sourceConnectionId })
-    : skillSourcesApi.create(companyId, { repositoryUrl: discovery!.repositoryUrl, trackingRef: discovery!.trackingRef, commitSha: discovery!.commitSha, connectionId, selectedPaths: [...selected], excludedFolders }),
+    ? skillSourcesApi.select(companyId, source.id, { revision: selectionRevision!, packageMode, selectedPaths: [...selected], excludedFolders, connectionId: sourceConnectionId })
+    : skillSourcesApi.create(companyId, { repositoryUrl: discovery!.repositoryUrl, trackingRef: discovery!.trackingRef, commitSha: discovery!.commitSha, packageMode, connectionId, selectedPaths: [...selected], excludedFolders }),
     onSuccess: async result => { sessionStorage.removeItem(draftKey); await onSaved(result); },
   });
-  const candidates: SkillTreeCandidate[] = source ? source.entries.map(entry => ({ ...entry,
+  const candidates: SkillTreeCandidate[] = discovery?.candidates ?? (source ? source.entries.map(entry => ({ ...entry,
     note: !entry.present ? 'Removed from source · installed copy retained' : entry.selection === 'new' ? 'New skill' : entry.skillId ? 'Already imported' : undefined,
-  })) : discovery?.candidates ?? [];
+  })) : []);
   const ready = Boolean(source || discovery);
-  const eligibleCount = candidates.filter(candidate => selected.has(candidate.path) && !candidate.error).length;
-  const skippedCount = candidates.filter(candidate => selected.has(candidate.path) && candidate.error).length;
+  const repositoryPackage = discovery?.repositoryPackage ?? source?.repositoryPackage;
+  const warnings = skillImportWarnings(candidates.filter(candidate => selected.has(candidate.path)), packageMode === 'repository' ? repositoryPackage : null, discovery?.warnings);
+  const selectionTree = <SkillSourceTree packageMode={packageMode} onPreview={(skill, filePath) => setPreview({ skill, filePath })} candidates={candidates} selected={selected} excludedFolders={excludedFolders} onChange={(paths, folders) => { setSelected(paths); setExcludedFolders(folders); }} disabled={scan.isPending || save.isPending} />;
+  const selectedCount = candidates.filter(candidate => selected.has(candidate.path)).length;
   const busy = scan.isPending || save.isPending;
   const error = (scan.error?.name === 'AbortError' ? null : scan.error) ?? save.error;
   function stopScan() { scanController.current?.abort(); scanController.current = null; scan.reset(); setProgress(null); setFound([]); }
   function clearScan() { setDiscovery(null); scan.reset(); save.reset(); }
   function dismiss() { stopScan(); sessionStorage.removeItem(draftKey); onClose(); }
-  return <Dialog open onOpenChange={open => { if (!open && !save.isPending) dismiss(); }}><DialogContent className="flex max-h-(--sz-calc-18) flex-col overflow-y-auto p-4 sm:max-w-2xl sm:p-6" aria-describedby={source ? 'source-description' : undefined}>
-    <DialogHeader><DialogTitle>{source ? source.fullName : t('upgrade2610Skills.importFromGithub')}</DialogTitle>{source && <DialogDescription id="source-description">{t('upgrade2610Skills.sourceDialog.description')}</DialogDescription>}</DialogHeader>
+  return <Dialog open onOpenChange={open => { if (!open && !save.isPending) dismiss(); }}><DialogContent className="flex max-h-(--sz-calc-18) flex-col overflow-hidden p-4 sm:max-w-2xl sm:p-6" aria-describedby={source ? 'source-description' : undefined}>
+    <DialogHeader className="shrink-0 flex-row items-start justify-between gap-3 pr-6">
+      <div className="min-w-0"><DialogTitle>{source ? source.fullName : t('upgrade2610Skills.importFromGithub')}</DialogTitle>{source && <DialogDescription id="source-description">{t('upgrade1029ConflictsD.skillSources.uncheckedStayInstalled')}</DialogDescription>}</div>
+    </DialogHeader>
+    <div className="min-h-0 space-y-4 overflow-y-auto">
       {!ready && !scan.isPending && <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           {availableRepositories.length > 0 && <div className="flex items-center justify-between gap-2">
@@ -206,20 +362,26 @@ function SourceDialog({ companyId, source, onClose, onSaved }: {
         <a href={source?.repositoryUrl ?? discovery?.repositoryUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-foreground">{t('upgrade2610Skills.sourceDialog.viewOnGithub')}<ExternalLink className="size-3" /></a>
       </div>}
       {source?.lastError && <p role="alert" className="text-sm text-destructive">{source.lastError}{' '}<Link onClick={rememberReturn} to={source.connectionId ? `/apps/${source.connectionId}/permissions` : connectHref} className="underline">{t('upgrade2610Skills.sourceDialog.manageGithubConnection')}</Link></p>}
-      {ready && !save.isPending && <SkillSourceTree onPreview={(skill, filePath) => setPreview({ skill, filePath })} candidates={candidates} selected={selected} excludedFolders={excludedFolders} onChange={(paths, folders) => { setSelected(paths); setExcludedFolders(folders); }} disabled={busy} />}
-      {discovery?.warnings.map(warning => <p key={warning} className="text-xs text-muted-foreground">{warning}</p>)}
-      {skippedCount > 0 && <p className="text-sm text-muted-foreground">{t('upgrade2610Skills.sourceDialog.skippedValidation', { count: skippedCount })}</p>}
+      {ready && !save.isPending && !scan.isPending && <div className="space-y-3">
+        {packageMode === 'repository' ? <>
+          {candidates[0] && <Button variant="outline" size="sm" onClick={() => setPreview({ skill: candidates[0]!, repository: true })}><FileText className="size-4" />{t(repositoryPackage?.files.length === 1 ? 'upgrade1029ConflictsD.skillSources.viewFilesOne' : 'upgrade1029ConflictsD.skillSources.viewFilesMany', { count: repositoryPackage?.files.length ?? 0 })}</Button>}
+        </> : null}
+        {selectionTree}
+        <SkillImportWarnings warnings={warnings} />
+      </div>}
       {error && <p role="alert" className="text-sm text-destructive">{error.message}{' '}<Link onClick={rememberReturn} to={connectHref} className="underline">{t('upgrade2610Skills.sourceDialog.connectGithubAccount')}</Link></p>}
       {scan.isPending && <SkillImportProgress repository={parsedRepository?.fullName ?? repositoryUrl} progress={progress} found={found} />}
-      {save.isPending && <SkillImportProgress importing repository={source?.fullName ?? discovery!.fullName} count={eligibleCount}
+      {save.isPending && <SkillImportProgress importing repository={source?.fullName ?? discovery!.fullName} count={selectedCount}
         found={candidates.filter(candidate => selected.has(candidate.path) && !candidate.error).map(candidate => ({ ...candidate, fileCount: candidate.inspection?.files.length ?? 1 }))} />}
-      <footer className="flex items-center justify-between gap-3 border-t border-border pt-4">
+    </div>
+      <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-border pt-4">
         <Button variant="ghost" disabled={save.isPending} onClick={() => { if (scan.isPending) stopScan(); else if (discovery && !source) clearScan(); else dismiss(); }}>{scan.isPending ? t('upgrade2610Skills.sourceDialog.cancelScan') : discovery && !source ? t('upgrade2610Skills.sourceDialog.back') : t('upgrade2610Skills.sourceDialog.cancel')}</Button>
-        {ready ? <Button disabled={busy || (!source && selected.size === 0)} onClick={() => save.mutate()}>{save.isPending ? t('upgrade2610Skills.sourceDialog.saving') : source ? t('upgrade2610Skills.sourceDialog.saveSelection') : t('upgrade2610Skills.sourceDialog.importCount', { count: eligibleCount })}</Button>
-          : <Button disabled={busy || repositories.isPending || !repositoryUrl.trim()} onClick={() => scan.mutate()}>{scan.isPending ? t('upgrade2610Skills.sourceDialog.scanning') : t('upgrade2610Skills.sourceDialog.findSkills')}</Button>}
+        {ready ? <Button disabled={busy || (!source && packageMode === 'skills' && selectedCount === 0)} onClick={() => save.mutate()}>{save.isPending ? t('upgrade2610Skills.sourceDialog.saving') : source ? t('upgrade2610Skills.sourceDialog.saveSelection') : packageMode === 'repository' ? t('upgrade1029ConflictsD.skillSources.importRepository') : t('upgrade2610Skills.sourceDialog.importCount', { count: selectedCount })}</Button>
+          : <Button disabled={busy || repositories.isPending || !repositoryUrl.trim()} onClick={() => scan.mutate(packageMode)}>{scan.isPending ? t('upgrade2610Skills.sourceDialog.scanning') : t('upgrade2610Skills.sourceDialog.findSkills')}</Button>}
       </footer>
-    {preview && <SkillPackagePreview key={`${preview.skill.path}:${preview.filePath ?? ''}`} companyId={companyId}
-      repository={{ repositoryUrl: source?.repositoryUrl ?? discovery!.repositoryUrl, connectionId: source ? sourceConnectionId : connectionId }}
+    {preview && <SkillPackagePreview key={`${packageMode}:${preview.repository}:${preview.skill.path}:${preview.filePath ?? ''}`} companyId={companyId}
+      repositoryPackage={preview.repository ? repositoryPackage ?? undefined : undefined}
+      repository={{ packageMode, repositoryUrl: source?.repositoryUrl ?? discovery!.repositoryUrl, connectionId: source ? sourceConnectionId : connectionId }}
       commitSha={preview.skill.inspection?.commitSha ?? source?.lastScanCommit ?? discovery?.commitSha ?? null} skill={preview.skill} initialFile={preview.filePath} onClose={() => setPreview(null)} />}
   </DialogContent></Dialog>;
 }

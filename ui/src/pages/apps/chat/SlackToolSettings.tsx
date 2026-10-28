@@ -1,5 +1,5 @@
 import { t as tNewUi } from "@/i18n";
-import { Link } from "react-router-dom";
+import { t } from "@/i18n";
 import { useId, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type {
@@ -19,12 +19,8 @@ export function SlackCapabilitiesView({
 }) {
   return (
     <section className="space-y-3">
-      <h3 className="text-sm font-semibold">{tNewUi("newUi.k192c25289bd0")}</h3>
-      <p className="text-sm">
-        {tNewUi("newUi.k99ab3294cdea")}
-      </p>
       <p className="text-sm text-muted-foreground">
-        {tNewUi("newUi.k62bc350d144c")}
+        {t("upgrade1029ConflictsE.slackToolsSummary")}
       </p>
       {error && (
         <p role="alert" className="text-sm text-destructive">
@@ -38,17 +34,6 @@ export function SlackCapabilitiesView({
       )}
       {capabilities && (
         <>
-          <ul className="space-y-2 text-sm">
-            <li>
-              {tNewUi("newUi.k1dbb5e500c00")}
-            </li>
-            <li>
-              {tNewUi("newUi.k7d725466d8d1")}
-            </li>
-            <li>
-              {tNewUi("newUi.k4ceb0fe13e85")}
-            </li>
-          </ul>
           {capabilities.missingScopes.length > 0 && (
             <div className="rounded-lg border border-border bg-muted p-3 space-y-2">
               <p className="text-sm font-medium">
@@ -71,35 +56,6 @@ export function SlackCapabilitiesView({
               </p>
             </div>
           )}
-          <details className="text-sm">
-            <summary className="cursor-pointer text-muted-foreground">
-              {tNewUi("newUi.kc1e8c89862b6")}
-            </summary>
-            <ul className="mt-3 divide-y divide-border">
-              {capabilities.tools.map((tool) => (
-                <li
-                  key={tool.name}
-                  className="flex items-center justify-between gap-3 py-2"
-                >
-                  <span>
-                    {tool.name.replace(/^slack_/, "").replaceAll("_", " ")}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {tool.available === false
-                      ? tNewUi("newUi.kfa8dc2e4876b")
-                      : tool.available === null
-                        ? tNewUi("newUi.k151339072593")
-                        : tool.risk === "approval"
-                          ? tNewUi("newUi.k4a9e8cf39abb")
-                          : tNewUi("newUi.ke674447337e8")}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </details>
-          <p className="text-xs text-muted-foreground">
-            {tNewUi("newUi.kfbd0464e83d8")}
-          </p>
         </>
       )}
     </section>
@@ -239,11 +195,9 @@ export function SlackSearchView({
 export function SlackToolsSettings({
   companyId,
   endpointId,
-  connectionId,
 }: {
   companyId: string;
   endpointId: string;
-  connectionId?: string | null;
 }) {
   const query = useQuery({
     queryKey: ["slack-capabilities", companyId, endpointId],
@@ -256,14 +210,7 @@ export function SlackToolsSettings({
         capabilities={query.data}
         error={query.error?.message}
       />
-      {connectionId && (
-        <Link
-          className="text-sm underline underline-offset-4"
-          to={`/apps/${connectionId}/permissions`}
-        >
-          {tNewUi("newUi.k94d9b7f3ceeb")}
-        </Link>
-      )}
+
     </div>
   );
 }

@@ -21,7 +21,7 @@ export function FinanceKindCard({ rows }: FinanceKindCardProps) {
         ) : (
           rows.map((row) => (
             <div
-              key={row.eventKind}
+              key={`${row.eventKind}:${row.currency}`}
               className="flex items-center justify-between gap-3 border border-border px-3 py-2"
             >
               <div className="min-w-0">
@@ -31,9 +31,9 @@ export function FinanceKindCard({ rows }: FinanceKindCardProps) {
                 </div>
               </div>
               <div className="text-right tabular-nums">
-                <div className="text-sm font-medium">{formatCents(row.netCents)}</div>
+                <div className="text-sm font-medium">{formatCents(row.netCents, row.currency)}</div>
                 <div className="text-xs text-muted-foreground">
-                  {formatCents(row.debitCents)} {t("sharedOperationsExtra.debits")}
+                  {formatCents(row.debitCents, row.currency)} {t("sharedOperationsExtra.debits")}
                 </div>
               </div>
             </div>

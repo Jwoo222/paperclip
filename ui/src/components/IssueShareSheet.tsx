@@ -1,0 +1,503 @@
+import { AgentAvatar } from "./AgentAvatar";
+import { Identity } from "./Identity";
+import { renderAccessIdentity, type AccessSelectOption } from "./AccessSelectIdentity";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  AlertTriangle,
+  Check,
+  Folder,
+  Lock,
+  RotateCcw,
+  UserPlus,
+} from "lucide-react";
+import type { IssueAccessGrant, IssueAccessGrantSource } from "@paperclipai/shared";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { SearchableSelect, type SearchableSelectGroup } from "@/components/SearchableSelect";
+import { Skeleton } from "@/components/ui/skeleton";
+import { QueryErrorState, useQueryView } from "@/components/QueryView";
+import { agentsApi } from "@/api/agents";
+import { accessApi } from "@/api/access";
+import { issuesApi } from "@/api/issues";
+import { useToastActions } from "@/context/ToastContext";
+import { queryKeys } from "@/lib/queryKeys";
+import { timeAgo } from "@/lib/timeAgo";
+import { cn } from "@/lib/utils";
+import { t } from "@/i18n";
+import {
+  agentVisibilityFromPermissions,
+  grantIsRevocable,
+  isSharedAgentVisibility,
+} from "@/lib/issuePrivacy";
+
+/**
+ * A role-based principal that can read the task by virtue of *who they are*
+ * (responsible user, creator, current assignee) rather than an explicit grant.
+ * Implicit principals are shown with a muted role badge and have NO revoke —
+ * you change their access by changing the role, not from the share sheet.
+ * The caller derives these (it holds the agent/user directories); the sheet
+ * only renders them.
+ */
+export interface ShareSheetImplicitPrincipal {
+  id: string;
+  displayName: string;
+  roleLabel: string;
+  subtitle?: string | null;
+  avatarUrl?: string | null;
+  initials?: string | null;
+}
+
+interface SourceBadgeSpec {
+  label: string;
+  icon: typeof UserPlus;
+  className: string;
+}
+
+// Source labels and icons distinguish access reasons; colors use semantic tokens.
+// `label` is a locale key under upgrade1029NewComponents.issueShareSheet, resolved at render time.
+const SOURCE_BADGES: Record<IssueAccessGrantSource, SourceBadgeSpec> = {
+  owner: { label: "sourceOwner", icon: Lock, className: "border-border bg-muted text-muted-foreground" },
+  explicit: {
+    label: "sourceExplicit",
+    icon: UserPlus,
+    className:
+      "border-primary/30 bg-primary/10 text-primary",
+  },
+  assignment: {
+    label: "sourceAssignment",
+    icon: Check,
+    className:
+      "border-border bg-secondary text-secondary-foreground",
+  },
+  project: {
+    label: "sourceProject",
+    icon: Folder,
+    className:
+      "border-border bg-accent text-accent-foreground",
+  },
+};
+
+function SourceBadge({ source }: { source: IssueAccessGrantSource }) {
+  const spec = SOURCE_BADGES[source];
+  const Icon = spec.icon;
+  return (
+    <span
+      data-testid={`grant-source-badge-${source}`}
+      data-source={source}
+      className={cn(
+        "inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 text-(length:--text-nano) font-medium leading-tight",
+        spec.className,
+      )}
+    >
+      <Icon className="h-3 w-3 shrink-0" aria-hidden="true" />
+      {t(`upgrade1029NewComponents.issueShareSheet.${spec.label}`)}
+    </span>
+  );
+}
+
+function PrincipalAvatar({
+  displayName,
+  avatarUrl,
+  initials,
+}: {
+  displayName: string;
+  avatarUrl?: string | null;
+  initials?: string | null;
+}) {
+  return (
+    <Avatar size="sm" className="mt-0.5" aria-hidden="true">
+      {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
+      <AvatarFallback>{initials ?? displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
+    </Avatar>
+  );
+}
+
+// The named type ladder in index.css explicitly prefers Tailwind text-xs and
+// text-sm for its 12px and 14px tiers; these are the shared scale tokens.
+function RowShell({
+  avatar,
+  title,
+  subtitle,
+  badge,
+  action,
+}: {
+  avatar: React.ReactNode;
+  title: React.ReactNode;
+  subtitle?: React.ReactNode;
+  badge?: React.ReactNode;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-2.5 py-2">
+      {avatar}
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="truncate text-sm font-medium">{title}</span>
+          {badge}
+        </div>
+        {subtitle ? <div className="truncate text-xs text-muted-foreground">{subtitle}</div> : null}
+      </div>
+      {action ? <div className="shrink-0 self-center">{action}</div> : null}
+    </div>
+  );
+}
+
+export function IssueShareSheet({
+  issueId,
+  companyId,
+  canManage,
+  open,
+  onOpenChange,
+  aclDescription: aclDescriptionProp,
+  implicitPrincipals = [],
+  initialView = "list",
+  initialAddSelection = "",
+}: {
+  issueId: string;
+  companyId: string;
+  canManage: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  aclDescription?: string;
+  implicitPrincipals?: ShareSheetImplicitPrincipal[];
+  /** Initial panel — `add` opens straight into the add flow (stories/tests). */
+  initialView?: "list" | "add";
+  /** Pre-selected add subject (`type:id`), used by stories/tests to show the caution. */
+  initialAddSelection?: string;
+}) {
+  const aclDescription = aclDescriptionProp ?? t("upgrade1029NewComponents.issueShareSheet.aclDescription");
+  const queryClient = useQueryClient();
+  const { pushToast } = useToastActions();
+  const [view, setView] = useState<"list" | "add">(initialView);
+  const [addSelection, setAddSelection] = useState<string>(initialAddSelection);
+  const [revokeTarget, setRevokeTarget] = useState<IssueAccessGrant | null>(null);
+
+  const grantsQuery = useQuery({
+    queryKey: queryKeys.issues.accessGrants(issueId),
+    queryFn: () => issuesApi.listAccessGrants(issueId),
+    enabled: open,
+  });
+  const directoryQuery = useQuery({
+    queryKey: queryKeys.access.companyUserDirectory(companyId),
+    queryFn: () => accessApi.listUserDirectory(companyId),
+    enabled: open && view === "add" && canManage,
+  });
+  const agentsQuery = useQuery({
+    queryKey: queryKeys.agents.list(companyId),
+    queryFn: () => agentsApi.list(companyId),
+    enabled: open && view === "add" && canManage,
+  });
+
+  const activeGrants = useMemo(
+    () => (grantsQuery.data ?? []).filter((grant) => grant.revokedAt === null),
+    [grantsQuery.data],
+  );
+  const grantedSubjectKeys = useMemo(
+    () => new Set(activeGrants.filter((grant) => !grant.inherited && grant.source !== "project")
+      .map((grant) => `${grant.subjectType}:${grant.subjectId}`)),
+    [activeGrants],
+  );
+
+  const addMutation = useMutation({
+    mutationFn: (payload: { subjectType: "user" | "agent"; subjectId: string }) =>
+      issuesApi.createAccessGrant(issueId, payload),
+    onSuccess: () => {
+      // A task grant also changes descendant access and cached task discovery.
+      queryClient.invalidateQueries({ queryKey: ["issues"] });
+      setAddSelection("");
+      setView("list");
+      pushToast({ title: t("secretsMain.access.granted"), tone: "success" });
+    },
+    onError: (error) => {
+      pushToast({ title: t("upgrade1029NewComponents.issueShareSheet.addFailed"), body: (error as Error).message, tone: "error" });
+    },
+  });
+
+  const revokeMutation = useMutation({
+    mutationFn: (grant: IssueAccessGrant) => issuesApi.revokeAccessGrant(issueId, grant.id),
+    onSuccess: () => {
+      // A task grant also changes descendant access and cached task discovery.
+      queryClient.invalidateQueries({ queryKey: ["issues"] });
+      setRevokeTarget(null);
+      pushToast({ title: t("upgrade1029NewComponents.issueShareSheet.accessRevoked"), tone: "success" });
+    },
+    onError: (error) => {
+      pushToast({ title: t("upgrade1029NewComponents.issueShareSheet.revokeFailed"), body: (error as Error).message, tone: "error" });
+    },
+  });
+
+  // Candidate subjects for the "Add someone" combobox, minus anyone who already
+  // holds a direct grant on this task. Inherited/project access can be supplemented
+  // with an independent child grant before broader access is removed. Value encodes both type and id: `type:id`.
+  const addGroups = useMemo<SearchableSelectGroup<string, AccessSelectOption>[]>(() => {
+    const users = (directoryQuery.data?.users ?? [])
+      .filter((entry) => entry.user && !grantedSubjectKeys.has(`user:${entry.user.id}`))
+      .map((entry) => ({
+        key: `user:${entry.user!.id}`,
+        value: `user:${entry.user!.id}`,
+        label: entry.user!.name ?? entry.user!.email ?? t("upgrade1029NewComponents.costByUserTable.unknownUser"),
+        searchText: [entry.user!.name, entry.user!.email].filter(Boolean).join(" "),
+        identity: <Identity name={entry.user!.name ?? entry.user!.email ?? t("upgrade1029NewComponents.costByUserTable.unknownUser")} avatarUrl={entry.user!.image} size="sm" />,
+      }));
+    const agents = (agentsQuery.data ?? [])
+      .filter((agent) => !grantedSubjectKeys.has(`agent:${agent.id}`))
+      .map((agent) => ({
+        key: `agent:${agent.id}`,
+        value: `agent:${agent.id}`,
+        label: agent.name,
+        searchText: agent.name,
+        identity: <><AgentAvatar agent={agent} size={24} /><span className="truncate">{agent.name}</span></>,
+      }));
+    const groups: SearchableSelectGroup<string, AccessSelectOption>[] = [];
+    if (users.length > 0) groups.push({ id: "people", label: t("upgrade1029NewComponents.issueShareSheet.people"), options: users });
+    if (agents.length > 0) groups.push({ id: "agents", label: t("shell.agents"), options: agents });
+    return groups;
+  }, [directoryQuery.data, agentsQuery.data, grantedSubjectKeys]);
+
+  // Is the currently-selected add subject a *shared* agent? Drives the caution.
+  const selectedSharedAgentName = useMemo(() => {
+    if (!addSelection.startsWith("agent:")) return null;
+    const agentId = addSelection.slice("agent:".length);
+    const agent = (agentsQuery.data ?? []).find((candidate) => candidate.id === agentId);
+    if (!agent) return null;
+    return isSharedAgentVisibility(agentVisibilityFromPermissions(agent.permissions))
+      ? agent.name
+      : null;
+  }, [addSelection, agentsQuery.data]);
+
+  function resetAndClose(next: boolean) {
+    if (!next) {
+      setView("list");
+      setAddSelection("");
+      setRevokeTarget(null);
+    }
+    onOpenChange(next);
+  }
+
+  function submitAdd() {
+    if (!addSelection) return;
+    const [subjectType, subjectId] = addSelection.split(/:(.+)/) as ["user" | "agent", string];
+    if (!subjectId) return;
+    addMutation.mutate({ subjectType, subjectId });
+  }
+
+  const grantsView = useQueryView(grantsQuery);
+  const isLoading = grantsQuery.isLoading || grantsView.kind === "reconnecting";
+  const loadFailed = grantsView.kind === "error";
+  const isEmpty = !isLoading && !loadFailed && activeGrants.length === 0 && implicitPrincipals.length === 0;
+
+  return (
+    <Dialog open={open} onOpenChange={resetAndClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Lock className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            {t("upgrade1029NewComponents.issueShareSheet.title")}
+          </DialogTitle>
+          <DialogDescription>{aclDescription}</DialogDescription>
+        </DialogHeader>
+
+        {view === "list" ? (
+          <div className="space-y-1">
+            {isLoading ? (
+              <div className="space-y-2 py-1" data-testid="share-sheet-loading">
+                {[0, 1, 2].map((row) => (
+                  <div key={row} className="flex items-center gap-2.5 py-1">
+                    <Skeleton className="h-6 w-6 rounded-full" />
+                    <div className="flex-1 space-y-1.5">
+                      <Skeleton className="h-3 w-32" />
+                      <Skeleton className="h-2.5 w-20" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : loadFailed ? (
+              <div data-testid="share-sheet-error">
+                <QueryErrorState
+                  error={grantsQuery.error}
+                  action="load access"
+                  onRetry={grantsView.retry}
+                  retrying={grantsView.isFetching}
+                />
+              </div>
+            ) : isEmpty ? (
+              <p className="py-3 text-sm text-muted-foreground" data-testid="share-sheet-empty">
+                {t("upgrade1029NewComponents.issueShareSheet.onlyYou")}
+              </p>
+            ) : (
+              <div className="divide-y divide-border/60">
+                {implicitPrincipals.filter(principal => !activeGrants.some(grant => grant.subjectId === principal.id || `${grant.subjectType}:${grant.subjectId}` === principal.id)).map((principal) => (
+                  <RowShell
+                    key={`implicit:${principal.id}`}
+                    avatar={
+                      <PrincipalAvatar
+                        displayName={principal.displayName}
+                        avatarUrl={principal.avatarUrl}
+                        initials={principal.initials}
+                      />
+                    }
+                    title={principal.displayName}
+                    subtitle={principal.subtitle ?? undefined}
+                    badge={
+                      <span className="inline-flex shrink-0 items-center rounded-md border border-border bg-muted/50 px-1.5 py-0.5 text-(length:--text-nano) font-medium text-muted-foreground">
+                        {principal.roleLabel}
+                      </span>
+                    }
+                  />
+                ))}
+                {activeGrants.map((grant) => {
+                  const displayName = grant.subjectDisplayName ?? t("activity.actors.unknown");
+                  const implicitPrincipal = implicitPrincipals.find(principal =>
+                    principal.id === `${grant.subjectType}:${grant.subjectId}`);
+                  const revocable = canManage && !grant.inherited && grantIsRevocable(grant.source);
+                  const grantedAgo = timeAgo(grant.createdAt);
+                  return (
+                    <RowShell
+                      key={grant.id}
+                      avatar={
+                        <PrincipalAvatar
+                          displayName={displayName}
+                          avatarUrl={grant.subjectAvatarUrl}
+                          initials={grant.subjectInitials}
+                        />
+                      }
+                      title={displayName}
+                      subtitle={implicitPrincipal ? t("upgrade1029NewComponents.issueShareSheet.roleAccess", { role: implicitPrincipal.roleLabel }) : grant.inherited ? t("upgrade1029NewComponents.issueShareSheet.inheritedAccess") : grant.source === "explicit" ? t("upgrade1029NewComponents.issueShareSheet.sharedAgo", { time: grantedAgo }) : t("upgrade1029NewComponents.issueShareSheet.grantedAgo", { time: grantedAgo })}
+                      badge={<SourceBadge source={grant.source} />}
+                      action={
+                        revocable ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground hover:text-destructive"
+                            onClick={() => setRevokeTarget(grant)}
+                          >
+                            {implicitPrincipal ? t("upgrade1029NewComponents.issueShareSheet.removeSavedGrant") : t("companyAccessResidual.revoke")}
+                          </Button>
+                        ) : grant.source === "project" ? (
+                          <span className="text-(length:--text-nano) text-muted-foreground">
+                            {t("upgrade1029NewComponents.issueShareSheet.projectManaged")}
+                          </span>
+                        ) : null
+                      }
+                    />
+                  );
+                })}
+              </div>
+            )}
+
+            {canManage ? (
+              <div className="pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setView("add")}
+                  disabled={isLoading}
+                >
+                  <UserPlus className="h-3.5 w-3.5" aria-hidden="true" /> {t("upgrade1029NewComponents.issueShareSheet.addSomeone")}
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <SearchableSelect
+              value={addSelection}
+              groups={addGroups}
+              renderValue={(option) => option ? renderAccessIdentity(option) : t("upgrade1029NewComponents.issueShareSheet.choosePlaceholder")}
+              renderOption={renderAccessIdentity}
+              onValueChange={(value) => setAddSelection(value)}
+              placeholder={t("upgrade1029NewComponents.issueShareSheet.choosePlaceholder")}
+              searchPlaceholder={t("upgrade1029NewComponents.issueShareSheet.searchPlaceholder")}
+              loading={directoryQuery.isLoading || agentsQuery.isLoading}
+              loadingMessage={t("upgrade1029NewComponents.issueShareSheet.loadingDirectory")}
+              emptyMessage={t("upgrade1029NewComponents.issueShareSheet.noOneLeft")}
+              triggerClassName="w-full"
+            />
+
+            {selectedSharedAgentName ? (
+              <div
+                role="note"
+                aria-label={t("upgrade1029NewComponents.issueShareSheet.sharedAgentCautionLabel")}
+                data-testid="shared-agent-caution"
+                className="flex items-start gap-2 rounded-md border border-border bg-muted px-3 py-2 text-xs leading-relaxed text-foreground"
+              >
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span>
+                  <span className="font-semibold">{t("upgrade1029NewComponents.issueShareSheet.sharedAgent")}</span> {t("upgrade1029NewComponents.issueShareSheet.sharedAgentCaution", { name: selectedSharedAgentName })}
+                </span>
+              </div>
+            ) : null}
+
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setView("list");
+                  setAddSelection("");
+                }}
+              >
+                {t("agentManagement.actions.back")}
+              </Button>
+              <Button size="sm" onClick={submitAdd} disabled={!addSelection || addMutation.isPending}>
+                {addMutation.isPending ? t("toolsAdvanced.residual.adding") : t("operations.common.add")}
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+
+      <AlertDialog
+        open={revokeTarget !== null}
+        onOpenChange={(next) => {
+          if (!next) setRevokeTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("upgrade1029NewComponents.issueShareSheet.removeTitle", { name: revokeTarget?.subjectDisplayName ?? t("upgrade1029NewComponents.issueShareSheet.thisSubject") })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("upgrade1029NewComponents.issueShareSheet.removeDescription")}{" "}
+              <span className="font-semibold">{t("upgrade1029NewComponents.issueShareSheet.removeNot")}</span>{t("upgrade1029NewComponents.issueShareSheet.removeAfter")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("adminExtra.experimental.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(event) => {
+                event.preventDefault();
+                if (revokeTarget) revokeMutation.mutate(revokeTarget);
+              }}
+              disabled={revokeMutation.isPending}
+            >
+              {revokeMutation.isPending ? t("issueProperties.removing") : t("upgrade1029NewComponents.issueShareSheet.removeGrant")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </Dialog>
+  );
+}

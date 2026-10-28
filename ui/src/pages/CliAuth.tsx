@@ -5,8 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useTranslation } from "@/i18n";
 import { accessApi } from "../api/access";
+import { ApiError } from "../api/client";
 import { authApi } from "../api/auth";
 import { queryKeys } from "../lib/queryKeys";
+
+function cliAuthRetryDelay(error: unknown): number {
+  const body = error instanceof ApiError && error.body && typeof error.body === "object"
+    ? error.body as { details?: unknown } : null;
+  const details = body?.details && typeof body.details === "object"
+    ? body.details as { retryAfterSeconds?: unknown } : null;
+  const milliseconds = typeof details?.retryAfterSeconds === "number" ? details.retryAfterSeconds * 1000 : Number.NaN;
+  return Number.isFinite(milliseconds) && milliseconds > 0 ? Math.max(1000, milliseconds) : 60_000;
+}
+
+function isCliAuthRateLimit(error: unknown): error is ApiError {
+  return error instanceof ApiError && error.status === 429;
+}
 
 export function CliAuthPage() {
   const { t } = useTranslation();
@@ -25,11 +39,20 @@ export function CliAuthPage() {
     queryFn: () => authApi.getSession(),
     retry: false,
   });
+  const challengeQueryKey = useMemo(() => ["cli-auth-challenge", challengeId, token] as const, [challengeId, token]);
+  const retryWindowEndsAt = useMemo(() => Date.now() + 10 * 60_000, [challengeId, token]);
   const challengeQuery = useQuery({
-    queryKey: ["cli-auth-challenge", challengeId, token],
+    queryKey: challengeQueryKey,
     queryFn: () => accessApi.getCliAuthChallenge(challengeId, token),
     enabled: challengeId.length > 0 && token.length > 0,
-    retry: false,
+    retry: (failureCount, error) => {
+      if (!isCliAuthRateLimit(error) || failureCount >= 3) return false;
+      const knownChallenge = queryClient.getQueryData<{ expiresAt: string }>(challengeQueryKey);
+      const knownExpiry = Date.parse(knownChallenge?.expiresAt ?? "");
+      const deadline = Number.isFinite(knownExpiry) ? Math.min(knownExpiry, retryWindowEndsAt) : retryWindowEndsAt;
+      return Date.now() + cliAuthRetryDelay(error) < deadline;
+    },
+    retryDelay: (_failureCount, error) => cliAuthRetryDelay(error),
   });
 
   const approveMutation = useMutation({
@@ -51,8 +74,11 @@ export function CliAuthPage() {
     return <div className="mx-auto max-w-xl py-10 text-sm text-destructive">{t("integrations.cliAuth.invalidUrl")}</div>;
   }
 
-  if (sessionQuery.isLoading || challengeQuery.isLoading) {
-    return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">{t("integrations.cliAuth.loading")}</div>;
+  const waitingForRateLimit = isCliAuthRateLimit(challengeQuery.failureReason) && challengeQuery.isFetching;
+  if (sessionQuery.isLoading || challengeQuery.isLoading || waitingForRateLimit) {
+    return <div role="status" className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">
+      {waitingForRateLimit ? t("upgrade1029ConflictsD.cliAuth.rateLimited") : t("integrations.cliAuth.loading")}
+    </div>;
   }
 
   if (challengeQuery.error) {
@@ -129,7 +155,7 @@ export function CliAuthPage() {
       <Card className="block p-6">
         <h1 className="text-xl font-semibold">{t("integrations.cliAuth.approveTitle")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {t("integrations.cliAuth.requestBody")}
+          {t("upgrade1029ConflictsD.cliAuth.requestBody")}
         </p>
 
         <div className="mt-5 space-y-3 text-sm">
@@ -149,7 +175,7 @@ export function CliAuthPage() {
           </div>
           {challenge.requestedCompanyName && (
             <div>
-              <div className="text-muted-foreground">Requested organization</div>
+              <div className="text-muted-foreground">{t("upgrade1029ConflictsD.cliAuth.auditOrganization")}</div>
               <div className="text-foreground">{challenge.requestedCompanyName}</div>
             </div>
           )}
@@ -165,7 +191,9 @@ export function CliAuthPage() {
 
         {!challenge.canApprove && (
           <p className="mt-4 text-sm text-destructive">
-            {t("integrations.cliAuth.adminRequired")}
+            {challenge.requestedAccess === "instance_admin_required"
+              ? t("integrations.cliAuth.adminRequired")
+              : t("upgrade1029ConflictsD.cliAuth.noOrganizationAccess")}
           </p>
         )}
 

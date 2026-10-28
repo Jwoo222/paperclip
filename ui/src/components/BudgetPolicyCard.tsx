@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { centsToUsd, usdToCents } from "@paperclipai/shared";
+import { useEffect, useId, useState } from "react";
 import type { BudgetPolicySummary } from "@paperclipai/shared";
 import { AlertTriangle, PauseCircle, ShieldAlert, Wallet } from "lucide-react";
 import { cn, formatCents } from "../lib/utils";
@@ -28,12 +29,16 @@ function statusTone(status: BudgetPolicySummary["status"]) {
 export function BudgetPolicyCard({
   summary,
   onSave,
+  onUnpricedUsagePolicyChange,
+  onReservationChange,
   isSaving,
   compact = false,
   variant = "card",
 }: {
   summary: BudgetPolicySummary;
   onSave?: (amountCents: number) => void;
+  onReservationChange?: (cents: string) => void;
+  onUnpricedUsagePolicyChange?: (policy: "block" | "allow") => void;
   isSaving?: boolean;
   compact?: boolean;
   variant?: "card" | "plain";
@@ -44,6 +49,38 @@ export function BudgetPolicyCard({
   useEffect(() => {
     setDraftBudget(centsInputValue(summary.amount));
   }, [summary.amount]);
+
+  const [reservation, setReservation] = useState(centsToUsd(summary.reservationCents ?? 0));
+  const reservationErrorId = useId();
+  useEffect(() => setReservation(centsToUsd(summary.reservationCents ?? 0)), [summary.reservationCents]);
+  let reservationCents: string | null = null;
+  try { if (!reservation.trim().startsWith("-")) reservationCents = usdToCents(reservation.trim()); } catch { /* Shown as invalid input below. */ }
+  const reservationSection = onReservationChange ? <div className="space-y-2">
+    <label className="text-sm">{t("upgrade1029ConflictsA.budget.reservePerRun")}
+      <Input aria-label={t("upgrade1029ConflictsA.budget.reservePerRun")} aria-invalid={reservationCents === null} aria-describedby={reservationCents === null ? reservationErrorId : undefined}
+        value={reservation} onChange={event => setReservation(event.target.value)} inputMode="decimal" />
+    </label>
+    {reservationCents === null && <p id={reservationErrorId} role="alert" className="text-xs text-destructive">{t("upgrade1029ConflictsA.budget.reserveInvalid")}</p>}
+    <p className="text-xs text-muted-foreground">{t("upgrade1029ConflictsA.budget.reserveHint")}</p>
+    <Button variant="outline" disabled={isSaving || reservationCents === null || reservationCents === (summary.reservationCents ?? "0.0000000")}
+      onClick={() => { if (reservationCents !== null) onReservationChange(reservationCents); }}>{t("upgrade1029ConflictsA.budget.updateReservation")}</Button>
+  </div> : null;
+
+  const advancedSettings = onReservationChange || onUnpricedUsagePolicyChange ? (
+    <details className="space-y-3">
+      <summary className="cursor-pointer text-sm font-medium">{t("upgrade1029ConflictsA.budget.advancedSettings")}</summary>
+      <div className="space-y-4">
+        {onUnpricedUsagePolicyChange && (
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={summary.unpricedUsagePolicy !== "allow"} disabled={isSaving}
+              onChange={(event) => onUnpricedUsagePolicyChange(event.target.checked ? "block" : "allow")} />
+            {t("upgrade1029ConflictsA.budget.blockUnpriced")}
+          </label>
+        )}
+        {reservationSection}
+      </div>
+    </details>
+  ) : null;
 
   const parsedDraft = parseDollarInput(draftBudget);
   const canSave = typeof parsedDraft === "number" && parsedDraft !== summary.amount && Boolean(onSave);
@@ -93,6 +130,10 @@ export function BudgetPolicyCard({
 
   const progressSection = (
     <div className="space-y-2">
+      {summary.pendingRunCount > 0 && <p className="text-sm text-destructive">{t("upgrade1029ConflictsA.budget.pendingRuns", { count: summary.pendingRunCount })}</p>}
+      {summary.unpricedEventCount > 0 && (
+        <p className="text-sm text-destructive">{t("upgrade1029ConflictsA.budget.unpricedEvents", { count: summary.unpricedEventCount })}</p>
+      )}
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>{t("overview.budget.remaining")}</span>
         <span>{summary.amount > 0 ? formatCents(summary.remainingAmount) : t("overview.budget.unlimited")}</span>
@@ -122,9 +163,9 @@ export function BudgetPolicyCard({
     <div className="flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-900 dark:text-red-100">
       <PauseCircle className="mt-0.5 h-4 w-4 shrink-0" />
       <div>
-          {summary.scopeType === "project"
-          ? t("overview.budget.projectPaused")
-          : t("overview.budget.scopePaused")}
+        {summary.scopeType === "project"
+          ? t("upgrade1029ConflictsA.budget.executionPausedProject")
+          : t("upgrade1029ConflictsA.budget.heartbeatsPausedScope")}
       </div>
     </div>
   ) : null;
@@ -184,6 +225,7 @@ export function BudgetPolicyCard({
         {progressSection}
         {pausedPane}
         {saveSection}
+        {advancedSettings}
         {parsedDraft === null ? (
           <p className="text-xs text-destructive">{t("overview.budget.invalidAmount")}</p>
         ) : null}
@@ -213,6 +255,7 @@ export function BudgetPolicyCard({
         {progressSection}
         {pausedPane}
         {saveSection}
+        {advancedSettings}
         {parsedDraft === null ? (
           <p className="text-xs text-destructive">{t("overview.budget.invalidAmount")}</p>
         ) : null}

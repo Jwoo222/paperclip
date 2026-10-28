@@ -2,7 +2,7 @@ import { t } from "@/i18n";
 import { useCallback, useMemo } from "react";
 import { NavLink, useLocation } from "@/lib/router";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, LogOut, MoreHorizontal, Star } from "lucide-react";
+import { Lock, Loader2, LogOut, MoreHorizontal, Star } from "lucide-react";
 import { useCompany } from "../context/CompanyContext";
 import { useSidebar } from "../context/SidebarContext";
 import { projectsApi } from "../api/projects";
@@ -131,6 +131,7 @@ export function SidebarStarredProjects() {
           >
             <ProjectTile color={project.color ?? null} icon={project.icon ?? null} size="xs" />
             <span className={rail ? SIDEBAR_RAIL_HIDDEN_LABEL : "flex-1 truncate"}>{project.name}</span>
+            {!rail && project.visibility === "private" ? <Lock className="size-3.5 shrink-0 text-muted-foreground" aria-label={t("upgrade1029AutoMerged.sidebar.privateProject")} /> : null}
             {!rail && project.pauseReason === "budget" ? (
               <BudgetSidebarMarker title={t("shell.projectPausedByBudget")} />
             ) : null}

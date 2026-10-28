@@ -1,10 +1,12 @@
 import { t } from "@/i18n";
 import { useEffect, useRef, useState } from "react";
 import type { IssueWorkMode } from "@paperclipai/shared";
-import { Check, ClipboardList, MessageCircleQuestion, Paperclip, Plus, Target, X, type LucideIcon } from "lucide-react";
+import { Check, ClipboardList, MessageCircleQuestion, Lock, Paperclip, Plus, Target, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useMobileEntityPickerViewportStyle } from "@/hooks/useMobileEntityPickerViewportStyle";
 import { workModeMetaFor } from "@/lib/work-mode-meta";
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +23,7 @@ interface ComposerAddMenuProps {
   onAttachFile?: () => void;
   attachDisabled?: boolean;
   onGoal?: () => void;
+  privacy?: { private: boolean; inherited?: string; onChange: (value: boolean) => void };
   disabled?: boolean;
   mobile?: boolean;
   triggerTestId?: string;
@@ -28,9 +31,10 @@ interface ComposerAddMenuProps {
 }
 
 export function ComposerAddMenu({
-  mode, onModeChange, onAttachFile, attachDisabled, onGoal, disabled, mobile: mobileProp, triggerTestId, menuTestId,
+  mode, onModeChange, onAttachFile, attachDisabled, onGoal, privacy, disabled, mobile: mobileProp, triggerTestId, menuTestId,
 }: ComposerAddMenuProps) {
   const [open, setOpen] = useState(false);
+  const mobileViewportStyle = useMobileEntityPickerViewportStyle();
   const goalFocusRef = useRef(false);
   const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_SHELL_QUERY).matches);
   useEffect(() => {
@@ -41,9 +45,10 @@ export function ComposerAddMenu({
     return () => query.removeEventListener("change", update);
   }, []);
   const mobile = mobileProp ?? narrow;
-  if (!onModeChange && !onAttachFile && !onGoal) return null;
+  if (!onModeChange && !onAttachFile && !onGoal && !privacy) return null;
   const actions: Array<{ id: string; label: string; detail?: string; Icon: LucideIcon; select: () => void; disabled?: boolean; selected?: boolean }> = [
     ...(onAttachFile ? [{ id: "composer-add-file", label: t("upgrade2610Task.filesAndImages"), Icon: Paperclip, select: onAttachFile, disabled: attachDisabled }] : []),
+    ...(privacy ? [{ id: "composer-add-private", label: t("upgrade1029ConflictsB.composer.privateTask"), detail: privacy.inherited, Icon: Lock, select: () => privacy.onChange(!privacy.private), selected: privacy.private, disabled: Boolean(privacy.inherited) }] : []),
     ...(onGoal ? [{ id: "composer-add-goal", label: t("newUi.kcdbf6975e8a3"), detail: t("upgrade2610Task.keepPursuing"), Icon: Target, select: onGoal }] : []),
     ...(onModeChange ? [
       { id: "composer-add-plan", label: t("upgrade2610Task.planMode"), detail: t("upgrade2610Task.planBeforeActing"), Icon: ClipboardList, select: () => onModeChange(mode === "planning" ? "standard" : "planning"), selected: mode === "planning" },
@@ -62,14 +67,14 @@ export function ComposerAddMenu({
   </>;
   if (mobile) return <Dialog open={open} onOpenChange={setOpen}>
     <DialogTrigger asChild>{trigger}</DialogTrigger>
-    <DialogContent aria-describedby={undefined} showCloseButton={false} data-testid={menuTestId}
+    <DialogContent aria-describedby={undefined} showCloseButton={false} data-testid={menuTestId} style={mobileViewportStyle}
       onCloseAutoFocus={(event) => { if (goalFocusRef.current) { event.preventDefault(); goalFocusRef.current = false; } }}
-      className="composer-mobile-dialog top-(--pct-50) -translate-y-(--pct-50) gap-0 overflow-y-auto p-0">
-      <div className="flex items-center gap-2 px-3 py-2">
+      className="composer-mobile-dialog flex flex-col translate-y-0 gap-0 overflow-hidden p-0 md:translate-y-0">
+      <div className="flex shrink-0 items-center gap-2 px-3 py-2">
         <DialogTitle className="min-w-0 flex-1 text-sm font-medium">{t("operations.common.add")}</DialogTitle>
-        <DialogClose asChild><button type="button" aria-label={t("upgrade2610Task.closeAddMenu")} className="grid size-8 place-items-center rounded-md text-muted-foreground hover:bg-accent"><X className="size-4" /></button></DialogClose>
+        <DialogClose asChild><button type="button" aria-label={t("upgrade2610Task.closeAddMenu")} className="grid size-11 place-items-center rounded-md text-muted-foreground hover:bg-accent"><X className="size-4" /></button></DialogClose>
       </div>
-      <div className="p-2 pt-0">{actions.map((action) => <button key={action.id} type="button" disabled={action.disabled} data-testid={action.id}
+      <div className="min-h-0 overflow-y-auto overscroll-contain p-2 pt-0">{actions.map((action) => <button key={action.id} type="button" disabled={action.disabled} data-testid={action.id}
         onClick={() => { goalFocusRef.current = action.id === "composer-add-goal"; action.select(); setOpen(false); }}
         className="flex min-h-11 w-full items-center gap-3 rounded-md px-2 text-left text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50">
         {content(action)}
@@ -107,4 +112,29 @@ export function ComposerModeChip({ mode, onRemove, disabled, testId, mobile = fa
     <span className={mobile ? "sr-only" : "max-sm:sr-only"}>{meta.label}</span>
     <X className="size-3.5" aria-hidden />
   </button>;
+}
+
+export function ComposerPrivacyChip({ inherited, onRemove, disabled }: { inherited?: string; onRemove: () => void; disabled?: boolean }) {
+  const [hintOpen, setHintOpen] = useState(false);
+  const explanation = inherited ?? t("upgrade1029ConflictsB.composer.privateExplanation");
+  return <TooltipProvider><Tooltip open={hintOpen} onOpenChange={setHintOpen}>
+    <TooltipTrigger asChild>
+      <span className="inline-flex shrink-0" role={inherited ? "button" : undefined}
+        tabIndex={inherited ? 0 : undefined} aria-label={inherited ? explanation : undefined}
+        onClick={inherited ? (event) => { event.preventDefault(); setHintOpen(true); } : undefined}
+        onKeyDown={inherited ? (event) => {
+          if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setHintOpen(true); }
+        } : undefined}>
+        <button type="button" onClick={onRemove} aria-label={inherited ? t("upgrade1029ConflictsB.composer.privateTask") : t("upgrade1029ConflictsB.composer.removePrivateTask")}
+          title={explanation}
+          disabled={disabled || Boolean(inherited)} data-testid="composer-private-chip"
+          className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-border bg-muted px-2 text-xs font-medium text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+          <Lock className="size-3.5" aria-hidden />
+          <span className="max-sm:sr-only">{t("newUi.kc63eb6720c6e")}</span>
+          {!inherited ? <X className="size-3.5" aria-hidden /> : null}
+        </button>
+      </span>
+    </TooltipTrigger>
+    <TooltipContent className="max-w-xs">{explanation}</TooltipContent>
+  </Tooltip></TooltipProvider>;
 }

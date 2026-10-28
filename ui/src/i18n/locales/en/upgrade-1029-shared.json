@@ -1,0 +1,21 @@
+{
+  "upgrade1029Shared": {
+    "taskListColumns": {
+      "task": "Task",
+      "taskId": "Task ID",
+      "createdBy": "Created by",
+      "assignee": "Assignee",
+      "project": "Project",
+      "parentTask": "Parent Task",
+      "tags": "Tags",
+      "worktree": "Worktree",
+      "lastUpdated": "Last updated"
+    },
+    "taskListViews": {
+      "inbox": "Inbox",
+      "unread": "Unread",
+      "blocked": "Needs attention",
+      "all": "All tasks"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 import { t as tNewUi } from "@/i18n";
 import { t } from "@/i18n";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type AiProvider, type AiAuthMethod, type AiConnectionLoginIntent } from "@paperclipai/shared";
 import { AgentProviderConnection } from "@/components/new-agent/AgentProviderConnection";
@@ -28,17 +28,19 @@ type Props = {
   agentIds: string[];
   allAgents: boolean;
   environmentId?: string;
+  defaults?: ReactNode;
+  disabled?: boolean;
   onComplete: (result: { connectionId: string; grantId: string; method: AiAuthMethod }) => void;
   onCancel: () => void;
 };
 
 /** Connections hosts the same provider step as agent setup, with its own save intent. */
 export function AiConnectionCredentialStep(props: Props) {
-  if (props.provider === "openrouter") return <ApiKeyConnectionStep {...props} />;
+  if (props.provider === "openrouter" || props.provider === "github" || props.provider === "google") return <ApiKeyConnectionStep {...props} />;
   return <SubscriptionConnectionStep {...props} />;
 }
 
-function SubscriptionConnectionStep({ companyId, provider, initialMethod, fixedMethod, connectionId, name: initialName, hideName, nameForMethod, ownership, agentIds, allAgents, environmentId: suppliedEnvironmentId, onComplete, onCancel }: Props) {
+function SubscriptionConnectionStep({ companyId, provider, initialMethod, fixedMethod, connectionId, name: initialName, hideName, nameForMethod, ownership, agentIds, allAgents, environmentId: suppliedEnvironmentId, onComplete, onCancel, defaults, disabled }: Props) {
   const [name, setName] = useState(initialName);
   const [chosenEnvironment, setChosenEnvironment] = useState<string>();
   const client = useQueryClient();
@@ -76,7 +78,7 @@ function SubscriptionConnectionStep({ companyId, provider, initialMethod, fixedM
   const canLogin = environment?.driver === "sandbox" && caps.data?.sandboxProviders?.[sandboxProvider]?.supportsLoginPty === true;
   const loading = [envs, caps, settings, experimental, general].some((query) => query.isPending);
   const error = environmentError ?? [envs, caps, settings, experimental, general].find((query) => query.error)?.error?.message;
-  const intent: AiConnectionLoginIntent = { provider, method: "subscription", name, ownership, agentIds, allAgents, connectionId };
+  const intent: AiConnectionLoginIntent = { provider: provider as AiConnectionLoginIntent["provider"], method: "subscription", name, ownership, agentIds, allAgents, connectionId };
   return <div className="mx-auto w-full min-w-0 max-w-xl space-y-6">
     {!hideName && <label className="block space-y-2 text-sm">{t("toolsAdvanced.connection.connectionName")}<Input value={name} onChange={(event) => setName(event.target.value)} disabled={Boolean(connectionId)} /></label>}
     {!suppliedEnvironmentId && !forced.forced && loginEnvironments.length > 1 && <Select value={environmentId ?? ""} onValueChange={setChosenEnvironment}>
@@ -84,6 +86,7 @@ function SubscriptionConnectionStep({ companyId, provider, initialMethod, fixedM
       <SelectContent>{loginEnvironments.map((env) => <SelectItem key={env.id} value={env.id}>{env.name}</SelectItem>)}</SelectContent>
     </Select>}
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+    {defaults}
     {loading ? <p role="status" className="text-sm text-muted-foreground">{tNewUi("newUi.kcdca9524ec00")}</p> : <AgentProviderConnection
       key={environmentId ?? "local"}
       companyId={companyId}
@@ -94,24 +97,38 @@ function SubscriptionConnectionStep({ companyId, provider, initialMethod, fixedM
       onBack={onCancel}
       onConnected={() => {}}
       testConnection={async () => false}
-      managedAccount={{ intent, nameForMethod, initialMethod, fixedMethod: fixedMethod ?? Boolean(connectionId), disabled: loading || Boolean(error) || !name.trim(), onComplete: (result) => { void client.invalidateQueries({ queryKey: ["ai-connections", companyId] }); onComplete(result); } }}
+      managedAccount={{ intent, nameForMethod, initialMethod, fixedMethod: fixedMethod ?? Boolean(connectionId), disabled: disabled || loading || Boolean(error) || !name.trim(), onComplete: (result) => { void client.invalidateQueries({ queryKey: ["ai-connections", companyId] }); void client.invalidateQueries({ queryKey: ["tools"] }); onComplete(result); } }}
     />}
   </div>;
 }
 
-function ApiKeyConnectionStep({ companyId, provider, connectionId, name: initialName, hideName, nameForMethod, ownership, agentIds, allAgents, onComplete, onCancel }: Props) {
+function ApiKeyConnectionStep({ companyId, provider, connectionId, name: initialName, hideName, nameForMethod, ownership, agentIds, allAgents, environmentId: suppliedEnvironmentId, defaults, disabled, onComplete, onCancel }: Props) {
   const [name, setName] = useState(initialName);
   const [apiKey, setApiKey] = useState("");
   const client = useQueryClient();
+  const [chosenEnvironment, setChosenEnvironment] = useState<string>();
+  const copilot = provider === "github";
+  const envs = useQuery({ queryKey: queryKeys.environments.list(companyId), queryFn: () => environmentsApi.list(companyId), enabled: copilot });
+  const settings = useQuery({ queryKey: queryKeys.instance.settings, queryFn: instanceSettingsApi.get, enabled: copilot });
+  const environmentId = suppliedEnvironmentId ?? chosenEnvironment ?? settings.data?.defaultEnvironmentId ?? resolveLocalDefaultEnvironmentId(envs.data);
+  const environmentError = copilot ? envs.error?.message ?? settings.error?.message : undefined;
+  const preparing = copilot && (envs.isPending || settings.isPending);
   const save = useMutation({
-    mutationFn: () => aiConnectionsApi.create(companyId, { provider, method: "api_key", name: connectionId ? name : nameForMethod?.("api_key") ?? name, ownership, agentIds, allAgents, connectionId, apiKey }),
-    onSuccess: (result) => { void client.invalidateQueries({ queryKey: ["ai-connections", companyId] }); onComplete({ ...result, method: "api_key" }); },
+    mutationFn: () => aiConnectionsApi.create(companyId, { provider, method: "api_key", name: connectionId ? name : nameForMethod?.("api_key") ?? name, ownership, agentIds, allAgents, connectionId, apiKey, ...(copilot ? { environmentId } : {}) }),
+    onSuccess: (result) => { void client.invalidateQueries({ queryKey: ["ai-connections", companyId] }); void client.invalidateQueries({ queryKey: ["tools"] }); onComplete({ ...result, method: "api_key" }); },
     onSettled: () => setApiKey(""),
   });
   return <div className="mx-auto w-full min-w-0 max-w-xl space-y-4">
     {!hideName && <label className="block space-y-2 text-sm">{t("toolsAdvanced.connection.connectionName")}<Input value={name} onChange={(event) => setName(event.target.value)} disabled={Boolean(connectionId)} /></label>}
     {save.error && <p role="alert" className="text-sm text-destructive">{save.error.message}</p>}
-    <ProviderApiKeyCard providerName="OpenRouter" value={apiKey} onChange={setApiKey} onSubmit={() => save.mutate()} disabled={save.isPending} placeholder={tNewUi("newUi.kc80c3ac9799d")} autoFocus />
-    <div className="flex justify-between gap-2"><Button variant="ghost" onClick={onCancel}>{t("taskDetail.cancel")}</Button><Button disabled={!name.trim() || !apiKey.trim() || save.isPending} onClick={() => save.mutate()}>{save.isPending ? t("upgrade2610Apps.credentialStep.connecting") : tNewUi("newUi.k1a2303ede074")}</Button></div>
+    {copilot && <p className="text-sm text-muted-foreground">{t("upgrade1029ConflictsB.aiConnections.copilotTokenIntro")} <a className="underline" href="https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/authenticate-copilot-cli" target="_blank" rel="noreferrer">{t("upgrade1029ConflictsB.aiConnections.githubTokenInstructions")}</a>{t("upgrade1029ConflictsB.aiConnections.copilotTokenOutro")}</p>}
+    {copilot && !suppliedEnvironmentId && <Select value={environmentId ?? ""} onValueChange={setChosenEnvironment} disabled={preparing || save.isPending}>
+      <SelectTrigger aria-label={t("upgrade1029ConflictsB.aiConnections.copilotExecutionEnvironment")}><SelectValue placeholder={t("upgrade1029ConflictsB.aiConnections.executionEnvironment")} /></SelectTrigger>
+      <SelectContent>{(envs.data ?? []).filter(env => env.status === "active").map(env => <SelectItem key={env.id} value={env.id}>{env.name}</SelectItem>)}</SelectContent>
+    </Select>}
+    {environmentError && <p role="alert" className="text-sm text-destructive">{environmentError}</p>}
+    {defaults}
+    <ProviderApiKeyCard providerName={copilot ? "GitHub Copilot" : provider === "google" ? "Google" : "OpenRouter"} value={apiKey} onChange={setApiKey} onSubmit={() => { if (!preparing && !environmentError && name.trim() && apiKey.trim()) save.mutate(); }} disabled={disabled || save.isPending || preparing || Boolean(environmentError)} placeholder={copilot ? "github_pat_..." : tNewUi("newUi.kc80c3ac9799d")} autoFocus />
+    <div className="flex justify-between gap-2"><Button variant="ghost" onClick={onCancel}>{t("taskDetail.cancel")}</Button><Button disabled={disabled || !name.trim() || !apiKey.trim() || save.isPending || preparing || Boolean(environmentError)} onClick={() => save.mutate()}>{save.isPending ? t("upgrade2610Apps.credentialStep.connecting") : tNewUi("newUi.k1a2303ede074")}</Button></div>
   </div>;
 }

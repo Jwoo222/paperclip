@@ -81,7 +81,6 @@ export function Sidebar() {
   const liveRunCount = liveRuns?.length ?? 0;
   const showWorkspacesLink = experimentalSettings?.enableIsolatedWorkspaces === true;
   const showApps = experimentalSettings?.enableApps === true;
-  const showPipelines = experimentalSettings?.enablePipelines === true;
   const showStatusCards = experimentalSettings?.enableStatusCards === true;
   const goalsLinkPending = experimentalSettings === undefined;
   const showGoalsLink = experimentalSettings?.enableGoalsSidebarLink === true;
@@ -186,9 +185,6 @@ export function Sidebar() {
             <SidebarNavItem to="/cases" label={t("shell.cases")} icon={Layers} textBadge="beta" />
           ) : null}
           <SidebarNavItem to="/routines" label={t("shell.routines")} icon={Repeat} />
-          {showPipelines ? (
-            <SidebarNavItem to="/pipelines" label={t("shell.pipelines")} icon={GitBranch} />
-          ) : null}
           {showGoalsLink ? (
             <SidebarNavItem to="/goals" label={t("shell.goals")} icon={Target} />
           ) : goalsLinkPending ? (
@@ -236,6 +232,7 @@ export function Sidebar() {
           <SidebarNavItem to="/costs" label={t("shell.costs")} icon={DollarSign} />
           {/* One entry — /audit merged into the rich Activity feed (PAP-16302). */}
           <SidebarNavItem to="/activity" label={t("shell.activity")} icon={History} />
+          <SidebarNavItem to="/activity/commentary" label={t("upgrade1029ConflictsB.commentary")} icon={History} />
           <SidebarNavItem to="/company/settings" label={t("shell.settings")} icon={Settings} />
         </SidebarSection>
 

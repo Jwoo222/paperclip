@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { agents, companies, createDb, heartbeatRunEvents, issues } from "@paperclipai/db";
+import { agents, authUsers, companies, companyMemberships, createDb, heartbeatRunEvents, issues } from "@paperclipai/db";
 import type { ServerAdapterModule } from "../adapters/index.js";
 import { registerServerAdapter, unregisterServerAdapter } from "../adapters/index.js";
 import { heartbeatService } from "../services/heartbeat.js";
@@ -31,6 +31,8 @@ describeDb("heartbeat issue model overrides across assignment paths", () => {
     tempDb = await startEmbeddedPostgresTestDatabase("heartbeat-model-overrides-");
     db = createDb(tempDb.connectionString);
     heartbeat = heartbeatService(db);
+    // Upstream now requires the responsible user to exist with an active membership.
+    await db.insert(authUsers).values({ id: "responsible-user", name: "Fixture owner", email: "owner@example.test", createdAt: new Date(), updatedAt: new Date() });
     for (const type of ["hermes_local", "codex_local", "claude_local"]) {
       registerServerAdapter({ type, supportsLocalAgentJwt: false, execute,
         testEnvironment: async () => ({ adapterType: type, status: "pass", checks: [], testedAt: new Date(0).toISOString() }),
@@ -52,6 +54,7 @@ describeDb("heartbeat issue model overrides across assignment paths", () => {
     const prefix = `T${companyId.replace(/-/g, "").slice(0, 6).toUpperCase()}`;
     await db.insert(companies).values({ id: companyId, name: "Override integration", issuePrefix: prefix,
       requireBoardApprovalForNewAgents: false, defaultResponsibleUserId: "responsible-user" });
+    await db.insert(companyMemberships).values({ companyId, principalType: "user", principalId: "responsible-user", status: "active", membershipRole: "member" });
     await db.insert(agents).values([
       { id: coder, companyId, name: "GPT executor", role: "engineer", status: "idle", adapterType: "hermes_local",
         adapterConfig: { model: "gpt-6-astra" }, runtimeConfig: {}, permissions: {} },

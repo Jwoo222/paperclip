@@ -12,6 +12,7 @@ import {
 } from "react";
 import { cn } from "@/lib/utils";
 import { t } from "@/i18n";
+import { usePaneWidthReset } from "@/hooks/usePaneWidthReset";
 
 const DEFAULT_SIDEBAR_WIDTH = 240;
 const MIN_SIDEBAR_WIDTH = 208;
@@ -87,7 +88,7 @@ type SidebarShellProps = {
  *
  * Opening/closing is intentionally instant (no width transition): the pin toggle
  * and peek snap between rail and expanded widths so the content never appears to
- * slide. Resizing the drag handle is likewise direct.
+ * slide. Resizing the drag handle is likewise direct; only double-click reset animates.
  */
 export function SidebarShell({
   children,
@@ -104,14 +105,19 @@ export function SidebarShell({
 }: SidebarShellProps) {
   const [width, setWidth] = useState(() => readStoredSidebarWidth(storageKey));
   const [isResizing, setIsResizing] = useState(false);
+  const shellRef = useRef<HTMLDivElement>(null);
+  const { resetting, startReset, cancelReset, onResetTransitionEnd } = usePaneWidthReset();
   const widthRef = useRef(width);
   const dragState = useRef<{ startX: number; startWidth: number } | null>(null);
 
   useEffect(() => {
+    cancelReset();
     const storedWidth = readStoredSidebarWidth(storageKey);
     widthRef.current = storedWidth;
     setWidth(storedWidth);
-  }, [storageKey]);
+  }, [storageKey, cancelReset]);
+
+  useEffect(() => { cancelReset(); }, [open, collapsed, peeking, cancelReset]);
 
   // Unified width function (plan §5): one code path for every pinned state.
   const expandedWidth = open ? width : 0;
@@ -133,13 +139,15 @@ export function SidebarShell({
   );
 
   const commitWidth = useCallback(
-    (nextWidth: number) => {
+    (nextWidth: number, animate = false) => {
+      if (animate) startReset();
+      else cancelReset();
       const clamped = clampSidebarWidth(nextWidth);
       widthRef.current = clamped;
       setWidth(clamped);
       writeStoredSidebarWidth(storageKey, clamped);
     },
-    [storageKey],
+    [storageKey, startReset, cancelReset],
   );
 
   const handlePointerDown = useCallback(
@@ -147,11 +155,15 @@ export function SidebarShell({
       if (!canResize) return;
 
       event.preventDefault();
+      const startWidth = resetting ? shellRef.current!.getBoundingClientRect().width : widthRef.current;
+      cancelReset();
+      widthRef.current = startWidth;
+      setWidth(startWidth);
       event.currentTarget.setPointerCapture(event.pointerId);
-      dragState.current = { startX: event.clientX, startWidth: widthRef.current };
+      dragState.current = { startX: event.clientX, startWidth };
       setIsResizing(true);
     },
-    [canResize],
+    [canResize, resetting, cancelReset],
   );
 
   const handlePointerMove = useCallback(
@@ -177,13 +189,14 @@ export function SidebarShell({
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
       if (!canResize) return;
+      const currentWidth = resetting ? shellRef.current!.getBoundingClientRect().width : width;
 
       if (event.key === "ArrowLeft") {
         event.preventDefault();
-        commitWidth(width - SIDEBAR_WIDTH_STEP);
+        commitWidth(currentWidth - SIDEBAR_WIDTH_STEP);
       } else if (event.key === "ArrowRight") {
         event.preventDefault();
-        commitWidth(width + SIDEBAR_WIDTH_STEP);
+        commitWidth(currentWidth + SIDEBAR_WIDTH_STEP);
       } else if (event.key === "Home") {
         event.preventDefault();
         commitWidth(MIN_SIDEBAR_WIDTH);
@@ -192,14 +205,15 @@ export function SidebarShell({
         commitWidth(MAX_SIDEBAR_WIDTH);
       }
     },
-    [canResize, commitWidth, width],
+    [canResize, commitWidth, width, resetting],
   );
 
   return (
-    <div className={cn("relative h-full shrink-0", className)} style={reservedStyle}>
+    <div ref={shellRef} className={cn("sidebar-shell relative h-full shrink-0", className)} style={reservedStyle}
+      data-width-resetting={resetting && canResize && !isResizing || undefined} onTransitionEnd={onResetTransitionEnd}>
       <div
         className={cn(
-          "absolute inset-y-0 left-0 flex flex-col overflow-hidden",
+          "sidebar-shell-panel absolute inset-y-0 left-0 flex flex-col overflow-hidden",
           // Open/close is instant (PAP-10676): no width transition so the rail and
           // expanded states snap without any sliding motion.
           // Overlay styling only while the panel is wider than its reserved
@@ -220,20 +234,21 @@ export function SidebarShell({
       {canResize ? (
         <div
           role="separator"
-          aria-label="Resize sidebar"
+          aria-label={t("shell.resizeSidebar")}
           aria-orientation="vertical"
           aria-valuemin={MIN_SIDEBAR_WIDTH}
           aria-valuemax={MAX_SIDEBAR_WIDTH}
           aria-valuenow={width}
           tabIndex={0}
           data-dragging={isResizing ? "" : undefined}
-          className="group absolute inset-y-0 z-20 cursor-col-resize touch-none outline-none"
+          className="pane-resize-handle group absolute inset-y-0 z-20 cursor-col-resize touch-none outline-none"
           style={{ right: -4, width: 8 }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={endResize}
           onPointerCancel={endResize}
           onLostPointerCapture={endResize}
+          onDoubleClick={() => commitWidth(DEFAULT_SIDEBAR_WIDTH, true)}
           onKeyDown={handleKeyDown}
         >
           <div

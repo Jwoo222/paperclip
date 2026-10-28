@@ -2,8 +2,8 @@ import { AgentAvatar } from "@/components/AgentAvatar";
 import { useEffect, useMemo, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Download, ScrollText, ShieldAlert } from "lucide-react";
-import type { Agent } from "@paperclipai/shared";
-import { Link } from "@/lib/router";
+import type { Agent, CaseWorkflowTransition } from "@paperclipai/shared";
+import { Link, useCaseHref } from "@/lib/router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,35 +26,38 @@ import { accessApi } from "@/api/access";
 import { ApiError } from "@/api/client";
 import { useToastActions } from "@/context/ToastContext";
 import { useTranslation } from "@/i18n";
+import { instanceSettingsApi } from "@/api/instanceSettings";
 
 const PAGE_SIZE = 50;
 const ALL = "__all";
 
 /** Action-domain prefixes offered in the filter (server does a prefix match). */
 const ACTION_DOMAINS: { value: string; labelKey: string }[] = [
-  { value: ALL, labelKey: "allActions" },
-  { value: "issue.", labelKey: "tasks" },
-  { value: "agent.", labelKey: "agents" },
-  { value: "heartbeat.", labelKey: "runs" },
-  { value: "approval.", labelKey: "approvals" },
-  { value: "project.", labelKey: "projects" },
-  { value: "goal.", labelKey: "goals" },
-  { value: "tool_", labelKey: "tools" },
-  { value: "cost.", labelKey: "costs" },
-  { value: "company.", labelKey: "company" },
+  { value: ALL, labelKey: "auditRuntime.feed.filters.allActions" },
+  { value: "issue.", labelKey: "auditRuntime.feed.filters.tasks" },
+  { value: "case.", labelKey: "operations.common.cases" },
+  { value: "agent.", labelKey: "auditRuntime.feed.filters.agents" },
+  { value: "heartbeat.", labelKey: "auditRuntime.feed.filters.runs" },
+  { value: "approval.", labelKey: "auditRuntime.feed.filters.approvals" },
+  { value: "project.", labelKey: "auditRuntime.feed.filters.projects" },
+  { value: "goal.", labelKey: "auditRuntime.feed.filters.goals" },
+  { value: "tool_", labelKey: "auditRuntime.feed.filters.tools" },
+  { value: "cost.", labelKey: "auditRuntime.feed.filters.costs" },
+  { value: "company.", labelKey: "auditRuntime.feed.filters.company" },
 ];
 
 /** Entity types offered in the filter (server does an exact match). */
 const ENTITY_TYPES: { value: string; labelKey: string }[] = [
-  { value: ALL, labelKey: "allEntities" },
-  { value: "issue", labelKey: "task" },
-  { value: "agent", labelKey: "agent" },
-  { value: "heartbeat_run", labelKey: "run" },
-  { value: "routine", labelKey: "routine" },
-  { value: "project", labelKey: "project" },
-  { value: "goal", labelKey: "goal" },
-  { value: "company", labelKey: "entityCompany" },
-  { value: "tool_connection", labelKey: "connection" },
+  { value: ALL, labelKey: "auditRuntime.feed.filters.allEntities" },
+  { value: "issue", labelKey: "auditRuntime.feed.filters.task" },
+  { value: "case", labelKey: "operations.common.case" },
+  { value: "agent", labelKey: "auditRuntime.feed.filters.agent" },
+  { value: "heartbeat_run", labelKey: "auditRuntime.feed.filters.run" },
+  { value: "routine", labelKey: "auditRuntime.feed.filters.routine" },
+  { value: "project", labelKey: "auditRuntime.feed.filters.project" },
+  { value: "goal", labelKey: "auditRuntime.feed.filters.goal" },
+  { value: "company", labelKey: "auditRuntime.feed.filters.entityCompany" },
+  { value: "tool_connection", labelKey: "auditRuntime.feed.filters.connection" },
 ];
 
 /**
@@ -87,6 +90,13 @@ export interface AuditFeedProps {
   /** Optional controlled action prefix, used by links from connection testing. */
   actionDomain?: string;
   onActionDomainChange?: (actionDomain: string) => void;
+  /** Shareable resource filter, independent of attribution permission. */
+  entityType?: string;
+  onEntityTypeChange?: (entityType: string) => void;
+  entityId?: string;
+  onEntityIdChange?: (entityId: string) => void;
+  /** Reset controlled URL filters together, preserving any locked agent/run. */
+  onClearFilters?: () => void;
 }
 
 function toStartIso(value: string): string | undefined {
@@ -101,7 +111,7 @@ function toEndIso(value: string): string | undefined {
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 }
 
-/** Actor avatar + name — agents render their icon glyph, humans their avatar. */
+/** Actor avatar + name, using the same identity as the rest of the product. */
 function AuditActor({
   record,
   agentMap,
@@ -123,9 +133,7 @@ function AuditActor({
   if (agent) {
     return (
       <span className="inline-flex min-w-0 items-center gap-1.5" title={agent.name}>
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-          <AgentAvatar agent={agent} size={16} className="h-3 w-3"/>
-        </span>
+        <AgentAvatar agent={agent} size={20} />
         <span className="truncate font-medium text-foreground">{agent.name}</span>
       </span>
     );
@@ -163,6 +171,15 @@ function AuditActor({
  */
 function AuditEntityNode({ record }: { record: AuditActionRecord }) {
   const { t } = useTranslation();
+  const caseHref = useCaseHref();
+  if (record.entityType === "case") {
+    const caseRef = record.entity.case;
+    return (
+      <Link to={caseHref(caseRef?.identifier ?? record.entityId)} className="font-medium text-primary hover:underline">
+        {caseRef ? `${caseRef.identifier} · ${caseRef.title}` : t("upgrade1029ConflictsE.auditTheCase")}
+      </Link>
+    );
+  }
   const { issue, document } = record.entity;
   const issueRef = issue?.identifier ?? issue?.id ?? null;
 
@@ -196,10 +213,12 @@ function AuditRow({
   record,
   agentMap,
   userProfileMap,
+  casesEnabled,
 }: {
   record: AuditActionRecord;
   agentMap: Map<string, Agent>;
   userProfileMap: Map<string, CompanyUserProfile>;
+  casesEnabled: boolean;
 }) {
   const { t } = useTranslation();
   const verb = t(`activity.actions.${record.action.replaceAll(".", "_")}`, {
@@ -215,6 +234,8 @@ function AuditRow({
   const excerpt = record.entity.comment?.excerpt?.trim();
   // Show the document key only when it isn't already the linked entity node.
   const documentKey = record.entity.issue && record.entity.document ? record.entity.document.key : null;
+  const workflowTransition = casesEnabled && record.action.startsWith("case.handoff_")
+    ? record.details?.workflowTransition as CaseWorkflowTransition | null | undefined : null;
 
   return (
     <li className="px-4 py-3 text-sm">
@@ -230,6 +251,10 @@ function AuditRow({
               “{excerpt}”
             </p>
           ) : null}
+          {workflowTransition?.from && workflowTransition?.to ? <p className="text-xs text-muted-foreground">
+            {workflowTransition.from.name ?? t("upgrade1029ConflictsE.caseInstructions")}{workflowTransition.from.phase ? ` · ${workflowTransition.from.phase}` : ""}
+            {" → "}{workflowTransition.to.name ?? t("upgrade1029ConflictsE.caseInstructions")} · {workflowTransition.to.phase}
+          </p> : null}
           {documentKey ? (
             <p className="text-xs text-muted-foreground">
               {t("auditRuntime.feed.document")} <span className="font-mono text-(length:--text-micro)">{documentKey}</span>
@@ -292,7 +317,13 @@ export function AuditFeed({
   onModeChange,
   actionDomain: controlledActionDomain,
   onActionDomainChange,
+  entityType: controlledEntityType,
+  onEntityTypeChange,
+  entityId: controlledEntityId,
+  onEntityIdChange,
+  onClearFilters,
 }: AuditFeedProps) {
+  const caseHref = useCaseHref();
   const { pushToast } = useToastActions();
   const { t } = useTranslation();
   const [agent, setAgent] = useState<string>(ALL);
@@ -303,7 +334,21 @@ export function AuditFeed({
     setLocalActionDomain(next);
     onActionDomainChange?.(next);
   };
-  const [entityType, setEntityType] = useState<string>(ALL);
+  const [localEntityType, setLocalEntityType] = useState<string>(ALL);
+  const entityType = controlledEntityType ?? localEntityType;
+  const setEntityType = (next: string) => {
+    setLocalEntityType(next);
+    onEntityTypeChange?.(next);
+  };
+  const [localEntityId, setLocalEntityId] = useState("");
+  const entityId = controlledEntityId ?? localEntityId;
+  const [entityIdDraft, setEntityIdDraft] = useState(entityId);
+  useEffect(() => setEntityIdDraft(entityId), [entityId]);
+  const setEntityId = (next: string) => {
+    setLocalEntityId(next);
+    setEntityIdDraft(next);
+    onEntityIdChange?.(next);
+  };
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [exporting, setExporting] = useState(false);
@@ -341,7 +386,7 @@ export function AuditFeed({
     responsibleUserId: responsibleUser === ALL ? undefined : responsibleUser,
     action: actionDomain === ALL ? undefined : actionDomain,
     entityType: lockedEntity?.type ?? (entityType === ALL ? undefined : entityType),
-    entityId: lockedEntity?.id,
+    entityId: lockedEntity?.id ?? (entityType === "case" ? entityId.trim() || undefined : undefined),
     from: toStartIso(dateFrom),
     to: toEndIso(dateTo),
   };
@@ -390,9 +435,15 @@ export function AuditFeed({
     const visible = hasBasicPage ? pages.filter((page) => page.accessTier !== "full") : pages;
     return visible.flatMap((page) => page.items);
   }, [feed.data, hasBasicPage]);
+  const { data: experimentalSettings } = useQuery({
+    queryKey: queryKeys.instance.experimentalSettings,
+    queryFn: () => instanceSettingsApi.getExperimental(),
+    enabled: items.some(item => Boolean(item.details?.workflowTransition)),
+  });
   // Access may be revoked between cursor requests. Treat the least-privileged
   // page as authoritative until every cached page has been fetched again.
   const accessTier = hasBasicPage ? "basic" : feed.data?.pages[0]?.accessTier;
+  const scopedCase = lockedEntity?.type === "case" ? items.find(item => item.entity.case)?.entity.case : null;
   const hasMixedAccessTiers = hasBasicPage && hasFullPage;
   const canUseAdvancedControls = lockedAgentId || lockedRunId
     ? true
@@ -454,10 +505,18 @@ export function AuditFeed({
   const clearFilters = () => {
     setAgent(ALL);
     setResponsibleUser(ALL);
-    setActionDomain(ALL);
-    setEntityType(ALL);
+    setLocalActionDomain(ALL);
+    setLocalEntityType(ALL);
+    setLocalEntityId("");
+    setEntityIdDraft("");
     setDateFrom("");
     setDateTo("");
+    if (onClearFilters) onClearFilters();
+    else {
+      onActionDomainChange?.(ALL);
+      onEntityTypeChange?.(ALL);
+      onEntityIdChange?.("");
+    }
   };
 
   const handleExport = async () => {
@@ -535,8 +594,10 @@ export function AuditFeed({
           {lockedRunId
             ? t("auditRuntime.feed.scopedToRun", { id: lockedRunId.slice(0, 8) })
             : lockedAgentId
-               ? t("auditRuntime.feed.scopedToAgent")
-               : t("auditRuntime.feed.scopedToEntity", { name: lockedEntity?.label ?? lockedEntity?.type ?? t("auditRuntime.feed.filters.entity") })}
+              ? t("auditRuntime.feed.scopedToAgent")
+              : scopedCase
+                ? <>{t("operations.common.case")} <Link to={caseHref(scopedCase.identifier)} className="font-medium text-primary hover:underline">{scopedCase.identifier} · {scopedCase.title}</Link></>
+                : t("auditRuntime.feed.scopedToEntity", { name: lockedEntity?.label ?? lockedEntity?.type ?? t("auditRuntime.feed.filters.entity") })}
         </div>
       ) : null}
 
@@ -587,7 +648,7 @@ export function AuditFeed({
             <SelectContent>
               {ACTION_DOMAINS.map((d) => (
                 <SelectItem key={d.value} value={d.value}>
-                  {t(`auditRuntime.feed.filters.${d.labelKey}`)}
+                  {t(d.labelKey)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -603,11 +664,34 @@ export function AuditFeed({
               <SelectContent>
                 {ENTITY_TYPES.map((e) => (
                   <SelectItem key={e.value} value={e.value}>
-                  {t(`auditRuntime.feed.filters.${e.labelKey}`)}
+                  {t(e.labelKey)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+          </label>
+        ) : null}
+        {!lockedEntity && entityType === "case" ? (
+          <label className="grid gap-1 text-(length:--text-micro) font-medium text-muted-foreground">
+            <span>{t("operations.common.case")}</span>
+            <Input
+              type="search"
+              aria-label={t("upgrade1029ConflictsE.caseIdOrIdentifier")}
+              placeholder="CAS-C1"
+              value={entityIdDraft}
+              onChange={event => {
+                setEntityIdDraft(event.target.value);
+                if (!event.target.value) setEntityId("");
+              }}
+              onBlur={() => setEntityId(entityIdDraft.trim())}
+              onKeyDown={event => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  setEntityId(entityIdDraft.trim());
+                }
+              }}
+              className="w-44 font-mono"
+            />
           </label>
         ) : null}
         <label className="grid gap-1 text-(length:--text-micro) font-medium text-muted-foreground">
@@ -704,6 +788,7 @@ export function AuditFeed({
                 record={record}
                 agentMap={agentMap}
                 userProfileMap={userProfileMap}
+                casesEnabled={experimentalSettings?.enableCases === true}
               />
             ))}
           </ul>

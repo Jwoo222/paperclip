@@ -240,7 +240,7 @@ export function UserProfile() {
     () =>
       (data?.topAgents ?? []).map((row) => ({
         key: row.agentId ?? "unknown",
-        label: row.agentName ?? (row.agentId ? row.agentId.slice(0, 8) : translate("adminExtra.profile.unknown")),
+        label: row.agentName ?? (row.agentId ? row.agentId.slice(0, 8) : translate("upgrade1029ConflictsD.costs.paperclipServices")),
         sublabel: translate("adminExtra.profile.taskLinkedUsage"),
         costCents: row.costCents,
         inputTokens: row.inputTokens,

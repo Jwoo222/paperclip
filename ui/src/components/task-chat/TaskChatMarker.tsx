@@ -1,7 +1,7 @@
 import { t } from "@/i18n";
 import { useId, useState } from "react";
 import { cn } from "@/lib/utils";
-import { ChevronDown, CircleDot, OctagonX, Square, Flag } from "lucide-react";
+import { ChevronDown, CircleDot, OctagonX, Square, Flag, KeyRound } from "lucide-react";
 import { useStreamlinedTaskChatPresentation } from "./presentation-mode";
 import type { TaskChatMarkerItem } from "./task-chat-model";
 import { Button } from "@/components/ui/button";
@@ -16,8 +16,8 @@ const VARIANT_ICON = {
 
 /**
  * Lifecycle divider — renders a state boundary (session start, interruption,
- * turn boundary) as a recessed rule, never a bubble. Interruptions use a dashed
- * destructive rule to read as a distinct state.
+ * turn boundary) as a recessed rule. Interruptions use a compact row without
+ * divider rules, including older items that did not set `collapsible`.
  */
 export function TaskChatMarker({
   item,
@@ -41,6 +41,33 @@ export function TaskChatMarker({
       .catch(() => undefined);
   };
 
+  if (item.credentialAccess) {
+    const { agentName, credentialName, deniedUser, settingsHref } = item.credentialAccess;
+    return (
+      <div role="alert" data-testid="task-chat-credential-access-notice"
+        className="tc-enter-marker flex w-full items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm">
+        <KeyRound className="mt-0.5 size-5 shrink-0 text-destructive" aria-hidden />
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <p className="font-semibold text-destructive">{t("upgrade1029AutoMerged.taskChatMarker.credentialCouldNotStart", { agentName })}</p>
+          <p className="break-words font-medium text-foreground">
+            {deniedUser === "you"
+              ? t("upgrade1029AutoMerged.taskChatMarker.credentialDeniedYou", { agentName, credentialName: credentialName || t("upgrade1029AutoMerged.taskChatMarker.credentialFallbackName") })
+              : t("upgrade1029AutoMerged.taskChatMarker.credentialDeniedUser", { agentName, credentialName: credentialName || t("upgrade1029AutoMerged.taskChatMarker.credentialFallbackName"), deniedUser })}
+          </p>
+          <p className="text-muted-foreground">
+            {deniedUser === "you"
+              ? t("upgrade1029AutoMerged.taskChatMarker.chooseConnectionYou", { agentName })
+              : t("upgrade1029AutoMerged.taskChatMarker.chooseConnectionUser", { agentName, deniedUser })}
+          </p>
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <Button asChild variant="outline" size="sm"><Link to={settingsHref}>{t("upgrade1029AutoMerged.taskChatMarker.changeAiConnection")}</Link></Button>
+            {item.runHref && <Button asChild variant="ghost" size="sm"><Link to={item.runHref}>{t("issueChatResidual.viewRun")}</Link></Button>}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (item.collapsible) {
     return (
       <div
@@ -62,7 +89,7 @@ export function TaskChatMarker({
             <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
             <span className="truncate font-medium">{item.label}</span>
             {relative ? (
-              <span className="shrink-0 text-muted-foreground/70">
+              <span className="shrink-0 text-muted-foreground">
                 · {relative}
               </span>
             ) : null}
@@ -132,20 +159,13 @@ export function TaskChatMarker({
   return (
     <div
       className="tc-enter-marker flex items-center gap-2 py-1 text-xs text-muted-foreground"
-      role={streamlined ? "separator" : undefined}
-      aria-label={streamlined ? item.label : undefined}
+      role={streamlined && item.variant !== "interrupted" ? "separator" : undefined}
+      aria-label={streamlined && item.variant !== "interrupted" ? item.label : undefined}
     >
+      {item.variant !== "interrupted" ? <span className="h-px flex-1 bg-border" /> : null}
       <span
         className={cn(
-          "h-px flex-1",
-          interrupted
-            ? "border-t border-dashed border-destructive/50"
-            : "bg-border",
-        )}
-      />
-      <span
-        className={cn(
-          "flex items-center gap-1.5",
+          "flex min-w-0 flex-wrap items-center gap-1.5",
           interrupted && "text-destructive",
         )}
       >
@@ -159,6 +179,7 @@ export function TaskChatMarker({
             type="button"
             variant="outline"
             size="xs"
+            className="text-foreground"
             onClick={handleTryAgain}
             disabled={tryAgainPending}
             data-testid="task-chat-run-failed-try-again"
@@ -167,14 +188,7 @@ export function TaskChatMarker({
           </Button>
         ) : null}
       </span>
-      <span
-        className={cn(
-          "h-px flex-1",
-          interrupted
-            ? "border-t border-dashed border-destructive/50"
-            : "bg-border",
-        )}
-      />
+      {item.variant !== "interrupted" ? <span className="h-px flex-1 bg-border" /> : null}
     </div>
   );
 }

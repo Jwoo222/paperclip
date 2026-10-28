@@ -35,7 +35,7 @@ export function ChatCommunicationInstructions({ value, onSave }: {
       <div className="space-y-1">
         <label id={`${id}-label`} htmlFor={id} className="text-sm font-semibold">{tNewUi("newUi.k8bff4980cd59")}</label>
         <p id={`${id}-help`} className="text-sm text-muted-foreground">
-          {tNewUi("newUi.kc5461a7ca38f")}
+          {t("upgrade1029ConflictsD.chatInstructions.appliesToNew")}
         </p>
       </div>
       <Textarea
@@ -45,7 +45,7 @@ export function ChatCommunicationInstructions({ value, onSave }: {
         disabled={pending}
         maxLength={4000}
         rows={4}
-        placeholder={tNewUi("newUi.k0e3d02c6fb74")}
+        placeholder={t("upgrade1029ConflictsD.chatInstructions.placeholder")}
         onChange={(event) => { setDraft(event.target.value); setSaved(false); setError(null); }}
       />
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}

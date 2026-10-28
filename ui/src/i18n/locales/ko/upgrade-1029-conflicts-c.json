@@ -1,0 +1,67 @@
+{
+  "upgrade1029ConflictsC": {
+    "agentDetail": {
+      "copyPublicKey": "공개 키 복사",
+      "couldNotLoadCreator": "만든 사람을 불러오지 못했습니다",
+      "couldNotLoadEvents": "이벤트를 불러오지 못했습니다. 다시 시도하세요.",
+      "couldNotLoadPublicKey": "공개 키를 불러오지 못했습니다",
+      "createdBy": "만든 사람",
+      "createdOnNextManagedRun": "다음 관리 실행 때 자동으로 만들어집니다",
+      "grokWorkNotice": "Grok Bot에서 실행됩니다. 사용량은 보고되지 않습니다. 이 세션을 중지하면 Paperclip 권한이 회수되지만 원격 실행은 계속될 수 있습니다. 확인하려면 Grok Bot 데스크톱 앱을 여세요. 이 화면에는 Paperclip이 보고한 활동만 표시됩니다.",
+      "loadMoreEvents": "이벤트 더 보기",
+      "managedByMuse": "Muse가 관리",
+      "notCreatedYet": "아직 만들어지지 않음",
+      "retryEvents": "이벤트 다시 불러오기",
+      "runUnavailable": "이 에이전트에서는 이 실행을 볼 수 없습니다.",
+      "runsInGrokBot": "Grok Bot에서 실행",
+      "stopPaperclipWork": "Paperclip 작업 중지",
+      "stoppingPaperclipWork": "Paperclip 작업 중지 중…",
+      "usageAndCostUnavailable": "사용량과 비용 정보 없음"
+    },
+    "agentRunSettings": "에이전트 실행 설정",
+    "agents": {
+      "lastHeartbeat": "마지막 하트비트",
+      "noSearchMatches": "검색어와 선택한 상태에 맞는 에이전트가 없습니다."
+    },
+    "continuedAfterSteering": "방향 조정 후 계속",
+    "couldNotSendStillQueued": "보내지 못했습니다. 메시지는 아직 대기열에 있습니다.",
+    "createdFrom": "생성 출처",
+    "credentialUpdatesNotifyHost": "자격 증명 갱신은 호스트에 알리고 실행 상세에 남습니다.",
+    "csvView": "CSV 보기",
+    "filePreviewMode": "파일 미리보기 방식",
+    "htmlView": "HTML 보기",
+    "intent": {
+      "accessDeclined": "접근 거절됨",
+      "accessGranted": "{{serviceName}} 접근 권한 부여됨",
+      "accountConnectedResume": "계정이 연결되었습니다. {{agentName}}에 이 계정을 사용하면 업무가 다시 진행됩니다.",
+      "adoptOwnAccountPrompt": "{{agentName}}에 {{aiProviderName}} 연결을 사용할까요? 에이전트의 기존 인증을 각 책임자의 개인 계정으로 바꿉니다. 모델은 그대로 유지됩니다.",
+      "chatHandoffSignIn": "저장된 설정에서 사람이 하는 로그인 단계를 마치세요. 연결이 준비되면 업무가 계속됩니다.",
+      "connectYourAccount": "내 {{aiProviderName}} 계정 연결",
+      "connectionManagerRequired": "연결 관리자 권한이 필요합니다.",
+      "continueAuthentication": "인증 계속하기",
+      "couldNotUpdateAccessRequest": "이 접근 요청을 업데이트하지 못했습니다.",
+      "grantAccess": "접근 권한 부여",
+      "grantAccessPrompt": "{{agentName}}에 “{{connectionName}}” 접근 권한을 줄까요?",
+      "grantingAccess": "접근 권한 부여 중…",
+      "needsOwnAiConnection": "{{agentName}}에 내 AI 연결이 필요합니다. 여기서 연결하면 업무가 자동으로 다시 진행됩니다.",
+      "notifiedContinueWithout": "{{agentName}}에게 알렸습니다. 이 연결 없이 계속할 수 있습니다.",
+      "requestWithdrawn": "연결 요청 철회됨",
+      "toolPermissions": "도구 권한",
+      "useYourAccount": "내 {{aiProviderName}} 계정 사용"
+    },
+    "messagesStillQueued": "메시지가 아직 대기 중입니다.",
+    "messagesStillQueuedUntilReady": "메시지가 아직 대기 중입니다. 업무가 준비되면 보냅니다.",
+    "museChoosesModelEffort": "Muse가 모델과 추론 수준을 직접 고릅니다. Paperclip에서는 업무별로 바꿀 수 없습니다.",
+    "providerErrorReported": "제공자 오류 보고됨",
+    "providerWarningReported": "제공자 경고 보고됨",
+    "queuedMessagesSubmitted": "대기 중인 메시지를 보냈습니다. 에이전트를 기다리는 중입니다.",
+    "receivedProviderUpdates": "제공자 업데이트 받음",
+    "selectModelAndEffort": "모델과 추론 수준 선택",
+    "sendQueuedMessages": "대기 중인 메시지 보내기",
+    "setupFlow": {
+      "couldNotLoadConnectorAvailability": "커넥터 사용 가능 여부를 불러오지 못했습니다. 새로고침한 뒤 다시 시도하세요.",
+      "draftProviderMismatch": "저장된 초안이 요청한 제공자와 맞지 않습니다. 연결은 바뀌지 않았습니다.",
+      "notAvailableOnInstance": "이 인스턴스에서는 {{name}}을(를) 사용할 수 없습니다."
+    }
+  }
+}

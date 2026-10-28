@@ -1,0 +1,67 @@
+{
+  "upgrade1029ConflictsC": {
+    "agentDetail": {
+      "copyPublicKey": "Copy public key",
+      "couldNotLoadCreator": "Could not load creator",
+      "couldNotLoadEvents": "Could not load events. Try again.",
+      "couldNotLoadPublicKey": "Could not load public key",
+      "createdBy": "Created by",
+      "createdOnNextManagedRun": "Created automatically on the next managed run",
+      "grokWorkNotice": "Runs in Grok Bot. Usage not reported. Stopping this session revokes Paperclip authority; remote execution may continue. Open the Grok Bot desktop app to inspect it. This view contains Paperclip-reported activity.",
+      "loadMoreEvents": "Load more events",
+      "managedByMuse": "Managed by Muse",
+      "notCreatedYet": "Not created yet",
+      "retryEvents": "Retry events",
+      "runUnavailable": "This run is unavailable for this agent.",
+      "runsInGrokBot": "Runs in Grok Bot",
+      "stopPaperclipWork": "Stop Paperclip work",
+      "stoppingPaperclipWork": "Stopping Paperclip work…",
+      "usageAndCostUnavailable": "Usage and cost unavailable"
+    },
+    "agentRunSettings": "Agent run settings",
+    "agents": {
+      "lastHeartbeat": "Last heartbeat",
+      "noSearchMatches": "No agents match your search and selected status."
+    },
+    "continuedAfterSteering": "Continued after steering",
+    "couldNotSendStillQueued": "Couldn’t send. Message is still queued.",
+    "createdFrom": "Created from",
+    "credentialUpdatesNotifyHost": "Credential updates notify the host and remain in run details.",
+    "csvView": "CSV view",
+    "filePreviewMode": "File preview mode",
+    "htmlView": "HTML view",
+    "intent": {
+      "accessDeclined": "Access declined",
+      "accessGranted": "{{serviceName}} access granted",
+      "accountConnectedResume": "Your account is connected. Use it for {{agentName}} to resume this task.",
+      "adoptOwnAccountPrompt": "Use your {{aiProviderName}} connection for {{agentName}}? This replaces the agent’s existing authentication with each responsible person’s own account. The model stays the same.",
+      "chatHandoffSignIn": "Complete the human sign-in step in the saved setup. Your task continues when the connection is ready.",
+      "connectYourAccount": "Connect your {{aiProviderName}} account",
+      "connectionManagerRequired": "Connection manager required.",
+      "continueAuthentication": "Continue authentication",
+      "couldNotUpdateAccessRequest": "Couldn’t update this access request.",
+      "grantAccess": "Grant access",
+      "grantAccessPrompt": "Grant {{agentName}} access to “{{connectionName}}”?",
+      "grantingAccess": "Granting access…",
+      "needsOwnAiConnection": "{{agentName}} needs your own AI connection. Connect here and the task will resume automatically.",
+      "notifiedContinueWithout": "{{agentName}} was notified and can continue without it.",
+      "requestWithdrawn": "Connection request withdrawn",
+      "toolPermissions": "Tool permissions",
+      "useYourAccount": "Use your {{aiProviderName}} account"
+    },
+    "messagesStillQueued": "Messages are still queued.",
+    "messagesStillQueuedUntilReady": "Messages are still queued. They will send when the task is ready.",
+    "museChoosesModelEffort": "Muse chooses its model and effort. Paperclip has no per-task override.",
+    "providerErrorReported": "Provider error reported",
+    "providerWarningReported": "Provider warning reported",
+    "queuedMessagesSubmitted": "Queued messages submitted. Waiting for the agent.",
+    "receivedProviderUpdates": "Received provider updates",
+    "selectModelAndEffort": "Select model and effort",
+    "sendQueuedMessages": "Send queued messages",
+    "setupFlow": {
+      "couldNotLoadConnectorAvailability": "Could not load connector availability. Refresh to try again.",
+      "draftProviderMismatch": "This saved draft does not match the requested provider. The connection was not changed.",
+      "notAvailableOnInstance": "{{name}} is not available on this instance."
+    }
+  }
+}

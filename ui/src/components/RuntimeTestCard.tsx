@@ -39,20 +39,42 @@ const copy = {
   },
 } as const;
 
+const prerequisiteCopy = {
+  idle: { title: tNewUi("upgrade1029AutoMerged.runtimeTestCard.prerequisites.idleTitle"), description: tNewUi("upgrade1029AutoMerged.runtimeTestCard.prerequisites.idleDescription"), action: tNewUi("upgrade1029AutoMerged.runtimeTestCard.prerequisites.idleAction") },
+  running: { title: tNewUi("upgrade1029AutoMerged.runtimeTestCard.prerequisites.runningTitle"), description: tNewUi("upgrade1029AutoMerged.runtimeTestCard.prerequisites.runningDescription"), action: tNewUi("miscResidualRound3.checking") },
+  pass: { title: tNewUi("upgrade1029AutoMerged.runtimeTestCard.prerequisites.passTitle"), description: tNewUi("upgrade1029AutoMerged.runtimeTestCard.prerequisites.passDescription"), action: tNewUi("upgrade1029AutoMerged.runtimeTestCard.checkAgain") },
+  warn: { title: tNewUi("upgrade1029AutoMerged.runtimeTestCard.prerequisites.warnTitle"), description: tNewUi("upgrade1029AutoMerged.runtimeTestCard.prerequisites.warnDescription"), action: tNewUi("upgrade1029AutoMerged.runtimeTestCard.checkAgain") },
+  fail: { title: tNewUi("upgrade1029AutoMerged.runtimeTestCard.prerequisites.failTitle"), description: tNewUi("upgrade1029AutoMerged.runtimeTestCard.prerequisites.failDescription"), action: tNewUi("upgrade1029AutoMerged.runtimeTestCard.prerequisites.failAction") },
+} as const;
+
 export function RuntimeTestCard({
   state,
   result,
   error,
   onTest,
   disabled = false,
+  variant = "connection",
+  metadataOnly = false,
 }: {
   state: TestState | "warn";
   result: AdapterEnvironmentTestResult | null;
   error?: string | null;
   onTest: () => void;
   disabled?: boolean;
+  variant?: "connection" | "prerequisites";
+  metadataOnly?: boolean;
 }) {
-  const content = copy[state];
+  const missingRuntime = state === "fail"
+    ? result?.checks.find(check => check.code === "acpx_runtime_package_missing")
+    : undefined;
+  const content = missingRuntime
+    ? { ...copy.fail, title: tNewUi("upgrade1029AutoMerged.runtimeTestCard.runtimeMissing"), description: missingRuntime.message }
+    : (variant === "prerequisites" ? prerequisiteCopy : copy)[state];
+  const description = metadataOnly && state === "idle"
+    ? tNewUi("upgrade1029AutoMerged.runtimeTestCard.metadataOnlyIdle")
+    : metadataOnly && state === "running"
+      ? tNewUi("upgrade1029AutoMerged.runtimeTestCard.metadataOnlyRunning")
+      : content.description;
   const Icon =
     state === "running"
       ? Loader2
@@ -93,7 +115,7 @@ export function RuntimeTestCard({
           >
             <h3 className="text-sm font-medium">{content.title}</h3>
             <p className="text-xs leading-relaxed text-muted-foreground">
-              {state === "fail" && error ? error : content.description}
+              {state === "fail" && error ? error : description}
             </p>
           </div>
           <Button

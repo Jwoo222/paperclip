@@ -1,61 +1,40 @@
-import { t as tNewUi } from "@/i18n";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ExecutionBlocker } from "@paperclipai/shared";
-import { agentsApi } from "../api/agents";
-import { activityApi } from "../api/activity";
-import { queryKeys } from "../lib/queryKeys";
+import type { TaskInterruptionPresentation } from "@paperclipai/shared";
+import { t } from "@/i18n";
 import { Button } from "./ui/button";
-import { Link } from "../lib/router";
+import { cn } from "../lib/utils";
+import { useSecondTick } from "../hooks/useSecondTick";
+import { TaskProjectAccessNotice } from "./TaskProjectAccessNotice";
 
-export function ExecutionBlockerNotice({ companyId, issueId, blocker, onRetried }: {
-  companyId: string;
-  issueId: string;
-  blocker: ExecutionBlocker;
-  onRetried: () => void;
+/** One ordinary interruption surface. Technical records remain in diagnostics. */
+export function ExecutionBlockerNotice({ presentation, canRetry, onRetry, optimistic, takingLonger, error, className, issueId, agentName, projectName }: {
+  presentation: TaskInterruptionPresentation | null | undefined;
+  canRetry: boolean;
+  onRetry: () => void;
+  optimistic?: boolean;
+  takingLonger?: boolean;
+  error?: Error | null;
+  className?: string;
+  issueId?: string;
+  agentName?: string;
+  projectName?: string;
 }) {
-  const queryClient = useQueryClient();
-  const { data: runs, error: runsError } = useQuery({
-    queryKey: queryKeys.issues.runs(issueId),
-    queryFn: () => activityApi.runsForIssue(issueId),
-  });
-  const failedRun = runs?.find(run => run.runId === blocker.runId &&
-    ["failed", "timed_out"].includes(run.status));
-  const requiresInspection = blocker.cause === "native_continuation_requires_reconciliation" ||
-    blocker.cause === "native_session_cleanup_quarantined";
-  const retry = useMutation({
-    mutationFn: () => agentsApi.retryFailedRun(blocker.agentId!, blocker.runId!, companyId),
-    onSuccess: () => {
-      onRetried();
-      for (const queryKey of [queryKeys.issues.detail(issueId), queryKeys.issues.runs(issueId),
-        queryKeys.issues.liveRuns(issueId), queryKeys.issues.activeRun(issueId)]) {
-        void queryClient.invalidateQueries({ queryKey });
-      }
-    },
-  });
+  useSecondTick(presentation?.state === "retry_scheduled");
+  if (presentation?.projectAccess && !optimistic && !takingLonger) return <TaskProjectAccessNotice
+    access={presentation.projectAccess} issueId={issueId} agentName={agentName} projectName={projectName}
+    canRetry={canRetry && presentation.canRetry} onRetry={onRetry} error={error} className={className} />;
+  if (error && !optimistic && !takingLonger) return <div role="alert" className={cn("flex items-center justify-between gap-2 text-sm text-destructive", className)}><span>{error.message}</span>{canRetry && <Button variant="outline" size="sm" onClick={onRetry}>{t("adapterImportVault.retry")}</Button>}</div>;
+  if (takingLonger) return <div role="status" className={cn("flex items-center justify-between gap-2 text-sm text-muted-foreground", className)}><span>{t("upgrade1029ConflictsA.blocker.takingLonger")}</span>{canRetry && <Button variant="outline" size="sm" onClick={onRetry}>{t("adapterImportVault.retry")}</Button>}</div>;
+  if (optimistic || !presentation || presentation.responsibility !== "system" ||
+      !["failed", "retry_scheduled"].includes(presentation.state)) return null;
+  const seconds = Math.max(0, Math.ceil((Date.parse(presentation.nextRetryAt ?? "") - Date.now()) / 1000));
   return (
-    <div role="status" aria-label={tNewUi("newUi.k4646b234c653")} className="mx-(--sz-execution-blocker-inline) my-(--sz-execution-blocker-block) flex flex-wrap items-center justify-between execution-blocker-notice border border-border bg-muted text-foreground">
-      <div className="min-w-0 flex-1 break-words">
-        <p>{tNewUi("upgrade2610Task.recoveryNeeded")}{blocker.runError ? ` ${blocker.runError}` : ""}</p>
-        <p>{blocker.nextAction}</p>
-        {Boolean(blocker.savedMessageCount) && (
-          <p>{tNewUi("upgrade2610Task.savedMessagesWaitingForRecovery", { count: blocker.savedMessageCount })}</p>
-        )}
-      </div>
-      {blocker.agentId && blocker.runId && (
-        <Button variant="outline" size="sm" asChild>
-          <Link to={`/agents/${blocker.agentId}/runs/${blocker.runId}`}>{tNewUi("newUi.k2671a485bfee")}</Link>
-        </Button>
-      )}
-      {(!requiresInspection || blocker.canRetry) && blocker.agentId && blocker.runId &&
-        ((blocker.cause === "legacy_execution_requires_reconciliation" && failedRun) || blocker.canContinue || blocker.canRetry) && (
-        <Button variant="outline" size="sm" disabled={retry.isPending} onClick={() => retry.mutate()}>
-          {retry.isPending ? tNewUi("upgrade2610Task.starting") : blocker.canContinue ? tNewUi("newUi.k31fbef162594") : tNewUi("newUi.k942087cc2d41")}
-        </Button>
-      )}
-      {retry.isError && (
-        <p role="alert" className="w-full text-destructive">{retry.error.message}</p>
-      )}
-      {runsError && <p role="alert" className="w-full text-destructive">{runsError.message}</p>}
+    <div role="status" aria-label={t("upgrade1029ConflictsA.blocker.taskStatus")} className={cn("flex items-center justify-between gap-2 text-sm text-muted-foreground", className)}>
+      <span>{presentation.state === "retry_scheduled"
+        ? seconds > 60
+          ? t("upgrade1029ConflictsA.blocker.retryInMinutes", { minutes: Math.ceil(seconds / 60) })
+          : t("upgrade1029ConflictsA.blocker.retryInSeconds", { seconds })
+        : t("upgrade1029ConflictsA.blocker.attemptFailed")}</span>
+      {canRetry && presentation.canRetry && <Button variant="outline" size="sm" onClick={onRetry}>{t("adapterImportVault.retry")}</Button>}
     </div>
   );
 }

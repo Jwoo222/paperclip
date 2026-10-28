@@ -2,15 +2,20 @@ import { t as tNewUi } from "@/i18n";
 import { AlertTriangle, ExternalLink } from "lucide-react";
 import type { AgentPermissions } from "@paperclipai/shared";
 import { getTrustPreset } from "@/lib/trust-policy-ui";
+import { Button } from "@/components/ui/button";
 
 export const LOW_TRUST_AGENT_GUIDE =
   "https://docs.paperclip.ing/administration/trust-and-low-trust-review/";
 
 export function GitHubAgentTrustWarning({
   agent,
+  onChangeToLowTrust,
+  disabled,
 }: {
   agent:
     { name: string; permissions: Partial<AgentPermissions> } | null | undefined;
+  onChangeToLowTrust?: () => void;
+  disabled?: boolean;
 }) {
   if (!agent || getTrustPreset(agent.permissions) === "low_trust_review")
     return null;
@@ -29,6 +34,11 @@ export function GitHubAgentTrustWarning({
       <p className="text-xs text-muted-foreground">
         {tNewUi("newUi.k3476e845ad16")}
       </p>
+      {onChangeToLowTrust && (
+        <Button variant="outline" className="h-auto whitespace-normal" disabled={disabled} onClick={onChangeToLowTrust}>
+          Change {agent.name} to a low trust agent
+        </Button>
+      )}
       <a
         className="inline-flex items-center gap-1 underline underline-offset-4"
         href={LOW_TRUST_AGENT_GUIDE}

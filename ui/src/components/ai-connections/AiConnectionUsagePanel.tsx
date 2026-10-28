@@ -69,24 +69,25 @@ function usageError(usage: AiConnectionUsage) {
     case "invalid_response": return t("upgrade2610Apps.usage.errors.invalidResponse");
     case "connection_unavailable": return t("upgrade2610Apps.usage.errors.connectionUnavailable");
     case "unsupported": return t("upgrade2610Apps.usage.errors.unsupported");
-    default: return usage.message;
+    default: return usage.message ?? t("upgrade2610Apps.usage.errors.unsupported");
   }
 }
 
-export function AiConnectionUsagePanel({ account }: { account: AiManagedConnectionSummary }) {
+export function AiConnectionUsagePanel({ account, observation, cachedOnly = false }: { account: AiManagedConnectionSummary; observation?: AiConnectionUsage; cachedOnly?: boolean }) {
   const probe = useMutation({
     mutationFn: () => aiConnectionsApi.probeUsage(account.companyId, account.id, account.grantId),
   });
   const supported = supportsAiConnectionUsage(account.provider, account.method);
-  const usage = probe.isSuccess ? probe.data : undefined;
+  const usage = cachedOnly ? observation : probe.isSuccess ? probe.data : undefined;
   return (
     <section aria-label={t("upgrade2610Apps.usage.ariaLabel")} className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-sm font-semibold">{t("upgrade2610Apps.usage.title")}</h3>
-        {supported && <Button variant="outline" size="sm" disabled={probe.isPending || account.status !== "connected"} onClick={() => probe.mutate()}>
+        {supported && !cachedOnly && <Button variant="outline" size="sm" disabled={probe.isPending || account.status !== "connected"} onClick={() => probe.mutate()}>
           {probe.isPending ? t("appsConnect.common.checking") : usage?.status === "ok" ? t("commonControls.refresh") : t("upgrade2610Apps.usage.checkUsage")}
         </Button>}
       </div>
+      {cachedOnly && !usage && <p className="text-xs text-muted-foreground">{t("upgrade1029ConflictsB.aiConnections.usageNotObserved")}</p>}
       {!supported && <p className="text-xs text-muted-foreground">{t("upgrade2610Apps.usage.unsupportedMethod")}</p>}
       {probe.error && <p role="alert" className="text-sm text-destructive">{probe.error.message}</p>}
       {usage && usage.status !== "ok" && <p role={usage.status === "unsupported" ? "status" : "alert"} className="text-sm text-muted-foreground">{usageError(usage)}</p>}

@@ -8,7 +8,7 @@ import { toolsApi } from "@/api/tools";
 import { useNavigate } from "@/lib/router";
 import { AiConnectionAccountControls } from "./AiConnectionAccountControls";
 import { AiConnectionUsagePanel } from "./AiConnectionUsagePanel";
-import type { ToolConnection } from "@paperclipai/shared";
+import type { ToolConnection, AiConnectionMetadata } from "@paperclipai/shared";
 import { aiMethodLabel } from "./model";
 
 export function ManagedAiConnectionRow({
@@ -16,16 +16,11 @@ export function ManagedAiConnectionRow({
 }: {
   connection: ToolConnection;
 }) {
-  const metadata = connection.config?.ai as
-    | {
-        provider: "anthropic" | "openai" | "openrouter" | "xai";
-        method: "subscription" | "api_key";
-      }
-    | undefined;
+  const metadata = connection.config?.ai as AiConnectionMetadata | undefined;
   if (!metadata) return null;
   return (
     <p className="text-xs text-muted-foreground">
-      {aiMethodLabel(metadata.provider, metadata.method)} ·{" "}
+      {metadata.routing ? metadata.routing.kind === "bedrock" ? `Bedrock · ${metadata.routing.region}` : metadata.routing.kind === "openrouter" ? "OpenRouter" : metadata.routing.baseUrl : aiMethodLabel(metadata.provider, metadata.method)} ·{" "}
       {connection.credentialPolicy === "per_user"
         ? tNewUi("newUi.k845f9286400f")
         : tNewUi("newUi.k47e5dc161731")}
@@ -92,6 +87,7 @@ export function ManagedAiConnectionDetails({
     );
   return (
     <div className="space-y-4">
+      {account.routing && <details className="rounded-lg border border-border p-4"><summary className="cursor-pointer text-sm font-medium">{tNewUi("upgrade1029AutoMerged.managedAiConnection.providerSettings")}</summary><dl className="mt-4 grid grid-cols-2 gap-3 text-sm"><dt className="text-muted-foreground">{tNewUi("upgrade1029AutoMerged.managedAiConnection.destination")}</dt><dd className="break-all">{account.routing.baseUrl ?? (account.routing.kind === "bedrock" ? account.routing.region : "OpenRouter")}</dd><dt className="text-muted-foreground">{tNewUi("upgrade1029AutoMerged.managedAiConnection.apiFormat")}</dt><dd>{account.routing.kind === "openrouter" ? tNewUi("upgrade1029AutoMerged.managedAiConnection.selectedByHarness") : account.routing.protocol}</dd><dt className="text-muted-foreground">{tNewUi("newUi.k66880d2d8216")}</dt><dd>{account.routing.auth}</dd><dt className="text-muted-foreground">{tNewUi("upgrade2610Task.models")}</dt><dd>{account.routing.models.map(m => m.label ?? m.id).join(", ") || tNewUi("upgrade1029AutoMerged.managedAiConnection.enterModelId")}</dd></dl></details>}
       <AiConnectionAccountControls
         account={account}
         grant={grant}

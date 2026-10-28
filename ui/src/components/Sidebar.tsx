@@ -100,7 +100,6 @@ export function Sidebar({ children }: { children?: ReactNode }) {
   // shell keeps its Inbox row even with the flag on.
   const combinedInboxTasks = streamlinedUiEnabled && experimentalSettings?.enableCombinedInboxTasks === true;
   const showWorkspacesLink = !chatRail && experimentalSettings?.enableIsolatedWorkspaces === true;
-  const showPipelines = experimentalSettings?.enablePipelines === true;
   const showStatusCards = experimentalSettings?.enableStatusCards === true;
   const goalsLinkPending = experimentalSettings === undefined;
   const showGoalsLink = experimentalSettings?.enableGoalsSidebarLink === true;
@@ -238,9 +237,6 @@ export function Sidebar({ children }: { children?: ReactNode }) {
           {showCases ? (
             <SidebarNavItem to="/cases" label={t("shell.cases")} icon={Layers} textBadge="beta" />
           ) : null}
-          {showPipelines ? (
-            <SidebarNavItem to="/pipelines" label={t("shell.pipelines")} icon={GitBranch} />
-          ) : null}
           {showGoalsLink ? (
             <SidebarNavItem to="/goals" label={t("shell.goals")} icon={Target} />
           ) : goalsLinkPending ? (
@@ -280,7 +276,7 @@ export function Sidebar({ children }: { children?: ReactNode }) {
           </SidebarSection>
         ) : null}
 
-        {children}
+        {children ?? (streamlinedUiEnabled ? <SidebarAgents streamlined /> : null)}
 
         {streamlinedUiEnabled ? (
           <SidebarRecentTasks companyId={selectedCompanyId} liveIssueIds={liveIssueIds} />
@@ -297,6 +293,7 @@ export function Sidebar({ children }: { children?: ReactNode }) {
               <SidebarNavItem to="/timeline" label={t("shell.timeline")} icon={GanttChartSquare} />
               <SidebarNavItem to="/costs" label={t("shell.costs")} icon={DollarSign} />
               <SidebarNavItem to="/activity" label={t("shell.activity")} icon={History} />
+              <SidebarNavItem to="/activity/commentary" label={t("upgrade1029ConflictsB.commentary")} icon={History} />
               <SidebarNavItem to="/company/settings" label={t("shell.settings")} icon={Settings} />
             </SidebarSection>
           </>

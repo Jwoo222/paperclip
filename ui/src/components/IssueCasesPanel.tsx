@@ -44,7 +44,10 @@ export function IssueCasesPanel({ issueId }: { issueId: string }) {
           >
             <span className="font-mono text-xs text-muted-foreground shrink-0">{link.case.identifier}</span>
             <span className="min-w-0 flex-1 truncate" title={link.case.title}>{link.case.title}</span>
-            <Badge variant="secondary" className="shrink-0">{t(`casesExtra.roles.${link.role}`)}</Badge>
+            <Badge variant="secondary" className="shrink-0">{link.case.workIssueId === issueId ? t("upgrade1029ConflictsA.issueCases.workflow") : t(`casesExtra.roles.${link.role}`)}</Badge>
+            {link.case.workIssueId === issueId && link.case.phase ? (
+              <span className="truncate text-xs text-muted-foreground">{link.case.phase}</span>
+            ) : null}
             <StatusBadge status={link.case.status} label={t(`casesExtra.status.${link.case.status}`)} />
           </Link>
         ))}

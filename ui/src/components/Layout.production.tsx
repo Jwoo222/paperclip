@@ -1,4 +1,7 @@
 import { t as tNewUi } from "@/i18n";
+import { useDesignSandbox } from "@/context/DesignSandboxContext";
+import { DesignSandboxSidebar } from "./DesignSandboxSidebar";
+import { BoardDialogs } from "./BoardDialogs";
 import { ChatSetupSidebarProvider } from "@/context/ChatSetupSidebarContext";
 import { PluginAppShellOverlays } from "./PluginAppShellOverlays";
 import {
@@ -26,10 +29,6 @@ import { AppDetailSidebar } from "./AppConnectionSidebar.production";
 import { BreadcrumbBar } from "./BreadcrumbBar.production";
 import { PropertiesPanel } from "./PropertiesPanel";
 import { CommandPalette } from "./CommandPalette";
-import { NewIssueDialog } from "./NewIssueDialog";
-import { NewProjectDialog } from "./NewProjectDialog";
-import { NewGoalDialog } from "./NewGoalDialog";
-import { NewAgentDialog } from "./NewAgentDialog";
 import { KeyboardShortcutsCheatsheet } from "./KeyboardShortcutsCheatsheet";
 import { ToastViewport } from "./ToastViewport";
 import { MobileBottomNav } from "./MobileBottomNav";
@@ -46,6 +45,8 @@ import { useCompany } from "../context/CompanyContext";
 import { useSidebar } from "../context/SidebarContext";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { useCompanyPageMemory } from "../hooks/useCompanyPageMemory";
+import { useMobileNavVisibility } from "../hooks/useMobileNavVisibility";
+import { useMobileVisualViewport } from "../hooks/useMobileVisualViewport";
 import { healthApi } from "../api/health";
 import {
   resolveArchivedCompanyBounce,
@@ -116,6 +117,7 @@ function isSkillsStoreRoute(
 }
 
 export function Layout() {
+  const designSandbox = useDesignSandbox();
   const {
     sidebarOpen,
     setSidebarOpen,
@@ -173,12 +175,12 @@ export function Layout() {
   // app nav collapses to its rail throughout the Skills Store section (PAP-10879).
   const isSkillsRoute = isSkillsStoreRoute(location.pathname, companyPrefix);
   const onboardingTriggered = useRef(false);
-  const lastMainScrollTop = useRef(0);
   const previousPathname = useRef<string | null>(null);
   const mainContentRef = useRef<HTMLElement | null>(null);
   const scrollMemory = useRef(new NavigationScrollMemory());
   const activeScrollKey = useRef<string>(location.key);
-  const [mobileNavVisible, setMobileNavVisible] = useState(true);
+  const mobileNavVisible = useMobileNavVisibility(isMobile, location.pathname);
+  const mobileViewportRef = useMobileVisualViewport(isMobile);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const matchedCompany = useMemo(() => {
     if (!companyPrefix) return null;
@@ -470,15 +472,6 @@ export function Layout() {
     onGoToInbox: () => navigate("/inbox"),
   });
 
-  useEffect(() => {
-    if (!isMobile) {
-      setMobileNavVisible(true);
-      return;
-    }
-    lastMainScrollTop.current = 0;
-    setMobileNavVisible(true);
-  }, [isMobile]);
-
   // Swipe gesture to open/close sidebar on mobile
   useEffect(() => {
     if (!isMobile) return;
@@ -523,41 +516,6 @@ export function Layout() {
       document.removeEventListener("touchend", onTouchEnd);
     };
   }, [isMobile, sidebarOpen, setSidebarOpen]);
-
-  const updateMobileNavVisibility = useCallback((currentTop: number) => {
-    const delta = currentTop - lastMainScrollTop.current;
-
-    if (currentTop <= 24) {
-      setMobileNavVisible(true);
-    } else if (delta > 8) {
-      setMobileNavVisible(false);
-    } else if (delta < -8) {
-      setMobileNavVisible(true);
-    }
-
-    lastMainScrollTop.current = currentTop;
-  }, []);
-
-  useEffect(() => {
-    if (!isMobile) {
-      setMobileNavVisible(true);
-      lastMainScrollTop.current = 0;
-      return;
-    }
-
-    const onScroll = () => {
-      updateMobileNavVisibility(
-        window.scrollY || document.documentElement.scrollTop || 0,
-      );
-    };
-
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-    };
-  }, [isMobile, updateMobileNavVisibility]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -633,8 +591,10 @@ export function Layout() {
   return (
     <ChatSetupSidebarProvider>
       <div
+        ref={mobileViewportRef}
+        data-mobile={isMobile ? "true" : undefined}
         className={cn(
-          "bg-background text-foreground pt-(--sz-safe-top)",
+          "paperclip-app-shell bg-background text-foreground pt-(--sz-safe-top)",
           // overflow-x-clip on mobile keeps a stray wide descendant from making the
           // whole viewport scroll horizontally. clip (not hidden) leaves overflow-y
           // computed as visible, so native body scroll + the sticky breadcrumb keep
@@ -654,7 +614,7 @@ export function Layout() {
         <DevRestartBanner devServer={health?.devServer} />
         <div
           className={cn(
-            "min-h-0 flex-1",
+            "app-main-row min-h-0 flex-1",
             isMobile ? "w-full" : "flex overflow-clip",
           )}
         >
@@ -684,18 +644,21 @@ export function Layout() {
           ) : (
             <SidebarShell
               open={sidebarOpen}
-              collapsed={collapsed}
-              peeking={peeking}
+              collapsed={designSandbox ? false : collapsed}
+              peeking={designSandbox ? false : peeking}
               resizable
+              storageKey={designSandbox ? "paperclip.design-proposals.sandbox.sidebar-width" : undefined}
               onPanelMouseEnter={handlePanelPointerEnter}
               onPanelMouseLeave={handlePanelPointerLeave}
               onPanelFocusCapture={collapsed ? handlePanelFocus : undefined}
               onPanelBlurCapture={collapsed ? handlePanelBlur : undefined}
             >
-              <div className="flex flex-1 min-h-0">
-                <Sidebar />
-              </div>
-              <SidebarAccountMenu deploymentMode={health?.deploymentMode} />
+              {designSandbox ? <DesignSandboxSidebar /> : <>
+                <div className="flex flex-1 min-h-0">
+                  <Sidebar />
+                </div>
+                <SidebarAccountMenu deploymentMode={health?.deploymentMode} />
+              </>}
             </SidebarShell>
           )}
 
@@ -705,12 +668,13 @@ export function Layout() {
 
           <div
             className={cn(
-              "flex min-w-0 flex-col",
+              "app-content-column flex min-w-0 flex-col",
               isMobile ? "w-full" : "h-full flex-1",
             )}
           >
             <div
               className={cn(
+                "app-breadcrumb",
                 isMobile &&
                   "sticky top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85",
               )}
@@ -723,7 +687,7 @@ export function Layout() {
                 </div>
               ) : null}
             </div>
-            <div className={cn(isMobile ? "block" : "flex flex-1 min-h-0")}>
+            <div className={cn("app-content-row", isMobile ? "block" : "flex flex-1 min-h-0")}>
               <main
                 id="main-content"
                 ref={mainContentRef}
@@ -739,6 +703,12 @@ export function Layout() {
                       "--tc-composer-bottom": mobileNavVisible
                           ? "var(--tc-composer-visible-nav-offset)"
                           : "var(--sz-calc-8)",
+                      "--mobile-nav-motion-duration": mobileNavVisible
+                          ? "var(--motion-mobile-nav-enter)"
+                          : "var(--motion-mobile-nav-exit)",
+                      "--mobile-nav-motion-ease": mobileNavVisible
+                          ? "var(--motion-ease-out-expo)"
+                          : "var(--motion-ease-standard)",
                       } as CSSProperties)
                     : undefined
                 }
@@ -748,7 +718,7 @@ export function Layout() {
                   // changes (e.g. switching skill-detail tabs) don't widen/shift
                   // when the vertical scrollbar appears or disappears (PAP-10907).
                   isMobile
-                    ? isTaskDetailRoute && mobileNavVisible
+                    ? isTaskDetailRoute
                       ? "overflow-visible pb-(--tc-composer-visible-nav-offset)"
                       : "overflow-visible pb-(--sz-calc-14)"
                     : "overflow-auto [scrollbar-gutter:stable]",
@@ -773,10 +743,7 @@ export function Layout() {
         </div>
         {isMobile && <MobileBottomNav visible={mobileNavVisible} />}
         <CommandPalette />
-        <NewIssueDialog />
-        <NewProjectDialog />
-        <NewGoalDialog />
-        <NewAgentDialog />
+        <BoardDialogs />
         <KeyboardShortcutsCheatsheet
           open={shortcutsOpen}
           onOpenChange={setShortcutsOpen}

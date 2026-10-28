@@ -170,7 +170,6 @@ export function AgentActionButtons({
   workActionsDisabled = false,
   workActionsDisabledReason,
   navigateToRunOnInvoke = true,
-  canRunWithProviderTrace = false,
   hasPendingNavigationChanges = false,
   onBeforeNavigate,
   onActionError,
@@ -191,8 +190,6 @@ export function AgentActionButtons({
   workActionsDisabled?: boolean;
   workActionsDisabledReason?: string;
   navigateToRunOnInvoke?: boolean;
-  /** Instance administrators may opt one manual run into short-lived raw provider capture. */
-  canRunWithProviderTrace?: boolean;
   /** Whether the caller currently has an unsaved draft that navigation would discard. */
   hasPendingNavigationChanges?: boolean;
   /** Return false to stop an action whose success would navigate away. */
@@ -245,7 +242,7 @@ export function AgentActionButtons({
 
   const resolvedCompanyId = companyId ?? agent.companyId;
   const canonicalAgentRef = agentRouteRef(agent);
-  const isPaused = agent.status === "paused";
+  const isPaused = agent.lifecycleState ? agent.lifecycleState === "paused" : agent.status === "paused";
   const isError = agent.status === "error";
   const displayAssignLabel = assignLabel ?? t("agentManagement.actions.assignTask", { defaultValue: "Assign Task" });
   const displayRunLabel = runLabel ?? t("agentManagement.actions.runNow", { defaultValue: "Run now" });
@@ -288,6 +285,8 @@ export function AgentActionButtons({
       onActionError?.(null);
       invalidateAgent();
       if (action === "terminate") {
+        const state = (data as Agent).lifecycleState;
+        if (state === "terminating" || state === "cleaning_up") return;
         if (!confirmLateNavigationChanges(agentActionStartedDirtyRef)) return;
         onTerminateSuccess?.(data as Agent);
       }
@@ -298,24 +297,6 @@ export function AgentActionButtons({
     },
     onError: (err) => {
       reportError(err instanceof Error ? err.message : t("agentManagement.errors.actionFailed", { defaultValue: "Action failed" }));
-    },
-  });
-
-  const providerTraceAction = useMutation({
-    mutationFn: () =>
-      agentsApi.invoke(agent.id, resolvedCompanyId ?? undefined, {
-        debug: { providerTrace: "raw" },
-      }),
-    onSuccess: (run) => {
-      onActionError?.(null);
-      invalidateAgent();
-      if (navigateToRunOnInvoke) {
-        if (!confirmLateNavigationChanges(agentActionStartedDirtyRef)) return;
-        navigate(`/agents/${canonicalAgentRef}/runs/${run.id}`);
-      }
-    },
-    onError: (err) => {
-      reportError(err instanceof Error ? err.message : "Failed to start traced run");
     },
   });
 
@@ -377,9 +358,10 @@ export function AgentActionButtons({
   });
 
   const isPendingApproval = agent.status === "pending_approval";
-  const disabled = actionsDisabled || agentAction.isPending || providerTraceAction.isPending;
-  const assignAndRunDisabled = disabled || isPendingApproval || workActionsDisabled;
-  const pauseResumeDisabled = disabled || isPendingApproval || (isPaused && workActionsDisabled);
+  const disabled = actionsDisabled || agentAction.isPending;
+  const assignAndRunDisabled = disabled || isPendingApproval || workActionsDisabled || agent.status === "terminated";
+  const pauseResumeDisabled = disabled || isPendingApproval || (isPaused && workActionsDisabled)
+    || Boolean(agent.lifecycleState && ["pausing", "terminating", "cleaning_up", "terminated", "rejected"].includes(agent.lifecycleState));
   const clearErrorDisabled = disabled;
   const runtimeConfig = agent.runtimeConfig as Record<string, unknown> | null;
   const runtimeDebug =
@@ -418,27 +400,18 @@ export function AgentActionButtons({
         label={displayRunLabel}
         size={size}
       />}
-      {canRunWithProviderTrace && (
-        <Button
-          variant="outline"
-          size={size}
-          onClick={() => {
-            if (navigateToRunOnInvoke && !confirmNavigationStart(agentActionStartedDirtyRef)) return;
-            providerTraceAction.mutate();
-          }}
-          disabled={assignAndRunDisabled}
-          title="Capture exact provider traffic for this run (expires after 24 hours)"
-        >
-          <Bug className="h-3.5 w-3.5 sm:mr-1" />
-          <span className="hidden sm:inline">Run with provider trace</span>
-        </Button>
-      )}
       {isError ? (
         <ClearErrorButton
           onClick={() => agentAction.mutate("clear_error")}
           disabled={clearErrorDisabled}
           size={size}
         />
+      ) : agent.pauseReason === "setup" && agent.lifecycleState === "paused" ? (
+        <Button variant="outline" size={size} disabled={disabled} onClick={() => navigate(`/agents/new?${new URLSearchParams({
+          name: agent.name, adapterType: agent.adapterType, setupAgentId: agent.id,
+          runnerProvider: String(agent.adapterConfig.provider === "acpx" ? agent.adapterConfig.acpxAgent : agent.adapterConfig.provider ?? "codex"),
+          ...(agent.adapterType === "paperclip_runner" ? { runner: "paperclip" } : ["codex_local", "claude_local", "opencode_local", "pi_local"].includes(agent.adapterType) ? { runner: "legacy" } : {}),
+        })}`)}>{t("newUi.kbc01ae77f37c")}</Button>
       ) : (
         <PauseResumeButton
           isPaused={isPaused}

@@ -1,18 +1,31 @@
 import { t as tNewUi } from "@/i18n";
 import { t } from "@/i18n";
-import { SlackToolsSettings, SlackSearchAccess } from "./SlackToolSettings";
-import { defaultSlackAppName } from "./slack-app-name";
-import { ChatCommunicationInstructions } from "./ChatCommunicationInstructions";
-import { SlackAvatarSettings } from "./SlackAvatarStep";
-import { agentsApi } from "@/api/agents";
+import { SpekoPhoneLine } from "@/components/voice/SpekoPhoneLine";
+import { SpekoIncomingCalls } from "@/components/voice/SpekoIncomingCalls";
+import { SpekoCallActivityItem, SpekoUnapprovedCallActivityItem, useSpekoCallHistory } from "@/components/voice/SpekoCallHistory";
+import { SpekoPhoneCallback } from "@/components/voice/SpekoPhoneCallback";
+import { deriveInitials } from "@/components/Identity";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { agentAvatarUrl } from "@/lib/agent-avatar-url";
 import { resolveAgentAppearance } from "@paperclipai/shared";
+import { SlackTestMessageButton } from "./SlackTestMessageButton";
+import { AgentAvatar } from "@/components/AgentAvatar";
+import { SlackSetupAdvanced } from "./SlackAppDetails";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { SlackToolsSettings, SlackSearchAccess } from "./SlackToolSettings";
+import { ChatCommunicationInstructions } from "./ChatCommunicationInstructions";
+import { ChatExecutionDefaults } from "./ChatExecutionDefaults";
+import { agentsApi } from "@/api/agents";
+import { ChatConversationList } from "./ChatConversationList";
+import { GitHubConnectionRecoveryNotice } from "./GitHubConnectionRecovery";
 import { GitHubBotManagement, GitHubReviews } from "./GitHubBotManagement";
+import { GitHubBotMention, GitHubAppIdentityActions } from "./GitHubAppIdentity";
+import { GitHubConnectionComplete, type GitHubConnectionCompleteLocationState } from "./GitHubConnectionComplete";
 import { EmailEndpointSettings } from "./EmailEndpointSetup";
 import { EmailConnectionAccess } from "@/components/EmailConnectionAccess";
 import { emailApi } from "@/api/email";
 import { toolsApi } from "@/api/tools";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -56,7 +69,7 @@ import { useToast } from "@/context/ToastContext";
 import { formatDateTime } from "@/lib/utils";
 import { queryKeys } from "@/lib/queryKeys";
 import { copyTextToClipboard } from "@/lib/clipboard";
-import { Link, Navigate, useNavigate, useParams } from "@/lib/router";
+import { Link, Navigate, useLocation, useNavigate, useParams } from "@/lib/router";
 
 const tabs = ["settings", "access", "reviews", "conversations", "activity"] as const;
 type ChatTab = (typeof tabs)[number];
@@ -65,6 +78,7 @@ const tabItems = tabs.map((value) => ({
   label: value[0].toUpperCase() + value.slice(1),
 }));
 const providerNames: Record<ChatProvider, string> = {
+  speko: "Speko",
   agentmail: "AgentMail",
   slack: "Slack",
   github: "GitHub",
@@ -78,6 +92,10 @@ const providerLifecycleGuidance: Record<
   ChatProvider,
   { reconnect: string; remove: string }
 > = {
+  speko: {
+    reconnect: t("upgrade1029ConflictsE.spekoReconnectCopy"),
+    remove: t("upgrade1029ConflictsE.spekoRemoveCopy"),
+  },
   agentmail: { reconnect: tNewUi("newUi.k1b5cb9317d00"), remove: tNewUi("newUi.ke12c70aff11f") },
   slack: {
     reconnect:
@@ -227,12 +245,17 @@ export function connectionHealthPresentation(
 }
 
 export function ChatEndpointDetail() {
-  const { endpointId = "", tab = "settings" } = useParams<{
+  const { endpointId = "", tab: routeTab, reviewId } = useParams<{
     endpointId: string;
     tab?: string;
+    reviewId?: string;
   }>();
+  const tab = reviewId ? "reviews" : (routeTab ?? "settings");
   const activeTab = tabs.includes(tab as ChatTab) ? (tab as ChatTab) : null;
   const navigate = useNavigate();
+  const location = useLocation();
+  const heading = useRef<HTMLHeadingElement>(null);
+  const completion = (location.state as GitHubConnectionCompleteLocationState | null)?.githubConnectionComplete;
   const { setBreadcrumbs } = useBreadcrumbs();
   const endpointQuery = useQuery({
     queryKey: queryKeys.chatEndpoints.detail(endpointId),
@@ -245,7 +268,17 @@ export function ChatEndpointDetail() {
         : false,
   });
   const endpoint = endpointQuery.data;
+  const avatarAgent = useQuery({
+    queryKey: queryKeys.agents.detail(endpoint?.assignedAgentId ?? ""),
+    queryFn: () => agentsApi.get(endpoint!.assignedAgentId),
+    enabled: endpoint?.provider === "github",
+  });
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
+  const agentQuery = useQuery({
+    queryKey: queryKeys.agents.detail(endpoint?.assignedAgentId ?? ""),
+    queryFn: () => agentsApi.get(endpoint!.assignedAgentId, endpoint!.companyId),
+    enabled: Boolean(endpoint?.assignedAgentId),
+  });
 
   useEffect(() => {
     if (!endpoint || !activeTab) return;
@@ -255,14 +288,14 @@ export function ChatEndpointDetail() {
         label: `${endpoint.assignedAgentName} · ${providerNames[endpoint.provider]}`,
         href: `/apps/chat/${endpoint.id}/settings`,
       },
-      {
+      ...(reviewId ? [{ label: tNewUi("newUi.k84cb7871b741"), href: `/apps/chat/${endpoint.id}/reviews` }, { label: tNewUi("newUi.kaff0766a5290") }] : [{
         label:
           tabItems.find((item) => item.value === activeTab)?.label ??
           tNewUi("newUi.k74a883a037bc"),
-      },
+      }]),
     ]);
     return () => setBreadcrumbs([]);
-  }, [activeTab, endpoint, setBreadcrumbs]);
+  }, [activeTab, endpoint, reviewId, setBreadcrumbs]);
 
   if (!activeTab)
     return <Navigate replace to={`/apps/chat/${endpointId}/settings`} />;
@@ -285,21 +318,33 @@ export function ChatEndpointDetail() {
       </div>
     );
   if (endpoint.provider === "agentmail" && activeTab === "settings")
-    return <EmailEndpointSettings key={endpoint.id} endpointId={endpoint.id} companyId={endpoint.companyId} assignedAgentName={endpoint.assignedAgentName} />;
+    return <div className="space-y-7"><EmailEndpointSettings key={endpoint.id} endpointId={endpoint.id} companyId={endpoint.companyId} assignedAgentName={endpoint.assignedAgentName} /><EndpointExecutionDefaults endpoint={endpoint} /></div>;
   const setupIncomplete =
     endpoint.setup?.step !== "complete" &&
+    !(endpoint.provider === "slack" && endpoint.setup?.step === "test") &&
     ["draft", "verifying", "attention", "revoked"].includes(endpoint.status);
+  const slackAppId = endpoint.setup?.slackRegistration?.appId;
+  const slackUrl = endpoint.provider === "slack"
+    ? slackAppId ? `https://api.slack.com/apps/${encodeURIComponent(slackAppId)}/oauth` : "https://api.slack.com/apps"
+    : null;
 
   return (
     <div className="max-w-5xl space-y-6 pb-12">
       <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold">
-            {endpoint.assignedAgentName} {tNewUi("newUi.k582967534d0f")} {providerNames[endpoint.provider]}
+        <div className="flex min-w-0 items-center gap-3">
+          <AgentAvatar agent={agentQuery.data ?? { id: endpoint.assignedAgentId, name: endpoint.assignedAgentName }} size={endpoint.provider === "github" ? 64 : 48} />
+          <div className="min-w-0">
+          <h1 ref={heading} tabIndex={-1} className={endpoint.provider === "speko" ? "flex items-center gap-3 text-xl font-bold" : "text-xl font-bold"}>
+            {endpoint.provider === "speko" && <AppLogo name="Speko" brandKey="speko" size={36} />}
+            {endpoint.provider === "github" ? (endpoint.botLabel ?? endpoint.assignedAgentName) : endpoint.assignedAgentName}{endpoint.provider === "speko" ? t("upgrade1029ConflictsE.inSpekoSuffix") : ""}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {endpoint.providerAccountLabel ?? (endpoint.provider === "agentmail" ? endpoint.botExternalId ?? "Email connection" : tNewUi("newUi.kc3b314eca2b0"))}
+          <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            {endpoint.provider === "github" ? <><AppLogo name="GitHub" brandKey="github" compact className="size-4! rounded-sm bg-transparent" /><Link to={`/agents/${endpoint.assignedAgentId}`} className="hover:underline">{endpoint.assignedAgentName}</Link>{endpoint.providerAccountLabel && <span>· {endpoint.providerAccountLabel}</span>}</> : endpoint.providerAccountLabel ?? (endpoint.provider === "agentmail" ? endpoint.botExternalId ?? "Email connection" : tNewUi("newUi.kc3b314eca2b0"))}
           </p>
+          {endpoint.provider === "github" && <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <GitHubBotMention endpoint={endpoint} />
+            <GitHubAppIdentityActions endpoint={endpoint} avatarUrl={avatarAgent.data ? agentAvatarUrl(resolveAgentAppearance(avatarAgent.data.appearance, endpoint.assignedAgentId), 512, 1, "rest") : undefined} />
+          </div>}
           {endpoint.provider === "imessage-photon" && endpoint.botExternalId && endpoint.photonAllocation !== "shared" && (
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
               <span>{endpoint.botExternalId}</span>
@@ -310,8 +355,11 @@ export function ChatEndpointDetail() {
               <span role="status" className="text-muted-foreground">{copyStatus}</span>
             </div>
           )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {endpoint.provider === "speko" && <a href="https://platform.speko.ai/agents" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm text-primary underline">{t("upgrade1029ConflictsE.openSpeko")}<ExternalLink className="size-3.5" aria-hidden="true" /></a>}
+          {slackUrl && <Button asChild variant="outline"><a href={slackUrl} target="_blank" rel="noopener noreferrer">{t("upgrade1029ConflictsE.openSlackConfiguration")} <ExternalLink className="size-4" /></a></Button>}
           {setupIncomplete ? (
             <Button
               variant="outline"
@@ -324,19 +372,27 @@ export function ChatEndpointDetail() {
               {tNewUi("newUi.kc5702c19da53")}
             </Button>
           ) : null}
-          {endpoint.status !== "active" && <StatusBadge status={endpoint.status} />}
+          {endpoint.status !== "active" && <StatusBadge status={endpoint.status} className={endpoint.provider === "speko" ? "text-foreground" : undefined} />}
         </div>
       </header>
-      {activeTab === "settings" && (
-        <>
-{endpoint.provider === "github" && <GitHubBotManagement endpoint={endpoint} view="settings" />}
-{endpoint.provider !== "github" && <Settings endpointId={endpoint.id} endpoint={endpoint} />}
-</>
+      {endpoint.provider === "github" && <GitHubConnectionRecoveryNotice endpoint={endpoint} />}
+      {activeTab === "settings" && endpoint.provider === "speko" && endpoint.status === "active" && <div className="space-y-6"><SpekoPhoneCallback companyId={endpoint.companyId} endpointId={endpoint.id} /><SpekoPhoneLine companyId={endpoint.companyId} endpointId={endpoint.id} /><SpekoIncomingCalls companyId={endpoint.companyId} endpointId={endpoint.id} agentId={endpoint.assignedAgentId} /></div>}
+      {endpoint.provider === "slack" && <SlackTestMessageButton key={endpoint.id} endpointId={endpoint.id} />}
+      {endpoint.provider === "github" && <div hidden={activeTab !== "settings" && activeTab !== "access"}>
+        <GitHubBotManagement key={endpoint.id} endpoint={endpoint} view={activeTab === "access" ? "access" : "settings"} />
+      </div>}
+      {activeTab === "settings" && endpoint.provider !== "github" && <Settings endpointId={endpoint.id} endpoint={endpoint} />}
+      {activeTab === "settings" && <EndpointExecutionDefaults endpoint={endpoint} />}
+      {activeTab === "reviews" && endpoint.provider === "github" && <GitHubReviews endpointId={endpoint.id} reviewId={reviewId} />}
+      {activeTab === "access" && endpoint.provider === "speko" && (
+        <section className="max-w-3xl space-y-3">
+          <h2 className="text-lg font-semibold">{t("upgrade1029ConflictsE.privateVoiceAccess")}</h2>
+          <p className="text-sm text-muted-foreground">{t("upgrade1029ConflictsE.browserCallsAccess")}</p>
+          <p className="text-sm text-muted-foreground">{t("upgrade1029ConflictsE.outgoingCallsHelp")}</p>
+        </section>
       )}
-      {activeTab === "reviews" && endpoint.provider === "github" && <GitHubReviews endpointId={endpoint.id} />}
-{activeTab === "access" && endpoint.provider === "github" && <GitHubBotManagement endpoint={endpoint} view="access" />}
 {activeTab === "access" && endpoint.provider === "agentmail" && <EmailAccess endpoint={endpoint} />}
-{activeTab === "access" && endpoint.provider !== "github" && endpoint.provider !== "agentmail" && (
+{activeTab === "access" && endpoint.provider !== "speko" && endpoint.provider !== "github" && endpoint.provider !== "agentmail" && (
         <Access
           endpointId={endpoint.id}
           allowUnlinked={endpoint.allowUnlinkedPeople}
@@ -349,8 +405,34 @@ export function ChatEndpointDetail() {
       {activeTab === "activity" && (
         <Activity endpointId={endpoint.id} endpoint={endpoint} />
       )}
+      {endpoint.provider === "github" && activeTab === "settings" && endpoint.status === "active" &&
+        endpoint.setup?.step === "complete" && completion?.endpointId === endpoint.id && (
+        <GitHubConnectionComplete
+          endpoint={endpoint}
+          agent={avatarAgent.data}
+          runtimeChecks={completion.runtimeChecks}
+          onClose={() => {
+            const { githubConnectionComplete: _complete, ...rest } = location.state as GitHubConnectionCompleteLocationState;
+            navigate({ pathname: location.pathname, search: location.search, hash: location.hash }, { replace: true, state: rest });
+          }}
+          onCloseAutoFocus={() => heading.current?.focus()}
+        />
+      )}
     </div>
   );
+}
+
+function EndpointExecutionDefaults({ endpoint }: { endpoint: ChatEndpoint }) {
+  const queryClient = useQueryClient();
+  return <section className="max-w-3xl py-5"><ChatExecutionDefaults
+    key={endpoint.id}
+    companyId={endpoint.companyId}
+    value={endpoint.executionDefaults}
+    onSave={async (executionDefaults) => {
+      const next = await chatEndpointsApi.update(endpoint.id, { executionDefaults });
+      queryClient.setQueryData(queryKeys.chatEndpoints.detail(endpoint.id), next);
+    }}
+  /></section>;
 }
 
 function EmailAccess({ endpoint }: { endpoint: ChatEndpoint }) {
@@ -365,15 +447,15 @@ function EmailAccess({ endpoint }: { endpoint: ChatEndpoint }) {
   });
   if (!endpoint.connectionId || agents.isError || connection.isError) return (
     <div className="space-y-3">
-      <p role="alert" className="text-sm text-destructive">Connection access could not be loaded.</p>
-      <Button variant="outline" onClick={() => { void agents.refetch(); void connection.refetch(); }}>Try again</Button>
+      <p role="alert" className="text-sm text-destructive">{tNewUi("newUi.k95339012793d")}</p>
+      <Button variant="outline" onClick={() => { void agents.refetch(); void connection.refetch(); }}>{tNewUi("newUi.kd8b8392e2c54")}</Button>
     </div>
   );
-  if (agents.isPending || connection.isPending) return <p role="status" className="text-sm text-muted-foreground">Loading access…</p>;
+  if (agents.isPending || connection.isPending) return <p role="status" className="text-sm text-muted-foreground">{tNewUi("newUi.ka55b4d69fcfd")}</p>;
   const sourceId = connection.data.config?.credentialConnectionId;
   const credentialId = typeof sourceId === "string" ? sourceId : endpoint.connectionId;
   return <section className="max-w-3xl space-y-4">
-    <h2 className="text-lg font-semibold">Access</h2>
+    <h2 className="text-lg font-semibold">{tNewUi("newUi.kec5ba0abb717")}</h2>
     {credentialId !== endpoint.connectionId && <p className="text-sm text-muted-foreground">These settings apply to the saved AgentMail account and all inboxes using it.</p>}
     <EmailConnectionAccess key={credentialId} companyId={endpoint.companyId} connectionId={credentialId} agents={agents.data} />
   </section>;
@@ -388,16 +470,11 @@ function Settings({
 }) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
-  const [messageCopied, setMessageCopied] = useState(false);
-  const avatarAgent = useQuery({
-    queryKey: queryKeys.agents.detail(endpoint.assignedAgentId),
-    queryFn: () => agentsApi.get(endpoint.assignedAgentId, endpoint.companyId),
-    enabled: endpoint.provider === "slack",
-  });
-  const mentionMessage = `@${(endpoint.botUsername ?? endpoint.botLabel ?? endpoint.assignedAgentName).replace(/^@/, "")} you there?`;
   const resourcesQuery = useQuery({
     queryKey: queryKeys.chatEndpoints.resources(endpointId),
     queryFn: () => chatEndpointsApi.listResources(endpointId),
+    enabled: endpoint.provider !== "speko",
+    ...(endpoint.provider === "slack" ? liveChatQueryOptions : {}),
   });
   const saveResources = useMutation({
     mutationFn: (resource: Pick<ChatEndpointResource, "id" | "enabled">) =>
@@ -428,6 +505,7 @@ function Settings({
         tone: "error",
       }),
   });
+  if (endpoint.provider === "speko") return null;
   const resources = resourcesQuery.data ?? [];
   const destinationResources = resources.filter((resource) =>
     isIndividuallyToggleableResource(endpoint.provider, resource.type),
@@ -438,36 +516,6 @@ function Settings({
   return (
     <section className="max-w-3xl space-y-7">
       {endpoint.provider === "imessage-photon" && <p className="text-sm text-muted-foreground">{endpoint.photonAllocation === "shared" ? tNewUi("newUi.kbdbec108665c") : tNewUi("newUi.kade4297c0b4f")}</p>}
-      {endpoint.provider === "slack" && (
-        <div className="space-y-2 text-sm">
-          <h2 className="text-lg font-semibold">{tNewUi("newUi.k4d7c0afaf53e")}</h2>
-          <p>{tNewUi("newUi.kec7e38b6fec4")}</p>
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
-            <code>{mentionMessage}</code>
-            <Button size="icon" variant="ghost" aria-label={messageCopied ? tNewUi("newUi.ked112278453f") : tNewUi("newUi.k457efe538b25")} onClick={() => {
-              void copyTextToClipboard(mentionMessage).then(() => setMessageCopied(true), () => pushToast({ title: tNewUi("newUi.k31ae078543c9"), body: tNewUi("newUi.k0edc1f0c401d"), tone: "error" }));
-            }}>{messageCopied ? <Check className="size-4" /> : <Copy className="size-4" />}</Button>
-          </div>
-        </div>
-      )}
-      {endpoint.provider === "slack" && (
-        avatarAgent.isPending ? <p role="status" className="text-sm text-muted-foreground">{tNewUi("newUi.k0a92b68354ac")}</p>
-          : avatarAgent.isError ? <p role="alert" className="text-sm text-destructive">{tNewUi("newUi.k984c743c4683")} <button className="underline" onClick={() => void avatarAgent.refetch()}>{tNewUi("newUi.kd8b8392e2c54")}</button></p>
-          : <SlackAvatarSettings
-              agentName={avatarAgent.data?.name ?? endpoint.assignedAgentName}
-              appName={endpoint.setup?.slackApp?.appName ?? defaultSlackAppName(avatarAgent.data?.name ?? endpoint.assignedAgentName)}
-              avatarUrl={agentAvatarUrl(resolveAgentAppearance(avatarAgent.data?.appearance, endpoint.assignedAgentId), 512, 1, "rest")}
-            />
-      )}
-      {endpoint.provider === "slack" && <SlackToolsSettings companyId={endpoint.companyId} endpointId={endpointId} connectionId={endpoint.connectionId} />}
-      {endpoint.provider === "slack" && <ChatCommunicationInstructions
-        key={endpoint.id}
-        value={endpoint.communicationInstructions ?? ""}
-        onSave={async (communicationInstructions) => {
-          const next = await chatEndpointsApi.update(endpointId, { communicationInstructions });
-          queryClient.setQueryData(queryKeys.chatEndpoints.detail(endpointId), next);
-        }}
-      />}
       {endpoint.provider === "telegram" && (
         <div className="space-y-2">
           <h2 className="text-lg font-semibold">{tNewUi("newUi.ka2c515a4d168")}</h2>
@@ -478,35 +526,33 @@ function Settings({
               &lt;request&gt;
             </code>
             <p className="mt-2 text-muted-foreground">
-              {tNewUi("newUi.kb372c3ed6fde")}
+              {t("upgrade1029ConflictsE.telegramPrivacyMode")}
             </p>
           </div>
         </div>
       )}
-      <div>
-        <h2 className="text-lg font-semibold">{tNewUi("newUi.kb3257820dbf0")}</h2>
-      </div>
       <div className="space-y-2">
         <h3 className="text-sm font-semibold">{endpoint.provider === "slack" ? tNewUi("newUi.ke57f04d75c1b") : tNewUi("newUi.k72eb63f032e4")}</h3>
-        {resourcesQuery.isLoading ? (
+        {resourcesQuery.isError ? <p role="alert" className="text-sm text-destructive">{t("upgrade1029ConflictsE.couldNotLoadChannels")} <button className="underline" onClick={() => void resourcesQuery.refetch()}>{tNewUi("newUi.kd8b8392e2c54")}</button></p> : resourcesQuery.isLoading ? (
           <p className="text-sm text-muted-foreground">{tNewUi("newUi.kb78eda5f3fc7")}</p>
-        ) : destinationResources.length === 0 ? (
+        ) : destinationResources.length === 0 && endpoint.provider !== "slack" ? (
           <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-            {tNewUi("newUi.k44663dffe955")}
+            {t("upgrade1029ConflictsE.noDestinationsYet")}
           </p>
         ) : (
-          <div className="divide-y divide-border border-y border-border">
+          <div className={endpoint.provider === "slack" ? "space-y-1" : "divide-y divide-border border-y border-border"}>
             {destinationResources.map((resource) => (
-              <div key={resource.id} className="flex items-center gap-3 py-3">
+              <div key={resource.id} className="py-3 space-y-3">
+              <div className="flex items-center gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">
                     {resource.label}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  {(resource.availability !== "available" || resource.detail) && <p className="text-xs text-muted-foreground">
                     {resource.availability === "available"
-                      ? (resource.detail ?? resource.type)
+                      ? resource.detail
                       : tNewUi("newUi.kb0c0c15c2d57")}
-                  </p>
+                  </p>}
                   {resource.participants?.length ? <p className="mt-1 break-words text-xs text-muted-foreground">{tNewUi("newUi.k92ac4b95326e")} {resource.participants.join(", ")}</p> : null}
                 </div>
                 <ToggleSwitch
@@ -522,19 +568,36 @@ function Settings({
                   }
                 />
               </div>
+              <details className="text-sm">
+                <summary className="cursor-pointer text-muted-foreground">{t("upgrade1029ConflictsE.taskDefaults")}</summary>
+                <div className="pt-3"><ChatExecutionDefaults
+                  companyId={endpoint.companyId}
+                  value={resource.executionDefaults}
+                  resource
+                  onSave={async (executionDefaults) => {
+                    const next = await chatEndpointsApi.updateResources(endpointId, [{ id: resource.id, executionDefaults }]);
+                    queryClient.setQueryData(queryKeys.chatEndpoints.resources(endpointId), next);
+                  }}
+                /></div>
+              </details>
+              </div>
             ))}
+            {endpoint.provider === "slack" && (
+              <p className="py-3 text-sm text-muted-foreground">
+                {t("upgrade1029ConflictsE.inviteToChannel", { name: endpoint.assignedAgentName })}
+              </p>
+            )}
           </div>
         )}
       </div>
       {endpoint.provider !== "github" && (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold">{tNewUi("newUi.k65f20ef7ee9a")}</h3>
           <SettingToggle
             label={tNewUi("newUi.ke2f7f14dd8ad")}
             detail={
               endpoint.provider === "discord"
                 ? tNewUi("newUi.kf78465c5a684")
-                : tNewUi("newUi.k4464bb789286")
+                : undefined
             }
             checked={endpoint.allowDirectMessages ?? false}
             pending={updateEndpoint.isPending}
@@ -542,6 +605,17 @@ function Settings({
               updateEndpoint.mutate({ allowDirectMessages })
             }
           />
+          {endpoint.provider === "slack" && (
+            <SettingToggle
+              label={t("upgrade1029ConflictsE.requireAtMention")}
+              detail={t("upgrade1029ConflictsE.requireAtMentionDetail")}
+              checked={endpoint.requireAtMention ?? false}
+              pending={updateEndpoint.isPending}
+              onChange={(requireAtMention) =>
+                updateEndpoint.mutate({ requireAtMention })
+              }
+            />
+          )}
           {endpoint.provider === "microsoft-teams" && (
             <SettingToggle
               label={tNewUi("newUi.k5fabb08f65b4")}
@@ -555,6 +629,15 @@ function Settings({
           )}
         </div>
       )}
+      {endpoint.provider === "slack" && <ChatCommunicationInstructions
+        key={endpoint.id}
+        value={endpoint.communicationInstructions ?? ""}
+        onSave={async (communicationInstructions) => {
+          const next = await chatEndpointsApi.update(endpointId, { communicationInstructions });
+          queryClient.setQueryData(queryKeys.chatEndpoints.detail(endpointId), next);
+        }}
+      />}
+      {endpoint.provider === "slack" && <SlackSetupAdvanced label={tNewUi("newUi.k192c25289bd0")}><SlackToolsSettings companyId={endpoint.companyId} endpointId={endpointId} /></SlackSetupAdvanced>}
     </section>
   );
 }
@@ -567,16 +650,16 @@ function SettingToggle({
   onChange,
 }: {
   label: string;
-  detail: string;
+  detail?: string;
   checked: boolean;
   pending: boolean;
   onChange: (value: boolean) => void;
 }) {
   return (
-    <div className="flex items-center gap-3 border-y border-border py-3">
+    <div className="flex items-center gap-3 py-3">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">{label}</p>
-        <p className="text-xs text-muted-foreground">{detail}</p>
+        {detail && <p className="text-xs text-muted-foreground">{detail}</p>}
       </div>
       <ToggleSwitch
         aria-label={label}
@@ -601,10 +684,13 @@ function Access({
   const { pushToast } = useToast();
   const [confirmationUrl, setConfirmationUrl] = useState<string | null>(null);
   const [joinCommandCopied, setJoinCommandCopied] = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const [confirmationFor, setConfirmationFor] = useState<string | null>(null);
   const joinCommand = `${endpoint.setup?.slackApp?.command ?? endpoint.setup?.command ?? "/paperclip"} connect`;
   const linksQuery = useQuery({
     queryKey: queryKeys.chatEndpoints.principals(endpointId),
     queryFn: () => chatEndpointsApi.listPrincipals(endpointId),
+    refetchInterval: 5000,
   });
   const updatePolicy = useMutation({
     mutationFn: (value: boolean) =>
@@ -623,11 +709,7 @@ function Access({
       setConfirmationUrl(
         new URL(confirmationUrl, window.location.origin).toString(),
       );
-      pushToast({
-        title: tNewUi("newUi.kec92b406a21c"),
-        body: tNewUi("newUi.kc0b6f302dc8d"),
-        tone: "success",
-      });
+
     },
     onError: (error) =>
       pushToast({
@@ -639,47 +721,46 @@ function Access({
   const revoke = useMutation({
     mutationFn: (principalId: string) =>
       chatEndpointsApi.revokeLink(endpointId, principalId),
-    onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.chatEndpoints.principals(endpointId),
-      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.chatEndpoints.principals(endpointId) }),
+    onError: (error) => pushToast({ title: t("upgrade1029ConflictsE.couldNotDisconnectAccount"), body: error instanceof Error ? error.message : tNewUi("newUi.ka0c2cc1374d9"), tone: "error" }),
   });
   const links = linksQuery.data ?? [];
   return (
     <section className="max-w-3xl space-y-7">
-      <div>
-        <h2 className="text-lg font-semibold">{tNewUi("newUi.k742bdfc379f8")}</h2>
-      </div>
-      {endpoint.provider === "slack" && <SlackSearchAccess companyId={endpoint.companyId} endpointId={endpointId} />}
-      {endpoint.provider === "slack" && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold">{tNewUi("newUi.ka7e7666699d0")}</h3>
-          <ol className="list-decimal space-y-3 pl-5 text-sm">
-            <li>
-              {tNewUi("newUi.k7fb4fb01bdc0")}
-              <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-border p-3">
-                <code>{joinCommand}</code>
-                <Button size="sm" variant="ghost" onClick={() => {
-                  void copyTextToClipboard(joinCommand).then(() => setJoinCommandCopied(true), () => pushToast({ title: tNewUi("newUi.kf3a00b9a8633"), body: tNewUi("newUi.k0edc1f0c401d"), tone: "error" }));
-                }}><Copy className="size-4" />{joinCommandCopied ? tNewUi("newUi.k8d525e5f158b") : tNewUi("newUi.k9a01feecae67")}</Button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">{t("upgrade1029ConflictsE.people")}</h2>
+        {endpoint.provider === "slack" && <Dialog>
+          <DialogTrigger asChild><Button>{tNewUi("newUi.k27bf0f2d3f3f")}</Button></DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("upgrade1029ConflictsE.invitePeopleToTalkTo", { name: endpoint.assignedAgentName })}</DialogTitle>
+              <DialogDescription>{t("upgrade1029ConflictsE.inviteInstructionsDescription")}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 text-sm">
+              <ol className="list-decimal space-y-3 pl-5">
+                <li>{t("upgrade1029ConflictsE.sendCommandBefore")} <code className="font-mono">{joinCommand}</code> {t("upgrade1029ConflictsE.sendCommandInSlackAfter")}</li>
+                <li>{t("upgrade1029ConflictsE.invitePrivateLinkStep")}</li>
+                <li>{t("upgrade1029ConflictsE.inviteRequestAccessStep")}</li>
+              </ol>
+              <p className="text-muted-foreground">{t("upgrade1029ConflictsE.confirmationLinkExpires")}</p>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <Button variant="ghost" onClick={() => {
+                  void copyTextToClipboard(joinCommand).then(() => setJoinCommandCopied(true), () => pushToast({ title: tNewUi("newUi.kf3a00b9a8633"), tone: "error" }));
+                }}>{joinCommandCopied ? <Check className="size-4" /> : <Copy className="size-4" />}{joinCommandCopied ? tNewUi("newUi.k8d525e5f158b") : tNewUi("newUi.k9a01feecae67")}</Button>
+                <Button onClick={() => {
+                  const workspace = endpoint.providerAccountId ? `https://app.slack.com/client/${encodeURIComponent(endpoint.providerAccountId)}` : "https://app.slack.com/";
+                  void copyTextToClipboard(t("upgrade1029ConflictsE.slackInvitationText", { name: endpoint.assignedAgentName, workspace, command: joinCommand })).then(() => setInviteCopied(true), () => pushToast({ title: t("upgrade1029ConflictsE.couldNotCopyInvitation"), tone: "error" }));
+                }}>{inviteCopied ? <Check className="size-4" /> : <Copy className="size-4" />}{inviteCopied ? t("upgrade1029ConflictsE.invitationCopied") : t("upgrade1029ConflictsE.copyInvitation")}</Button>
               </div>
-            </li>
-            <li>{tNewUi("newUi.k16dc3980b69c")}</li>
-            <li>{tNewUi("newUi.kbb882d5f32d6")} <strong>{tNewUi("newUi.kb06f1662da4a")}</strong>{tNewUi("newUi.k3ad41e9225c8")}</li>
-          </ol>
-          <p className="text-sm text-muted-foreground">{tNewUi("newUi.k3bc0efc6b09e")}</p>
-        </div>
-      )}
-      <SettingToggle
-        label={tNewUi("newUi.kb61e32fc710b")}
-        detail={tNewUi("newUi.k89e4d44d213e")}
-        checked={allowUnlinked}
-        pending={updatePolicy.isPending}
-        onChange={(value) => updatePolicy.mutate(value)}
-      />
+            </div>
+          </DialogContent>
+        </Dialog>}
+      </div>
+      <p className="text-sm text-muted-foreground">{t("upgrade1029ConflictsE.linkedAccountsUseOwnPermissions")} <Link className="underline underline-offset-4" to="/company/settings/members">{t("upgrade1029ConflictsE.manageMembers")}</Link></p>
       {confirmationUrl && (
         <div className="space-y-2 border-y border-border py-3">
-          <p className="text-sm font-medium">{tNewUi("newUi.ka3503780b09e")}</p>
+          <p className="text-sm font-medium">{t("upgrade1029ConflictsE.confirmAccountName", { name: confirmationFor ?? t("upgrade1029ConflictsE.thisAccount") })}</p>
+          <p className="text-xs text-muted-foreground">{t("upgrade1029ConflictsE.shareOnlyWithThisPerson")}</p>
           <p className="break-all text-xs text-muted-foreground">
             {confirmationUrl}
           </p>
@@ -708,25 +789,31 @@ function Access({
         </div>
       )}
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold">{tNewUi("newUi.kd0150db97db5")}</h3>
-        {links.length === 0 ? (
+        {linksQuery.isPending ? <p role="status" className="text-sm text-muted-foreground">{t("upgrade1029ConflictsE.loadingPeople")}</p> : linksQuery.isError ? <p role="alert" className="text-sm text-destructive">{t("upgrade1029ConflictsE.couldNotLoadPeople")} <button className="underline" onClick={() => void linksQuery.refetch()}>{tNewUi("newUi.kd8b8392e2c54")}</button></p> : links.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-            {tNewUi("newUi.k9c4711037567")}
+            {t("upgrade1029ConflictsE.noLinkedAccountsYet")}
           </p>
         ) : (
-          <div className="divide-y divide-border border-y border-border">
+          <div role="list" aria-label={t("upgrade1029ConflictsE.people")} className="divide-y divide-border border-y border-border">
             {links.map((link) => (
               <div
                 key={link.id}
+                role="listitem"
                 className="flex flex-wrap items-center gap-3 py-3"
               >
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium">{link.externalLabel}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {link.paperclipUserLabel
-                      ? `Linked to ${link.paperclipUserLabel}`
-                      : (link.externalDetail ?? tNewUi("newUi.k1e31d9596d67"))}
-                  </p>
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <Avatar aria-hidden="true">
+                    {link.paperclipUserImage && <AvatarImage src={link.paperclipUserImage} alt="" />}
+                    <AvatarFallback>{deriveInitials(link.paperclipUserLabel ?? link.externalLabel)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm" title={link.paperclipUserLabel ?? link.externalLabel}>{link.paperclipUserLabel ?? link.externalLabel}</p>
+                    {(link.status !== "linked" || link.externalLabel !== link.paperclipUserLabel) && <p className="text-xs text-muted-foreground">
+                      {link.status === "revoked" ? tNewUi("newUi.k04dfac3671b4") : link.status === "linked"
+                        ? link.externalLabel
+                        : t("upgrade1029ConflictsE.waitingForAccountConfirmation")}
+                    </p>}
+                  </div>
                 </div>
                 {link.status === "linked" ? (
                   <Button
@@ -736,16 +823,16 @@ function Access({
                     onClick={() => revoke.mutate(link.principalId)}
                   >
                     <Unlink />
-                    {t("toolsResidualRound2.revoke")}
+                    {tNewUi("newUi.kacfc5be785a9")}
                   </Button>
                 ) : (
                   <Button
                     size="sm"
                     variant="outline"
                     disabled={createIntent.isPending}
-                    onClick={() => createIntent.mutate(link.principalId)}
+                    onClick={() => { setConfirmationUrl(null); setConfirmationFor(link.externalLabel); createIntent.mutate(link.principalId); }}
                   >
-                    {tNewUi("newUi.kd972bf7850a7")}
+                    {t("upgrade1029ConflictsE.createConfirmationLink")}
                   </Button>
                 )}
               </div>
@@ -753,6 +840,12 @@ function Access({
           </div>
         )}
       </div>
+      <SlackSetupAdvanced label={t("upgrade1029ConflictsE.guestAccess")}>
+        <SettingToggle label={tNewUi("newUi.kb61e32fc710b")}
+          detail={t("upgrade1029ConflictsE.allowUnlinkedDetail")}
+          checked={allowUnlinked} pending={updatePolicy.isPending} onChange={value => updatePolicy.mutate(value)} />
+      </SlackSetupAdvanced>
+      {endpoint.provider === "slack" && <SlackSetupAdvanced label={t("upgrade1029ConflictsE.personalSlackSearch")}><SlackSearchAccess companyId={endpoint.companyId} endpointId={endpointId} /></SlackSetupAdvanced>}
     </section>
   );
 }
@@ -769,43 +862,14 @@ function Conversations({
     queryFn: () => chatEndpointsApi.listConversations(endpointId),
     ...liveChatQueryOptions,
   });
-  const rows = query.data ?? [];
   return (
     <section className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold">{tNewUi("newUi.k1d432f58690c")}</h2>
-      </div>
       {query.isPending ? <p role="status" className="text-sm text-muted-foreground">Loading conversations…</p> : query.isError ? (
         <div className="space-y-3">
           <p role="alert" className="text-sm text-destructive">Conversations could not be loaded.</p>
-          <Button variant="outline" onClick={() => void query.refetch()}>Try again</Button>
+          <Button variant="outline" onClick={() => void query.refetch()}>{tNewUi("newUi.kd8b8392e2c54")}</Button>
         </div>
-      ) : rows.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-          {provider === "agentmail"
-            ? "No email conversations yet. Send an email to this agent’s address to start one."
-            : tNewUi("newUi.kc1c6b0806b90")}
-        </p>
-      ) : (
-        <ul aria-label={tNewUi("newUi.k1d432f58690c")} className="divide-y divide-border overflow-x-auto border-y border-border">
-          {rows.map((row) => (
-            <li key={row.id} className="flex min-w-xl items-center gap-3 px-2 py-3 text-sm transition-colors hover:bg-accent/50">
-              <AppLogo name={providerNames[provider]} brandKey={provider} compact className="size-5! rounded-sm bg-transparent" />
-              <div className="flex min-w-0 max-w-56 items-center gap-2">
-                <span className="truncate font-medium" title={row.externalLabel}>{row.externalLabel}</span>
-                {row.externalUrl && <a href={row.externalUrl} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline">{tNewUi("newUi.ked077f3d8125")} {providerNames[provider]}<ExternalLink className="size-3" /></a>}
-              </div>
-              <span aria-hidden="true" className="text-muted-foreground">·</span>
-              <div className="flex min-w-0 flex-1 items-center gap-2">
-                <span className="truncate" title={row.issueTitle ?? undefined}>{row.issueTitle ?? tNewUi("newUi.k2d3edb9384ce")}</span>
-                {row.issueId && <Link to={`/issues/${row.issueId}`} className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline">{t("pipelinesResidualExtra.openTask")}<ExternalLink className="size-3" /></Link>}
-              </div>
-              <span className="hidden shrink-0 text-xs text-muted-foreground xl:inline">{row.issueIdentifier}</span>
-              {row.state !== "active" && <StatusBadge status={row.state} />}
-            </li>
-          ))}
-        </ul>
-      )}
+      ) : <ChatConversationList rows={query.data ?? []} provider={provider} />}
     </section>
   );
 }
@@ -833,6 +897,7 @@ function Activity({
     ...liveChatQueryOptions,
     refetchInterval: cursor ? false : liveChatQueryOptions.refetchInterval,
   });
+  const calls = useSpekoCallHistory(endpoint.companyId, endpointId, endpoint.provider === "speko" && !cursor);
   const replay = useMutation({
     mutationFn: (item: ChatActivityItem) =>
       item.kind === "publication"
@@ -843,7 +908,7 @@ function Activity({
         queryKey: queryKeys.chatEndpoints.activity(endpointId),
       });
       pushToast({
-        title: `${item.kind === "publication" ? tNewUi("newUi.k15fc65b69327") : tNewUi("newUi.k52bfe584a5fc")} queued for replay`,
+        title: item.kind === "publication" ? t("upgrade1029ConflictsE.publicationQueuedForReplay") : t("upgrade1029ConflictsE.deliveryQueuedForReplay"),
         tone: "success",
       });
     },
@@ -946,6 +1011,14 @@ function Activity({
       }),
   });
   const rows = query.data?.items ?? [];
+  // Calls use their own caller-authorized API and appear once in recent activity.
+  // Older connection-event pages retain the existing cursor contract.
+  const activityEntries = [
+    ...(!query.isError ? rows.map(item => ({ kind: "connection" as const, id: `connection:${item.id}`, createdAt: item.createdAt, item })) : []),
+    ...(!cursor && !calls.error ? calls.entries.map(entry => ({ kind: "call" as const, id: `call:${entry.session.id}`, createdAt: entry.session.createdAt, entry })) : []),
+    ...(!cursor && !calls.incomingError ? calls.unapprovedCalls.map(call => ({ kind: "unapproved_call" as const, id: `unapproved:${call.id}`, createdAt: call.createdAt, call })) : []),
+  ].sort((a, b) => b.createdAt.localeCompare(a.createdAt) || a.id.localeCompare(b.id));
+
   const { status } = endpoint;
   const health = connectionHealthPresentation(endpoint);
   const lifecycleAction = lifecycle.variables;
@@ -957,7 +1030,7 @@ function Activity({
       ] as const)
     : [];
   return (
-    <section className="space-y-5">
+    <section className="space-y-5" aria-label={tNewUi("newUi.k52520f2f36e9")}>
       <h2 className="text-lg font-semibold">{tNewUi("newUi.k52520f2f36e9")}</h2>
       {((status !== "active" && health.message) || health.error) && (
         <div
@@ -1060,7 +1133,7 @@ function Activity({
                 ) : (
                   <Play />
                 )}
-                {tNewUi("newUi.kd640c7421da0")}
+                {t("upgrade1029ConflictsE.resumeConnection")}
               </Button>
             )}
             {[
@@ -1108,9 +1181,10 @@ function Activity({
         </div>
       </details>
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold">
-          {t("appDetail.activity.title")}
-        </h3>
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-semibold">{t("appDetail.activity.title")}</h3>
+          {endpoint.provider === "speko" && !cursor && <Button size="sm" variant="ghost" onClick={() => { void query.refetch(); calls.onRetry(); }} disabled={query.isFetching || calls.loading}>{tNewUi("newUi.k0e9161011702")}</Button>}
+        </div>
         {endpoint.provider === "agentmail" && rows.some((item) => item.kind === "publication" && item.status === "delivery_unknown") && (
           <p className="text-sm text-muted-foreground">
             Review unconfirmed email delivery in the{" "}
@@ -1118,7 +1192,7 @@ function Activity({
           </p>
         )}
         <div className="divide-y divide-border border-y border-border">
-          {query.isLoading && (
+          {(query.isLoading || calls.loading) && (
             <div className="flex items-center gap-2 py-5 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
               {tNewUi("newUi.ka389c395010e")}
@@ -1138,11 +1212,19 @@ function Activity({
               </Button>
             </div>
           )}
-          {!query.isLoading &&
-            !query.isError &&
-            rows.map((item) => (
+          {endpoint.provider === "speko" && !cursor && [
+            calls.error && t("upgrade1029ConflictsE.callActivityLoadFailed", { error: calls.error }),
+            calls.incomingError && t("upgrade1029ConflictsE.unapprovedCallsLoadFailed", { error: calls.incomingError }),
+            calls.endError && t("upgrade1029ConflictsE.callEndFailed", { error: calls.endError }),
+          ].filter(Boolean).map((message) => <div key={String(message)} className="flex flex-wrap items-center justify-between gap-3 py-4"><p role="alert" className="text-sm text-destructive">{message}</p><Button size="sm" variant="outline" onClick={calls.onRetry}>{t("upgrade1029ConflictsE.retryCalls")}</Button></div>)}
+          {activityEntries.map(entry => {
+            if (entry.kind === "call") return <SpekoCallActivityItem key={entry.id} entry={entry.entry} presentation="activity" onEnd={calls.onEnd} ending={calls.endingSessionId === entry.entry.session.id} />;
+            if (entry.kind === "unapproved_call") return <SpekoUnapprovedCallActivityItem key={entry.id} call={entry.call} presentation="activity" />;
+            const item = entry.item;
+            return (
               <div
-                key={item.id}
+                key={entry.id}
+                data-activity-kind="connection"
                 className="flex items-start gap-3 px-2 py-3 transition-colors hover:bg-accent/50"
               >
                 <span className="mt-0.5 text-muted-foreground" aria-hidden="true">
@@ -1198,8 +1280,9 @@ function Activity({
                   </Button>
                 )}
               </div>
-            ))}
-          {!query.isLoading && !query.isError && rows.length === 0 && (
+            );
+          })}
+          {!query.isLoading && !query.isError && !calls.loading && !calls.error && !calls.incomingError && activityEntries.length === 0 && (
             <p className="py-5 text-sm text-muted-foreground">
               {tNewUi("newUi.k3ba50fcde806")}
             </p>
@@ -1312,6 +1395,14 @@ function Activity({
               {endpoint.assignedAgentName} {tNewUi("newUi.kb875c1b5c98b")}
               {` ${providerNames[endpoint.provider]}`}{tNewUi("newUi.keda77d69e522")}{" "}
               {providerLifecycleGuidance[endpoint.provider].remove}
+              {endpoint.provider === "slack" && (
+                <> <a
+                  href={endpoint.setup?.slackRegistration?.managementUrl ?? "https://api.slack.com/apps"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-4"
+                >{t("upgrade1029ConflictsE.openSlackAppSettings")}</a> {t("upgrade1029ConflictsE.manageOrDeleteSlackAppAfter")}</>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

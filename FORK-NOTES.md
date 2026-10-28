@@ -254,6 +254,42 @@ actions; raw event codes remain visible as technical identifiers.
   `ui/src/lib/activity-format.ts` (English word order is baked into sentence
   assembly), skill descriptions and app connection names (stored data).
 
+### 2026-10-29 merge of `cff331f6ca` (1048 upstream commits)
+
+- 180 files conflicted (445 hunks; 158 UI files / 415 hunks). Resolved the same
+  way as 2026-10-05: upstream structure first, then existing keys where the
+  English is unchanged. Upstream deleted the old Pipelines screens; the fork's
+  translated copies were dropped with them.
+- Owner scope for this merge: translate what the new commits added, and
+  resolve conflicts — not a full re-translation. New strings live in
+  `ui/src/i18n/locales/{en,ko}/upgrade-1029-*.json` (top-level
+  `upgrade1029<Area>`): `conflicts-{a..e}`, `new-components`, `new-pages`,
+  `auto-merged`, `errors`, `shared`. Next merge: add a new dated set.
+- New screens translated this time even where FL-004 had deferred the area:
+  the Slack/GitHub chat endpoint setup pages added upstream
+  (`upgrade1029NewPages.{githubIdentity,githubComplete,githubRecovery,slackDetails,slackTest,managedSlack,ownSlack}`).
+  Remote MCP setup kept the 2026-10-05 deferral (existing keys only).
+- `ui/src/api/errors.ts` is upstream's single error-copy table (toasts,
+  connectivity banner, `QueryErrorState`). Its copy now resolves through
+  `upgrade1029Errors.*` at call time (FORK-LOCAL). `describeError` titles use
+  `upgrade1029Errors.couldNotAction` (ko `{{action}}에 실패했습니다`); callers
+  pass either a translated noun phrase (`t("…loadThisCase")` → `케이스 불러오기`)
+  or an English phrase listed in `ACTION_KEYS`. Add new English `action=`
+  phrases to that table.
+- `ui/src/lib/task-list.ts` / `task-list-views.ts` labels are getters over
+  `upgrade1029Shared.*`; several exported label arrays from the new
+  components use the same getter pattern (shape unchanged).
+- App catalog: 46 new definition/gallery strings added to `app-catalog.json`
+  (rerun the comparison script described above after every merge).
+- `ui/src/artifact-directions/**` (separate `artifact-directions.html` design
+  lab) and the `design-sandbox` components stay English, like the Design Guide.
+- Known mixed wording from key reuse: some reused keys say 아티팩트/작업 where
+  the newer copy says 산출물/업무. Five clear mistranslations were replaced
+  with new keys (Resume ≠ 이력서, Reopened ≠ 재개장, branch ≠ 지점).
+- FL-001: the new column layout (`TaskRowColumnCells`, `appearance="refreshed"`
+  with `columnValues`) renders the identifier itself and has no badge. Only the
+  dev design sandbox uses it today; add the badge there if a real board adopts it.
+
 ## FL-005 — Restorable embedded PostgreSQL backup on Windows
 
 **Status:** active · **Added:** 2026-09-24
@@ -342,6 +378,40 @@ Every listed path must be an intentional fork deletion; today there are none.
 
 ---
 
+## FL-009 — Server and helper-script fork changes re-applied on `cff331f6ca`
+
+**Status:** active · **Added:** 2026-10-29
+
+Upstream split `server/src/services/heartbeat.ts` into `heartbeat/*.ts`, so the
+fork's heartbeat edits (committed in `b46be8c4c` / `57ce3450c5`) were re-applied
+by hand on upstream's files. `git grep -n "FORK-LOCAL" -- server skills` lists
+every block. Prefer taking upstream and re-applying these again over hand-merging.
+
+| Change | Where now | Notes |
+| --- | --- | --- |
+| CMPA-487 issue adapter override compatibility | `heartbeat.ts` (right after `parseIssueAssigneeAdapterOverrides`) | Filtered once at the source, so router overrides, runtime/environment selection and the session fingerprint all see the filtered config. A task whose override is skipped may get one fresh session after the upgrade. |
+| CMPA-277 pending-card recipient | `heartbeat/queue.ts` (`isPendingCardRecipient`, claim gate, `holderIsInteractionRecipient`, `blockedInteractionWake`) and the `issueThreadInteractions` import in `modules/run-dispatch/adapters/postgres.ts` | The auto-merge silently dropped that import (runtime `ReferenceError`); check it after every merge. `contextSnapshot` is persisted at claim only when the card path enriched it. |
+| Legacy reassignment handoff (live patch 2026-10-01) | `modules/wake-queue/adapters/postgres.ts` pre-drain facts | Combined with upstream's `queuedOperatorStop` term. |
+| CMPA-644 plugin issue listing window | `plugin-host-services.ts` `issues.list` | Upstream still slices the SQL page again (offset applied twice); kept alongside upstream's `readCondition`. |
+| FL-002 issue-update helper | `skills/paperclip/scripts/paperclip-issue-update.sh` | Upstream added its own helper with the same name (retry, status echo check — SKILL.md relies on it). Kept upstream's interface; body goes through files and `node` instead of `jq` + argv (no `jq` here; argv mangles Hangul). |
+| Upload-artifact response file | `skills/paperclip/scripts/paperclip-upload-artifact.sh` | Upstream's `helper_response_file` plus `cygpath -m` for native curl. |
+
+Dropped because upstream now covers them: the attention-feed indexed lookup
+(2026-10-20 desk fix; upstream #15697 does the same) and the run-list
+`jsonb_to_record` / default-200 backport (upstream `heartbeat/run-state.ts`).
+
+Build notes for this revision: `packages/paperclip-runner` needs
+`pnpm run build:typescript` (no cargo) before the server typechecks or starts,
+and its scripts call `pnpm` by name, so a `pnpm` shim must be on `PATH`.
+`packages/plugins/sdk` needs a `tsc` build too. The UI is served from
+`ui/dist` (`pnpm run build` in `ui/`).
+
+A freshly restored database has no planner statistics: the run list took 3.7 s
+until `ANALYZE heartbeat_runs` (0.5 s after). Run `ANALYZE` after restoring a
+backup or applying many migrations.
+
+---
+
 ## Merging on this machine (Windows) — practical notes
 
 1. **Commit the live checkout first.** Agents and desk sessions apply patches
@@ -365,6 +435,13 @@ Every listed path must be an intentional fork deletion; today there are none.
 5. **Known environment-only failures** (not merge regressions):
    - Hermes `command-resolution.test.ts` (uses a `#!/bin/sh` fake CLI) and the
      symlink-conflict test in `src/index.test.ts` (needs Developer Mode).
+   - `file-delivery-bridges.test.ts` (3 tests): the native runner file handoff
+     verifies descriptors through `/proc/self/fd` or `/dev/fd`, which Windows
+     lacks (`paperclip_runner_file_handoff_descriptor_unverifiable`), and the
+     Bash helper hits "Sandbox callback bridge entrypoint upload sha mismatch".
+     The same 3 fail identically on the 2026-10-05 checkout.
+   - Under full-suite load, `ui/src/lib/sentry.test.ts` (2 tests) can time out;
+     it passes 29/29 alone.
    - `companies-service.test.ts` "does not auto-provision bundled built-in
      agents": the test uses the default home `C:\Users\03jwo\.paperclip`, which
      is a junction to `E:\AX_WORKSPACE\runtime\paperclip-user-profile`, and the

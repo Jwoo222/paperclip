@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type Ref } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type Ref, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Check, Copy, Terminal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,21 +23,23 @@ export interface AgentSetupPromptProps {
   /** Carry over the clipboard result when generating a prompt already copied it. */
   initialCopyStatus?: "idle" | "copied" | "failed";
   onCopied?: () => void;
+  /** Brand a handoff for one recipient; omit for the general agent logo stack. */
+  agent?: { name: string; className?: string } & ({ src: string; icon?: never } | { icon: ReactNode; src?: never });
 }
 
-const agents = [
+const defaultAgents: NonNullable<AgentSetupPromptProps["agent"]>[] = [
   { name: "Codex", src: "/brands/codex-color.svg", className: "" },
   { name: "ChatGPT", src: "/brands/apps/openai.svg", className: "dark:invert" },
   { name: "Claude", src: "/brands/claude-color.svg", className: "" },
 ];
 
-function AgentLogos({ ref, hidden }: { ref: Ref<HTMLSpanElement>; hidden: boolean }) {
+function AgentLogos({ ref, hidden, agents }: { ref: Ref<HTMLSpanElement>; hidden: boolean; agents: NonNullable<AgentSetupPromptProps["agent"]>[] }) {
   return (
     <span ref={ref} className="agent-setup-logos" data-hidden={hidden} aria-hidden="true">
       {agents.map((agent) => (
         <span key={agent.name} className="agent-setup-logo-slot">
           <span className="agent-setup-logo">
-            <img src={agent.src} alt="" className={cn("size-5", agent.className)} draggable={false} />
+            {agent.src ? <img src={agent.src} alt="" className={cn("size-5", agent.className)} draggable={false} /> : agent.icon}
           </span>
         </span>
       ))}
@@ -74,7 +76,9 @@ export function AgentSetupPrompt({
   className,
   initialCopyStatus = "idle",
   onCopied,
+  agent,
 }: AgentSetupPromptProps) {
+  const agents = agent ? [agent] : defaultAgents;
   const id = useId();
   const reducedMotion = usePrefersReducedMotion();
   const [open, setOpen] = useState(false);
@@ -199,7 +203,7 @@ export function AgentSetupPrompt({
               <span className={status === "copied" ? "invisible" : undefined}>{label}</span>
               {status === "copied" && <span className="agent-setup-confirmation absolute inset-0 flex items-center">{t("commonControls.copied")}</span>}
             </span>
-            <span className="agent-setup-trigger-logos"><AgentLogos ref={triggerLogos} hidden={open || Boolean(flight)} /></span>
+            <span className="agent-setup-trigger-logos" data-single={Boolean(agent)}><AgentLogos agents={agents} ref={triggerLogos} hidden={open || Boolean(flight)} /></span>
           </Button>
         </PopoverTrigger>
         <PopoverContent
@@ -230,7 +234,7 @@ export function AgentSetupPrompt({
           </div>
 
           <div className="agent-setup-preview-wrap relative pt-2">
-            <div className="agent-setup-preview-logos absolute right-3 top-0 z-10"><AgentLogos ref={previewLogos} hidden={Boolean(flight)} /></div>
+            <div className="agent-setup-preview-logos absolute right-3 top-0 z-10"><AgentLogos agents={agents} ref={previewLogos} hidden={Boolean(flight)} /></div>
             {status === "failed" ? (
               <Textarea
                 aria-label={t("newUi.kc7b9bbe5f091")}
@@ -261,17 +265,19 @@ export function AgentSetupPrompt({
               {status === "copied" ? t("taskDetail.copiedToClipboard") : status === "copying" ? t("upgrade2610Agents.setupPromptCopying") : status === "failed" ? t("upgrade2610Agents.setupPromptTryAgain") : t("agentManagement.dialog.copyPrompt")}
             </Button>
             <p className="text-center text-xs text-muted-foreground">
-              {status === "copied" ? t("upgrade2610Agents.setupPromptReady") : t("upgrade2610Agents.setupPromptWorksWith")}
+              {status === "copied"
+                ? agent ? t("upgrade1029ConflictsA.setupPrompt.readyFor", { name: agent.name }) : t("upgrade2610Agents.setupPromptReady")
+                : agent ? t("upgrade1029ConflictsA.setupPrompt.giveTo", { name: agent.name }) : t("upgrade2610Agents.setupPromptWorksWith")}
             </p>
           </div>
         </PopoverContent>
       </Popover>
-      <span role="status" className="sr-only">{status === "copied" ? t("upgrade2610Agents.setupPromptCopiedStatus") : ""}</span>
+      <span role="status" className="sr-only">{status === "copied" ? (agent ? t("upgrade1029ConflictsA.setupPrompt.copiedFor", { name: agent.name }) : t("upgrade2610Agents.setupPromptCopiedStatus")) : ""}</span>
       {flight && createPortal(
         <span ref={flyingLogos} className="agent-setup-flight-layer" aria-hidden="true">
           {agents.map((agent, index) => (
             <span key={agent.name} className="agent-setup-logo agent-setup-flying-logo" style={flight.origins[index]}>
-              <img src={agent.src} alt="" className={cn("size-5", agent.className)} draggable={false} />
+              {agent.src ? <img src={agent.src} alt="" className={cn("size-5", agent.className)} draggable={false} /> : agent.icon}
             </span>
           ))}
         </span>,

@@ -164,7 +164,7 @@ export function IssueScheduledRetryCard({
           ) : null}
           {scheduledRetry.error ? (
             <div className="mt-1 text-xs text-muted-foreground">
-              {t("taskDetailExtra.lastAttemptFailed", { error: scheduledRetry.error })}
+              {t("upgrade1029ConflictsA.retry.lastAttemptFailed", { error: `${scheduledRetry.error}${/[.!?]$/.test(scheduledRetry.error.trim()) ? "" : "."}` })}
             </div>
           ) : null}
           {isError ? (
@@ -211,7 +211,9 @@ export function IssueScheduledRetryCard({
                 ? retryNow.data?.outcome === "already_promoted"
                   ? t("taskDetailExtra.alreadyPromotedStarting")
                   : t("taskDetailExtra.promotedStarting")
-                : helperIdle}
+                : retryNow.data?.outcome === "waiting" && retryNow.data.scheduledRetry?.runId === scheduledRetry.runId
+                  ? retryNow.data.message
+                  : helperIdle}
           </span>
         </div>
       </div>

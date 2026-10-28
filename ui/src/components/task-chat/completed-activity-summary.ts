@@ -6,7 +6,7 @@ import {
   type ToolFamily,
   type ToolIcon,
 } from "./tool-taxonomy";
-import { protocolActivityPresentation } from "./task-chat-activity-presentation";
+import { protocolActivityPresentation, providerNoticeSeverity } from "./task-chat-activity-presentation";
 
 type Activity = TaskChatActivityPhaseItem["items"][number];
 const labels: Record<ToolFamily, string> = {
@@ -43,6 +43,12 @@ export function completedActivitySummary(items: Activity[]) {
     completed: boolean;
     order: number;
   }> = [];
+  const notices: Array<{
+    summary: string | undefined;
+    severity: "info" | "warning" | "error";
+    icon: ToolIcon;
+    order: number;
+  }> = [];
   for (const [order, item] of items.entries()) {
     if (item.kind === "tool") {
       const p = toolActivityPresentation({
@@ -68,6 +74,13 @@ export function completedActivitySummary(items: Activity[]) {
       } else {
         const p = protocolActivityPresentation(item);
         if (!p) continue;
+        if (item.surface === "provider_activity" && item.family === "provider_notice") {
+          // Reuse only the normalized notice text already available in the row.
+          const summary = item.summary?.trim()
+            || item.details.find((entry) => entry.label === "Summary")?.value.trim();
+          notices.push({ summary, severity: providerNoticeSeverity(item), icon: p.icon, order });
+          continue;
+        }
         const family =
           item.surface === "provider_activity" ? item.family : item.surface;
         const label =
@@ -85,7 +98,6 @@ export function completedActivitySummary(items: Activity[]) {
               safety: tNewUi("newUi.kb9971493654f"),
               terminal: tNewUi("newUi.k80905baf3aae"),
               wait: tNewUi("newUi.ka1b56198592b"),
-              provider_notice: tNewUi("newUi.k7bd94199ab60"),
               workspace_change: tNewUi("newUi.k624abb5df7ca"),
               workspace_file: tNewUi("newUi.k3373b282ac12"),
               resource: tNewUi("newUi.k66d79b24a58f"),
@@ -94,6 +106,21 @@ export function completedActivitySummary(items: Activity[]) {
         add(label, p.icon, order);
       }
     }
+  }
+  if (notices.length) {
+    const strongest = notices.find((notice) => notice.severity === "error")
+      ?? notices.find((notice) => notice.severity === "warning")
+      ?? notices[0]!;
+    const label = notices.length === 1
+      ? strongest.summary || tNewUi("newUi.k7bd94199ab60")
+      : strongest.severity === "error"
+        ? tNewUi("upgrade1029ConflictsC.providerErrorReported")
+        : strongest.severity === "warning"
+          ? tNewUi("upgrade1029ConflictsC.providerWarningReported")
+          : tNewUi("upgrade1029ConflictsC.receivedProviderUpdates");
+    // One notice category leaves room for actual work. Keep warnings and errors
+    // visible when the compact label truncates other activity categories.
+    add(label, strongest.icon, strongest.severity === "info" ? notices[0]!.order : -1);
   }
   const completedFamilies = new Set(
     tools.filter((tool) => tool.completed).map((tool) => tool.family),

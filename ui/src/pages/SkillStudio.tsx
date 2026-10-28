@@ -1,7 +1,9 @@
+import { SkillsPageNavigation } from "@/components/skill-studio/SkillsNavigationTabs";
 import { interactionReadinessRefetchInterval } from "@/lib/issue-thread-interactions";
 import { SkillBinaryFile } from "../components/SkillBinaryFile";
 import { SkillSourceProvenance } from "../components/SkillSourceProvenance";
 import { AgentIdentity } from "@/components/AgentIdentity";
+import { QueryErrorState, useQueryView } from "@/components/QueryView";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -300,6 +302,7 @@ export function SkillStudio() {
     queryFn: () => companySkillsApi.detail(companyId, skillId),
     enabled: Boolean(companyId && skillId && !isCreateMode),
   });
+  const detailView = useQueryView(detailQuery);
   const forkDetailQuery = useQuery({
     queryKey: queryKeys.companySkills.detail(companyId, forkFromSkillId ?? ""),
     queryFn: () => companySkillsApi.detail(companyId, forkFromSkillId!),
@@ -363,10 +366,22 @@ export function SkillStudio() {
       />
     );
   }
-  if (detailQuery.isLoading) {
+  if (detailQuery.isLoading || detailView.kind === "reconnecting") {
     return <StudioMessage message={i18n.t("skillStudio.loadingSkill")} />;
   }
-  if (detailQuery.isError || !detailQuery.data) {
+  // "Not found" only for a real 404; an outage never looks like a missing skill.
+  if (detailView.kind === "error" && detailView.errorKind !== "not_found") {
+    return (
+      <QueryErrorState
+        size="page"
+        error={detailQuery.error}
+        action={i18n.t("upgrade1029ConflictsD.skillStudio.loadThisSkill")}
+        onRetry={detailView.retry}
+        retrying={detailView.isFetching}
+      />
+    );
+  }
+  if (detailView.kind === "error" || !detailQuery.data) {
     return <StudioMessage message={i18n.t("skillStudio.skillNotFound")} />;
   }
 
@@ -413,6 +428,7 @@ function StudioCreateMode({
             emptyLabel={i18n.t("skillStudio.newSkill")}
           />
         </header>
+        <SkillsPageNavigation activeView="authored" />
         <div className="min-h-0 flex-1 overflow-y-auto">
           <StudioNewSkillPanel
             companyId={companyId}
@@ -734,6 +750,7 @@ function StudioEmptyState({
             emptyLabel={i18n.t("skillStudio.selectSkill")}
           />
         </header>
+        <SkillsPageNavigation activeView="authored" />
         <div className="flex flex-1 items-center justify-center">
           <EmptyState
             icon={FileCode}
@@ -811,6 +828,7 @@ function StudioLanding({
             {i18n.t("miscResidualRound3.newSkill")}
           </Button>
         </header>
+        <SkillsPageNavigation activeView="authored" />
         <div className="min-h-0 flex-1 overflow-auto">
           <div className="mx-auto w-full max-w-3xl space-y-8 px-4 py-8">
             {visited.length > 0 ? (
@@ -1057,6 +1075,7 @@ function StudioShell({
           onSelectSkill={(nextSkillId) => navigate(skillStudioRoute(nextSkillId))}
           onOpenVersions={() => setVersionSheetOpen(true)}
         />
+        <SkillsPageNavigation activeView="authored" />
         {projectScan ? (
           <ProjectScanNotice skill={skill} onEditACopy={() => setForkDialogOpen(true)} />
         ) : null}

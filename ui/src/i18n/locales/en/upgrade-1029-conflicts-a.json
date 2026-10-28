@@ -1,0 +1,176 @@
+{
+  "upgrade1029ConflictsA": {
+    "codex": {
+      "harnessHint": "Choose the agent harness that runs your tasks.",
+      "unknownProvider": "{{provider}} (unknown provider)",
+      "dotConnection": "Dot connection",
+      "dotConnectionHint": "A verified event round trip is required before assigning work.",
+      "readTaskAttachments": "Read task attachments",
+      "readTaskAttachmentsHint": "Let Dot read files attached to its current assigned task. File contents are sent to OpenAI. Does not require workspace command access; off by default.",
+      "workspaceFilesAndCommands": "Workspace files and commands",
+      "workspaceFilesAndCommandsHint": "Let Dot read and write its assigned workspace and publish files. Requires a local Runner. Commands are available only on Linux with bubblewrap; they cannot read your home directory or use injected credentials.",
+      "allowExternallyBilledProvider": "Allow externally billed provider",
+      "dotUnmeteredHint": "Dot does not report token usage or cost. Paperclip cannot enforce a provider spend ceiling; known company and agent budget limits still apply.",
+      "museConnection": "Muse connection",
+      "museConnectionHint": "Pairing, receiver contact, background reply, and agent setup are verified separately.",
+      "museUnmeteredHint": "Muse does not report usage or cost. Paperclip cannot enforce a Muse spend ceiling; known company and agent budget limits still apply.",
+      "acpAgentHint": "Cursor uses Paperclip questions; per-run cost is unavailable. Pi accepts any provider/model ID. GitHub Copilot awaits qualification.",
+      "cursorMode": "Cursor mode",
+      "cursorModeHint": "Select Cursor's session mode. Permissions and company approval rules still apply.",
+      "unsupportedSavedMode": "Unsupported saved mode — select Agent, Plan, or Ask",
+      "cursorModeAgent": "Agent",
+      "piThinkingLevel": "Pi thinking level",
+      "piThinkingLevelHint": "The runner verifies this exact level before each session can prompt. Changing it starts a new session.",
+      "unsupportedThinkingLevel": "Unsupported saved thinking level",
+      "thinkingOff": "Off",
+      "unknownProviderPreserved": "Unknown provider configuration is preserved."
+    },
+    "login": {
+      "preparingBrowserSignIn": "Preparing browser sign-in…"
+    },
+    "harness": "Harness",
+    "runnerUpgrade": {
+      "unknownEnvironment": "Could not determine which environment to verify. Retry the upgrade.",
+      "settingsChanged": "Agent settings changed during verification. Retry the upgrade with the current settings.",
+      "unsupportedEnvironment": "This environment does not support Paperclip Runner. Your agent still uses Legacy runner.",
+      "failed": "Could not upgrade this agent. Try again.",
+      "title": "Upgrade to Paperclip Runner",
+      "description": "Keep your harness, model, account, and compatible settings. New sessions start fresh; past runs stay available.",
+      "verifyFirst": "The upgrade will verify your computer first. This can take a few minutes.",
+      "saveComputerFirst": "Save your computer change before upgrading the runner.",
+      "unsavedIncluded": "Your unsaved changes will be included.",
+      "upgrading": "Upgrading…",
+      "upgrade": "Upgrade runner",
+      "upgraded": "Upgraded to Paperclip Runner."
+    },
+    "museOption": "Muse — Personal agent",
+    "model": {
+      "enterCustom": "Enter custom model…",
+      "modelId": "Model ID",
+      "modelIdPlaceholder": "Enter model ID or alias"
+    },
+    "runnerTest": {
+      "settingsChanged": "Agent settings changed during the test. Run test again.",
+      "verifyFailed": "Could not verify the saved computer. Run test again."
+    },
+    "setupPrompt": {
+      "readyFor": "Ready to paste into your {{name}}.",
+      "giveTo": "Give this prompt to your {{name}}.",
+      "copiedFor": "Setup prompt copied. Ready to paste into your {{name}}."
+    },
+    "budget": {
+      "scopeWarning": "{{scope}} budget warning",
+      "scopeHardStop": "{{scope}} hard stop",
+      "accountingIncomplete": "Accounting is incomplete. Known spend is {{amount}}; review pending or unpriced usage in the budget policy.",
+      "spendingReached": "Spending reached {{observed}} against a limit of {{limit}}.",
+      "warningThreshold": "Spending crossed the warning threshold. This warning does not pause work.",
+      "raiseBudget": "Raise budget",
+      "dismissWarning": "Dismiss warning",
+      "executionPausedProject": "Execution is paused for this project until the budget block is resolved.",
+      "heartbeatsPausedScope": "Heartbeats are paused for this scope until the budget block is resolved.",
+      "percentOfCompanyBudget": "{{percent}}% of company budget",
+      "reservePerRun": "Reserve per run (USD)",
+      "reserveInvalid": "Enter a valid amount of zero or more.",
+      "reserveHint": "An estimate held before each run starts. Zero disables the estimate. Actual provider charges may exceed it.",
+      "updateReservation": "Update reservation",
+      "advancedSettings": "Advanced settings",
+      "blockUnpriced": "Block new work when usage has no reliable price",
+      "pendingRuns": "{{count}} completed runs await accounting.",
+      "unpricedEvents": "{{count}} usage events are unpriced. Known spend excludes their unknown cost."
+    },
+    "caseActivity": {
+      "handoffRequested": "handoff requested",
+      "handoffApplied": "task handed off",
+      "handoffDelivered": "agent wake queued",
+      "handoffCompleted": "case completed",
+      "handoffCancelled": "handoff cancelled"
+    },
+    "caseRevision": {
+      "agent": "agent",
+      "oldRevision": "Old revision",
+      "newRevision": "New revision",
+      "loadRevisions": "load revisions"
+    },
+    "subscriptions": {
+      "claudeDescription": "Quota from the Claude subscription connected to this server.",
+      "codexDescription": "Quota from the Codex subscription connected to this server."
+    },
+    "decisions": {
+      "controls": "Decisions controls",
+      "search": "Search decisions",
+      "searchPlaceholder": "Search decisions…"
+    },
+    "blocker": {
+      "takingLonger": "Taking longer than usual…",
+      "taskStatus": "Task status",
+      "retryInMinutes": "Trying again in {{minutes}}m…",
+      "retryInSeconds": "Trying again in {{seconds}}s…",
+      "attemptFailed": "Couldn’t finish this attempt. Your message is saved."
+    },
+    "fileViewer": {
+      "previewMode": "{{format}} preview mode",
+      "showRendered": "Show rendered {{format}}",
+      "rendered": "Rendered {{format}}",
+      "showRaw": "Show raw {{format}}",
+      "raw": "Raw {{format}}",
+      "htmlView": "HTML view"
+    },
+    "finance": {
+      "recentEventsDescription": "Provider charges, subscriptions, fees, and credits. Reported separately from run-cost estimates.",
+      "noEvents": "No financial events recorded in this period. Events appear when reported through the API, CLI, or a supported integration.",
+      "providerCostReport": "Provider cost report"
+    },
+    "issueCases": {
+      "workflow": "workflow"
+    },
+    "blocked": {
+      "unavailable": "unavailable",
+      "privateNoAccess": "Private — you don't have access"
+    },
+    "chat": {
+      "fastResponseNote": "Platform-generated acknowledgement. The agent’s substantive response follows separately."
+    },
+    "issueFilters": {
+      "showAgentCreatedTasks": "show agent-created tasks"
+    },
+    "monitor": {
+      "checkStatus": "Check status",
+      "waitingForWorkspace": "Waiting for workspace",
+      "workspaceBusy": "Another task is using this workspace. Work starts automatically when it is available.",
+      "workspaceStartsAutomatically": "Work starts automatically when the workspace is available.",
+      "prReviewRequested": "Pull request review requested",
+      "nextCheckYourTime": "Next check {{eta}} · {{time}} (your time)",
+      "nextCheck": "Next check {{eta}} · {{time}}",
+      "poolExhausted": "Pool exhausted",
+      "usageRecheckYourTime": "Usage recheck {{eta}} · {{time}} (your time)",
+      "usageRecheck": "Usage recheck {{eta}} · {{time}}",
+      "poolKeepAccountResumes": "Tasks with a selected account keep it while waiting. Work resumes when usage permits.",
+      "poolKeepAccount": "Tasks with a selected account keep it while waiting.",
+      "cancelFailed": "Unable to cancel the monitor. Try again.",
+      "cancel": "Cancel monitor",
+      "cancelTitle": "Cancel monitor?",
+      "cancelDescription": "This removes the scheduled monitor check. The agent will no longer resume from this monitor. You can send a message to continue the task.",
+      "keep": "Keep monitor",
+      "reviewOnGitHub": "Review on GitHub, then check status to have the agent verify the result.",
+      "keepSendingInstructions": "You can keep sending instructions while the agent waits."
+    },
+    "issueRow": {
+      "tryingAgainSoon": "Trying again soon",
+      "retryAvailable": "Retry available",
+      "openTaskWithStatus": "Open task {{identifier}} ({{status}})",
+      "recoveryStatus": "Task recovery status"
+    },
+    "retry": {
+      "lastAttemptFailed": "Last attempt failed: {{error}} Paperclip will retry automatically."
+    },
+    "issuesList": {
+      "subTasksParen": "(sub-tasks)",
+      "externalFilterFailed": "Unable to filter tasks by external status: {{message}}",
+      "retryExternalStatuses": "Retry external statuses",
+      "hierarchyFailed": "Failed to load task hierarchy: {{message}}"
+    },
+    "kanban": {
+      "columns": "Task board columns"
+    }
+  }
+}

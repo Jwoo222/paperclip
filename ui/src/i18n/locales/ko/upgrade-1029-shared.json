@@ -1,0 +1,21 @@
+{
+  "upgrade1029Shared": {
+    "taskListColumns": {
+      "task": "업무",
+      "taskId": "업무 ID",
+      "createdBy": "만든 사람",
+      "assignee": "담당자",
+      "project": "프로젝트",
+      "parentTask": "상위 업무",
+      "tags": "태그",
+      "worktree": "워크트리",
+      "lastUpdated": "마지막 업데이트"
+    },
+    "taskListViews": {
+      "inbox": "받은편지함",
+      "unread": "읽지 않음",
+      "blocked": "확인 필요",
+      "all": "모든 업무"
+    }
+  }
+}

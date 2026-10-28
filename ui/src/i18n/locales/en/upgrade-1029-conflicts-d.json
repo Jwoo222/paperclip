@@ -1,0 +1,295 @@
+{
+  "upgrade1029ConflictsD": {
+    "caseDetail": {
+      "loadThisCase": "load this case",
+      "caseLabels": "Case labels",
+      "caseDetails": "Case details",
+      "caseDocuments": "Case documents",
+      "moreDocumentsOnTasks": "More documents are available on the linked tasks.",
+      "caseAttachments": "Case attachments",
+      "downloadAttachment": "Download attachment",
+      "relatedCases": "Related cases",
+      "childCasesLoadFailed": "Child cases couldn’t be loaded.",
+      "noFindings": "No findings recorded yet.",
+      "created": "Created",
+      "viewInAudit": "View in Audit"
+    },
+    "cases": {
+      "filterBy": "Filter by {{label}}",
+      "projectUnavailable": "Project unavailable",
+      "selectCompany": "Select a company to view cases.",
+      "caseControls": "Case controls",
+      "searchPlaceholder": "Search cases…",
+      "loading": "Loading cases…",
+      "updating": "Updating cases…",
+      "range": "{{start}}–{{end}} cases",
+      "countOne": "{{count}} case",
+      "countMany": "{{count}} cases",
+      "allTypes": "All types",
+      "allProjects": "All projects",
+      "selectedProject": "Selected project",
+      "filtersLoadFailed": "Some case filters couldn’t be loaded.",
+      "retryFilters": "Retry filters",
+      "loadFailed": "Cases couldn’t be loaded.",
+      "noCasesOnPage": "No cases on this page",
+      "noCasesMatch": "No cases match these filters",
+      "firstPage": "First page",
+      "caseList": "Case list",
+      "caseListPages": "Case list pages"
+    },
+    "cliAuth": {
+      "rateLimited": "Too many CLI approval requests. Retrying shortly...",
+      "requestBody": "A CLI client is requesting full board access to the organizations you can access on this instance. Approve only if you started this request in your own terminal.",
+      "auditOrganization": "Organization for audit context",
+      "noOrganizationAccess": "You do not have access to the requested organization."
+    },
+    "companyImport": {
+      "openAiDotExperimental": "OpenAI Dot (experimental)",
+      "museExperimental": "Muse — Personal agent (experimental)",
+      "sourceAdapterMissing": "source adapter {{source}} is not installed here — this agent will use {{target}}",
+      "runnerUnavailable": "Paperclip Runner is unavailable here. Choose a runner or another harness explicitly.",
+      "runnerProviderRequiresFlag": "Paperclip Runner provider {{provider}} requires its experimental feature to be enabled. This import keeps its saved harness until you choose another one.",
+      "unknownRunnerProvider": "Unknown Paperclip Runner provider {{provider}}. Keep the package configuration or explicitly choose another harness.",
+      "dotBillingRequired": "OpenAI Dot requires acknowledgement of external billing. Configure the Dot adapter and enable Allow externally billed provider.",
+      "museBillingRequired": "Muse requires acknowledgement of external billing. Configure Muse and enable Allow externally billed provider."
+    },
+    "pluginPage": {
+      "loadPluginExtensions": "load plugin extensions"
+    },
+    "decisionQueue": {
+      "noMatches": "No decisions match your search or filters.",
+      "adjustFilters": "Adjust or clear your search and filters to see the rest."
+    },
+    "companySkills": {
+      "authoredDescription": "Skills you can open, edit and test in Studio.",
+      "searchMySkills": "Search my skills",
+      "emptyAuthored": "No skills yet. Create a skill to start working in Studio.",
+      "emptyInstalled": "No installed skills yet. Discover a skill or create one.",
+      "emptyDiscover": "No skills are available to discover yet.",
+      "emptyView": "No skills in this view yet."
+    },
+    "costs": {
+      "agentLoadFailed": "Could not load agent details. Totals below show recorded organization costs.",
+      "museUsageUnavailable": "{{name}}'s Muse activity has no reported usage or cost. Totals below show recorded organization charges only. Paperclip cannot enforce a Muse spend ceiling.",
+      "usdOnly": "Finance headline totals are USD only. Other currencies are listed separately; no exchange-rate conversion is applied.",
+      "apiSpend": "API spend",
+      "apiUsageUnavailable": "API usage is unavailable",
+      "apiUsageLoading": "API usage is loading",
+      "spendOfBudgetThisMonth": "{{spend}} of {{budget}} this month",
+      "monthlyLimit": "Monthly limit",
+      "recordedCharges": "Recorded charges",
+      "debitsAmount": "{{amount}} debits",
+      "creditsAmount": "{{amount}} credits",
+      "financialDataUnavailable": "Financial data unavailable",
+      "subscriptionUsageCharges": "Subscription accounts also have {{amount}} in recorded usage charges for this period, separate from monthly fees.",
+      "otherBillingUsage": "Other billing usage: {{tokens}} tokens{{charges}}, included in the inference ledger.",
+      "otherBillingCharges": " · {{amount}} in recorded charges",
+      "staleSubscriptionUsage": "Showing the last loaded API and subscription usage. Updates will resume automatically.",
+      "accountCheckFailed": "Connected accounts could not be checked. Existing subscription estimates are still shown.",
+      "retryAccountCheck": "Retry account check",
+      "budgetLoadFailed": "Budget data could not be loaded. Please try again shortly.",
+      "staleData": "Showing the last loaded data. Updates will resume automatically.",
+      "budgetUpdateFailed": "Could not update the budget. Check any pending runs or unpriced usage shown on this page, then try again.",
+      "decisionsTab": "Decisions",
+      "fastResponsesTab": "Fast responses",
+      "costLoadFailed": "Cost data could not be loaded. Please try again shortly.",
+      "rowCosts": "{{name}} costs",
+      "paperclipServices": "Paperclip services",
+      "tokensInOut": "in {{input}} ({{cached}} cached) · out {{output}}",
+      "runsPrefix": "runs: ",
+      "apiRuns": "{{count}} api",
+      "subRuns": "{{count}} sub",
+      "userCostsStale": "User costs could not be refreshed. Showing the last loaded data.",
+      "userCostsLoadFailed": "User costs could not be loaded. Please try again shortly.",
+      "policyUpdateFailed": "Could not update the budget policy. Review your settings and try again.",
+      "resolveIncidents": "Raise the budget or keep a hard stop paused. Dismiss a warning when no action is needed.",
+      "providerReports": "Provider API cost reports: {{amount}}. Report totals overlap invoices and run estimates and are shown separately from recorded charges.",
+      "financeLoading": "Loading financial events…",
+      "financeLoadFailed": "Financial events could not be loaded. Please try again shortly."
+    },
+    "workspace": {
+      "loadThisWorkspace": "load this workspace"
+    },
+    "inbox": {
+      "tryingAgainIn": "Trying again in {{seconds}}s…",
+      "attemptFailed": "Couldn’t finish this attempt. Your message is saved.",
+      "waitApproval": "Approval required",
+      "waitAssignAgent": "Assign an agent",
+      "waitChooseModel": "Choose a supported model",
+      "waitResume": "Work is paused",
+      "waitBudget": "Budget limit reached",
+      "waitProjectAccess": "Agent needs project access",
+      "someItemsFailed": "Some inbox items couldn’t load. Showing available items.",
+      "retryMissingItems": "Retry missing items",
+      "loadFailed": "Unable to load the inbox: {{message}}"
+    },
+    "experimental": {
+      "artifactsV1": {
+        "title": "Artifacts V1",
+        "description": "Show artifacts the way the artifact directions lab settled: paper stacks and tiles on the Artifacts page, compact rows in the panel's Artifacts tab, and grouped rows in the task thread.",
+        "footnote": "Presentation only. Turning this off restores the current cards; no data changes.",
+        "ariaLabel": "Toggle artifacts V1 experimental setting"
+      },
+      "assistantConnections": {
+        "title": "Assistant connections (MCP)",
+        "description": "Connect Codex, Claude, and other assistants to your Paperclip organization. People sign in, select an organization once, and approve access to review work, delegate tasks, and add feedback.",
+        "footnote": "Requires an authenticated instance with a configured public URL. Takes effect immediately. Turning this off blocks assistant calls and event delivery; work already delegated continues.",
+        "setupLink": "Set up an assistant connection",
+        "ariaLabel": "Toggle assistant connections experimental setting"
+      },
+      "chatConnectors": {
+        "description": "Connect agents to Slack, Discord, Microsoft Teams, and Telegram conversations.",
+        "footnote": "Turning this off hides experimental chat setup and connected-task controls. Existing chat connections keep running. AgentMail, GitHub review bots, and tool connectors are controlled separately."
+      },
+      "fastResponses": {
+        "title": "Experimental fast responses",
+        "description": "Allow short acknowledgements while agents begin work. Configure them in Settings → Connections.",
+        "ariaLabel": "Toggle fast responses experimental setting"
+      },
+      "githubReviewBots": {
+        "title": "GitHub review bots",
+        "description": "Connect agents to GitHub with their own App identity to review pull requests and respond to issues.",
+        "footnote": "Independent of Chat connectors. Turning this off hides setup and management; existing bots keep running. GitHub tool connections stay available.",
+        "ariaLabel": "Toggle GitHub review bots experimental setting"
+      },
+      "grokBot": {
+        "title": "Grok Bot",
+        "description": "Connect an existing Grok Bot as an agent. Verify routine delivery and an authenticated reply before assigning work.",
+        "footnote": "Requires Assistant connections (MCP), Paperclip Runner, and authenticated public HTTPS. Usage is not reported. Turning this off blocks Grok calls and new dispatch.",
+        "ariaLabel": "Toggle Grok Bot experimental setting"
+      },
+      "muse": {
+        "title": "Muse — Personal agent",
+        "description": "Connect your personal Meta Muse. Pair it, detect its receiver, and verify an independent background reply before assigning tasks.",
+        "footnote": "Requires Paperclip Runner and an authenticated instance with a public HTTPS URL. Turning this off blocks new work; cleanup and stop evidence remain available. Provider usage and cost are unavailable.",
+        "ariaLabel": "Toggle Muse experimental setting"
+      },
+      "openAiDot": {
+        "title": "OpenAI Dot",
+        "description": "Add OpenAI Dot as a standalone agent choice. Pair your Dot and verify event delivery before assigning work.",
+        "footnote": "Requires Assistant connections (MCP) and an authenticated instance with a public HTTPS URL. Turning this off blocks Dot calls and new work; saved connections are kept.",
+        "ariaLabel": "Toggle OpenAI Dot experimental setting"
+      },
+      "paperclipRunner": {
+        "description": "Allow agents to select Paperclip Runner, including authenticated runner ingress when a sandbox requires it. First-run setup offers qualified GitHub Copilot. Turning this off hides the choice without affecting existing native runs."
+      }
+    },
+    "issueDetail": {
+      "runStoppedUpdateFailed": "Run was stopped, but updating the task failed: {{detail}}",
+      "runStoppedUpdateFailedRetry": "Run was stopped, but updating the task failed. Retry the task status update.",
+      "messagesStillQueued": "Messages are still queued.",
+      "moreMessages": "More messages",
+      "stopPaperclipWork": "Stop Paperclip work",
+      "stoppingPaperclipWork": "Stopping Paperclip work…",
+      "grokWorkNotice": "Runs in Grok Bot · Usage not reported. Stop Paperclip work revokes this session’s authority; remote execution may continue. Open the Grok Bot desktop app to inspect it.",
+      "previewAgent": "Preview agent",
+      "loadThisTask": "load this task",
+      "showTaskActivity": "Show task activity",
+      "someDetailsFailed": "Some task details could not be loaded.",
+      "noPermissionRepairWorkspace": "You don’t have permission to repair this task’s workspace.",
+      "noPermissionRetry": "You don’t have permission to retry this task.",
+      "resumeTaskBeforeRetry": "Resume the task before retrying.",
+      "resumeProjectBeforeRetry": "Resume the project before retrying.",
+      "respondBeforeRetry": "Respond to the pending question or confirmation before retrying.",
+      "checkTheMonitor": "check the monitor"
+    },
+    "plugins": {
+      "loadPlugins": "load plugins",
+      "loadBundledPlugins": "load bundled plugins"
+    },
+    "routines": {
+      "noSearchMatch": "No routines match your search."
+    },
+    "projects": {
+      "noSearchMatch": "No projects match your search.",
+      "privateProject": "Private project"
+    },
+    "skillSources": {
+      "description": "Skills from your repositories stay up to date automatically.",
+      "moreSourceActions": "More source actions",
+      "projectRepositories": "Project repositories",
+      "updatedAgo": " · Updated {{time}}",
+      "projectAccess": " · Project access",
+      "importingSkills": " · Importing skills…",
+      "automaticUpdatesPaused": "Automatic updates paused",
+      "trackingStopped": "Repository tracking stopped · installed skills kept",
+      "automaticUpdates": "Automatic updates",
+      "retryProjectImport": "Retry project import",
+      "importRemainingProjectSkills": "Import remaining project skills",
+      "importProjectSkills": "Import project skills",
+      "chooseNewBranch": "Choose a new branch",
+      "removeSource": "Remove source",
+      "removedFromSource": "Removed from source · installed copy kept",
+      "noSkillsFound": "No skills found yet.",
+      "newSkillsAutoImport": " New skills will be imported automatically.",
+      "updateProjectRepository": "Update {{name}} repository",
+      "disconnectTitle": "Disconnect {{name}}?",
+      "removeTitle": "Remove {{name}}?",
+      "removeWithSkillsOne": "Remove this repository from Sources. What should happen to its {{count}} imported skill?",
+      "removeWithSkillsMany": "Remove this repository from Sources. What should happen to its {{count}} imported skills?",
+      "removeDescription": "Remove this repository from Sources.",
+      "importedSkills": "Imported skills",
+      "keepCopies": "Keep editable copies",
+      "keepCopiesProjects": "Move them to My Skills, keeping project access restrictions. Assigned agents keep using them.",
+      "keepCopiesDescription": "Move them to My Skills. Assigned agents keep using them.",
+      "deleteSkills": "Delete skills",
+      "deleteSkillsDescription": "Remove them from the library. Detach skills used by agents first.",
+      "reloadSource": "Reload source",
+      "uncheckedStayInstalled": "Unchecked skills stay installed.",
+      "viewFilesOne": "View {{count}} file",
+      "viewFilesMany": "View {{count}} files",
+      "importRepository": "Import repository"
+    },
+    "skillStudio": {
+      "loadThisSkill": "load this skill"
+    },
+    "teamCatalog": {
+      "noAgentsToManage": "No agents are available to manage this team. Create an agent in your company, then try again."
+    },
+    "chatInstructions": {
+      "appliesToNew": "Applies to new conversations.",
+      "placeholder": "For example: Keep replies brief and explain technical terms."
+    },
+    "appDetail": {
+      "githubRefreshFailed": "Couldn't refresh GitHub access",
+      "composioPermissions": "These permissions apply to all apps available through this Composio connection. Manage app accounts and sign-in in Composio."
+    },
+    "browse": {
+      "lastKnownAccount": "Last known account · Refresh to verify",
+      "accountFoundUpstream": "Account found upstream · Authorization not verified",
+      "finishConnectingAccount": "Finish connecting this account.",
+      "needsSignIn": "Needs sign-in",
+      "addConnectionPool": "Add connection pool",
+      "reopenPoolConfirmation": "Open the confirmation again before removing this pool.",
+      "poolConnectionsKept": "The connections in the pool are kept.",
+      "poolUnavailable": "This connection pool is no longer available.",
+      "poolOpenFailed": "Couldn't open the connection pool",
+      "spekoDescription": "Talk with an agent using experimental browser voice.",
+      "connectThrough": "Connect through {{providers}}.",
+      "orSeparator": " or ",
+      "andSeparator": " and ",
+      "gatewayRefreshFailed": "Couldn’t refresh the gateway. Last known accounts are shown.",
+      "accountsLoadFailed": "Couldn’t load {{providers}} accounts. Use Refresh in the connection’s menu to try again.",
+      "catalogPages": "Connector catalog pages",
+      "pageOf": "Page {{page}} of {{total}}",
+      "thisPoolConnectionsKept": "The connections in this pool are kept.",
+      "removeAggregatorDescription": "This removes the saved {{provider}} connection from Paperclip and agents lose access through it. Your apps and accounts remain connected in {{provider}}.",
+      "removeFailed": "Couldn’t remove the connection. Please try again.",
+      "manageThroughThirdParty": "Manage {{name}} through {{provider}}, a third-party service",
+      "connectThroughThirdParty": "Connect {{name}} through {{provider}}, a third-party service",
+      "accountsManagedIn": "Accounts managed in {{providers}}.",
+      "connectionCount": "{{count}} connections",
+      "needsAttentionOne": "· {{count}} needs attention",
+      "needsAttentionMany": "· {{count}} need attention",
+      "managedBy": "Managed by {{provider}} ·",
+      "manageName": "Manage {{name}}",
+      "manageNameConnection": "Manage {{name}} connection",
+      "openIn": "Open in {{provider}}",
+      "setManagementUrl": "Set the management URL on this gateway to open its console",
+      "refreshProvider": "Refresh {{provider}}",
+      "setUpAccountSync": "Set up account sync",
+      "accountSyncSettings": "Account sync settings",
+      "consoleUrl": "Console URL"
+    }
+  }
+}

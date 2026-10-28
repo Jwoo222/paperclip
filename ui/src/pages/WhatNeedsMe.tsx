@@ -100,6 +100,8 @@ export function WhatNeedsMe() {
   // still follows a click, so keyboard actions target the row you just used.
   const [selectionFromKeyboard, setSelectionFromKeyboard] = useState(false);
   const [autoExpandDone, setAutoExpandDone] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
   // Toolbar preferences (persisted to localStorage, Inbox pattern).
   const [groupBy, setGroupBy] = useState<AttentionGroupBy>(() => loadAttentionGroupBy());
   const [sortOrder, setSortOrder] = useState<AttentionSortOrder>(() => loadAttentionSortOrder());
@@ -255,13 +257,13 @@ export function WhatNeedsMe() {
   // carries an explicit, due decide-by. Any explicit
   // group-by keeps the Inbox-style activity grouping.
   const groups = useMemo<AttentionGroup[]>(() => {
-    const filtered = filterAttentionItems(deskItems, filters);
+    const filtered = filterAttentionItems(deskItems, filters, searchQuery);
     if (groupBy === "none") {
       return buildDeskShelves(filtered, now);
     }
     const sorted = sortAttentionItems(filtered, sortOrder);
     return groupAttentionItems(sorted, groupBy);
-  }, [deskItems, filters, sortOrder, groupBy, now]);
+  }, [deskItems, filters, searchQuery, sortOrder, groupBy, now]);
 
   const visibleCount = useMemo(() => groups.reduce((sum, group) => sum + group.items.length, 0), [groups]);
   const keyboardItems = useMemo(
@@ -520,9 +522,11 @@ export function WhatNeedsMe() {
 
   return (
     <div ref={rootRef} className="max-w-3xl space-y-4">
-      <div className="flex items-center justify-between gap-2">
+      <div className="space-y-4">
         <h1 className="text-xl font-bold">{t("coreNavigation.attention.title", { defaultValue: "Decisions" })}</h1>
         <DecisionsToolbar
+          query={searchQuery}
+          onQueryChange={setSearchQuery}
           visibleCount={visibleCount}
           filterOptions={filterOptions}
           filters={filters}
@@ -817,10 +821,10 @@ function CaughtUpNote({ filtered }: { filtered: boolean }) {
   return (
     <div className="rounded-xl border border-dashed border-border py-10 text-center">
       <p className="text-sm font-medium text-foreground">
-        {filtered ? t("coreNavigation.attention.emptyFiltered", { defaultValue: "No decisions match your filters." }) : t("coreNavigation.attention.emptyAllCaughtUp", { defaultValue: "You're all caught up." })}
+        {filtered ? t("upgrade1029ConflictsD.decisionQueue.noMatches") : t("coreNavigation.attention.emptyAllCaughtUp", { defaultValue: "You're all caught up." })}
       </p>
       {filtered && (
-        <p className="mt-1 text-xs text-muted-foreground">{t("coreNavigation.attention.adjustFilters", { defaultValue: "Adjust or clear the filters to see the rest." })}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{t("upgrade1029ConflictsD.decisionQueue.adjustFilters")}</p>
       )}
     </div>
   );

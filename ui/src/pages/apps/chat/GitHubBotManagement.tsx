@@ -1,23 +1,187 @@
 import { t as tNewUi } from "@/i18n";
 import { t } from "@/i18n";
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { ExternalLink, RefreshCw } from "lucide-react";
-import type { GitHubChatConfiguration } from "@paperclipai/shared";
+import { useEffect, useRef, useState } from "react";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  ExternalLink,
+  GitPullRequest,
+  MoreHorizontal,
+  RefreshCw,
+  Search,
+} from "lucide-react";
+import type {
+  GitHubChatConfiguration,
+  GitHubTaskReview,
+} from "@paperclipai/shared";
 import {
   githubChatApi,
   type GitHubConfigurationRecord,
 } from "@/api/githubChat";
-import { chatEndpointsApi, type ChatEndpoint } from "@/api/chatEndpoints";
+import {
+  chatEndpointsApi,
+  type ChatEndpoint,
+} from "@/api/chatEndpoints";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { EmptyState } from "@/components/EmptyState";
+import { MarkdownBody } from "@/components/MarkdownBody";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Link } from "@/lib/router";
 import { formatDateTime } from "@/lib/utils";
 import {
   GitHubAccessEditor,
   GitHubPolicyEditor,
   GitHubToggle,
-  githubSelectClass,
 } from "./GitHubBotConfiguration";
+import { ChatExecutionDefaults } from "./ChatExecutionDefaults";
+
+export function GitHubRepositoryAccess({
+  endpointId,
+  companyId,
+  managementUrl,
+  pending,
+  onRefresh,
+  onChange,
+  onToggleAll,
+}: {
+  endpointId: string;
+  companyId: string;
+  managementUrl: string;
+  pending: boolean;
+  onRefresh: () => void;
+  onChange: (id: string, enabled: boolean) => void;
+  onToggleAll: (enabled: boolean) => void;
+}) {
+  const client = useQueryClient();
+  const [search, setSearch] = useState("");
+  const scroller = useRef<HTMLDivElement>(null);
+  const more = useRef<HTMLDivElement>(null);
+  const list = useInfiniteQuery({
+    queryKey: ["github-bot-repository-pages", endpointId, search],
+    queryFn: ({ pageParam }) => githubChatApi.repositories(endpointId, { limit: 20, offset: pageParam, search }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextOffset ?? undefined,
+  });
+  const rows = list.data?.pages.flatMap((page) => page.items) ?? [];
+  const summary = list.data?.pages[0];
+  const disableAll = (summary?.enabledCount ?? 0) > 0;
+  useEffect(() => {
+    if (scroller.current) scroller.current.scrollTop = 0;
+  }, [search]);
+  useEffect(() => {
+    if (!list.hasNextPage || list.isFetching || list.isError || pending || !more.current || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting) void list.fetchNextPage({ cancelRefetch: false });
+    }, { root: scroller.current });
+    observer.observe(more.current);
+    return () => observer.disconnect();
+  }, [list.hasNextPage, list.isFetching, list.isError, list.fetchNextPage, pending]);
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-base font-semibold">{tNewUi("newUi.k1e32af87ea74")}</h2>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t("upgrade1029ConflictsE.manageRepositories")}
+            >
+              <MoreHorizontal className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <a href={managementUrl} target="_blank" rel="noreferrer">
+                {t("upgrade1029ConflictsE.manageOnGithub")}
+                <ExternalLink className="size-4" />
+              </a>
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={pending} onClick={onRefresh}>
+              <RefreshCw className="size-4" />
+              {t("upgrade2610Skills.sourceDialog.refreshRepositories")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {t("upgrade1029ConflictsE.repositoriesIntro")}
+      </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative min-w-0 flex-1 basis-48">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input aria-label={t("upgrade2610Skills.sourceDialog.searchRepositories")} placeholder={t("upgrade2610Skills.sourceDialog.searchRepositories")} className="pl-9"
+            value={search} maxLength={200} onChange={(event) => setSearch(event.target.value)} />
+        </div>
+        <Button variant="outline" size="sm" disabled={pending || list.isFetching || !summary || !summary.totalCount || (!disableAll && !summary.availableCount)}
+          aria-label={disableAll ? t("upgrade1029ConflictsE.disableAllRepositories") : t("upgrade1029ConflictsE.enableAllRepositories")}
+          onClick={() => onToggleAll(!disableAll)}>
+          {disableAll ? t("upgrade1029ConflictsE.disableAll") : t("upgrade1029ConflictsE.enableAll")}
+        </Button>
+      </div>
+      {summary && <p className="text-xs text-muted-foreground">
+        {t("upgrade1029ConflictsE.repositoriesEnabledSummary", { enabled: summary.enabledCount, total: summary.totalCount })}
+      </p>}
+      {list.isError && <p role="alert" className="text-sm text-destructive">
+        {t("upgrade1029ConflictsE.couldNotLoadRepositories")} <Button variant="link" size="sm" onClick={() => void list.refetch()}>{tNewUi("newUi.kd8b8392e2c54")}</Button>
+      </p>}
+      <div ref={scroller} role="region" aria-label={tNewUi("newUi.k1e32af87ea74")} tabIndex={0}
+        className="max-h-96 overflow-y-auto overscroll-contain border-y border-border">
+        <div className="divide-y divide-border">
+        {rows.map((resource) => (
+          <div key={resource.id} className="px-1 py-1">
+            <GitHubToggle
+              label={resource.label ?? resource.providerResourceId}
+              checked={resource.enabled}
+              disabled={
+                pending ||
+                (resource.availability !== "available" && !resource.enabled)
+              }
+              description={
+                resource.availability === "available"
+                  ? undefined
+                  : t("upgrade1029ConflictsE.repositoryUnavailableOnGithub")
+              }
+              onChange={(enabled) => onChange(resource.id, enabled)}
+            />
+            <details className="text-sm">
+              <summary className="cursor-pointer text-muted-foreground">{t("upgrade1029ConflictsE.taskDefaults")}</summary>
+              <div className="pt-3">
+                <ChatExecutionDefaults
+                  companyId={companyId}
+                  value={resource.executionDefaults}
+                  resource
+                  onSave={async (executionDefaults) => {
+                    await chatEndpointsApi.updateResources(endpointId, [{ id: resource.id, executionDefaults }]);
+                    await client.invalidateQueries({ queryKey: ["github-bot-repositories", endpointId] });
+                    await client.invalidateQueries({ queryKey: ["github-bot-repository-pages", endpointId] });
+                  }}
+                />
+              </div>
+            </details>
+          </div>
+        ))}
+        </div>
+        {list.isPending ? <p role="status" className="py-4 text-sm text-muted-foreground">{t("upgrade1029ConflictsE.loadingRepositories")}</p> : rows.length === 0 && !list.isError && (
+          <p className="py-4 text-sm text-muted-foreground">
+            {search ? t("upgrade1029ConflictsE.noRepositoriesMatch") : t("upgrade1029ConflictsE.noRepositoriesAvailable")}
+          </p>
+        )}
+        {list.hasNextPage && <div ref={more} className="flex justify-center py-2">
+          <Button variant="ghost" size="sm" disabled={pending || list.isFetching}
+            onClick={() => void list.fetchNextPage({ cancelRefetch: false })}>
+            {list.isFetchingNextPage ? t("upgrade1029ConflictsE.loadingRepositories") : t("upgrade1029ConflictsE.loadMoreRepositories")}
+          </Button>
+        </div>}
+      </div>
+    </section>
+  );
+}
 
 export function GitHubBotManagement({
   endpoint,
@@ -26,22 +190,36 @@ export function GitHubBotManagement({
   endpoint: ChatEndpoint;
   view: "settings" | "access";
 }) {
+  const client = useQueryClient();
   const query = useQuery({
     queryKey: ["github-bot-configuration", endpoint.id],
     queryFn: () => githubChatApi.configuration(endpoint.id),
   });
-  const resources = useQuery({
-    queryKey: ["github-bot-repositories", endpoint.id],
-    queryFn: () => chatEndpointsApi.listResources(endpoint.id),
-  });
   const [draft, setDraft] = useState<GitHubConfigurationRecord | null>(null);
-  const [repository, setRepository] = useState("");
+  const [editorVersion, setEditorVersion] = useState(0);
+  const [scoreText, setScoreText] = useState<string | null>(null);
+  const [automaticMode, setAutomaticMode] = useState<"linked_authors" | "allowed_authors" | null>(null);
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const record = draft ?? query.data;
+  const currentScoreText = scoreText ?? String(record?.configuration.defaults.ratingThreshold ?? 5);
+  const score = Number(currentScoreText);
+  const scoreValid = record?.configuration.defaults.ratingThreshold === null ||
+    (currentScoreText.trim() !== "" && Number.isInteger(score) && score >= 1 && score <= 5);
+  const dirty = Boolean(
+    draft &&
+      JSON.stringify(draft.configuration) !==
+        JSON.stringify(query.data?.configuration),
+  );
   const edit = (configuration: GitHubChatConfiguration) => {
-    if (record) setDraft({ ...record, configuration });
+    if (record) {
+      if (configuration.defaults.invocation !== "mentions_only")
+        setAutomaticMode(configuration.defaults.invocation);
+      else if (record.configuration.defaults.invocation !== "mentions_only")
+        setAutomaticMode(record.configuration.defaults.invocation);
+      setDraft({ ...record, configuration });
+    }
     setNotice("");
   };
   const act = async (fn: () => Promise<unknown>) => {
@@ -55,7 +233,7 @@ export function GitHubBotManagement({
       setPending(false);
     }
   };
-  if (query.isError || resources.isError)
+  if (query.isError)
     return (
       <p role="alert" className="text-sm text-destructive">
         {tNewUi("newUi.k520186526fb3")}{" "}
@@ -63,7 +241,6 @@ export function GitHubBotManagement({
           variant="link"
           onClick={() => {
             void query.refetch();
-            void resources.refetch();
           }}
         >
           {tNewUi("newUi.kd8b8392e2c54")}
@@ -72,174 +249,92 @@ export function GitHubBotManagement({
     );
   if (!record)
     return (
-      <p className="text-sm text-muted-foreground">{tNewUi("newUi.kbc8fd86dcffd")}</p>
+      <p role="status" className="text-sm text-muted-foreground">
+        {tNewUi("newUi.kbc8fd86dcffd")}
+      </p>
     );
   const config = record.configuration;
-  const override = repository ? config.repositories[repository] : undefined;
   return (
-    <section className="max-w-3xl space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-lg font-semibold">
-          {view === "access"
-            ? tNewUi("newUi.ka4285ffa01bd")
-            : tNewUi("newUi.k3a5d8a8c669c")}
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          {endpoint.assignedAgentName} {tNewUi("newUi.ke7c7a0b30a27")}
-        </p>
-        <Link
-          className="text-sm underline"
-          to={`/apps/${endpoint.connectionId}`}
-        >
-          {tNewUi("newUi.kef3e4ed59500")}
-        </Link>
-      </div>
-      {view === "access" ? (
-        <GitHubAccessEditor
-          endpointId={endpoint.id}
-          companyId={endpoint.companyId}
-          configuration={config}
-          onChange={edit}
-        />
-      ) : (
-        <>
-          <GitHubToggle
-            label={tNewUi("newUi.k48a207abaa96")}
-            description={tNewUi("newUi.k64035f24ab8a")}
-            checked={config.toolsEnabled}
-            onChange={(toolsEnabled) => edit({ ...config, toolsEnabled })}
-          />
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h3 className="text-sm font-medium">{tNewUi("newUi.k3e3d7edf97ee")}</h3>
-              <div className="flex gap-2">
+    <section className="max-w-3xl space-y-8">
+      <fieldset disabled={pending} className="min-w-0 space-y-8">
+        {view === "access" ? (
+          <>
+            <GitHubRepositoryAccess
+              endpointId={endpoint.id}
+              companyId={endpoint.companyId}
+              pending={pending}
+              managementUrl={
+                endpoint.setup?.github?.managementUrl ??
+                endpoint.setup?.github?.installationUrl ??
+                "https://github.com/settings/installations"
+              }
+              onRefresh={() =>
+                void act(async () => {
+                  await githubChatApi.refreshRepositories(endpoint.id);
+                  await client.invalidateQueries({ queryKey: ["github-bot-repositories", endpoint.id] });
+                  await client.invalidateQueries({ queryKey: ["github-bot-repository-pages", endpoint.id] });
+                  setNotice(
+                    tNewUi("newUi.k1b9f7156a5e7"),
+                  );
+                })
+              }
+              onChange={(id, enabled) =>
+                void act(async () => {
+                  await chatEndpointsApi.updateResources(endpoint.id, [
+                    { id, enabled },
+                  ]);
+                  await client.invalidateQueries({ queryKey: ["github-bot-repositories", endpoint.id] });
+                  await client.invalidateQueries({ queryKey: ["github-bot-repository-pages", endpoint.id] });
+                })
+              }
+              onToggleAll={(enabled) => void act(async () => {
+                await githubChatApi.toggleAllRepositories(endpoint.id, enabled);
+                await client.invalidateQueries({ queryKey: ["github-bot-repositories", endpoint.id] });
+                await client.invalidateQueries({ queryKey: ["github-bot-repository-pages", endpoint.id] });
+              })}
+            />
+            <GitHubAccessEditor
+              endpointId={endpoint.id}
+              companyId={endpoint.companyId}
+              configuration={config}
+              onChange={edit}
+            />
+            {!config.toolsEnabled && (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  {t("upgrade1029ConflictsE.botToolsDisabled")}
+                </p>
                 <Button
                   variant="outline"
-                  size="sm"
-                  disabled={pending}
-                  onClick={() =>
-                    void act(async () => {
-                      await githubChatApi.refreshRepositories(endpoint.id);
-                      await resources.refetch();
-                      setNotice(
-                        tNewUi("newUi.k1b9f7156a5e7"),
-                      );
-                    })
-                  }
+                  onClick={() => edit({ ...config, toolsEnabled: true })}
                 >
-                  <RefreshCw className="size-4" />
-                  {tNewUi("newUi.k0e9161011702")}
-                </Button>
-                <Button variant="outline" size="sm" asChild>
-                  <a
-                    href={
-                      endpoint.setup?.github?.managementUrl ??
-                      endpoint.setup?.github?.installationUrl ??
-                      "https://github.com/settings/installations"
-                    }
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {tNewUi("newUi.k106d34427770")}
-                    <ExternalLink className="size-4" />
-                  </a>
+                  {t("upgrade1029ConflictsE.enableBotTools")}
                 </Button>
               </div>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {tNewUi("newUi.k2e1191e8d80d")}
-            </p>
-            {resources.data
-              ?.filter((r) => r.type === "repository")
-              .map((resource) => (
-                <GitHubToggle
-                  key={resource.id}
-                  label={resource.label ?? resource.providerResourceId}
-                  description={
-                    resource.availability === "available"
-                      ? undefined
-                      : tNewUi("newUi.kbca11134d2de")
-                  }
-                  checked={resource.enabled}
-                  onChange={(enabled) =>
-                    void act(async () => {
-                      await chatEndpointsApi.updateResources(endpoint.id, [
-                        { id: resource.id, enabled },
-                      ]);
-                      await resources.refetch();
-                    })
-                  }
-                />
-              ))}
-          </div>
-          <div className="space-y-2">
-            <label
-              htmlFor="github-policy-repository"
-              className="text-sm font-medium"
-            >
-              {tNewUi("newUi.kda791254e00e")}
-            </label>
-            <select
-              id="github-policy-repository"
-              className={githubSelectClass}
-              value={repository}
-              onChange={(e) => setRepository(e.target.value)}
-            >
-              <option value="">{tNewUi("newUi.kef6250a55128")}</option>
-              {resources.data
-                ?.filter(
-                  (r) =>
-                    r.type === "repository" &&
-                    r.enabled &&
-                    r.metadata?.providerRepositoryId,
-                )
-                .map((r) => (
-                  <option
-                    key={r.id}
-                    value={String(r.metadata?.providerRepositoryId)}
-                  >
-                    {r.label ?? r.providerResourceId}
-                  </option>
-                ))}
-            </select>
-          </div>
-          {repository && (
-            <GitHubToggle
-              label={tNewUi("newUi.kfa09d2e2b04e")}
-              description={tNewUi("newUi.kd31e5099c792")}
-              checked={!!override}
-              onChange={(enabled) => {
-                const repositories = { ...config.repositories };
-                if (enabled) repositories[repository] = { ...config.defaults };
-                else delete repositories[repository];
-                edit({ ...config, repositories });
-              }}
+            )}
+            {endpoint.connectionId && (
+              <Link
+                className="text-xs text-muted-foreground underline underline-offset-4"
+                to={`/apps/${endpoint.connectionId}`}
+              >
+                {t("upgrade1029ConflictsE.manageToolPermissions")}
+              </Link>
+            )}
+          </>
+        ) : (
+          <>
+            <GitHubPolicyEditor key={editorVersion}
+              readOnly={pending}
+              scoreText={currentScoreText}
+              onScoreTextChange={setScoreText}
+              rememberedAutomaticMode={automaticMode ?? (config.defaults.invocation === "mentions_only" ? "linked_authors" : config.defaults.invocation)}
+              accessHref={`/apps/chat/${endpoint.id}/access`}
+              policy={config.defaults}
+              onChange={(defaults) => edit({ ...config, defaults })}
             />
-          )}
-          {!repository || override ? (
-            <GitHubPolicyEditor
-              policy={{ ...config.defaults, ...override }}
-              onChange={(policy) =>
-                edit(
-                  repository
-                    ? {
-                        ...config,
-                        repositories: {
-                          ...config.repositories,
-                          [repository]: policy,
-                        },
-                      }
-                    : { ...config, defaults: policy },
-                )
-              }
-            />
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {tNewUi("newUi.kd0a794abc92a")}
-            </p>
-          )}
-        </>
-      )}
+          </>
+        )}
+      </fieldset>
       {error && (
         <p role="alert" className="text-sm text-destructive">
           {error}
@@ -250,148 +345,301 @@ export function GitHubBotManagement({
           {notice}
         </p>
       )}
-      <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
-        <Button
-          variant="ghost"
-          disabled={!draft || pending}
-          onClick={() => {
-            setDraft(null);
-            setError("");
-          }}
-        >
-          {t("routinesExtra.general.discard")}
-        </Button>
-        <Button
-          disabled={!draft || pending}
-          onClick={() =>
-            void act(async () => {
-              const saved = await githubChatApi.save(
-                endpoint.id,
-                record.revision,
-                config,
-              );
-              setDraft(saved);
-              await query.refetch();
+      {(dirty || !scoreValid) && (
+        <div className="sticky bottom-(--tc-composer-bottom) z-10 flex items-center justify-between gap-3 border-t border-border bg-background py-4 md:bottom-0">
+          <Button
+            variant="ghost"
+            disabled={pending}
+            onClick={() => {
               setDraft(null);
-              setNotice(tNewUi("newUi.k6b5b3c69e02d"));
-            })
-          }
-        >
-          {pending ? "Saving…" : tNewUi("newUi.kdd0ae7a5cbcf")}
-        </Button>
-      </div>
+              setScoreText(null);
+              setAutomaticMode(null);
+              setEditorVersion((value) => value + 1);
+              setError("");
+            }}
+          >
+            {t("routinesExtra.general.discard")}
+          </Button>
+          <Button
+            disabled={pending || !scoreValid}
+            onClick={() =>
+              void act(async () => {
+                const saved = await githubChatApi.save(
+                  endpoint.id,
+                  record.revision,
+                  config,
+                );
+                client.setQueryData(
+                  ["github-bot-configuration", endpoint.id],
+                  saved,
+                );
+                setDraft(null);
+                setScoreText(null);
+                setAutomaticMode(null);
+                setNotice(t("upgrade1029ConflictsE.changesSaved"));
+              })
+            }
+          >
+            {pending ? t("agentManagement.actions.saving") : tNewUi("newUi.kdd0ae7a5cbcf")}
+          </Button>
+        </div>
+      )}
     </section>
   );
 }
 
-export function GitHubReviews({ endpointId }: { endpointId: string }) {
-  const query = useQuery({
-    queryKey: ["github-bot-reviews", endpointId],
-    queryFn: () => githubChatApi.reviews(endpointId),
-    refetchInterval: 5000,
-  });
+export function orderedGitHubReviews(reviews: GitHubTaskReview[]) {
+  return [...reviews].sort(
+    (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
+  );
+}
+
+export function gitHubReviewResultLabel(review: GitHubTaskReview) {
+  const completed = review.state === "completed" && review.assessment?.complete;
+  const conclusion = review.conclusion
+    ? {
+        success: t("agentManagement.form.passed"),
+        failure: t("upgrade1029ConflictsE.reviewBelowThreshold"),
+        neutral: tNewUi("newUi.k5d49741265be"),
+        action_required: t("upgrade1029ConflictsE.reviewActionRequired"),
+      }[review.conclusion]
+    : t("upgrade1029ConflictsE.reviewAwaitingCheck");
+  const state = {
+    queued: tNewUi("newUi.k661ff40a07e0"),
+    running: t("upgrade1029ConflictsE.reviewReviewing"),
+    completed: t("runnerInspector.incomplete"),
+    incomplete: t("runnerInspector.incomplete"),
+    error: t("upgrade1029ConflictsE.reviewFailed"),
+    superseded: t("upgrade1029ConflictsE.reviewSuperseded"),
+    manual_required: t("upgrade1029ConflictsE.reviewActionRequired"),
+  }[review.state];
+  return completed ? `${review.assessment!.score}/5 · ${conclusion}` : state;
+}
+
+function ReviewResult({ review }: { review: GitHubTaskReview }) {
   return (
-    <section className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold">{tNewUi("newUi.k84cb7871b741")}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {tNewUi("newUi.kbb8c8faa9fdf")}
-        </p>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <span className="text-sm font-medium">
+          {gitHubReviewResultLabel(review)}
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {t("statusTraining.training.commit")} <code>{review.headSha.slice(0, 7)}</code> ·{" "}
+          {formatDateTime(review.updatedAt)}
+        </span>
       </div>
-      {query.isError && (
-        <p role="alert" className="text-sm text-destructive">
-          {tNewUi("newUi.k58b6d1547d53")}{" "}
-          <Button variant="link" onClick={() => void query.refetch()}>
-            {tNewUi("newUi.kd8b8392e2c54")}
-          </Button>
-        </p>
-      )}
-      {query.isLoading && (
-        <p className="text-sm text-muted-foreground">{tNewUi("newUi.k510c765f211f")}</p>
-      )}
-      {query.data?.length === 0 && (
+      {review.assessment ? (
+        <MarkdownBody className="text-sm">
+          {review.assessment.summary}
+        </MarkdownBody>
+      ) : (
         <p className="text-sm text-muted-foreground">
-          {tNewUi("newUi.k52d01638be45")}
+          {t("upgrade1029ConflictsE.noAssessmentYet")}
         </p>
       )}
-      {query.data?.map((review) => (
-        <article
-          key={review.id}
-          className="space-y-3 rounded-lg border border-border p-4"
+      <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+        <Link
+          className="underline underline-offset-4"
+          to={`/issues/${review.issueId}`}
         >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <a
-              className="text-sm font-medium underline"
-              href={`https://github.com/${review.repository}/pull/${review.pullNumber}`}
-              target="_blank"
-              rel="noreferrer"
+          {tNewUi("newUi.kff44b378e15c")}
+        </Link>
+        {review.summaryUrl && (
+          <a
+            className="underline underline-offset-4"
+            href={review.summaryUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t("upgrade1029ConflictsE.githubComment")}
+          </a>
+        )}
+        {review.checkUrl && (
+          <a
+            className="underline underline-offset-4"
+            href={review.checkUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {tNewUi("newUi.k9d60841e0a78")}
+          </a>
+        )}
+      </div>
+      <section className="space-y-4 text-sm" aria-label={t("upgrade1029ConflictsE.reviewEvidence")}>
+        <div className="space-y-3">
+          {review.runId && (
+            <Link
+              className="text-xs underline underline-offset-4"
+              to={`/issues/${review.issueId}?runId=${review.runId}`}
             >
-              {review.repository} #{review.pullNumber}
-            </a>
-            <span className="text-sm">
-              {review.assessment?.complete
-                ? `${review.assessment.score}/5`
-                : review.state.replaceAll("_", " ")}{" "}
-              ·{" "}
-              {review.conclusion?.replaceAll("_", " ") ?? tNewUi("newUi.k53000e1b1134")}
-            </span>
-          </div>
-          <p className="text-sm">
-            {review.assessment?.summary ?? review.event.title}
-          </p>
-          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-            <code>{review.headSha.slice(0, 12)}</code>
-            <span>{formatDateTime(review.updatedAt)}</span>
-            <Link className="underline" to={`/issues/${review.issueId}`}>
-              {tNewUi("newUi.kff44b378e15c")}
+              {t("upgrade1029ConflictsE.agentRun")}
             </Link>
-            {review.runId && (
-              <Link
-                className="underline"
-                to={`/issues/${review.issueId}?runId=${review.runId}`}
-              >
-                {tNewUi("newUi.k00d60e31a4e6")}
-              </Link>
-            )}
-            {review.summaryUrl && (
-              <a
-                className="underline"
-                href={review.summaryUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {t("pipelinesResidualExtra.deliverableSummary")}
-              </a>
-            )}
-            {review.checkUrl && (
-              <a
-                className="underline"
-                href={review.checkUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {tNewUi("newUi.k9d60841e0a78")}
-              </a>
-            )}
-          </div>
+          )}
           {review.assessment && (
-            <details className="text-sm">
-              <summary className="cursor-pointer">
-                {tNewUi("newUi.k439aa4e2b74a")}
-              </summary>
-              <p className="mt-2">{review.assessment.rationale}</p>
-              <p className="mt-2 text-muted-foreground">
+            <>
+              <h3 className="font-medium">{t("upgrade1029ConflictsE.rationale")}</h3>
+              <MarkdownBody>{review.assessment.rationale}</MarkdownBody>
+              {review.assessment.findings.length > 0 && (
+                <section className="space-y-3">
+                  <h3 className="font-medium">{t("upgrade1029ConflictsE.findings")}</h3>
+                  {review.assessment.findings.map((finding) => (
+                    <div
+                      key={finding.key}
+                      className="space-y-2 border-l border-border pl-4"
+                    >
+                      <p className="break-all font-mono text-xs">
+                        {finding.path}:{finding.line} · {finding.severity}
+                      </p>
+                      <MarkdownBody>{finding.body}</MarkdownBody>
+                    </div>
+                  ))}
+                </section>
+              )}
+              <h3 className="font-medium">{t("secretsMain.tabs.coverage")}</h3>
+              <p className="text-xs text-muted-foreground">
                 {review.assessment.coverage.reviewedPaths.length} {tNewUi("newUi.k4bcaed702a56")} {review.assessment.coverage.omittedPaths.length} {tNewUi("newUi.kf34912a1d0fc")}
               </p>
               {review.assessment.coverage.limitations.map((limit, index) => (
-                <p key={index} className="mt-1 text-muted-foreground">
+                <p key={index} className="text-xs text-muted-foreground">
                   {limit}
                 </p>
               ))}
-            </details>
+            </>
           )}
-        </article>
-      ))}
-    </section>
+        </div>
+      </section>
+    </div>
   );
+}
+
+export function GitHubReviewList({
+  endpointId,
+  reviews,
+}: {
+  endpointId: string;
+  reviews: GitHubTaskReview[];
+}) {
+  if (!reviews.length)
+    return (
+      <EmptyState
+        icon={GitPullRequest}
+        message={t("upgrade1029ConflictsE.noReviewsYet")}
+        description={t("upgrade1029ConflictsE.noReviewsDescription")}
+      />
+    );
+  return (
+    <ul
+      aria-label={tNewUi("newUi.k84cb7871b741")}
+      className="divide-y divide-border border-y border-border"
+    >
+      {orderedGitHubReviews(reviews).map((review) => (
+        <li key={review.id}>
+          <Link
+            to={`/apps/chat/${endpointId}/reviews/${review.id}`}
+            className="flex flex-wrap items-center gap-x-6 gap-y-2 py-4 text-sm hover:bg-accent/50"
+          >
+            <div className="min-w-0 flex-1 basis-48 space-y-1">
+              <p className="break-words font-medium">
+                {review.event.title || t("upgrade1029ConflictsE.pullRequestNumber", { number: review.pullNumber })}
+              </p>
+              <p className="break-all text-xs text-muted-foreground">
+                {review.repository} #{review.pullNumber} ·{" "}
+                <code>{review.headSha.slice(0, 7)}</code>
+              </p>
+            </div>
+            <div className="space-y-1 text-right">
+              <p className="font-medium">{gitHubReviewResultLabel(review)}</p>
+              <time
+                className="text-xs text-muted-foreground"
+                dateTime={review.createdAt}
+              >
+                {formatDateTime(review.createdAt)}
+              </time>
+            </div>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function GitHubReviewDetail({
+  endpointId,
+  review,
+}: {
+  endpointId: string;
+  review: GitHubTaskReview;
+}) {
+  return (
+    <article className="max-w-3xl space-y-6">
+      <Link
+        className="text-sm text-muted-foreground hover:underline"
+        to={`/apps/chat/${endpointId}/reviews`}
+      >
+        {t("upgrade1029ConflictsE.backToAllReviews")}
+      </Link>
+      <header className="space-y-2">
+        <h2 className="text-lg font-semibold">
+          {review.event.title || t("upgrade1029ConflictsE.pullRequestNumber", { number: review.pullNumber })}
+        </h2>
+        <a
+          className="break-all text-sm text-muted-foreground hover:underline"
+          href={`https://github.com/${review.repository}/pull/${review.pullNumber}`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {review.repository} #{review.pullNumber}
+        </a>
+      </header>
+      <ReviewResult review={review} />
+    </article>
+  );
+}
+
+export function GitHubReviews({
+  endpointId,
+  reviewId,
+}: {
+  endpointId: string;
+  reviewId?: string;
+}) {
+  const query = useQuery({
+    queryKey: ["github-bot-reviews", endpointId, reviewId ?? "list"],
+    queryFn: async () => reviewId ? [await githubChatApi.review(endpointId, reviewId)] : githubChatApi.reviews(endpointId),
+    refetchInterval: 5000,
+  });
+  if (query.isError)
+    return (
+      <p role="alert" className="text-sm text-destructive">
+        {reviewId ? t("upgrade1029ConflictsE.reviewNotLoaded") : tNewUi("newUi.k58b6d1547d53")}{" "}
+        <Button variant="link" onClick={() => void query.refetch()}>
+          {tNewUi("newUi.kd8b8392e2c54")}
+        </Button>
+      </p>
+    );
+  if (query.isPending)
+    return (
+      <p role="status" className="text-sm text-muted-foreground">
+        {tNewUi("newUi.k510c765f211f")}
+      </p>
+    );
+  if (reviewId) {
+    const review = query.data.find((review) => review.id === reviewId);
+    return review ? (
+      <GitHubReviewDetail endpointId={endpointId} review={review} />
+    ) : (
+      <div className="space-y-3">
+        <p role="alert" className="text-sm text-muted-foreground">
+          {t("upgrade1029ConflictsE.reviewNotFound")}
+        </p>
+        <Link
+          to={`/apps/chat/${endpointId}/reviews`}
+          className="text-sm underline"
+        >
+          {t("upgrade1029ConflictsE.allReviews")}
+        </Link>
+      </div>
+    );
+  }
+  return <GitHubReviewList endpointId={endpointId} reviews={query.data} />;
 }

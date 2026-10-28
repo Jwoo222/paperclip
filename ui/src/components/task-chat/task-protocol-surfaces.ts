@@ -108,6 +108,7 @@ export const TASK_PROTOCOL_EVENT_SURFACE_REGISTRY: Readonly<Record<string, TaskP
   ...Object.fromEntries(runnerLifecycleEvents.map((eventType) => [eventType, folded("turn", tNewUi("newUi.k4b0f7e3780d3"))])),
   ...Object.fromEntries(diagnosticEvents.map((eventType) => [eventType, folded("system_notice", tNewUi("newUi.k112bc65b21a0"))])),
   ...Object.fromEntries(itemEvents.map((eventType) => [eventType, folded("conversation_or_tool", tNewUi("newUi.kc09f70a45767") )])),
+  "auth.credentials.updated": debugOnly("run_debug", tNewUi("upgrade1029ConflictsC.credentialUpdatesNotifyHost")),
   "sandbox.metric": debugOnly("run_debug", tNewUi("newUi.keb4d900e8161")),
   ...Object.fromEntries(mcpLifecycleEvents.map((eventType) => [eventType, debugOnly("run_debug", tNewUi("newUi.kfb94465279b0"))])),
   ...Object.fromEntries(governanceEvents.map((eventType) => [eventType, folded("governance", tNewUi("newUi.ka8c965ab1123") )])),

@@ -4,11 +4,13 @@ import type { AiConnectionLoginIntent, LocalAiLoginAttempt, LocalAiLoginStatus }
 import { aiConnectionsApi } from "@/api/ai-connections";
 
 /** Every authentication host uses the same local credential check and login lifecycle. */
-export function useLocalAiLogin(companyId: string | null, intent: AiConnectionLoginIntent, enabled: boolean, options: { allowHostClaude?: boolean } = {}) {
-  const isolated = intent.provider !== "anthropic" || !options.allowHostClaude;
+export function useLocalAiLogin(companyId: string | null, intent: AiConnectionLoginIntent, enabled: boolean) {
+  const isolated = true;
   const active = Boolean(companyId && enabled);
   const [attempt, setAttempt] = useState<LocalAiLoginAttempt | null>(null);
   const [status, setStatus] = useState<LocalAiLoginStatus["status"] | null>(null);
+  const [authorizationUrl, setAuthorizationUrl] = useState<string | null>(null);
+  const [code, setCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [generation, setGeneration] = useState(0);
   const latestIntent = useRef(intent);
@@ -28,6 +30,8 @@ export function useLocalAiLogin(companyId: string | null, intent: AiConnectionLo
     setAttempt(null);
     setError(null);
     setStatus(null);
+    setAuthorizationUrl(null);
+    setCode(null);
     if (!active || !companyId) return;
     let cancelled = false;
     let checking = false;
@@ -55,9 +59,11 @@ export function useLocalAiLogin(companyId: string | null, intent: AiConnectionLo
         });
         if (cancelled) return;
         setStatus(next.status);
-        setError(next.status === "expired" ? tNewUi("newUi.k263c2c5b19ea") : null);
-        // Stop polling a verified account. Focus still rechecks after a terminal
-        // visit; awaiting terminal login never requires repeated Connect clicks.
+        setAuthorizationUrl(next.authorizationUrl ?? null);
+        setCode(next.code ?? null);
+        setError(next.error ?? (next.status === "expired" ? tNewUi("newUi.k263c2c5b19ea") : null));
+        // Stop polling a verified account. Focus rechecks after the provider
+        // browser visit; sign-in never requires repeated Connect clicks.
         if (next.status === "sign_in_required") timer = setTimeout(() => void check(), 5000);
       } catch (cause) {
         if (!cancelled) setError(cause instanceof Error ? cause.message : tNewUi("newUi.k0ce5fa5f3f76"));
@@ -73,17 +79,27 @@ export function useLocalAiLogin(companyId: string | null, intent: AiConnectionLo
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onFocus);
       // Navigation is not cancellation. The server resumes this bounded attempt
-      // when the user returns and reaps abandoned attempts after expiry. Deleting
-      // here made copied CODEX_HOME commands point at nonexistent directories.
+      // when the user returns and reaps abandoned attempts after expiry.
     };
   }, [companyId, active, isolated, target, generation]);
   return {
     isolated,
     command: attempt?.command,
+    authorizationUrl,
+    code,
     status,
     preparing: active && !status && !error,
     error,
     retry: () => { restartRequested.current = true; cancelCurrent(); setGeneration((value) => value + 1); },
+    submitCode: async (browserCode: string) => {
+      if (!companyId || !attempt) throw new Error("Start sign-in before submitting a code.");
+      try {
+        await aiConnectionsApi.submitLocalLoginCode(companyId, attempt.sessionId, browserCode);
+      } catch (cause) {
+        setError(tNewUi("upgrade1029ConflictsB.aiConnections.couldNotSubmitCode"));
+        throw cause;
+      }
+    },
     connect: (input = intent) => {
       if (!companyId) throw new Error(tNewUi("newUi.k86780647cd5f"));
       if (isolated && !attempt) throw new Error(tNewUi("newUi.k6430ea3f1f16"));

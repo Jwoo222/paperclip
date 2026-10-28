@@ -2,6 +2,8 @@ import { t as tNewUi } from "@/i18n";
 import { TextAttachmentContext } from "@/context/TextAttachmentContext";
 import { TaskAttachmentPanel } from "./TaskAttachmentPanel";
 import { useTaskBrowsers } from "@/hooks/useTaskBrowsers";
+import { taskPluginPanelId, type TaskPluginPanel } from "@/hooks/useTaskPluginPanels";
+import { PluginSlotMount } from "@/plugins/slots";
 import { TaskBrowserPanel } from "./TaskBrowserPanel";
 import {
   useCallback,
@@ -20,6 +22,7 @@ import {
 } from "@paperclipai/shared";
 import {
   Globe,
+  AppWindow,
   Box,
   FileCode2,
   FileText,
@@ -29,6 +32,7 @@ import {
   ListTree,
   Plus,
   SlidersHorizontal,
+  X,
 } from "lucide-react";
 import { fileResourcesApi } from "@/api/file-resources";
 import { IssueProperties } from "@/components/IssueProperties";
@@ -37,12 +41,16 @@ import { WorkspaceFileBrowser } from "@/components/WorkspaceFileBrowser";
 import { AgentArtifactsPanel, AgentTasksPanel } from "@/components/chat/AgentWorkPanels";
 import { useAgentChatEnabled } from "@/hooks/useAgentChatEnabled";
 import { IssuePropertiesArtifactsTab } from "@/components/issue-properties/IssuePropertiesArtifactsTab";
+import { ArtifactDropzone } from "@/components/artifacts/ArtifactDropzone";
+import { ArtifactUploadButton } from "@/components/artifacts/ArtifactUploadControls";
+import { useIssueArtifactUploads } from "@/hooks/useIssueArtifactUploads";
 import { IssuePropertiesPlansTab } from "@/components/issue-properties/IssuePropertiesPlansTab";
 import { TaskDetailSubtasksPanel } from "@/components/task-detail/TaskDetailRelationsPanel";
 import {
   SidePanelLauncher,
   SidePanelToggleButton,
   SidePanelTabs,
+  SidePanelMobileTabs,
   useScrollbarWhileScrolling,
   useSidePanelTabs,
   type SidePanelLauncherItem,
@@ -71,6 +79,7 @@ import { useLocation, useNavigate } from "@/lib/router";
 import {
   readTaskSidePanelState,
   taskPanelBrowserTab,
+  taskPanelPluginTab,
   taskPanelAgentTasksTab,
   taskPanelArtifactsTab,
   taskPanelAttachmentTab,
@@ -90,6 +99,9 @@ import { TaskSkillPanel } from "./TaskSkillPanel";
 
 export interface TaskSidePanelProps {
   issue: Issue;
+  pluginPanels?: TaskPluginPanel[];
+  openedPluginPanelKeys?: Set<string>;
+  dismissedPluginPanelKeys?: Set<string>;
   openBrowserId?: string | null;
   onBrowserOpened?: () => void;
   accountScope: string;
@@ -98,6 +110,7 @@ export interface TaskSidePanelProps {
   onAddSubIssue?: () => void;
   onUpdate: (data: Record<string, unknown>) => void;
   inline?: boolean;
+  mobile?: boolean;
   hasActiveRun?: boolean;
   externalObjects?: IssueExternalObjectGroup[];
   externalObjectsLoading?: boolean;
@@ -123,10 +136,12 @@ export interface TaskSidePanelProps {
 }
 
 const EMPTY_ISSUE_DOCUMENTS: IssueDocument[] = [];
+const EMPTY_PLUGIN_PANELS: TaskPluginPanel[] = [];
 
 function tabIcon(tab: SidePanelTabRecord<TaskSidePanelTabPayload>): ReactNode {
   switch (tab.payload.kind) {
     case "browser": return <Globe />;
+    case "plugin-panel": return <AppWindow />;
     case "properties": return <SlidersHorizontal />;
     case "subtasks": return <ListTree />;
     case "artifacts": return <Box />;
@@ -233,6 +248,9 @@ function useTaskSidePanelFileRouting() {
 }
 
 export function TaskSidePanel({
+  pluginPanels = EMPTY_PLUGIN_PANELS,
+  openedPluginPanelKeys,
+  dismissedPluginPanelKeys,
   openBrowserId,
   onBrowserOpened,
   issue,
@@ -242,6 +260,7 @@ export function TaskSidePanel({
   onAddSubIssue,
   onUpdate,
   inline = false,
+  mobile = false,
   hasActiveRun = false,
   externalObjects,
   externalObjectsLoading,
@@ -271,6 +290,7 @@ export function TaskSidePanel({
   const conversationAgentId = agentChatEnabled ? issue.conversationAgentId ?? null : null;
   const showRelatedTasks = showSubtasksTab && !conversationAgentId;
   const viewer = useTaskSidePanelFileRouting();
+  const artifactUploads = useIssueArtifactUploads(issue);
   const { data: documentsData } = useIssueDocuments(issue.id);
   const documents = documentsData ?? EMPTY_ISSUE_DOCUMENTS;
   const { data: planDocument } = useIssuePlanDocument(issue.id);
@@ -334,6 +354,26 @@ export function TaskSidePanel({
     });
   }, [accountScope, issue.companyId, issue.id, launcherOpen]);
   const controller = useSidePanelTabs<TaskSidePanelTabPayload>({ initialState, onStateChange: persist });
+  const localOpenedPluginPanels = useRef(new Set<string>());
+  const openedPluginPanels = openedPluginPanelKeys ?? localOpenedPluginPanels.current;
+  const localDismissedPluginPanels = useRef(new Set<string>());
+  const dismissedPluginPanels = dismissedPluginPanelKeys ?? localDismissedPluginPanels.current;
+  const pluginPanelKey = useCallback((panel: TaskPluginPanel) => JSON.stringify([accountScope, issue.companyId, issue.id, panel.runId, taskPluginPanelId(panel)]), [accountScope, issue.companyId, issue.id]);
+  useEffect(() => {
+    const ids = new Set(pluginPanels.map(taskPluginPanelId));
+    for (const tab of controller.tabs) {
+      if (tab.payload.kind === "plugin-panel" && !ids.has(tab.id)) controller.closeTab(tab.id);
+    }
+    for (const panel of pluginPanels) {
+      const key = pluginPanelKey(panel);
+      if (dismissedPluginPanels.has(key)) continue;
+      const firstArrival = !openedPluginPanels.has(key);
+      openedPluginPanels.add(key);
+      if (controller.tabs.some(tab => tab.id === taskPluginPanelId(panel))) continue;
+      if (firstArrival) setLauncherOpen(false);
+      controller.openTab(taskPanelPluginTab(panel), firstArrival);
+    }
+  }, [dismissedPluginPanels, openedPluginPanels, pluginPanelKey, pluginPanels, controller.tabs, controller.closeTab, controller.openTab]);
   const browsersQuery = useTaskBrowsers(issue.id);
   const newestLiveBrowser = browsersQuery.data?.findLast((browser) => browser.status === "running" || browser.status === "idle");
   useEffect(() => {
@@ -350,6 +390,9 @@ export function TaskSidePanel({
     }
   }, [openBrowserId, controller.activeTabId, onBrowserOpened, accountScope, issue.companyId, issue.id, fileTabsEnabled]);
   const activeTab = controller.tabs.find((tab) => tab.id === controller.activeTabId) ?? null;
+  const hasArtifactUploadSlot = !conversationAgentId && !issue.id.startsWith("chat:")
+    && controller.tabs.some((tab) => tab.payload.kind === "artifacts");
+  const canUploadArtifacts = hasArtifactUploadSlot && activeTab?.payload.kind === "artifacts";
   const subtasksAvailable = showRelatedTasks && (taskCount > 0 || tasksTab?.hasError === true);
   const hasSubtasksTab = controller.tabs.some((tab) => tab.id === "subtasks");
 
@@ -521,6 +564,10 @@ export function TaskSidePanel({
     markInteracted();
     if (tabId === "subtasks") subtasksDismissedRef.current = true;
     const tab = controller.tabs.find((candidate) => candidate.id === tabId);
+    if (tab?.payload.kind === "plugin-panel") {
+      const panel = pluginPanels.find(panel => taskPluginPanelId(panel) === tabId);
+      if (panel) dismissedPluginPanels.add(pluginPanelKey(panel));
+    }
     controller.closeTab(tabId);
     if (tabId === controller.activeTabId && (tab?.payload.kind === "workspace-file" || tab?.payload.kind === "files-browser")) {
       viewer.close();
@@ -581,6 +628,7 @@ export function TaskSidePanel({
     for (const [index, browser] of (browsersQuery.data ?? []).entries()) {
       primary.push({ id: `browser:${browser.id}`, label: (browsersQuery.data?.length ?? 0) > 1 ? tNewUi("upgrade2610Task.browserNumbered", { number: index + 1 }) : tNewUi("upgrade2610Task.browser"), description: browser.status, icon: <Globe />, alreadyOpen: controller.tabs.some(tab => tab.id === `browser:${browser.id}`) });
     }
+    for (const panel of pluginPanels) primary.push({ id: taskPluginPanelId(panel), label: panel.slot.displayName, icon: <AppWindow />, alreadyOpen: controller.tabs.some(tab => tab.id === taskPluginPanelId(panel)) });
     if (fileTabsEnabled) {
       primary.push({ id: "files", label: tNewUi("newUi.kabc7e9892806"), icon: <FolderOpen />, shortcut: "G F", alreadyOpen: controller.tabs.some((tab) => tab.id === "files") });
     }
@@ -628,11 +676,18 @@ export function TaskSidePanel({
       });
     }
     return sections;
-  }, [browsersQuery.data, conversationAgentId, taskCount, taskLabel, tasksTab?.hasError, controller.tabs, documents, fileTabsEnabled, planDocument, recentFilesQuery.data, recentFilesQuery.isError, recentFilesQuery.isLoading, subtasksAvailable]);
+  }, [pluginPanels, browsersQuery.data, conversationAgentId, taskCount, taskLabel, tasksTab?.hasError, controller.tabs, documents, fileTabsEnabled, planDocument, recentFilesQuery.data, recentFilesQuery.isError, recentFilesQuery.isLoading, subtasksAvailable]);
 
   function selectLauncherItem(item: SidePanelLauncherItem) {
     markInteracted();
     if (item.id.startsWith("browser:")) controller.openTab(taskPanelBrowserTab(item.id.slice(8)));
+    else if (item.id.startsWith("plugin:")) {
+      const panel = pluginPanels.find(panel => taskPluginPanelId(panel) === item.id);
+      if (panel) {
+        dismissedPluginPanels.delete(pluginPanelKey(panel));
+        controller.openTab(taskPanelPluginTab(panel));
+      }
+    }
     else if (item.id === "properties") controller.openTab(taskPanelPropertiesTab());
     else if (item.id === "subtasks") {
       subtasksDismissedRef.current = false;
@@ -678,7 +733,9 @@ export function TaskSidePanel({
           size="icon-sm"
           className={cn(
             "shrink-0 text-muted-foreground hover:text-foreground focus-visible:text-foreground",
-            streamlinedTabs
+            mobile
+              ? "size-(--sz-44px) rounded-md"
+              : streamlinedTabs
               ? "h-(--side-panel-tab-height) w-(--side-panel-tab-height) rounded-md"
               : "h-(--side-panel-tab-height) w-(--side-panel-tab-height) rounded-(--side-panel-control-radius)",
           )}
@@ -689,7 +746,15 @@ export function TaskSidePanel({
       )}
     />
   );
-  const tabStrip = (
+  const tabStrip = mobile ? (
+    <SidePanelMobileTabs
+      tabs={visualTabs}
+      activeTabId={controller.activeTabId}
+      onActiveTabChange={selectTab}
+      onCloseTab={closeTab}
+      addControl={launcherControl}
+    />
+  ) : (
     <SidePanelTabs
       tabs={visualTabs}
       activeTabId={controller.activeTabId}
@@ -709,6 +774,11 @@ export function TaskSidePanel({
     content = <SidePanelLauncher sections={launcherSections} onSelect={selectLauncherItem} />;
   } else if (activeTab.payload.kind === "browser") {
     content = null; // Mounted below independently of the selected tab.
+  } else if (activeTab.payload.kind === "plugin-panel") {
+    const panel = pluginPanels.find(panel => taskPluginPanelId(panel) === activeTab.id);
+    content = panel ? (
+      <PluginSlotMount key={panel.runId} slot={panel.slot} context={{ companyId: issue.companyId, projectId: issue.projectId, entityId: panel.entityId, entityType: "agent" }} />
+    ) : null;
   } else if (activeTab.payload.kind === "properties") {
     content = (
       <IssueProperties
@@ -747,7 +817,7 @@ export function TaskSidePanel({
       markInteracted();
       controller.openTab(taskPanelAttachmentTab(id, title));
       if (viewer.state || viewer.browse) viewer.close();
-    }}><IssuePropertiesArtifactsTab issue={issue} onOpenDocument={openDocument} /></TextAttachmentContext.Provider>;
+    }}><IssuePropertiesArtifactsTab issue={issue} onOpenDocument={openDocument} uploadState={artifactUploads} /></TextAttachmentContext.Provider>;
   } else if (activeTab.payload.kind === "issue-document") {
     content = activeTab.payload.documentKey === "plan" ? (
       <IssuePropertiesPlansTab issue={issue} inline={inline} />
@@ -802,13 +872,31 @@ export function TaskSidePanel({
   }
 
   const contentMode = activeTab?.contentMode ?? "full-bleed";
+  const header = <>{tabStrip}{hasArtifactUploadSlot ? (
+    // Keep the header footprint stable when selection changes. Hidden controls
+    // retain their space but cannot receive focus or open the file picker.
+    <div
+      data-artifact-upload-slot
+      className={cn("shrink-0", !canUploadArtifacts && "invisible")}
+      aria-hidden={!canUploadArtifacts}
+      inert={!canUploadArtifacts}
+    >
+      <ArtifactUploadButton onUpload={artifactUploads.upload} />
+    </div>
+  ) : null}</>;
   return (
+    <ArtifactDropzone enabled={canUploadArtifacts} target={paneHeaderSlot?.closest<HTMLElement>("[data-presentation]")} onUpload={artifactUploads.upload}>
     <div className="flex h-full min-h-0 flex-col">
-      {paneHeaderSlot ? createPortal(tabStrip, paneHeaderSlot) : (
+      <span className="sr-only" role="status" aria-live="polite">{artifactUploads.announcement}</span>
+      {paneHeaderSlot ? createPortal(header, paneHeaderSlot) : (
         <div className="flex h-(--side-panel-header-height) shrink-0 items-center gap-1 px-2">
-          {tabStrip}
+          {header}
           {onRequestClose ? (
-            <SidePanelToggleButton open onToggle={onRequestClose} />
+            mobile ? (
+              <Button variant="ghost" size="icon" className="size-(--sz-44px) shrink-0" aria-label={tNewUi("newUi.k952218264350")} onClick={onRequestClose}>
+                <X aria-hidden />
+              </Button>
+            ) : <SidePanelToggleButton open onToggle={onRequestClose} />
           ) : null}
         </div>
       )}
@@ -838,5 +926,6 @@ export function TaskSidePanel({
         ) : content}
       </div>
     </div>
+    </ArtifactDropzone>
   );
 }

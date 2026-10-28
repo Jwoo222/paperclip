@@ -12,6 +12,7 @@ import {
   buildExecutionPolicy,
   stageParticipantValues,
 } from "../lib/issue-execution-policy";
+import { useExecutionPolicy } from "../hooks/useExecutionPolicy";
 import { cn } from "../lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { User, Eye, ShieldCheck } from "lucide-react";
@@ -35,6 +36,7 @@ export function ExecutionParticipantPicker({
 }: ExecutionParticipantPickerProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const policyAvailable = useExecutionPolicy(issue.executionPolicy).success;
 
   const reviewerValues = stageParticipantValues(issue.executionPolicy, "review");
   const approverValues = stageParticipantValues(issue.executionPolicy, "approval");
@@ -74,6 +76,7 @@ export function ExecutionParticipantPicker({
   };
 
   const updatePolicy = (nextValues: string[]) => {
+    if (!policyAvailable) return;
     onUpdate({
       executionPolicy: buildExecutionPolicy({
         existingPolicy: issue.executionPolicy ?? null,
@@ -94,6 +97,10 @@ export function ExecutionParticipantPicker({
     ? t("commonResidual.participants.reviewers", { defaultValue: "Reviewers" })
     : t("commonResidual.participants.approvers", { defaultValue: "Approvers" });
   const Icon = stageType === "review" ? Eye : ShieldCheck;
+
+  if (!policyAvailable) {
+    return <span role="status" className="text-xs text-muted-foreground">{t("upgrade1029AutoMerged.executionParticipantPicker.policyUnavailable")}</span>;
+  }
 
   return (
     <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setSearch(""); }}>

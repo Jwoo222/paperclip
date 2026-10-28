@@ -44,7 +44,7 @@ export const remoteMcpProviders: Record<RemoteMcpProviderId, RemoteMcpProvider> 
     setupUrl: "https://docs.composio.dev/docs/composio-connect",
     dashboardUrl: "https://dashboard.composio.dev",
     defaultUrl: "https://connect.composio.dev/mcp", placeholder: "https://connect.composio.dev/mcp",
-    urlHelp: tNewUi("newUi.kddf5612d31a6"),
+    urlHelp: "Paste the MCP URL from your existing Composio session. If it requires headers, add them under Change.",
     authHelp: tNewUi("newUi.k2b2155661a73"),
   },
   executor: {

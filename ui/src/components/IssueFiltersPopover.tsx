@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Bot, Check, Filter, HardDrive, Search, User, X } from "lucide-react";
+import { Bot, Check, Filter, Search, User, X } from "lucide-react";
 import { PriorityIcon } from "./PriorityIcon";
 import { SHOW_TASK_PRIORITY_UI } from "../lib/ui-flags";
 import { StatusIcon } from "./StatusIcon";
@@ -27,6 +27,8 @@ import { externalObjectStatusIcon } from "../lib/status-colors";
 import { formatAssigneeUserLabel } from "../lib/assignees";
 import type { InboxApprovalFilter, InboxCategoryFilter } from "../lib/inbox";
 import { cn } from "../lib/utils";
+import { IssueFilterPanel } from "./IssueFilterPanel";
+import { FlyoutAppearanceProvider } from "./ui/flyout";
 
 type AgentOption = {
   id: string;
@@ -42,11 +44,6 @@ type LabelOption = {
   id: string;
   name: string;
   color: string;
-};
-
-type WorkspaceOption = {
-  id: string;
-  name: string;
 };
 
 type CreatorOption = {
@@ -114,10 +111,9 @@ export function IssueFiltersPopover({
   labels,
   currentUserId,
   enableExternalObjectFilters = true,
-  enableRoutineVisibilityFilter = false,
+  enableAgentCreatedVisibilityFilter = false,
   buttonVariant = "ghost",
   iconOnly = false,
-  workspaces,
   creators,
   presentation = "legacy",
   inboxScopeFilters,
@@ -130,20 +126,19 @@ export function IssueFiltersPopover({
   labels?: LabelOption[];
   currentUserId?: string | null;
   enableExternalObjectFilters?: boolean;
-  enableRoutineVisibilityFilter?: boolean;
+  enableAgentCreatedVisibilityFilter?: boolean;
   buttonVariant?: "ghost" | "outline";
   iconOnly?: boolean;
-  workspaces?: WorkspaceOption[];
   creators?: CreatorOption[];
-  presentation?: "legacy" | "streamlined";
+  presentation?: "legacy" | "streamlined" | "refreshed";
   inboxScopeFilters?: InboxScopeFilters;
 }) {
   const streamlined = presentation === "streamlined";
+  const refreshed = presentation === "refreshed";
   const [creatorSearch, setCreatorSearch] = useState("");
   const [assigneeSearch, setAssigneeSearch] = useState("");
   const [projectSearch, setProjectSearch] = useState("");
   const [labelSearch, setLabelSearch] = useState("");
-  const [workspaceSearch, setWorkspaceSearch] = useState("");
   const visibleAgents = useMemo(
     () => searchIssueFilterOptions(agents, assigneeSearch, (option) => option.name),
     [agents, assigneeSearch],
@@ -155,10 +150,6 @@ export function IssueFiltersPopover({
   const visibleLabels = useMemo(
     () => searchIssueFilterOptions(labels, labelSearch, (option) => option.name),
     [labels, labelSearch],
-  );
-  const visibleWorkspaces = useMemo(
-    () => searchIssueFilterOptions(workspaces, workspaceSearch, (option) => option.name),
-    [workspaces, workspaceSearch],
   );
   const creatorOptions = creators ?? [];
   const creatorOptionById = useMemo(
@@ -194,7 +185,7 @@ export function IssueFiltersPopover({
     inboxScopeFilters?.onClear();
   };
 
-  return (
+  const popover = (
     <Popover>
       <PopoverTrigger asChild>
         <Button variant={buttonVariant} size={iconOnly ? "icon" : "sm"} className={`text-xs ${iconOnly ? "relative h-8 w-8 shrink-0" : ""} ${activeFilterCount > 0 ? "text-blue-600 dark:text-blue-400" : ""}`} title={iconOnly ? (activeFilterCount > 0 ? t("work.filters.filtersCount", { count: activeFilterCount }) : t("work.filters.filter")) : undefined}>
@@ -214,12 +205,13 @@ export function IssueFiltersPopover({
         </Button>
       </PopoverTrigger>
       <PopoverContent
+        aria-label="Filters"
         align="end"
-        className={streamlined
+        className={refreshed ? "task-filters-popover" : streamlined
           ? "w-(--sz-calc-10) max-h-(--sz-calc-9) overflow-y-auto overscroll-contain p-0"
           : "w-(--sz-calc-10) p-0"}
       >
-        <div className="space-y-3 p-3">
+        {refreshed ? <IssueFilterPanel state={state} onChange={onChange} activeFilterCount={activeFilterCount} agents={agents} projects={projects} labels={labels} creators={creators} currentUserId={currentUserId} onClear={clearFilters} /> : <div className="space-y-3 p-3">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">{t("work.filters.filter")}</span>
             {activeFilterCount > 0 ? (
@@ -491,27 +483,6 @@ export function IssueFiltersPopover({
                 </div>
               ) : null}
 
-              {workspaces && workspaces.length > 0 ? (
-                <div className="space-y-1">
-                  <span className="text-xs text-muted-foreground">Workspace</span>
-                  {streamlined && workspaces.length > SEARCHABLE_FILTER_THRESHOLD ? (
-                    <FilterOptionSearch value={workspaceSearch} onChange={setWorkspaceSearch} label="Workspaces" />
-                  ) : null}
-                  <div data-filter-options="workspaces" className={streamlined ? "space-y-0.5" : "max-h-32 space-y-0.5 overflow-y-auto"}>
-                    {(streamlined ? visibleWorkspaces : workspaces).map((workspace) => (
-                      <label key={workspace.id} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
-                        <Checkbox
-                          checked={state.workspaces.includes(workspace.id)}
-                          onCheckedChange={() => onChange({ workspaces: toggleIssueFilterValue(state.workspaces, workspace.id) })}
-                        />
-                        <HardDrive className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="text-sm">{workspace.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
               {enableExternalObjectFilters ? (
                 <div className="space-y-1">
                   <span className="text-xs text-muted-foreground">{t("work.filters.externalObjectStatus")}</span>
@@ -521,6 +492,7 @@ export function IssueFiltersPopover({
                         : value === "waiting" ? "waiting"
                         : value === "running" ? "running"
                         : value === "auth_required" ? "auth_required"
+                        : value === "rate_limited" ? "rate_limited"
                         : value === "unreachable" ? "unreachable"
                         : value === "stale" ? "unknown"
                         : "closed";
@@ -554,20 +526,21 @@ export function IssueFiltersPopover({
                   />
                   <span className="text-sm">{t("work.filters.liveRunsOnly")}</span>
                 </label>
-                {enableRoutineVisibilityFilter ? (
+                {enableAgentCreatedVisibilityFilter ? (
                   <label className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                     <Checkbox
-                      checked={state.hideRoutineExecutions}
-                      onCheckedChange={(checked) => onChange({ hideRoutineExecutions: checked === true })}
+                      checked={state.showAgentCreatedTasks}
+                      onCheckedChange={(checked) => onChange({ showAgentCreatedTasks: checked === true })}
                     />
-                    <span className="text-sm">{t("work.filters.hideRoutineRuns")}</span>
+                    <span className="text-sm">{t("upgrade1029ConflictsA.issueFilters.showAgentCreatedTasks")}</span>
                   </label>
                 ) : null}
               </div>
             </div>
           </div>
-        </div>
+        </div>}
       </PopoverContent>
     </Popover>
   );
+  return refreshed ? <FlyoutAppearanceProvider>{popover}</FlyoutAppearanceProvider> : popover;
 }

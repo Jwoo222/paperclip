@@ -19,9 +19,10 @@ import { LINK_LABEL_FADE_IN, LINK_LABEL_FADE_OUT } from "./onboarding-motion";
  */
 
 const LINK_LABEL: Record<CredentialMode, string> = {
-  subscription: tNewUi("newUi.k91c16a846a63"),
-  api: tNewUi("newUi.k03050a116e6e"),
+  subscription: tNewUi("newUi.k03050a116e6e"),
+  api: tNewUi("newUi.k91c16a846a63"),
 };
+const NATIVE_MODES: CredentialMode[] = ["subscription", "api"];
 
 const OTHER_MODE: Record<CredentialMode, CredentialMode> = {
   subscription: "api",
@@ -35,10 +36,19 @@ export function CredentialModeLink({
   mode: CredentialMode;
   onChange: (next: CredentialMode) => void;
 }) {
+  return <ModeLink destination={OTHER_MODE[mode]} onClick={() => onChange(OTHER_MODE[mode])} modes={NATIVE_MODES} />;
+}
+
+function ModeLink({ destination, onClick, modes }: {
+  destination: CredentialMode;
+  onClick: () => void;
+  modes: CredentialMode[];
+}) {
   return (
     <button
       type="button"
-      onClick={() => onChange(OTHER_MODE[mode])}
+      aria-label={LINK_LABEL[destination]}
+      onClick={onClick}
       className={cn(
         // A grid rather than a flow of text, so both labels can occupy one cell
         // and overlap during the swap. Same padding as the checkbox row this
@@ -54,7 +64,7 @@ export function CredentialModeLink({
         also takes them out of the accessibility tree, leaving the button's name
         to the one real label below.
       */}
-      {(Object.keys(LINK_LABEL) as CredentialMode[]).map((sizerMode) => (
+      {modes.map((sizerMode) => (
         <span
           key={sizerMode}
           aria-hidden
@@ -66,7 +76,7 @@ export function CredentialModeLink({
 
       <AnimatePresence initial={false} mode="sync">
         <motion.span
-          key={mode}
+          key={destination}
           // Left-aligned in that max-width cell, so the sentence starts at the
           // same x in both states and only its tail changes.
           className={cn(
@@ -82,7 +92,7 @@ export function CredentialModeLink({
           animate={{ opacity: 1, transition: LINK_LABEL_FADE_IN }}
           exit={{ opacity: 0, transition: LINK_LABEL_FADE_OUT }}
         >
-          {LINK_LABEL[mode]}
+          {LINK_LABEL[destination]}
         </motion.span>
       </AnimatePresence>
     </button>

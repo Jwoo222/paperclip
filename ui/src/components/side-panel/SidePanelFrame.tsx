@@ -50,7 +50,7 @@ export function SidePanelFrame({
       data-maximized={maximized ? "true" : "false"}
       data-resizing={resizing ? "true" : "false"}
       className={cn(
-        "flex min-h-0 min-w-0 flex-col overflow-hidden bg-(--side-panel-bg) text-(--side-panel-fg)",
+        "relative flex min-h-0 min-w-0 flex-col overflow-hidden bg-(--side-panel-bg) text-(--side-panel-fg)",
         presentation === "docked" && "h-full border-l border-border",
         presentation === "sheet" && "h-full w-full",
         presentation === "embedded" && "h-full rounded-xl border border-border",
@@ -103,11 +103,13 @@ export function SidePanelToggleButton({
   onToggle,
   shortcut,
   className,
+  highlightWhenOpen = true,
 }: {
   open: boolean;
   onToggle: () => void;
   shortcut?: string;
   className?: string;
+  highlightWhenOpen?: boolean;
 }) {
   const label = tNewUi("newUi.k081f0fced829");
   return (
@@ -122,7 +124,7 @@ export function SidePanelToggleButton({
           onClick={onToggle}
           className={cn(
             "h-(--side-panel-tab-height) w-(--side-panel-tab-height)",
-            open && "bg-accent text-accent-foreground",
+            open && highlightWhenOpen && "bg-accent text-accent-foreground",
             className,
           )}
         >

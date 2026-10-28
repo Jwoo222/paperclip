@@ -1,10 +1,16 @@
 import { t } from "@/i18n";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Code2, Download, Eye } from "lucide-react";
+import { Download } from "lucide-react";
 import { issuesApi } from "@/api/issues";
 import { Button } from "@/components/ui/button";
+import { QueryErrorState, useQueryView } from "@/components/QueryView";
+import { CsvPreview } from "@/components/CsvPreview";
+import { isCsvFile } from "@/lib/csv-preview";
 import { MarkdownBody } from "@/components/MarkdownBody";
+import { HtmlArtifactPreview } from "@/components/HtmlArtifactPreview";
+import { FilePreviewModeToggle, type FilePreviewMode } from "@/components/FilePreviewModeToggle";
+import { isHtmlPreview } from "@/lib/html-preview";
 import { attachmentDownloadPath, isMarkdownAttachment, isTextAttachment } from "@/lib/issue-attachments";
 import { queryKeys } from "@/lib/queryKeys";
 
@@ -12,7 +18,8 @@ export const TEXT_PREVIEW_MAX_BYTES = 512 * 1024;
 
 /** Bound the actual response, not just producer-supplied attachment metadata. */
 export async function readTextPreview(response: Response) {
-  if (!response.ok) throw new Error(`Could not load file (${response.status}).`);
+  // Carry the status so the shared classification can tell an outage (503) from a real failure.
+  if (!response.ok) throw Object.assign(new Error(`Could not load file (${response.status}).`), { status: response.status });
   if (!response.body) throw new Error("The file response is empty.");
   const reader = response.body.getReader();
   const decoder = new TextDecoder("utf-8", { fatal: true });
@@ -35,34 +42,32 @@ export async function readTextPreview(response: Response) {
   }
 }
 
-export function TextAttachmentPreview({ title, text, markdown, downloadUrl }: {
+export function TextAttachmentPreview({ title, text, markdown, html = false, csv = false, downloadUrl }: {
   title: string;
   text: string;
   markdown: boolean;
+  html?: boolean;
+  csv?: boolean;
   downloadUrl: string;
 }) {
-  const [raw, setRaw] = useState(false);
+  const [mode, setMode] = useState<FilePreviewMode>("rendered");
+  useEffect(() => setMode("rendered"), [title]);
+  const renderCsv = csv && mode === "rendered" && text.length > 0;
+  const renderHtml = html && mode === "rendered" && text.length > 0;
   return (
     <div className="flex h-full min-h-0 flex-col">
       <header className="flex items-center gap-2 border-b border-border px-3 py-2">
         <h2 className="min-w-0 flex-1 truncate text-sm font-medium" title={title}>{title}</h2>
-        {markdown ? (
-          <div className="flex gap-1" role="group" aria-label={t("upgrade2610Task.markdownView")}>
-            <Button size="icon-sm" variant={raw ? "ghost" : "secondary"} aria-label={t("upgrade2610Task.rendered")} title={t("upgrade2610Task.rendered")} aria-pressed={!raw} onClick={() => setRaw(false)}>
-              <Eye aria-hidden />
-            </Button>
-            <Button size="icon-sm" variant={raw ? "secondary" : "ghost"} aria-label={t("upgrade2610Task.raw")} title={t("upgrade2610Task.raw")} aria-pressed={raw} onClick={() => setRaw(true)}>
-              <Code2 aria-hidden />
-            </Button>
-          </div>
-        ) : null}
+        {markdown || html || csv ? <FilePreviewModeToggle mode={mode} onChange={setMode} label={html ? t("upgrade1029ConflictsC.htmlView") : csv ? t("upgrade1029ConflictsC.csvView") : t("upgrade2610Task.markdownView")} /> : null}
         <Button asChild variant="ghost" size="icon-sm">
           <a href={downloadUrl} download aria-label={t("taskDetailExtra.downloadFile", { filename: title })} title={t("taskDetailExtra.downloadFile", { filename: title })}><Download aria-hidden /></a>
         </Button>
       </header>
-      <div className="min-h-0 flex-1 overflow-auto p-4">
+      <div className={renderHtml || renderCsv ? "flex min-h-0 flex-1 flex-col overflow-hidden" : "min-h-0 flex-1 overflow-auto p-4"}>
         {text.length === 0 ? <p className="text-sm text-muted-foreground">{t("upgrade2610Task.fileIsEmpty")}</p>
-          : markdown && !raw ? <MarkdownBody mediaMode="reference">{text}</MarkdownBody>
+          : renderCsv ? <CsvPreview text={text} title={title} />
+          : renderHtml ? <HtmlArtifactPreview html={text} title={title} />
+          : markdown && mode === "rendered" ? <MarkdownBody mediaMode="reference">{text}</MarkdownBody>
           : <pre className="whitespace-pre-wrap break-words font-mono text-sm" aria-label={t("upgrade2610Task.rawTextFor", { title })}>{text}</pre>}
       </div>
     </div>
@@ -84,21 +89,32 @@ export function TaskAttachmentPanel({ issueId, attachmentId }: { issueId: string
       { signal, credentials: "same-origin" },
     )),
     enabled: Boolean(eligible),
-    retry: false,
   });
-  if (attachments.isLoading) return <p className="p-4 text-sm" role="status">{t("upgrade2610Task.loadingFile")}</p>;
-  if (attachments.isError) return <div className="p-4" role="alert">{t("upgrade2610Task.couldNotLoadAttachmentDetails")} <Button onClick={() => void attachments.refetch()}>{t("coreWorkflow.fileViewer.retry")}</Button></div>;
+  const attachmentsView = useQueryView(attachments);
+  const contentView = useQueryView(content);
+  if (attachments.isLoading || attachmentsView.kind === "reconnecting") return <p className="p-4 text-sm" role="status">{t("upgrade2610Task.loadingFile")}</p>;
+  if (attachmentsView.kind === "error") {
+    return (
+      <QueryErrorState
+        className="m-4"
+        error={attachments.error}
+        action="load attachment details"
+        onRetry={attachmentsView.retry}
+        retrying={attachmentsView.isFetching}
+      />
+    );
+  }
   if (!attachment) return <p className="p-4 text-sm" role="status">{t("upgrade2610Task.fileNoLongerAvailable")}</p>;
   const downloadUrl = attachmentDownloadPath(attachment);
-  if (!eligible || content.isError) {
+  if (!eligible || contentView.kind === "error") {
     return (
       <div className="space-y-3 p-4" role="alert">
-        <p className="text-sm">{content.isError ? t("upgrade2610Task.couldNotPreviewFile") : t("upgrade2610Task.fileTooLargeForPreview")}</p>
+        <p className="text-sm">{contentView.kind === "error" ? t("upgrade2610Task.couldNotPreviewFile") : t("upgrade2610Task.fileTooLargeForPreview")}</p>
         {eligible ? <Button onClick={() => void content.refetch()}>{t("coreWorkflow.fileViewer.retry")}</Button> : null}
         <Button asChild variant="outline"><a href={downloadUrl} download>{t("commonControls.artifact.downloadFile")}</a></Button>
       </div>
     );
   }
   if (content.data === undefined) return <p className="p-4 text-sm" role="status">{t("upgrade2610Task.loadingFile")}</p>;
-  return <TextAttachmentPreview title={attachment.originalFilename ?? attachment.id} text={content.data} markdown={isMarkdownAttachment(attachment)} downloadUrl={downloadUrl} />;
+  return <TextAttachmentPreview key={attachment.id} title={attachment.originalFilename ?? attachment.id} text={content.data} csv={isCsvFile(attachment.originalFilename ?? "", attachment.contentType)} markdown={isMarkdownAttachment(attachment)} html={isHtmlPreview(attachment.contentType, attachment.originalFilename)} downloadUrl={downloadUrl} />;
 }

@@ -7,6 +7,7 @@ import { SetupWizardFooter } from "@/components/SetupWizard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { RemoteMcpManagement } from "./RemoteMcpManagement";
 import {
@@ -37,7 +38,9 @@ function FieldHelp({ label, children }: { label: string; children: ReactNode }) 
 
 /** Controlled presentation shared by provider setup, configuration imports and review stories.
  * Authentication, persistence and calls belong to the controller, never these views. */
-export function RemoteMcpConnectionSetup({ provider, state: s, actions: a, agents, companyId, connectionId, fixedGrantKind, lockedAgentId, host = "page", authorizationUrl, upstreamServiceName, onCancel }: {
+export function RemoteMcpConnectionSetup({ provider, state: s, actions: a, agents, companyId, connectionId, fixedGrantKind, lockedAgentId, host = "page", authorizationUrl, upstreamServiceName, onCancel, additionalSettings, settingsValid = true }: {
+  additionalSettings?: ReactNode;
+  settingsValid?: boolean;
   companyId: string;
   onCancel?: () => void;
   upstreamServiceName?: string;
@@ -54,6 +57,7 @@ export function RemoteMcpConnectionSetup({ provider, state: s, actions: a, agent
   const uid = useId();
   const heading = useRef<HTMLHeadingElement>(null);
   const previousStep = useRef(s.step);
+  const [sessionOpen, setSessionOpen] = useState(() => Boolean(provider.defaultUrl && s.url !== provider.defaultUrl));
   useEffect(() => {
     if (previousStep.current !== s.step) heading.current?.focus();
     previousStep.current = s.step;
@@ -114,6 +118,15 @@ export function RemoteMcpConnectionSetup({ provider, state: s, actions: a, agent
     : s.connectStatus === "rejected" ? { title: tNewUi("newUi.k73a4956368db"), body: `Check or replace the credentials from ${provider.name}, then reconnect. Your agent access and tool choices are preserved.` }
     : s.connectStatus === "unreachable" ? { title: tNewUi("newUi.kdd97cf34a058"), body: tNewUi("newUi.k2536e8ff4584") }
     : null;
+  const urlField = <div className="space-y-2">
+    <div className="flex items-center gap-2"><Label htmlFor={`${uid}-url`}>{tNewUi("newUi.k4f5aff033a99")}</Label><FieldHelp label={tNewUi("newUi.k4f5aff033a99")}>{provider.urlHelp}</FieldHelp></div>
+    <Input id={`${uid}-url`} type="password" autoComplete="off" spellCheck={false} placeholder={provider.placeholder} value={s.url} aria-invalid={s.connectStatus === "invalid_url"} aria-describedby={`${uid}-url-help`} onChange={(event) => change({ url: event.target.value })} />
+    <p id={`${uid}-url-help`} className="text-xs text-muted-foreground">{provider.urlHelp}</p>
+    {provider.id === "executor" ? <div className="space-y-2"><div className="flex items-center gap-2"><Label htmlFor={`${uid}-management`}>Console URL (optional)</Label>
+      <FieldHelp label="Executor console URL">The URL of your Executor organization’s integrations page. Used to open and manage imported accounts.</FieldHelp></div>
+      <Input id={`${uid}-management`} type="url" value={s.managementUrl ?? ""} placeholder="https://executor.sh/your-organization/integrations" onChange={event => change({ managementUrl: event.target.value })} />
+    </div> : null}
+  </div>;
 
   return <div className={host === "dialog" ? "min-w-0 text-foreground" : "mx-auto max-w-6xl p-4 text-foreground sm:p-8"} data-remote-mcp-provider={provider.id}>
     <StepHeader headingRef={heading} appIdentity={{ name: provider.name, logoUrl: null }}
@@ -121,7 +134,7 @@ export function RemoteMcpConnectionSetup({ provider, state: s, actions: a, agent
       subtitle={currentStep >= 0 && !s.setupComplete ? `Paperclip will use ${provider.name} on your behalf.` : s.step === "draft" ? `Your ${provider.name} setup is ready to resume.` : s.step === "permissions" ? `Connected${s.identity ? ` as ${s.identity}` : ""} · ${s.tools.length} actions available` : `Manage this ${provider.name} connection.`}
       step={currentStep >= 0 && !s.setupComplete ? "key" : "gallery"} activeIndex={currentStep} labels={steps.map(() => tNewUi("newUi.k1a2303ede074"))} onCancel={busy || s.step === "management" || s.step === "permissions" || s.step === "draft" ? undefined : onCancel ?? a.saveExit} />
     <main className="space-y-6">
-        {upstreamServiceName && <InlineBanner compact>{provider.name} is an external service that handles the connection and requests to {upstreamServiceName}. After connecting, the agent will verify the app and guide you through any additional authorization.</InlineBanner>}
+        {upstreamServiceName && <InlineBanner compact>{provider.name} handles the connection and requests to {upstreamServiceName}. {provider.id === "composio" ? "After connecting this account, sign in to the app in Composio." : "Manage app sign-in in the provider, then refresh your gateway here."}</InlineBanner>}
         {s.notice && <p role="status" className="text-sm text-muted-foreground">{s.notice}</p>}
 
         {s.step === "access" && <AccessStepContent agents={agents} lockedAgentId={lockedAgentId} authKind="oauth" grantKinds={fixedGrantKind ? [fixedGrantKind] : undefined} grantKind={s.grantKind} setGrantKind={(grantKind) => { if (grantKind !== "agent") change({ grantKind }); }}
@@ -155,11 +168,10 @@ export function RemoteMcpConnectionSetup({ provider, state: s, actions: a, agent
             {error && <div role="alert"><InlineBanner tone="danger" title={error.title}>{error.body}</InlineBanner></div>}
             {s.connectStatus === "cancelled" && <p role="status" className="text-sm text-muted-foreground">{tNewUi("newUi.k7d123dbb1f7f")}</p>}
             <fieldset disabled={busy} className="min-w-0 space-y-5">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2"><Label htmlFor={`${uid}-url`}>{tNewUi("newUi.k4f5aff033a99")}</Label><FieldHelp label={tNewUi("newUi.k4f5aff033a99")}>{provider.urlHelp}</FieldHelp></div>
-                <Input id={`${uid}-url`} type="password" autoComplete="off" spellCheck={false} placeholder={provider.placeholder} value={s.url} aria-invalid={s.connectStatus === "invalid_url"} aria-describedby={`${uid}-url-help`} onChange={(event) => change({ url: event.target.value })} />
-                <p id={`${uid}-url-help`} className="text-xs text-muted-foreground">{provider.urlHelp}</p>
-              </div>
+              {provider.defaultUrl ? <Collapsible open={sessionOpen || s.connectStatus === "invalid_url"} onOpenChange={setSessionOpen}>
+                <CollapsibleTrigger asChild><Button type="button" variant="link" className="h-auto p-0 text-sm text-muted-foreground underline underline-offset-2">Reuse an existing session</Button></CollapsibleTrigger>
+                <CollapsibleContent className="mt-3">{urlField}</CollapsibleContent>
+              </Collapsible> : urlField}
               {defaults(<div className="space-y-4">
                   <p className="text-sm font-medium text-foreground">{tNewUi("newUi.k66880d2d8216")}</p>
                   <p className="text-sm text-muted-foreground">{provider.authHelp}</p>
@@ -178,8 +190,9 @@ export function RemoteMcpConnectionSetup({ provider, state: s, actions: a, agent
                   </div>}
                 </div>)}
             </fieldset>
+            {additionalSettings}
             {busy && <p role="status" className="flex items-center gap-2 text-sm"><Loader2 className="size-4 animate-spin motion-reduce:animate-none" />{tNewUi("newUi.k99f0c67e69e7")}</p>}
-            {footer(<>{s.setupComplete ? <Button type="button" variant="outline" disabled={busy} onClick={a.finish}>{tNewUi("newUi.k76900f1bfd16")}</Button> : <span />}<Button type="submit" disabled={busy || !s.url.trim()}>{busy ? "Connecting…" : error || s.connectStatus === "cancelled" ? tNewUi("newUi.kd8b8392e2c54") : `Connect ${provider.name}`}</Button></>)}
+            {footer(<>{s.setupComplete ? <Button type="button" variant="outline" disabled={busy} onClick={a.finish}>{tNewUi("newUi.k76900f1bfd16")}</Button> : <span />}<Button type="submit" disabled={busy || !s.url.trim() || !settingsValid}>{busy ? "Connecting…" : error || s.connectStatus === "cancelled" ? tNewUi("newUi.kd8b8392e2c54") : `Connect ${provider.name}`}</Button></>)}
           </form>}
         </>}
 

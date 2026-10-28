@@ -33,9 +33,12 @@ vi.mock("../services/cloud-lifecycle-sync.js", () => ({
   notifyCloudOfPrimaryCompanyLifecycleChange: notifyCloudSpy,
 }));
 
+import { startAgentLifecycle } from "../services/agent-lifecycle.js";
+import { createLifecycleDriver } from "../services/agent-lifecycle-driver.js";
+import { reserveRunBudget } from "../services/budget-reservations.js";
 import { companyService } from "../services/companies.js";
 import { deriveIssuePrefixBase } from "../services/issue-prefix.js";
-import { readBuiltInAgentMarker } from "../services/built-in-agent-metadata.js";
+import { readBuiltInAgentMarker } from "../lib/built-in-agent-metadata.js";
 import { builtInAgentService, reconcileBuiltInAgentsOnStartup } from "../services/built-in-agents.js";
 
 const embeddedPostgresSupport = await getEmbeddedPostgresTestSupport();
@@ -49,6 +52,19 @@ if (!embeddedPostgresSupport.supported) {
 
 describeEmbeddedPostgres("companyService", () => {
   let db!: ReturnType<typeof createDb>;
+  let lifecycleWorker: ReturnType<typeof startAgentLifecycle>;
+  beforeEach(() => {
+    lifecycleWorker = startAgentLifecycle(db, { ...createLifecycleDriver(db, {} as never),
+      requiredPluginIds: async () => [], runPlugin: async () => "complete" }, () => true);
+  });
+  async function insertAgents(input: typeof agents.$inferInsert | Array<typeof agents.$inferInsert>) {
+    const rows = Array.isArray(input) ? input : [input];
+    await db.insert(agents).values(rows.map(row => ({ ...row,
+      lifecycleState: ["paused", "pending_approval", "terminated"].includes(row.status ?? "") ? row.status! : "ready",
+      lifecycleHolds: row.status === "paused" ? [row.pauseReason ?? "manual"] : [],
+    })));
+  }
+
   let tempDb: Awaited<ReturnType<typeof startEmbeddedPostgresTestDatabase>> | null = null;
 
   beforeAll(async () => {
@@ -57,6 +73,7 @@ describeEmbeddedPostgres("companyService", () => {
   }, 20_000);
 
   afterEach(async () => {
+    await lifecycleWorker.stop();
     await db.delete(routineTriggers);
     await db.delete(routines);
     await db.delete(builtInManagedResources);
@@ -103,6 +120,17 @@ describeEmbeddedPostgres("companyService", () => {
   it("normalizes an explicit prefix chosen at creation", async () => {
     const created = await companyService(db).create({ name: "셀러의 도구함", issuePrefix: "vos" });
     expect(created.issuePrefix).toBe("VOS");
+  });
+
+  it("leaves unrelated company-hold projection out of name edits", async () => {
+    const [company] = await db.insert(companies).values({ name: "Rename only", issuePrefix: "REN" }).returning();
+    const [agent] = await db.insert(agents).values({ companyId: company.id, name: "Unrelated agent",
+      status: "paused", lifecycleState: "paused", lifecycleHolds: ["manual", "company_paused"], pauseReason: "manual" }).returning();
+    await companyService(db).update(company.id, { description: "Updated description" });
+    expect((await db.select().from(agents).where(eq(agents.id, agent.id)))[0].lifecycleHolds)
+      .toEqual(["manual", "company_paused"]);
+    await lifecycleWorker.sweep();
+    expect((await db.select().from(agents).where(eq(agents.id, agent.id)))[0].lifecycleHolds).toEqual(["manual"]);
   });
 
   it("does not auto-provision bundled built-in agents for a freshly created company", async () => {
@@ -175,7 +203,7 @@ describeEmbeddedPostgres("companyService", () => {
       requireBoardApprovalForNewAgents: false,
     });
 
-    await db.insert(agents).values([
+    await insertAgents([
       {
         id: runningAgentId,
         companyId,
@@ -271,6 +299,10 @@ describeEmbeddedPostgres("companyService", () => {
     });
 
     expect(archived?.status).toBe("archived");
+    // The request commits the admission block; stopping providers is owed work.
+    expect((await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, runId)))[0].status).toBe("running");
+    expect(await lifecycleWorker.hasPending()).toBe(true);
+    await lifecycleWorker.sweep();
 
     const archiveActivity = await db
       .select({
@@ -287,7 +319,7 @@ describeEmbeddedPostgres("companyService", () => {
     expect(archiveActivity[0]).toMatchObject({
       actorType: "user",
       actorId: "test-user",
-      details: { agentsPaused: 3, runsCancelled: 1 },
+      details: { agentsPauseRequested: 3, runsCancellationRequested: 1 },
     });
 
     const rows = await db
@@ -331,6 +363,27 @@ describeEmbeddedPostgres("companyService", () => {
     });
   });
 
+  it.each(["archive", "pause"] as const)("preserves owed stops across immediate %s and reactivation", async action => {
+    const companyId = randomUUID();
+    const agentId = randomUUID();
+    await db.insert(companies).values({ id: companyId, name: "Rapid lifecycle", issuePrefix: `R${companyId.slice(0, 6)}` });
+    await insertAgents({ id: agentId, companyId, name: "Running target", adapterType: "process", status: "running" });
+    const [original] = await db.insert(heartbeatRuns).values({ companyId, agentId, status: "running", invocationSource: "on_demand" }).returning();
+    const service = companyService(db);
+    if (action === "archive") await service.archive(companyId);
+    else await service.update(companyId, { status: "paused" });
+    expect((await db.select().from(agents).where(eq(agents.id, agentId)))[0]).toMatchObject({ lifecycleState: "pausing", status: "paused" });
+    expect((await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, original.id)))[0].status).toBe("running");
+    await service.update(companyId, { status: "active" });
+    const [waiting] = await db.insert(heartbeatRuns).values({ companyId, agentId, status: "queued", invocationSource: "on_demand" }).returning();
+    await expect(reserveRunBudget(db, companyId, waiting.id, null)).rejects.toThrow(/paused|not ready/);
+    await lifecycleWorker.sweep();
+    expect((await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, original.id)))[0].status).toBe("cancelled");
+    expect((await db.select().from(agents).where(eq(agents.id, agentId)))[0]).toMatchObject({ lifecycleState: "ready", status: "idle" });
+    const [fresh] = await db.insert(heartbeatRuns).values({ companyId, agentId, status: "queued", invocationSource: "on_demand" }).returning();
+    await expect(reserveRunBudget(db, companyId, fresh.id, null)).resolves.toMatchObject({ runId: fresh.id, reused: false });
+  });
+
   it("reactivates only agents paused because the company was archived", async () => {
     const companyId = randomUUID();
     const archivedPausedAgentId = randomUUID();
@@ -345,7 +398,7 @@ describeEmbeddedPostgres("companyService", () => {
       requireBoardApprovalForNewAgents: false,
     });
 
-    await db.insert(agents).values([
+    await insertAgents([
       {
         id: archivedPausedAgentId,
         companyId,
@@ -392,6 +445,7 @@ describeEmbeddedPostgres("companyService", () => {
     );
 
     expect(reactivated?.status).toBe("active");
+    await lifecycleWorker.sweep();
 
     const reactivateActivity = await db
       .select({
@@ -451,7 +505,7 @@ describeEmbeddedPostgres("companyService", () => {
       requireBoardApprovalForNewAgents: false,
     });
 
-    await db.insert(agents).values([
+    await insertAgents([
       {
         id: runningAgentId,
         companyId,
@@ -511,6 +565,7 @@ describeEmbeddedPostgres("companyService", () => {
     );
 
     expect(archived?.status).toBe("archived");
+    await lifecycleWorker.sweep();
 
     const rows = await db
       .select({ id: agents.id, status: agents.status, pauseReason: agents.pauseReason })
@@ -544,7 +599,7 @@ describeEmbeddedPostgres("companyService", () => {
     expect(archiveActivity[0]).toMatchObject({
       actorType: "user",
       actorId: "test-user",
-      details: { agentsPaused: 2, runsCancelled: 1 },
+      details: { agentsPauseRequested: 2, runsCancellationRequested: 1 },
     });
   });
 
@@ -561,7 +616,7 @@ describeEmbeddedPostgres("companyService", () => {
       requireBoardApprovalForNewAgents: false,
     });
 
-    await db.insert(agents).values([
+    await insertAgents([
       {
         id: archivedPausedAgentId,
         companyId,
@@ -597,6 +652,7 @@ describeEmbeddedPostgres("companyService", () => {
     );
 
     expect(reactivated?.status).toBe("active");
+    await lifecycleWorker.sweep();
 
     const rows = await db
       .select({ id: agents.id, status: agents.status, pauseReason: agents.pauseReason })
@@ -628,7 +684,7 @@ describeEmbeddedPostgres("companyService", () => {
       requireBoardApprovalForNewAgents: false,
     });
 
-    await db.insert(agents).values({
+    await insertAgents({
       id: terminatedAgentId,
       companyId,
       name: "Terminated Agent",
@@ -671,7 +727,7 @@ describeEmbeddedPostgres("companyService", () => {
       requireBoardApprovalForNewAgents: false,
     });
 
-    await db.insert(agents).values({
+    await insertAgents({
       id: manualPausedAgentId,
       companyId,
       name: "Manual Paused Agent",
@@ -723,7 +779,7 @@ describeEmbeddedPostgres("companyService", () => {
       requireBoardApprovalForNewAgents: false,
     });
 
-    await db.insert(agents).values({
+    await insertAgents({
       id: agentId,
       companyId,
       name: "Idle Agent",
@@ -768,6 +824,7 @@ describeEmbeddedPostgres("companyService", () => {
       runId: null,
     });
     expect(archived?.status).toBe("archived");
+    await lifecycleWorker.sweep();
 
     const wakeups = await db
       .select({
@@ -798,7 +855,7 @@ describeEmbeddedPostgres("companyService", () => {
       requireBoardApprovalForNewAgents: false,
     });
 
-    await db.insert(agents).values({
+    await insertAgents({
       id: agentId,
       companyId,
       name: "Idle Agent",
@@ -825,7 +882,7 @@ describeEmbeddedPostgres("companyService", () => {
         eq(activityLog.action, "company.archived"),
       ));
     expect(archiveActivity).toHaveLength(1);
-    expect(archiveActivity[0]).toMatchObject({ details: { agentsPaused: 1, runsCancelled: 0 } });
+    expect(archiveActivity[0]).toMatchObject({ details: { agentsPauseRequested: 1, runsCancellationRequested: 0 } });
   });
 
   it("rings the Cloud lifecycle doorbell exactly on archived-boundary transitions", async () => {
@@ -873,7 +930,7 @@ describeEmbeddedPostgres("companyService", () => {
       requireBoardApprovalForNewAgents: false,
     });
 
-    await db.insert(agents).values({
+    await insertAgents({
       id: idleAgentId,
       companyId,
       name: "Idle Agent",
@@ -900,6 +957,7 @@ describeEmbeddedPostgres("companyService", () => {
     );
 
     expect(archived?.status).toBe("archived");
+    await lifecycleWorker.sweep();
 
     const agent = await db
       .select({ status: agents.status, pauseReason: agents.pauseReason })
@@ -922,7 +980,7 @@ describeEmbeddedPostgres("companyService", () => {
       ));
     expect(archiveActivity).toHaveLength(1);
     expect(archiveActivity[0]).toMatchObject({
-      details: { agentsPaused: 1, runsCancelled: 1 },
+      details: { agentsPauseRequested: 1, runsCancellationRequested: 1 },
     });
   });
 

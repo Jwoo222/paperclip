@@ -28,6 +28,11 @@ const EVENT_KEYS: Record<CaseEventKind, string> = {
   attachment_added: "casesExtra.activity.attachment_added",
   label_added: "casesExtra.activity.label_added",
   label_removed: "casesExtra.activity.label_removed",
+  handoff_requested: "upgrade1029ConflictsA.caseActivity.handoffRequested",
+  handoff_applied: "upgrade1029ConflictsA.caseActivity.handoffApplied",
+  handoff_delivered: "upgrade1029ConflictsA.caseActivity.handoffDelivered",
+  handoff_completed: "upgrade1029ConflictsA.caseActivity.handoffCompleted",
+  handoff_cancelled: "upgrade1029ConflictsA.caseActivity.handoffCancelled",
 };
 
 /** Human label for the actor, preferring the resolved agent name. */

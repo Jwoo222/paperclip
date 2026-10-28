@@ -8,6 +8,7 @@ import {
   Download,
   FlaskConical,
   KeyRound,
+  Link2,
   MailPlus,
   MonitorCog,
   Puzzle,
@@ -145,6 +146,7 @@ export function CompanySettingsSidebar() {
               end
             />
           )}
+          <SidebarNavItem to="/company/settings/connections" label={t("integrations.common.connections")} icon={Link2} end />
           {showPage("instance.access") && (
             <SidebarNavItem
               to={`${INSTANCE_SETTINGS_PATH_PREFIX}/access`}

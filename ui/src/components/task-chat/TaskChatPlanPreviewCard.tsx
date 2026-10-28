@@ -2,6 +2,7 @@ import { t as tNewUi } from "@/i18n";
 import type { IssueDocument } from "@paperclipai/shared";
 import { Lightbulb, Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTaskChatShimmer } from "./TaskChatShimmer";
 import type { TaskChatProviderActivityItem } from "./task-chat-model";
 
 const PLAN_PREVIEW_LINE_COUNT = 3;
@@ -83,6 +84,7 @@ export function TaskChatPlanPreviewCard({
   testId = "task-chat-plan-preview",
   className,
 }: TaskChatPlanPreviewCardProps) {
+  const shimmer = useTaskChatShimmer(source.kind === "live" ? source.activity.id : "saved-plan");
   const revision = planRevision(source);
   const content = source.kind === "saved" && source.document
     ? planPreviewContent(source.document.body)
@@ -100,12 +102,12 @@ export function TaskChatPlanPreviewCard({
           aria-hidden
           className={cn("h-4 w-4 shrink-0", live && "text-(--status-agent-running)")}
         />
-        <span className={cn("font-medium", live && "shimmer-text shimmer-text-muted")} data-testid={live ? "task-chat-plan-streaming-status" : undefined}>
+        <span className={cn("font-medium", live && shimmer && "shimmer-text shimmer-text-muted")} data-testid={live ? "task-chat-plan-streaming-status" : undefined}>
           {live ? tNewUi("newUi.k64c92e65a10a") : tNewUi("newUi.kfa8ed0bdabdd")}
         </span>
         {headerDetail ? (
           <span
-            className={cn("text-xs", live && "shimmer-text shimmer-text-muted")}
+            className="text-xs"
           >
             · {headerDetail}
           </span>

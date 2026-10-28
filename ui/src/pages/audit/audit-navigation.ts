@@ -1,5 +1,6 @@
 import { t as tNewUi } from "@/i18n";
-export type AuditSection = "activity" | "runs" | "costs" | "budgets" | "timeline";
+import { t } from "@/i18n";
+export type AuditSection = "activity" | "runs" | "costs" | "budgets" | "timeline" | "commentary";
 
 export const AUDIT_SECTIONS: ReadonlyArray<{
   value: AuditSection;
@@ -8,6 +9,7 @@ export const AUDIT_SECTIONS: ReadonlyArray<{
 }> = [
   { value: "activity", label: tNewUi("newUi.k38da1505ca83"), href: "/activity" },
   { value: "runs", label: tNewUi("newUi.k848f54e89660"), href: "/activity/runs" },
+  { value: "commentary", label: t("upgrade1029ConflictsE.auditSectionCommentary"), href: "/activity/commentary" },
   { value: "costs", label: tNewUi("newUi.kb88fc5fc4765"), href: "/activity/costs" },
   { value: "budgets", label: tNewUi("newUi.ka1a06e046b0b"), href: "/activity/budgets" },
   { value: "timeline", label: tNewUi("newUi.k9dcff98e275f"), href: "/activity/timeline" },
@@ -47,6 +49,11 @@ export function routineAuditHref(routineId: string) {
     entityType: "routine",
     entityId: routineId,
   });
+}
+
+/** Link target for a case's handoffs and other persistent changes. */
+export function caseAuditHref(caseId: string) {
+  return auditSectionHref("activity", { entityType: "case", entityId: caseId });
 }
 
 /** Link target for the attributed activity behind a specific run. */

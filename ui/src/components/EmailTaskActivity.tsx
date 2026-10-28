@@ -37,6 +37,7 @@ export function EmailTaskActivity({
       )}
       {messages.map((m) => (
         <EmailMessageCard
+          contextNotice
           key={m.id}
           issueId={issueId}
           message={m}
@@ -79,7 +80,7 @@ function EmailDelivery({
       {p.request && !p.providerMessageId && (
         <article
           aria-label={tNewUi("newUi.k5cd558440d10")}
-          className="space-y-3 rounded-lg border border-border p-4"
+          className="task-context-notice space-y-3"
         >
           <p className="font-semibold">{p.request.subject ?? tNewUi("newUi.kef902e386028")}</p>
           {p.request.to && <p>{tNewUi("newUi.k2b5fc5c94f64")} {p.request.to.join(", ")}</p>}

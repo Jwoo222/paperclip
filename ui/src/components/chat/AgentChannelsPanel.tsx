@@ -4,12 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, MessageSquarePlus } from "lucide-react";
 import { chatEndpointsApi, type ChatProvider } from "@/api/chatEndpoints";
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/StatusBadge";
+import { Badge } from "@/components/ui/badge";
 import { queryKeys } from "@/lib/queryKeys";
 import { Link } from "@/lib/router";
-import { useChatConnectorsEnabled } from "@/hooks/useChatConnectorsEnabled";
+import { useChatConnectorsEnabled, chatProviderVisible } from "@/hooks/useChatConnectorsEnabled";
 
 const providerNames: Record<ChatProvider, string> = {
+  speko: "Speko",
   slack: "Slack",
   github: "GitHub Code Review Bot",
   discord: "Discord",
@@ -26,7 +27,7 @@ export function AgentChannelsPanel({
   companyId: string;
   agentId: string;
 }) {
-  const { enabled } = useChatConnectorsEnabled();
+  const { enabled, githubEnabled } = useChatConnectorsEnabled();
   const query = useQuery({
     queryKey: queryKeys.chatEndpoints.list(companyId),
     queryFn: () => chatEndpointsApi.list(companyId),
@@ -34,7 +35,7 @@ export function AgentChannelsPanel({
   });
   const endpoints = (query.data ?? []).filter(
     (endpoint) =>
-      endpoint.assignedAgentId === agentId && endpoint.status !== "archived" && (endpoint.provider === "agentmail" || enabled),
+      endpoint.assignedAgentId === agentId && endpoint.status !== "archived" && chatProviderVisible(endpoint.provider, enabled, githubEnabled),
   );
   return (
     <section className="max-w-3xl space-y-5">
@@ -58,7 +59,7 @@ export function AgentChannelsPanel({
         <div className="rounded-lg border border-dashed border-border p-5">
           <p className="text-sm font-medium">{tNewUi("newUi.kce30a0411e96")}</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            {enabled ? "Connect AgentMail, Slack, GitHub Code Review Bot, Discord, Microsoft Teams, or Telegram from Connectors." : t("upgrade2610Agents.channelsEmptyAgentMailOnly")}
+            {enabled || githubEnabled ? t("upgrade1029ConflictsB.connectAgentIdentity") : t("upgrade2610Agents.channelsEmptyAgentMailOnly")}
           </p>
           <Button asChild className="mt-3" variant="outline" size="sm">
             <Link to="/apps">{tNewUi("newUi.kd985974b1d05")}</Link>
@@ -81,7 +82,7 @@ export function AgentChannelsPanel({
                     tNewUi("newUi.k656eefd90b92")}
                 </p>
               </div>
-              <StatusBadge status={endpoint.status} />
+              <Badge variant="outline">{endpoint.status.replace(/[_-]/g, " ")}</Badge>
               <Button asChild size="sm" variant="outline">
                 <Link to={`/apps/chat/${endpoint.id}/settings`}>
                   {tNewUi("newUi.kbfb179e9b5bc")} <ExternalLink />

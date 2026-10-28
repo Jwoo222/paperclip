@@ -2,14 +2,11 @@ import { t as tNewUi } from "@/i18n";
 import { t } from "@/i18n";
 import { useId, useState } from "react";
 import {
-  ArrowRight,
-  Check,
   Download,
   ExternalLink,
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SetupWizardFooter } from "@/components/SetupWizard";
 
 export interface SlackAvatarProps {
   agentName: string;
@@ -17,7 +14,7 @@ export interface SlackAvatarProps {
   avatarUrl: string;
 }
 
-/** Shared by Slack onboarding and its Settings page. Slack upload is manual. */
+/** Manual fallback shared by Slack onboarding and its Settings page. */
 export function SlackAvatarContent({
   agentName,
   appName,
@@ -154,53 +151,6 @@ export function SlackAvatarContent({
   );
 }
 
-export function SlackAvatarStep({
-  uploaded,
-  onUploaded,
-  onSkip,
-  onSaveExit,
-  ...props
-}: SlackAvatarProps & {
-  uploaded: boolean;
-  onUploaded: () => void;
-  onSkip: () => void;
-  onSaveExit: () => void;
-}) {
-  return (
-    <div className="space-y-8">
-      <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-bold">
-            {tNewUi("newUi.kc6402106c821")} {props.agentName} {tNewUi("newUi.k5c31a82b59ec")}
-          </h1>
-          <span className="text-xs text-muted-foreground">{tNewUi("newUi.k59be71333c96")}</span>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {tNewUi("newUi.kc36d819e7bc6")} {props.agentName}{tNewUi("newUi.k001b345bd19c")}
-        </p>
-      </div>
-      <SlackAvatarContent {...props} />
-      {uploaded && (
-        <p
-          role="status"
-          className="flex items-center gap-2 rounded-lg bg-(--status-task-done)/10 p-3 text-sm"
-        >
-          <Check className="size-4 text-(--status-task-done)" />
-          {tNewUi("newUi.kbc4cad4b6e09")}
-        </p>
-      )}
-      <SetupWizardFooter onSaveExit={onSaveExit}>
-        <Button variant="ghost" onClick={onSkip}>
-          {tNewUi("newUi.kb58eb52c8810")}
-        </Button>
-        <Button onClick={onUploaded}>
-          {uploaded ? tNewUi("newUi.k31fbef162594") : tNewUi("newUi.k6e475f8b403b")}
-          <ArrowRight className="size-4" />
-        </Button>
-      </SetupWizardFooter>
-    </div>
-  );
-}
 
 export function SlackAvatarSettings(props: SlackAvatarProps) {
   return (

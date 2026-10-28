@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   activityLog,
+  costEvents,
   agents,
   agentRuntimeState,
   agentWakeupRequests,
@@ -63,6 +64,7 @@ describeEmbeddedPostgres("heartbeat lock release on cross-agent reassignment", (
     await drainHeartbeatRunsToQuiescence(db, heartbeat);
     await db.delete(activityLog);
     await db.delete(heartbeatRunEvents);
+    await db.delete(costEvents);
     await db.delete(heartbeatRuns);
     await db.delete(agentWakeupRequests);
     await db.delete(issueThreadInteractions);

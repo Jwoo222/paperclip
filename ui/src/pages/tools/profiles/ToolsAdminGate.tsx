@@ -9,9 +9,9 @@ import { useCompany } from "@/context/CompanyContext";
 
 /**
  * Best-effort admin gate for the access-profiles surface, mirroring
- * `AdvancedToolsRoute` (PAP-10862, plan D8). Instance admins and company
- * owners/admins pass; the server stays authoritative. Shared so the profiles
- * index and the create wizard guard identically.
+ * `AdvancedToolsRoute` (PAP-10862, plan D8). Local boards, instance admins,
+ * and active company owners/admins/operators pass; the server stays
+ * authoritative. Shared so the profiles index and create wizard guard identically.
  */
 export function ToolsAdminGate({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
@@ -27,22 +27,25 @@ export function ToolsAdminGate({ children }: { children: ReactNode }) {
   }
 
   const data = boardAccess.data;
-  const membership = data?.memberships?.find((m) => m.companyId === selectedCompanyId);
-  const isAdmin =
+  const membership = data?.memberships?.find((m) => m.companyId === selectedCompanyId && m.status === "active");
+  const canManageTools =
+    data?.source === "local_implicit" ||
     Boolean(data?.isInstanceAdmin) ||
     membership?.membershipRole === "owner" ||
-    membership?.membershipRole === "admin";
+    membership?.membershipRole === "admin" ||
+    membership?.membershipRole === "operator" ||
+    membership?.membershipRole === "member";
 
-  if (!isAdmin) {
+  if (!canManageTools) {
     return (
       <div className="mx-auto max-w-xl py-10">
         <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-6">
           <div className="flex items-center gap-2 text-foreground">
             <ShieldAlert className="h-5 w-5 text-muted-foreground" />
-            <h1 className="text-lg font-semibold">{t("toolsAdvanced.profiles.adminTitle")}</h1>
+            <h1 className="text-lg font-semibold">{t("upgrade1029ConflictsE.profilesGateTitle")}</h1>
           </div>
           <p className="text-sm text-muted-foreground">
-            {t("toolsResidualRound2.profilesAdminBodyBeforeLink")} {" "}
+            {t("upgrade1029ConflictsE.profilesGateBodyBeforeLink")}{" "}
             <Link to="/apps" className="font-medium text-primary hover:underline">
               {t("toolsResidualRound2.profilesYourApps")}
             </Link>

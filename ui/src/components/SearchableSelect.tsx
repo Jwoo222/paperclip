@@ -1,6 +1,6 @@
 import { t } from "@/i18n";
 import { Check, ChevronsUpDown, X } from "lucide-react";
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -63,6 +63,10 @@ export interface SearchableSelectProps<
   disablePortal?: boolean;
   /** Heading for the large mobile selector modal. Defaults to the placeholder. */
   mobileTitle?: string;
+  triggerAriaLabel?: string;
+  modal?: boolean;
+  contentStyle?: CSSProperties;
+  listFooter?: ReactNode;
   /**
    * Optional pinned "creatable" item rendered at the bottom of the list,
    * regardless of the query (used e.g. by the secret picker's
@@ -112,6 +116,10 @@ export function SearchableSelect<
   scoreOption,
   disablePortal,
   mobileTitle,
+  triggerAriaLabel,
+  modal,
+  contentStyle,
+  listFooter,
   createItem,
 }: SearchableSelectProps<TValue, TOption>) {
   const [open, setOpen] = useState(false);
@@ -191,6 +199,7 @@ export function SearchableSelect<
 
   return (
     <Popover
+      modal={modal}
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
@@ -221,6 +230,7 @@ export function SearchableSelect<
             }
           }}
           aria-expanded={open}
+          aria-label={triggerAriaLabel}
           role="combobox"
           className={cn("w-full justify-between overflow-hidden", className, triggerClassName)}
         >
@@ -233,7 +243,7 @@ export function SearchableSelect<
       <PopoverContent
         data-mobile-entity-picker=""
         aria-label={mobileTitle ?? placeholder}
-        style={mobileViewportStyle}
+        style={{ ...mobileViewportStyle, ...contentStyle }}
         align={align}
         collisionPadding={16}
         disablePortal={disablePortal}
@@ -250,6 +260,12 @@ export function SearchableSelect<
             event.stopPropagation();
             closePopover({ suppressTriggerFocus: true });
           }
+        }}
+        onCloseAutoFocus={() => {
+          // Modal outside dismissal restores focus to the trigger. Keep that
+          // restore from reopening the picker, without swallowing a later Tab.
+          suppressNextTriggerFocusRef.current = true;
+          queueMicrotask(() => { suppressNextTriggerFocusRef.current = false; });
         }}
       >
         <div data-mobile-entity-picker-header="" className="hidden items-center justify-between border-b border-border px-4 py-3">
@@ -326,6 +342,7 @@ export function SearchableSelect<
                     </CommandItem>
                   </CommandGroup>
                 ) : null}
+                {listFooter}
               </>
             )}
           </CommandList>

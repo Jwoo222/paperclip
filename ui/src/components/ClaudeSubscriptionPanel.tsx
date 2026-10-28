@@ -1,3 +1,4 @@
+import { quotaUnavailableMessage } from "@/lib/quota-refresh";
 import type { QuotaWindow } from "@paperclipai/shared";
 import { cn, quotaSourceDisplayName } from "@/lib/utils";
 import { t } from "@/i18n";
@@ -67,7 +68,7 @@ export function ClaudeSubscriptionPanel({
             {t("commonResidual.subscriptions.anthropicTitle", { defaultValue: "Anthropic subscription" })}
           </div>
           <div className="mt-1 text-sm text-muted-foreground">
-            {t("commonResidual.subscriptions.claudeDescription", { defaultValue: "Live Claude quota windows." })}
+            {t("upgrade1029ConflictsA.subscriptions.claudeDescription")}
           </div>
         </div>
         {source ? (
@@ -78,8 +79,8 @@ export function ClaudeSubscriptionPanel({
       </div>
 
       {error ? (
-        <div className="mt-4 border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error}
+        <div role="status" className="mt-4 text-sm text-muted-foreground">
+          {quotaUnavailableMessage(windows.length > 0)}
         </div>
       ) : null}
 
