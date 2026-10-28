@@ -1066,6 +1066,57 @@ function readRunIssueId(contextSnapshot: Record<string, unknown> | null) {
   return typeof issueId === "string" && issueId.length > 0 ? issueId : null;
 }
 
+const SUPERSEDED_RUN_LOOKUP_CHUNK = 500;
+
+/**
+ * Failed runs with an issue that the same agent has run again later.
+ * Each lookup goes through the (company, context issueId/taskId, created_at)
+ * expression indexes. Scanning every run since the oldest failure instead made
+ * Postgres detoast hundreds of MB of context_snapshot per feed build, because
+ * the planner prices the small heap, not the TOAST reads.
+ * The match mirrors readRunIssueId: issueId wins, taskId only when issueId is null.
+ * createdAt arrives truncated to milliseconds, so "newer" is compared at that
+ * precision and a failed run never counts as newer than itself.
+ */
+async function listSupersededFailedRunIds(
+  db: Db,
+  companyId: string,
+  failedRuns: Array<{ id: string; agentId: string; issueId: string; createdAt: Date }>,
+): Promise<Set<string>> {
+  const superseded = new Set<string>();
+  for (let start = 0; start < failedRuns.length; start += SUPERSEDED_RUN_LOOKUP_CHUNK) {
+    const chunk = failedRuns.slice(start, start + SUPERSEDED_RUN_LOOKUP_CHUNK);
+    const values = sql.join(
+      chunk.map((run) => sql`(${run.id}::uuid, ${run.agentId}::uuid, ${run.issueId}::text, ${run.createdAt.toISOString()}::timestamptz)`),
+      sql`, `,
+    );
+    const rows = await db.execute(sql`
+      select f.run_id
+      from (values ${values}) as f(run_id, agent_id, issue_key, created_at)
+      where exists (
+          select 1 from heartbeat_runs r
+          where r.company_id = ${companyId}::uuid
+            and (r.context_snapshot ->> 'issueId') = f.issue_key
+            and r.agent_id = f.agent_id
+            and r.created_at >= f.created_at + interval '1 millisecond'
+        )
+        or exists (
+          select 1 from heartbeat_runs r
+          where r.company_id = ${companyId}::uuid
+            and (r.context_snapshot ->> 'taskId') = f.issue_key
+            and (r.context_snapshot ->> 'issueId') is null
+            and r.agent_id = f.agent_id
+            and r.created_at >= f.created_at + interval '1 millisecond'
+        )
+    `);
+    for (const row of Array.isArray(rows) ? rows : []) {
+      const runId = (row as Record<string, unknown>).run_id;
+      if (typeof runId === "string") superseded.add(runId);
+    }
+  }
+  return superseded;
+}
+
 export function attentionService(db: Db, serviceOptions: AttentionServiceOptions = {}) {
   const openDecisionLimit = Math.min(
     Math.max(Math.trunc(serviceOptions.openDecisionLimit ?? OPEN_DECISION_DEFAULT_LIMIT), 1),
@@ -1663,18 +1714,26 @@ export function attentionService(db: Db, serviceOptions: AttentionServiceOptions
 
       const failedRows = await listAttentionExhaustedRuns(db, companyId);
       const failedIssueIds = failedRows.map((row) => readRunIssueId(row.contextSnapshot));
-      const failedAgentIds = [...new Set(failedRows.map((row) => row.agentId))];
-      const oldestFailedRunCreatedAt = failedRows.reduce<Date | null>((oldest, row) => {
+      const failedRunsWithIssue = failedRows.flatMap((row, index) => {
+        const issueId = failedIssueIds[index];
+        return issueId ? [{ id: row.id, agentId: row.agentId, issueId, createdAt: row.createdAt }] : [];
+      });
+      // Issue-less failures still compare against every later issue-less run
+      // of the agent; no index covers that, so only their agents are scanned.
+      const issuelessFailedRows = failedRows.filter((_, index) => !failedIssueIds[index]);
+      const failedAgentIds = [...new Set(issuelessFailedRows.map((row) => row.agentId))];
+      const oldestFailedRunCreatedAt = issuelessFailedRows.reduce<Date | null>((oldest, row) => {
         if (!oldest || row.createdAt < oldest) return row.createdAt;
         return oldest;
       }, null);
-      const [failedIssueMap, failedImageMap, newerRuns] = await Promise.all([
+      const [failedIssueMap, failedImageMap, supersededFailedRunIds, newerRuns] = await Promise.all([
         issueSummaryMap(
           db,
           companyId,
           failedIssueIds,
         ),
         issueImageMap(db, companyId, failedIssueIds),
+        listSupersededFailedRunIds(db, companyId, failedRunsWithIssue),
         oldestFailedRunCreatedAt && failedAgentIds.length > 0
           ? db
             .select({
@@ -1705,7 +1764,9 @@ export function attentionService(db: Db, serviceOptions: AttentionServiceOptions
       for (const run of failedRows) {
         const issueId = readRunIssueId(run.contextSnapshot);
         const runKey = `${run.agentId}:${issueId ?? ""}`;
-        const hasNewerRun = (latestRunCreatedAtByKey.get(runKey)?.getTime() ?? 0) > run.createdAt.getTime();
+        const hasNewerRun = issueId
+          ? supersededFailedRunIds.has(run.id)
+          : (latestRunCreatedAtByKey.get(runKey)?.getTime() ?? 0) > run.createdAt.getTime();
         if (hasNewerRun) continue;
 
         const issue = issueId ? failedIssueMap.get(issueId) ?? null : null;

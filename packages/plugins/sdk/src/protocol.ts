@@ -1981,6 +1981,7 @@ export interface WorkerToHostMethods {
       companyId: string;
       includeSubtree?: boolean;
       billingCode?: string | null;
+      includeRunUsage?: boolean;
     },
     result: PluginIssueOrchestrationSummary,
   ];

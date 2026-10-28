@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import express from "express";
 import request from "supertest";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
   activityLog,
@@ -1025,6 +1025,43 @@ describeEmbeddedPostgres("attention service", () => {
     const feed = await attentionService(db).list(companyId, { userId: "board-user" });
 
     expect(feed.items.filter((item) => item.sourceKind === "failed_run")).toEqual([]);
+  });
+
+  it("matches newer runs per agent and issue, including taskId-only context and sub-millisecond timestamps", async () => {
+    const { companyId, workerId, reviewerId } = await seedCompany("ATS");
+    const taskOnlyIssueId = await insertIssue({ companyId, identifier: "ATS-1", title: "Task-only context", status: "in_progress" });
+    const otherAgentIssueId = await insertIssue({ companyId, identifier: "ATS-2", title: "Retried by another agent", status: "in_progress" });
+    const microIssueId = await insertIssue({ companyId, identifier: "ATS-3", title: "Sub-millisecond failure", status: "in_progress" });
+    const taskOnlyRunId = randomUUID();
+    const otherAgentRunId = randomUUID();
+    const microRunId = randomUUID();
+    const failedAt = new Date("2026-07-09T12:00:00.000Z");
+    const laterAt = new Date("2026-07-09T12:05:00.000Z");
+    const failed = { companyId, invocationSource: "automation" as const, status: "failed", error: "adapter failed" };
+    const succeeded = { companyId, invocationSource: "automation" as const, status: "succeeded" };
+
+    await db.insert(heartbeatRuns).values([
+      { ...failed, id: taskOnlyRunId, agentId: workerId, contextSnapshot: { taskId: taskOnlyIssueId }, createdAt: failedAt, updatedAt: failedAt, finishedAt: failedAt },
+      { ...succeeded, id: randomUUID(), agentId: workerId, contextSnapshot: { taskId: taskOnlyIssueId }, createdAt: laterAt, updatedAt: laterAt, finishedAt: laterAt },
+      { ...failed, id: otherAgentRunId, agentId: workerId, contextSnapshot: { issueId: otherAgentIssueId }, createdAt: failedAt, updatedAt: failedAt, finishedAt: failedAt },
+      { ...succeeded, id: randomUUID(), agentId: reviewerId, contextSnapshot: { issueId: otherAgentIssueId }, createdAt: laterAt, updatedAt: laterAt, finishedAt: laterAt },
+      // Postgres keeps microseconds; the service sees milliseconds. The run must not count as newer than itself.
+      { ...failed, id: microRunId, agentId: workerId, contextSnapshot: { issueId: microIssueId }, createdAt: sql`'2026-07-09T12:00:00.000500Z'::timestamptz` as unknown as Date, updatedAt: failedAt, finishedAt: failedAt },
+    ]);
+    await db.insert(heartbeatRunEvents).values([taskOnlyRunId, otherAgentRunId, microRunId].map((runId) => ({
+      companyId,
+      runId,
+      agentId: workerId,
+      seq: 1,
+      eventType: "lifecycle",
+      message: "Bounded retry exhausted after 4 scheduled attempts; no further automatic retry will be queued",
+      createdAt: new Date("2026-07-09T12:00:01.000Z"),
+    })));
+
+    const feed = await attentionService(db).list(companyId, { userId: "board-user" });
+
+    expect(feed.items.filter((item) => item.sourceKind === "failed_run").map((item) => item.subject.id).sort())
+      .toEqual([otherAgentRunId, microRunId].sort());
   });
 
   it("enriches interaction details with project, workspace, plan metadata, and images", async () => {

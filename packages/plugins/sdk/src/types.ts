@@ -1285,6 +1285,36 @@ export interface PluginIssueRunSummary {
   finishedAt: string | null;
   error: string | null;
   createdAt: string;
+  /**
+   * Allowlisted per-run usage. Present only when the orchestration read was
+   * called with `includeRunUsage: true`; absent on older hosts and on every
+   * other run listing. `null` means the run stored no usage record.
+   */
+  financialUsage?: PluginRunFinancialUsage | null;
+}
+
+/**
+ * Per-run usage projected from stored run metadata. Every value is either the
+ * stored, validated value or `null`; missing data is never filled with 0.
+ * Token buckets do not overlap when `inputIncludesCacheWrite` is false.
+ */
+export interface PluginRunFinancialUsage {
+  provider: string | null;
+  model: string | null;
+  /** Adapter-reported USD for this run, as stored. Not a billed amount. */
+  reportedUsd: number | null;
+  input: number | null;
+  output: number | null;
+  cacheRead: number | null;
+  cacheWrite: number | null;
+  /** true: `input` also counts cache-write tokens; null: not determinable. */
+  inputIncludesCacheWrite: boolean | null;
+  /** `fresh_session` only when the run provably did not resume a session. */
+  costScope: "fresh_session" | "unconfirmed";
+  /** `claude_cli_price_table` only for a verified Claude CLI result total. */
+  estimateSource: "claude_cli_price_table" | "unknown";
+  resumed: boolean | null;
+  usageSource: "per_run" | "session_delta" | null;
 }
 
 export interface PluginIssueApprovalSummary {
@@ -1340,6 +1370,11 @@ export interface PluginIssueOrchestrationSummary {
   costs: PluginIssueCostSummary;
   openBudgetIncidents: PluginBudgetIncidentSummary[];
   invocationBlocks: PluginIssueInvocationBlockSummary[];
+  /**
+   * Present only with `includeRunUsage: true`. false means `runs` was cut at
+   * the host limit, so totals over `runs` are incomplete.
+   */
+  runsComplete?: boolean;
 }
 
 export interface PluginIssueSubtreeOptions {
@@ -1384,6 +1419,8 @@ export interface PluginIssueSummariesClient {
     companyId: string;
     includeSubtree?: boolean;
     billingCode?: string | null;
+    /** Attach `financialUsage` to each run and report `runsComplete`. */
+    includeRunUsage?: boolean;
   }): Promise<PluginIssueOrchestrationSummary>;
 }
 

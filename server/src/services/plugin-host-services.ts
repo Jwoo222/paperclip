@@ -25,6 +25,7 @@ import type {
   IssueComment,
   PluginIssueAssigneeSummary,
   PluginIssueOrchestrationSummary,
+  PluginIssueRunSummary,
   PluginExecutionWorkspaceMetadata,
 } from "@paperclipai/plugin-sdk";
 import type { CreateIssueThreadInteraction, InviteJoinType, IssueDocumentSummary, PermissionKey, PrincipalType } from "@paperclipai/shared";
@@ -65,6 +66,7 @@ import {
   writePluginLocalFolderTextAtomic,
 } from "./plugin-local-folders.js";
 import { createPluginSecretsHandler } from "./plugin-secrets-handler.js";
+import { projectRunFinancialUsage } from "./plugin-run-usage.js";
 import { logActivity } from "./activity-log.js";
 import type { PluginEventBus } from "./plugin-event-bus.js";
 import type { PluginWorkerManager } from "./plugin-worker-manager.js";
@@ -1123,6 +1125,100 @@ export function buildHostServices(
     }));
   };
 
+  const RUN_USAGE_LIMIT = 100;
+
+  /**
+   * Opt-in run listing for orchestration reads that asked for usage. Reads
+   * only allowlisted jsonb scalars; one extra row detects truncation.
+   */
+  const getIssueRunSummariesWithUsage = async (companyId: string, issueIds: string[]) => {
+    if (issueIds.length === 0) return { runs: [] as PluginIssueRunSummary[], complete: true };
+    const issueIdExpr = sql<string | null>`${heartbeatRuns.contextSnapshot} ->> 'issueId'`;
+    const usage = (key: string) => sql<unknown>`${heartbeatRuns.usageJson} -> ${key}::text`;
+    const rows = await db
+      .select({
+        id: heartbeatRuns.id,
+        issueId: issueIdExpr,
+        agentId: heartbeatRuns.agentId,
+        status: heartbeatRuns.status,
+        invocationSource: heartbeatRuns.invocationSource,
+        triggerDetail: heartbeatRuns.triggerDetail,
+        startedAt: heartbeatRuns.startedAt,
+        finishedAt: heartbeatRuns.finishedAt,
+        error: heartbeatRuns.error,
+        createdAt: heartbeatRuns.createdAt,
+        hasUsageRecord: sql<boolean>`jsonb_typeof(${heartbeatRuns.usageJson}) = 'object'`,
+        hasSessionIdBefore: sql<boolean>`${heartbeatRuns.sessionIdBefore} is not null`,
+        provider: usage("provider"),
+        biller: usage("biller"),
+        model: usage("model"),
+        costUsd: usage("costUsd"),
+        inputTokens: usage("inputTokens"),
+        cachedInputTokens: usage("cachedInputTokens"),
+        outputTokens: usage("outputTokens"),
+        usageSource: usage("usageSource"),
+        freshSession: usage("freshSession"),
+        sessionReused: usage("sessionReused"),
+        taskSessionReused: usage("taskSessionReused"),
+        resultType: sql<unknown>`${heartbeatRuns.resultJson} -> 'type'`,
+        resultTotalCostUsd: sql<unknown>`${heartbeatRuns.resultJson} -> 'total_cost_usd'`,
+        // Numeric buckets only; model names and every other field are dropped.
+        modelUsage: sql<unknown>`(
+          select jsonb_agg(jsonb_build_object(
+            'inputTokens', entry.value -> 'inputTokens',
+            'outputTokens', entry.value -> 'outputTokens',
+            'cacheReadInputTokens', entry.value -> 'cacheReadInputTokens',
+            'cacheCreationInputTokens', entry.value -> 'cacheCreationInputTokens'
+          ))
+          from jsonb_each(
+            case when jsonb_typeof(${heartbeatRuns.resultJson} -> 'modelUsage') = 'object'
+              then ${heartbeatRuns.resultJson} -> 'modelUsage'
+              else '{}'::jsonb end
+          ) as entry
+        )`,
+      })
+      .from(heartbeatRuns)
+      .where(and(eq(heartbeatRuns.companyId, companyId), inArray(issueIdExpr, issueIds)))
+      .orderBy(desc(heartbeatRuns.createdAt), desc(heartbeatRuns.id))
+      .limit(RUN_USAGE_LIMIT + 1);
+
+    const complete = rows.length <= RUN_USAGE_LIMIT;
+    const agentIds = [...new Set(rows.map((row) => row.agentId))];
+    const adapterRows = agentIds.length > 0
+      ? await db
+        .select({ id: agentsTable.id, adapterType: agentsTable.adapterType })
+        .from(agentsTable)
+        .where(and(eq(agentsTable.companyId, companyId), inArray(agentsTable.id, agentIds)))
+      : [];
+    const adapterTypeByAgent = new Map(adapterRows.map((row) => [row.id, row.adapterType]));
+
+    const seen = new Set<string>();
+    const runs: PluginIssueRunSummary[] = [];
+    for (const row of rows.slice(0, RUN_USAGE_LIMIT)) {
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      runs.push({
+        id: row.id,
+        issueId: row.issueId,
+        agentId: row.agentId,
+        status: row.status,
+        invocationSource: row.invocationSource,
+        triggerDetail: row.triggerDetail,
+        startedAt: row.startedAt?.toISOString() ?? null,
+        finishedAt: row.finishedAt?.toISOString() ?? null,
+        error: row.error,
+        createdAt: row.createdAt.toISOString(),
+        financialUsage: projectRunFinancialUsage({
+          ...row,
+          hasUsageRecord: row.hasUsageRecord === true,
+          hasSessionIdBefore: row.hasSessionIdBefore === true,
+          adapterType: adapterTypeByAgent.get(row.agentId) ?? null,
+        }),
+      });
+    }
+    return { runs, complete };
+  };
+
   const setBlockedByWithActivity = async (params: {
     issueId: string;
     companyId: string;
@@ -1904,7 +2000,15 @@ export function buildHostServices(
         const companyId = ensureCompanyId(params.companyId);
         await ensurePluginAvailableForCompany(companyId);
         assertReadableOriginFilter(params.originKind);
-        return applyWindow((await issues.list(companyId, params as any)) as Issue[], params);
+        // The issue service applies the window in SQL; do not slice that page again.
+        const limit = parseWindowValue(params.limit);
+        const offset = parseWindowValue(params.offset) ?? 0;
+        if (limit === 0) return [];
+        return (await issues.list(companyId, {
+          ...params,
+          limit: limit ?? undefined,
+          offset,
+        } as any)) as Issue[];
       },
       async get(params) {
         const companyId = ensureCompanyId(params.companyId);
@@ -2325,8 +2429,10 @@ export function buildHostServices(
             }),
           )
         ).flat();
-        const [runs, costsSummary, openBudgetIncidents] = await Promise.all([
-          getIssueRunSummaries(companyId, subtreeIssueIds),
+        const [runListing, costsSummary, openBudgetIncidents] = await Promise.all([
+          params.includeRunUsage === true
+            ? getIssueRunSummariesWithUsage(companyId, subtreeIssueIds)
+            : getIssueRunSummaries(companyId, subtreeIssueIds).then((runs) => ({ runs, complete: null })),
           getIssueCostSummary(companyId, subtreeIssueIds, params.billingCode ?? rootIssue.billingCode ?? null),
           getOpenBudgetIncidents(companyId),
         ]);
@@ -2366,10 +2472,11 @@ export function buildHostServices(
           subtreeIssueIds,
           relations: Object.fromEntries(relationPairs),
           approvals: approvalRows,
-          runs,
+          runs: runListing.runs,
           costs: costsSummary,
           openBudgetIncidents,
           invocationBlocks,
+          ...(runListing.complete === null ? {} : { runsComplete: runListing.complete }),
         };
       },
       async listComments(params) {
