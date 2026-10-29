@@ -3,7 +3,7 @@
     "unknownError": "알 수 없는 오류",
     "noScopeMatch": "{{scope}}에서 일치하는 결과를 찾지 못했습니다. 범위를 넓히거나 검색어를 바꿔 보세요.",
     "searchAllScopes": "전체 범위 검색",
-    "createTaskFromQuery": "이 검색어로 작업 만들기",
+    "createTaskFromQuery": "이 검색어로 업무 만들기",
     "resultsCountSingular": "결과 1개",
     "resultsCount": "결과 {{count}}개{{suffix}}",
     "pluralSuffix": "",
@@ -48,18 +48,18 @@
     "disabled": "비활성화됨",
     "scope": {
       "all": "전체 범위",
-      "issues": "작업",
+      "issues": "업무",
       "comments": "댓글",
       "documents": "문서",
-      "artifacts": "아티팩트",
+      "artifacts": "산출물",
       "agents": "에이전트",
       "projects": "프로젝트"
     },
     "searchGroup": {
-      "issues": "작업",
+      "issues": "업무",
       "comments": "댓글",
       "documents": "문서",
-      "artifacts": "아티팩트",
+      "artifacts": "산출물",
       "agents": "에이전트",
       "projects": "프로젝트"
     }

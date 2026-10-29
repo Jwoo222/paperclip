@@ -141,7 +141,7 @@
       "changeLater": "나중에 앱 페이지에서 변경할 수 있습니다.",
       "allAgents": "모든 에이전트",
       "recommended": "권장",
-      "allAgentsHelp": "Paperclip에 추가한 모든 에이전트가 작업에서 {{name}}을(를) 사용할 수 있습니다. 대부분의 팀에 적합한 설정입니다.",
+      "allAgentsHelp": "Paperclip에 추가한 모든 에이전트가 업무에서 {{name}}을(를) 사용할 수 있습니다. 대부분의 팀에 적합한 설정입니다.",
       "specificAgents": "특정 에이전트만",
       "specificAgentsHelp": "{{name}}을(를) 사용할 에이전트를 선택하세요.",
       "continueToInstall": "설치로 계속",

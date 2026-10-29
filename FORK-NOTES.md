@@ -269,6 +269,7 @@ actions; raw event codes remain visible as technical identifiers.
   the Slack/GitHub chat endpoint setup pages added upstream
   (`upgrade1029NewPages.{githubIdentity,githubComplete,githubRecovery,slackDetails,slackTest,managedSlack,ownSlack}`).
   Remote MCP setup kept the 2026-10-05 deferral (existing keys only).
+  Owner confirmed on 2026-10-29: keep these chat setup pages in Korean.
 - `ui/src/api/errors.ts` is upstream's single error-copy table (toasts,
   connectivity banner, `QueryErrorState`). Its copy now resolves through
   `upgrade1029Errors.*` at call time (FORK-LOCAL). `describeError` titles use
@@ -283,9 +284,14 @@ actions; raw event codes remain visible as technical identifiers.
   (rerun the comparison script described above after every merge).
 - `ui/src/artifact-directions/**` (separate `artifact-directions.html` design
   lab) and the `design-sandbox` components stay English, like the Design Guide.
-- Known mixed wording from key reuse: some reused keys say 아티팩트/작업 where
-  the newer copy says 산출물/업무. Five clear mistranslations were replaced
-  with new keys (Resume ≠ 이력서, Reopened ≠ 재개장, branch ≠ 지점).
+- Five clear mistranslations from key reuse were replaced with new keys
+  (Resume ≠ 이력서, Reopened ≠ 재개장, branch ≠ 지점).
+- Ko terms (owner decision 2026-10-29): artifact = 산출물, task/issue as a
+  Paperclip item = 업무. Every 아티팩트 in `ko/*.json` became 산출물, and
+  values whose English says task/issue moved 작업 → 업무 with particles fixed.
+  작업 stays where it means an operation or process (background task,
+  generation task, 작업자, 작업공간). Check new copy for both terms after
+  each merge.
 - FL-001: the new column layout (`TaskRowColumnCells`, `appearance="refreshed"`
   with `columnValues`) renders the identifier itself and has no badge. Only the
   dev design sandbox uses it today; add the badge there if a real board adopts it.

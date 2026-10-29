@@ -18,8 +18,8 @@
     "filters": "필터", "clearAll": "모두 지우기", "cancel": "취소",
     "sort": { "results": "검색 결과 정렬", "prefix": "정렬:", "by": "정렬 기준", "relevance": "관련도순", "updated": "최근 업데이트순", "created": "최신 생성순", "priority": "우선순위순" },
     "sheet": { "showResults": "결과 보기", "showResult": "결과 1개 보기", "showResultsCount": "결과 {{count}}개 보기" },
-    "snippet": { "comment": "댓글", "document": "문서", "artifact": "아티팩트", "description": "설명" },
-    "source": { "agent": "에이전트", "project": "프로젝트", "artifact": "아티팩트", "user": "사용자", "label": "라벨" },
+    "snippet": { "comment": "댓글", "document": "문서", "artifact": "산출물", "description": "설명" },
+    "source": { "agent": "에이전트", "project": "프로젝트", "artifact": "산출물", "user": "사용자", "label": "라벨" },
     "relative": { "justNow": "방금", "minutes": "{{count}}분 전", "hours": "{{count}}시간 전", "days": "{{count}}일 전", "weeks": "{{count}}주 전", "months": "{{count}}개월 전", "years": "{{count}}년 전" },
     "updated": { "24h": "최근 24시간", "7d": "최근 7일", "30d": "최근 30일", "90d": "최근 90일" },
     "zero": { "noResultsWithFilters": "현재 필터에 맞는 결과가 없습니다", "resultMatches": "결과 1개가 일치하지만", "resultsMatch": "결과 {{count}}개가 일치하지만", "oneFilterHides": "적용된 필터가 모든 결과를 숨기고 있습니다", "filtersHide": "적용된 필터 {{count}}개가 모든 결과를 숨기고 있습니다", "loosenFilter": "필터 완화", "remove": "제거", "result": "결과", "results": "결과", "clearAllFilters": "모든 필터 지우기" }

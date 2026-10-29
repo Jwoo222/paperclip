@@ -788,8 +788,8 @@
       "dropHint": "이 패널 아무 곳에나 파일을 놓거나 업로드 아이콘을 사용하세요."
     },
     "artifactsToolbar": {
-      "controls": "아티팩트 컨트롤",
-      "searchPlaceholder": "아티팩트 검색…"
+      "controls": "산출물 컨트롤",
+      "searchPlaceholder": "산출물 검색…"
     },
     "artifactFileRow": {
       "openRawFile": "{{filename}} 원본 열기",
@@ -805,7 +805,7 @@
     },
     "artifactsV1Filters": {
       "allFiles": "모든 파일",
-      "showBy": "업무별 또는 유형별로 아티팩트 보기"
+      "showBy": "업무별 또는 유형별로 산출물 보기"
     },
     "caseDocumentPreview": {
       "taskDocument": "업무 문서",

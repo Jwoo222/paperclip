@@ -101,7 +101,7 @@
       "secrets": "보안 키", "bound": "연결 {{count}}개", "manageSecrets": "연결된 보안 키 관리", "lastRun": "최근 실행", "noRuns": "실행 없음", "triggerRun": "실행 시작", "noActivity": "아직 활동이 없습니다.", "viewActivity": "모든 활동 보기", "noResponsible": "담당자 없음", "searchResponsible": "담당자 검색...", "noResponsibleFound": "담당자를 찾을 수 없습니다.", "noProject": "프로젝트 없음", "searchProjects": "프로젝트 검색...", "noProjectsFound": "프로젝트를 찾을 수 없습니다."
     },
     "triggers": { "none": "아직 트리거가 없습니다", "count": "트리거 {{count}}개", "addTitle": "트리거 추가", "comingSoon": "출시 예정", "adding": "추가 중...", "add": "트리거 추가" },
-    "secrets": { "reserved": "이 루틴이 만드는 모든 작업에 루틴 보안 키가 적용됩니다. 프로젝트 및 에이전트 환경 변수의 같은 키를 덮어씁니다. {{prefix}} 이름은 예약되어 있습니다.", "saveNow": "지금 저장하세요. Paperclip은 보안 키 값을 다시 표시하지 않습니다." },
+    "secrets": { "reserved": "이 루틴이 만드는 모든 업무에 루틴 보안 키가 적용됩니다. 프로젝트 및 에이전트 환경 변수의 같은 키를 덮어씁니다. {{prefix}} 이름은 예약되어 있습니다.", "saveNow": "지금 저장하세요. Paperclip은 보안 키 값을 다시 표시하지 않습니다." },
     "delivery": { "concurrency": "동시 실행 정책", "catchUp": "놓친 실행 보충 정책", "advanced": "고급 실행 정책", "scope": "활동 게이트 범위", "noSchedule": "활동 기준으로 실행을 제한하려면 일정 트리거를 추가하세요. 웹훅, 수동, API 실행은 항상 진행됩니다." },
     "runs": { "filterDate": "날짜로 필터링", "date": "날짜", "noMatch": "필터와 일치하는 실행이 없습니다.", "clearFilters": "필터 지우기" },
     "activity": { "empty": "아직 활동이 없습니다." }
