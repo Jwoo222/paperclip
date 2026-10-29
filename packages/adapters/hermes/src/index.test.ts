@@ -123,6 +123,47 @@ test("Hermes rejects a conflicting operational skill target", async () => {
   }
 });
 
+// FORK-LOCAL (Hermes versioned skill relink, 2026-10-29): a company skill is served
+// from `<instance>/skills/<companyId>/__versions__/<skillId>/<versionId>`. When a new
+// version is published the previous version directory still exists for a while, and
+// the link must move to the new version instead of failing the run.
+test("Hermes moves a link from an older Paperclip-managed version to the new version", async () => {
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-hermes-version-relink-"));
+  try {
+    const companyRoot = path.join(home, "instance", "skills", "22222222-2222-4222-8222-222222222222");
+    const oldVersion = path.join(companyRoot, "__versions__", "33333333-3333-4333-8333-333333333333", "v1");
+    const newVersion = path.join(companyRoot, "__versions__", "33333333-3333-4333-8333-333333333333", "v2");
+    const target = path.join(home, ".hermes", "skills", "company-wiki-curation--31aaf8e3dc");
+    for (const dir of [oldVersion, newVersion]) {
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(path.join(dir, "SKILL.md"), `# ${path.basename(dir)}\n`, "utf8");
+    }
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.symlink(oldVersion, target, process.platform === "win32" ? "junction" : undefined);
+    const adapter = createServerAdapter();
+
+    await adapter.syncSkills?.({
+      adapterType: "hermes_local",
+      agentId: "11111111-1111-4111-8111-111111111111",
+      companyId: "22222222-2222-4222-8222-222222222222",
+      config: {
+        env: { HOME: home },
+        paperclipRuntimeSkills: [{
+          key: "company/22222222-2222-4222-8222-222222222222/company-wiki-curation",
+          runtimeName: "company-wiki-curation--31aaf8e3dc",
+          source: newVersion,
+        }],
+        paperclipSkillSync: { desiredSkills: ["company/22222222-2222-4222-8222-222222222222/company-wiki-curation"] },
+      },
+    }, ["company/22222222-2222-4222-8222-222222222222/company-wiki-curation"]);
+
+    expect(path.resolve(path.dirname(target), await fs.readlink(target))).toBe(path.resolve(newVersion));
+    expect(await fs.readFile(path.join(oldVersion, "SKILL.md"), "utf8")).toBe("# v1\n");
+  } finally {
+    await fs.rm(home, { recursive: true, force: true });
+  }
+});
+
 test("Hermes rejects a live symlink owned by another operational skill", async () => {
   const home = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-hermes-core-link-conflict-"));
   try {

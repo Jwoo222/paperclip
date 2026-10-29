@@ -396,6 +396,8 @@ every block. Prefer taking upstream and re-applying these again over hand-mergin
 | FL-002 issue-update helper | `skills/paperclip/scripts/paperclip-issue-update.sh` | Upstream added its own helper with the same name (retry, status echo check — SKILL.md relies on it). Kept upstream's interface; body goes through files and `node` instead of `jq` + argv (no `jq` here; argv mangles Hangul). |
 | Upload-artifact response file | `skills/paperclip/scripts/paperclip-upload-artifact.sh` | Upstream's `helper_response_file` plus `cygpath -m` for native curl. |
 
+| Hermes versioned skill relink (2026-10-29, after cutover) | `packages/adapters/hermes/src/server/skills.ts` `releaseStalePaperclipSkillLink` | Company skills now live in `<instance>/skills/<companyId>/__versions__/<skillId>/<versionId>`; a new version is a new directory while the old one still exists, and `ensurePaperclipSkillSymlink` only repairs dead links, so Hermes runs failed "occupied by another installation" after every skill update. A link into the same company skill root is now moved; any other live link still fails as upstream intends. Test: `index.test.ts` "moves a link from an older Paperclip-managed version". |
+
 Dropped because upstream now covers them: the attention-feed indexed lookup
 (2026-10-20 desk fix; upstream #15697 does the same) and the run-list
 `jsonb_to_record` / default-200 backport (upstream `heartbeat/run-state.ts`).

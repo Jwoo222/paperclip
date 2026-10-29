@@ -21,6 +21,33 @@ const __moduleDir = path.dirname(fileURLToPath(import.meta.url));
 // Helpers
 // ---------------------------------------------------------------------------
 
+// FORK-LOCAL (Hermes versioned skill relink, 2026-10-29): company skills are served
+// from `<instance>/skills/<companyId>/...` (`__versions__/<skillId>/<versionId>` since
+// upstream cff331f6ca). A new version gets a new directory while the previous one
+// still exists for a while; `ensurePaperclipSkillSymlink` only repairs links whose
+// target is gone, so the run failed as "occupied by another installation". Treat a
+// link into the same company's Paperclip skill root as ours and move it.
+const PAPERCLIP_COMPANY_SKILL_ROOT = /^(.*[\\/]skills[\\/][0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[\\/]|$)/i;
+
+function paperclipCompanySkillRoot(candidate: string): string | null {
+  const root = PAPERCLIP_COMPANY_SKILL_ROOT.exec(path.resolve(candidate))?.[1];
+  if (!root) return null;
+  return process.platform === "win32" ? root.toLowerCase() : root;
+}
+
+async function releaseStalePaperclipSkillLink(source: string, target: string): Promise<void> {
+  const existing = await fs.lstat(target).catch(() => null);
+  if (!existing?.isSymbolicLink()) return;
+  const linked = await fs.readlink(target).catch(() => null);
+  if (!linked) return;
+  const resolvedLinked = path.resolve(path.dirname(target), linked);
+  if (resolvedLinked === path.resolve(source)) return;
+  const sourceRoot = paperclipCompanySkillRoot(source);
+  if (!sourceRoot || paperclipCompanySkillRoot(resolvedLinked) !== sourceRoot) return;
+  // Removes only the link; the old version directory is left for Paperclip to prune.
+  await fs.unlink(target);
+}
+
 function asString(value: unknown): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
@@ -233,6 +260,7 @@ export async function reconcileHermesPaperclipSkills(
   for (const entry of availableEntries) {
     if (!desiredSet.has(entry.key) || isPaperclipSkillSourceMissing(entry)) continue;
     const target = path.join(skillsHome, entry.runtimeName);
+    await releaseStalePaperclipSkillLink(entry.source, target); // FORK-LOCAL (Hermes versioned skill relink)
     await ensurePaperclipSkillSymlink(entry.source, target);
     const linkedSource = await fs.readlink(target).catch(() => null);
     const resolvedSource = linkedSource
